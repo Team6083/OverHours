@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/kennhung/OverHours/module"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -10,11 +11,12 @@ import (
 )
 
 type Web struct {
+	database        *module.Database
 	templateHelpers template.FuncMap
 }
 
-func NewWeb() *Web {
-	web := &Web{}
+func NewWeb(database *module.Database) *Web {
+	web := &Web{database: database}
 	return web
 }
 
@@ -23,11 +25,12 @@ func handleWebErr(w http.ResponseWriter, err error) {
 }
 
 func (web *Web) ServeWebInterface(webPort int) {
-
 	//go web.ServeSocketInterface(8000)
 
+	web.database.DB.C("session").DropCollection()
+
 	http.Handle("/res/", http.StripPrefix("/res/", http.FileServer(http.Dir("res/"))))
-	//http.Handle("/", web.newHandler())
+	http.Handle("/", web.newHandler())
 
 	// Start Server
 	log.Printf("Serving HTTP requests on port %d", webPort)
@@ -38,17 +41,30 @@ func (web *Web) ServeWebInterface(webPort int) {
 func (web *Web) newHandler() http.Handler {
 	router := mux.NewRouter()
 	router.HandleFunc("/", web.IndexHandler).Methods("GET")
+	router.HandleFunc("/login", web.LoginHandler).Methods("GET")
+	router.HandleFunc("/login", web.LoginPOST).Methods("POST")
 	return router
 }
 
 func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
+
+	sessionToken, err := web.checkAuth(w, r)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	if sessionToken == nil {
+		return
+	}
+
 	template, err := web.parseFiles("templates/index.html", "templates/base.html")
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
 	data := struct {
-	}{}
+		Response string
+	}{"test"}
 	err = template.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		handleWebErr(w, err)

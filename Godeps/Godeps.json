@@ -2,9 +2,6 @@
 	"ImportPath": "github.com/kennhung/OverHours",
 	"GoVersion": "go1.11",
 	"GodepVersion": "v80",
-	"Packages": [
-		"./"
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/gorilla/mux",
@@ -15,6 +12,20 @@
 			"ImportPath": "github.com/gorilla/websocket",
 			"Comment": "v1.2.0-6-ga69d9f6",
 			"Rev": "a69d9f6de432e2c6b296a947d8a5ee88f68522cf"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-sqlite3",
+			"Comment": "v1.2.0-124-g5160b48",
+			"Rev": "5160b48509cf5c877bc22c11c373f8c7738cdb38"
+		},
+		{
+			"ImportPath": "github.com/satori/go.uuid",
+			"Comment": "v1.2.0-12-gb2ce238",
+			"Rev": "b2ce2384e17bbe0c6d34077efa39dbab3e09123b"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
 		}
 	]
 }
