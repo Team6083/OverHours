@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/kennhung/ftcScoring/webTemplate"
 	"log"
 	"net/http"
 )
 
 type Web struct {
-
 }
 
 func NewWeb() *Web {
@@ -35,14 +33,14 @@ func (web *Web) ServeWebInterface(webPort int) {
 	http.ListenAndServe(fmt.Sprintf(":%d", webPort), nil)
 }
 
-func (web *Web)newHandler() http.Handler {
+func (web *Web) newHandler() http.Handler {
 	router := mux.NewRouter()
 	router.HandleFunc("/", web.IndexHandler).Methods("GET")
 	return router
 }
 
-func (web *Web)IndexHandler(w http.ResponseWriter, r *http.Request){
+func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	buffer := new(bytes.Buffer)
-	template.Index("Test",buffer)
+	//template.Index("Test",buffer)
 	w.Write(buffer.Bytes())
 }
