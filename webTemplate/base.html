@@ -1,3 +1,5 @@
+
+{{define "base"}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,20 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- Bootstrap CSS -->
     <link href="/res/css/bootstrap.min.css" rel="stylesheet">
-    <!-- JS Scripts -->
 
-    <!-- load jQuery 3.3.1 -->
-    <script src="/res/js/jquery-3.3.1.min.js"></script>
-    <script src="/res/js/jquery.websocket-0.0.1.js"></script>
-    <script src="/res/js/HoursWebsocket.js"></script>
-
-    <script src="/res/js/jquery-3.3.1.slim.min.js"></script>
-    <script src="/res/js/popper.min.js"></script>
-    <script src="/res/js/bootstrap.min.js"></script>
-
-    <%@ scoring_scripts { %> <% } %>
-
-    <title><%@ title { %> <% } %>- OverHours</title>
+    <title>{{template "title" .}} - OverHours</title>
 </head>
 <body>
 
@@ -62,8 +52,22 @@
 </nav>
 
 <div class="container-fluid">
-    <%@ body { %>
-    <% } %>
+    {{template "body" .}}
 </div>
+
+<!-- JS Scripts -->
+
+<!-- load jQuery 3.3.1 -->
+<script src="/res/js/jquery-3.3.1.min.js"></script>
+<script src="/res/js/jquery.websocket-0.0.1.js"></script>
+<script src="/res/js/HoursWebsocket.js"></script>
+
+<script src="/res/js/jquery-3.3.1.slim.min.js"></script>
+<script src="/res/js/popper.min.js"></script>
+<script src="/res/js/bootstrap.min.js"></script>
+
+{{template "script" .}}
 </body>
 </html>
+
+{{end}}
