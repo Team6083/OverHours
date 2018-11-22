@@ -1,14 +1,16 @@
 package web
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"path/filepath"
+	"text/template"
 )
 
 type Web struct {
+	templateHelpers template.FuncMap
 }
 
 func NewWeb() *Web {
@@ -40,7 +42,27 @@ func (web *Web) newHandler() http.Handler {
 }
 
 func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
-	buffer := new(bytes.Buffer)
-	//template.Index("Test",buffer)
-	w.Write(buffer.Bytes())
+	template, err := web.parseFiles("templates/index.html", "templates/base.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	data := struct {
+	}{}
+	err = template.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+}
+
+// Prepends the base directory to the template filenames.
+func (web *Web) parseFiles(filenames ...string) (*template.Template, error) {
+	var paths []string
+	for _, filename := range filenames {
+		paths = append(paths, filepath.Join(".", filename))
+	}
+
+	template := template.New("").Funcs(web.templateHelpers)
+	return template.ParseFiles(paths...)
 }
