@@ -42,26 +42,19 @@ func (web *Web) newHandler() http.Handler {
 	router := mux.NewRouter()
 	router.HandleFunc("/", web.IndexHandler).Methods("GET")
 	router.HandleFunc("/login", web.LoginHandler).Methods("GET")
-	router.HandleFunc("/login", web.LoginPOST).Methods("POST")
+	router.HandleFunc("/loginPost", web.LoginPOST).Methods("POST")
 	return router
 }
 
 func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
-
-	sessionToken, err := web.checkAuth(w, r)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-	if sessionToken == nil {
-		return
-	}
+	web.pageAccessManage(w, r, PageLogin, true)
 
 	template, err := web.parseFiles("templates/index.html", "templates/base.html")
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
+
 	data := struct {
 		Response string
 	}{"test"}
