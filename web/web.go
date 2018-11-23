@@ -40,9 +40,15 @@ func (web *Web) ServeWebInterface(webPort int) {
 
 func (web *Web) newHandler() http.Handler {
 	router := mux.NewRouter()
+
+	// Pages
 	router.HandleFunc("/", web.IndexHandler).Methods("GET")
+	// Auth
 	router.HandleFunc("/login", web.LoginHandler).Methods("GET")
 	router.HandleFunc("/loginPost", web.LoginPOST).Methods("POST")
+	// Student Login
+	router.HandleFunc("/student/checkinPost", web.StudentCheckinPOST).Methods("POST")
+
 	return router
 }
 
@@ -56,8 +62,8 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Response string
-	}{"test"}
+		Name string
+	}{"N/A"}
 	err = template.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		handleWebErr(w, err)

@@ -70,28 +70,36 @@ const (
 	PageAdmin = 2
 )
 
+const (
+	AccOK     = 0
+	AccErr    = 1
+	AccUnAuth = 2
+)
+
 // Manage page access with different level
-func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level int, useDefault bool) {
+func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level int, useDefault bool) (int, error) {
 	if level == PageOpen {
 		w.WriteHeader(http.StatusOK)
-		return
+		return AccOK, nil
 	}
 
 	authStatus, err := web.checkAuth(w, r)
 	if err != nil {
-		handleWebErr(w, err)
-		return
+		if useDefault {
+			handleWebErr(w, err)
+			return AccErr, nil
+		}
+		return AccErr, err
 	}
 
 	if authStatus == AuthNoSessionProvide || authStatus == AuthUnAuth {
 		if useDefault {
-			http.Redirect(w, r, "/login?status=1&redirect="+r.RequestURI, http.StatusSeeOther)
-		} else {
-			w.WriteHeader(http.StatusUnauthorized)
+			http.Redirect(w, r, "/login?status=2&redirect="+r.RequestURI, http.StatusSeeOther)
 		}
-		return
+		return AccUnAuth, nil
 	}
 
+	return AccOK, nil
 }
 
 // Handle login page
@@ -128,7 +136,7 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 	if r.Form["loginUsername"] == nil || r.Form["loginPassword"] == nil {
-		http.Redirect(w, r, "/login?status=2", 303)
+		http.Redirect(w, r, "/login?status=2", http.StatusSeeOther)
 		return
 	}
 
