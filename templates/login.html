@@ -5,7 +5,17 @@
         <div class="col-lg-2"></div>
         <div class="col col-lg-8">
             <h2>Login</h2>
-
+            {{if eq .Status 1}}
+                <div class="alert alert-warning" role="alert">
+                    Please login first.
+                    請先登入
+                </div>
+            {{else if eq .Status 2}}
+                <div class="alert alert-warning" role="alert">
+                    Wrong username or password.
+                    錯誤帳號或密碼
+                </div>
+            {{end}}
             <form method="post" action="/loginPost">
                 <div class="form-group">
                     <label for="usernameInput">User Name</label>

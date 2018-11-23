@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -84,7 +85,7 @@ func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level i
 
 	if authStatus == AuthNoSessionProvide || authStatus == AuthUnAuth {
 		if useDefault {
-			http.Redirect(w, r, "/login?status=0&redirect="+r.RequestURI, http.StatusSeeOther)
+			http.Redirect(w, r, "/login?status=1&redirect="+r.RequestURI, http.StatusSeeOther)
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
 		}
@@ -95,14 +96,21 @@ func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level i
 
 // Handle login page
 func (web *Web) LoginHandler(w http.ResponseWriter, r *http.Request) {
+
+	data := struct {
+		Status int
+	}{0}
+	status, ok := r.URL.Query()["status"]
+	if ok && len(status[0]) >= 1 {
+		data.Status, _ = strconv.Atoi(status[0])
+	}
+
 	template, err := web.parseFiles("templates/login.html", "templates/base.html")
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
-	data := struct {
-		Response string
-	}{"test"}
+
 	err = template.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		handleWebErr(w, err)
@@ -112,6 +120,7 @@ func (web *Web) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handle login POST request
 func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
+
 	cred := struct {
 		Password string
 		Username string
@@ -119,20 +128,29 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 	if r.Form["loginUsername"] == nil || r.Form["loginPassword"] == nil {
-		http.Redirect(w, r, "/login?status=1", 303)
+		http.Redirect(w, r, "/login?status=2", 303)
 		return
 	}
 
 	cred.Username = r.Form["loginUsername"][0]
 	cred.Password = r.Form["loginPassword"][0]
 
-	fmt.Printf("%s, %s", cred.Username, cred.Password)
+	user, err := web.database.GetUserByName(cred.Username)
 
-	// Get the expected password from our in memory map
-	expectedPassword, ok := users[cred.Username]
+	var expectedPassword string
+	ok := false
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	if err == nil {
+		expectedPassword = user.Password
+		ok = true
+	}
 
 	if !ok || expectedPassword != cred.Password {
-		http.Redirect(w, r, "/login?status=1", 303)
+		http.Redirect(w, r, "/login?status=2", 303)
 		return
 	}
 
