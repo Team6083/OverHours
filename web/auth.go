@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
@@ -20,22 +21,20 @@ type LoginSession struct {
 	SessionToken string
 }
 
-const (
-	AuthPass             = 0
-	AuthErr              = 1
-	AuthNoSessionProvide = 2
-	AuthUnAuth           = 3
+// Check auth status
+var (
+	AuthSessionNotProvided = errors.New("no session provided")
+	AuthWrongSession       = errors.New("wrong session")
 )
 
-// Check auth status
-func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (int, error) {
+func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession, error) {
 
 	sessionToken, err := getSessionToken(r)
 	if err != nil {
-		return AuthErr, err
+		return nil, err
 	}
 	if sessionToken == nil {
-		return AuthNoSessionProvide, nil
+		return nil, AuthSessionNotProvided
 	}
 
 	result := LoginSession{}
@@ -43,12 +42,12 @@ func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (int, error) {
 
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return AuthUnAuth, nil
+			return nil, AuthWrongSession
 		}
-		return AuthErr, err
+		return nil, err
 	}
 
-	return AuthPass, nil
+	return &result, nil
 }
 
 // Get Session Token from Cookie
@@ -70,36 +69,30 @@ const (
 	PageAdmin = 2
 )
 
-const (
-	AccOK     = 0
-	AccErr    = 1
-	AccUnAuth = 2
-)
-
 // Manage page access with different level
-func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level int, useDefault bool) (int, error) {
+func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level int, autoRedirect bool) (*LoginSession, error) {
 	if level == PageOpen {
 		w.WriteHeader(http.StatusOK)
-		return AccOK, nil
+		return nil, nil
 	}
 
-	authStatus, err := web.checkAuth(w, r)
+	session, err := web.checkAuth(w, r)
 	if err != nil {
-		if useDefault {
-			handleWebErr(w, err)
-			return AccErr, nil
+		if err == AuthWrongSession || err == AuthSessionNotProvided {
+			if autoRedirect {
+				web.redirectToLoginPage(w, r)
+			}
+			return nil, err
+		} else {
+			return nil, err
 		}
-		return AccErr, err
 	}
 
-	if authStatus == AuthNoSessionProvide || authStatus == AuthUnAuth {
-		if useDefault {
-			http.Redirect(w, r, "/login?status=2&redirect="+r.RequestURI, http.StatusSeeOther)
-		}
-		return AccUnAuth, nil
-	}
+	return session, nil
+}
 
-	return AccOK, nil
+func (web *Web) redirectToLoginPage(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/login?status=2&redirect="+r.RequestURI, http.StatusSeeOther)
 }
 
 // Handle login page
@@ -175,7 +168,7 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   sessionToken,
-		Expires: time.Now().Add(120 * time.Second),
+		Expires: time.Now().Add(600 * time.Second),
 	})
 
 	web.database.DB.C("session").Insert(LoginSession{cred.Username, sessionToken})

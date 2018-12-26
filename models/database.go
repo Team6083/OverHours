@@ -1,4 +1,4 @@
-package module
+package models
 
 import (
 	"encoding/json"
@@ -19,8 +19,6 @@ type DatabaseConfig struct {
 }
 
 func OpenDataBase(DbConfigPath string) (*Database, error) {
-	database := new(Database)
-
 	var config DatabaseConfig
 	configFile, err := os.Open(DbConfigPath)
 	if err != nil {
@@ -30,7 +28,18 @@ func OpenDataBase(DbConfigPath string) (*Database, error) {
 	jsonParser.Decode(&config)
 	configFile.Close()
 
-	database.config = &config
+	database, err := OpenDataBaseWithConfig(&config)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return database, nil
+}
+
+func OpenDataBaseWithConfig(config *DatabaseConfig) (*Database, error) {
+	database := new(Database)
+	database.config = config
 
 	session, err := mgo.Dial(config.Hosts)
 

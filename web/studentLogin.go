@@ -6,15 +6,19 @@ import (
 )
 
 func (web *Web) StudentCheckinPOST(w http.ResponseWriter, r *http.Request) {
-	status, err := web.pageAccessManage(w, r, PageLogin, false)
-
+	session, err := web.pageAccessManage(w, r, PageLogin, false)
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
 
-	if status == AccOK {
-		r.ParseForm()
+	if session != nil {
+		err := r.ParseForm()
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+
 		if r.Form["studentName"] == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return

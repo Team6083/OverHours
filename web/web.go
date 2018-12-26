@@ -3,7 +3,7 @@ package web
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/kennhung/OverHours/module"
+	"github.com/kennhung/OverHours/models"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -11,11 +11,11 @@ import (
 )
 
 type Web struct {
-	database        *module.Database
+	database        *models.Database
 	templateHelpers template.FuncMap
 }
 
-func NewWeb(database *module.Database) *Web {
+func NewWeb(database *models.Database) *Web {
 	web := &Web{database: database}
 	return web
 }
@@ -53,7 +53,14 @@ func (web *Web) newHandler() http.Handler {
 }
 
 func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
-	web.pageAccessManage(w, r, PageLogin, true)
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	if session == nil {
+		return
+	}
 
 	template, err := web.parseFiles("templates/index.html", "templates/base.html")
 	if err != nil {
@@ -61,9 +68,19 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := web.database.GetUserByName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+	}
+
 	data := struct {
-		Name string
-	}{"N/A"}
+		UserName string
+	}{"unknown"}
+
+	if user != nil {
+		data.UserName = user.Name
+	}
+
 	err = template.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		handleWebErr(w, err)
