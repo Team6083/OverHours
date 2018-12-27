@@ -11,9 +11,9 @@
 
             <form method="post" action="/student/checkinPost">
                 <div class="input-group mb-3 mt-3">
-                    <input type="text" class="form-control" name="studentName" placeholder="Students's username">
+                    <input type="text" class="form-control" name="studentId"  placeholder="Students's Id" value="{{.UserAccName}}" {{.Disable}}>
                     <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="submit" id="stu-submit">Submit</button>
+                        <button class="btn btn-outline-secondary" type="submit" id="stu-submit">Checkin</button>
                     </div>
                 </div>
             </form>

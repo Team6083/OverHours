@@ -95,6 +95,15 @@ func (web *Web) redirectToLoginPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login?status=2&redirect="+r.RequestURI, http.StatusSeeOther)
 }
 
+func (web *Web) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   "",
+		Expires: time.Now(),
+	})
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 // Handle login page
 func (web *Web) LoginHandler(w http.ResponseWriter, r *http.Request) {
 

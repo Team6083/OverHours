@@ -15,6 +15,8 @@ type Web struct {
 	templateHelpers template.FuncMap
 }
 
+const tempSeason string = "tempSeason"
+
 func NewWeb(database *models.Database) *Web {
 	web := &Web{database: database}
 	return web
@@ -46,6 +48,7 @@ func (web *Web) newHandler() http.Handler {
 	// Auth
 	router.HandleFunc("/login", web.LoginHandler).Methods("GET")
 	router.HandleFunc("/loginPost", web.LoginPOST).Methods("POST")
+	router.HandleFunc("/logout", web.LogoutHandler).Methods("GET")
 	// Student Login
 	router.HandleFunc("/student/checkinPost", web.StudentCheckinPOST).Methods("POST")
 
@@ -74,11 +77,17 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		UserName string
-	}{"unknown"}
+		UserName    string
+		Disable     string
+		UserAccName string
+	}{"unknown", "readonly='readonly'", ""}
 
 	if user != nil {
 		data.UserName = user.Name
+		data.UserAccName = user.Username
+		if user.PermissionLevel > 1 {
+			data.Disable = ""
+		}
 	}
 
 	err = template.ExecuteTemplate(w, "base", data)

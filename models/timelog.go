@@ -14,9 +14,21 @@ type TimeLog struct {
 	Id       bson.ObjectId `bson:"_id,omitempty"`
 }
 
+func NewTimeLogAtNow(studentId string, seasonId string) TimeLog {
+	return TimeLog{studentId, int64(time.Now().Unix()), 0, seasonId, bson.NewObjectId()}
+}
+
 func (timeLog *TimeLog) GetDuration() *time.Duration {
 	duration := timeLog.GetOutTime().Sub(timeLog.GetInTime())
 	return &duration
+}
+
+func (timeLog *TimeLog) IsOut() bool {
+	if timeLog.TimeOut == 0 {
+		return false
+	} else {
+		return true
+	}
 }
 
 func (timeLog *TimeLog) GetInTime() time.Time {
@@ -48,12 +60,12 @@ func (database *Database) GetTimeLogsByUser(userId string) ([]TimeLog, error) {
 }
 
 func (database *Database) GetLastLogByUser(userId string) (*TimeLog, error) {
-	var timeLogs TimeLog
-	err := database.DB.C("timeLogs").Find(bson.M{"userId": userId}).Sort("+timeIn").One(&timeLogs)
+	var timeLog TimeLog
+	err := database.DB.C("timeLogs").Find(bson.M{"userId": userId}).Sort("+timeIn").One(&timeLog)
 	if err != nil {
 		return nil, err
 	}
-	return &timeLogs, nil
+	return &timeLog, nil
 }
 
 func (database *Database) SaveTimeLog(log *TimeLog) (*mgo.ChangeInfo, error) {
