@@ -8,8 +8,15 @@ import (
 	"time"
 )
 
+func TestTimeLog_GetInTime(t *testing.T) {
+	timeNow := time.Now()
+
+	timeLog := TimeLog{"TestID", timeNow.Unix(), time.Now().Local().Add(time.Second * time.Duration(10)).Unix(), "Season1", bson.NewObjectId()}
+	assert.Equal(t, time.Unix(timeNow.Unix(), 0), timeLog.GetInTime())
+}
+
 func TestTimeLog_GetDuration(t *testing.T) {
-	timeLog := TimeLog{"TestID", int64(time.Now().Unix()), int64(time.Now().Local().Add(time.Second * time.Duration(10)).Unix()), "Season1", bson.NewObjectId()}
+	timeLog := TimeLog{"TestID", time.Now().Unix(), time.Now().Local().Add(time.Second * time.Duration(10)).Unix(), "Season1", bson.NewObjectId()}
 
 	assert.Equal(t, timeLog.GetDuration().Seconds(), float64(10))
 }
@@ -17,9 +24,9 @@ func TestTimeLog_GetDuration(t *testing.T) {
 func TestDatabase_GetLastLogByUser(t *testing.T) {
 	database := SetupTestDb(t)
 
-	timeLog1 := TimeLog{"TestID", int64(time.Now().Unix()), int64(time.Now().Local().Add(time.Second * time.Duration(10)).Unix()), "Season1", bson.NewObjectId()}
+	timeLog1 := TimeLog{"TestID", time.Now().Unix(), time.Now().Local().Add(time.Second * time.Duration(10)).Unix(), "Season1", bson.NewObjectId()}
 	time.Sleep(time.Second * time.Duration(2))
-	timeLog2 := TimeLog{"TestID", int64(time.Now().Unix()), int64(time.Now().Local().Add(time.Second * time.Duration(10)).Unix()), "Season 2", bson.NewObjectId()}
+	timeLog2 := TimeLog{"TestID", time.Now().Unix(), time.Now().Local().Add(time.Second * time.Duration(10)).Unix(), "Season 2", bson.NewObjectId()}
 
 	_, err := database.SaveTimeLog(&timeLog1)
 	if err != nil {
@@ -47,7 +54,7 @@ func TestDatabase_GetLastLogByUser(t *testing.T) {
 func TestDatabase_DeleteTimeLog(t *testing.T) {
 	database := SetupTestDb(t)
 
-	timeLog := TimeLog{"TestID", int64(time.Now().Unix()), int64(time.Now().Local().Add(time.Second * time.Duration(10)).Unix()), "Season1", bson.NewObjectId()}
+	timeLog := TimeLog{"TestID", time.Now().Unix(), time.Now().Local().Add(time.Second * time.Duration(10)).Unix(), "Season1", bson.NewObjectId()}
 
 	_, err := database.SaveTimeLog(&timeLog)
 	if err != nil {

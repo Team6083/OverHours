@@ -11,7 +11,8 @@
 
             <form method="post" action="/student/checkinPost">
                 <div class="input-group mb-3 mt-3">
-                    <input type="text" class="form-control" name="studentId"  placeholder="Students's Id" value="{{.UserAccName}}" {{.Disable}}>
+                    <input type="text" class="form-control" name="studentId" placeholder="Students's Id"
+                           value="{{.UserAccName}}" {{.Disable}}>
                     <div class="input-group-append">
                         <button class="btn btn-outline-secondary" type="submit" id="stu-submit">Checkin</button>
                     </div>
@@ -23,13 +24,61 @@
         <div class="col-lg-2">
 
         </div>
-        <div class="col-lg">
+        <div class="col-lg col-sm">
+            <table id="timeLogsTable" class="table table-hover">
+                <thead>
+                <tr>
+                    <th>user</th>
+                    <th>time in</th>
+                    <th>time out</th>
+                    <th>season</th>
+                </tr>
+                </thead>
+                <tbody>
 
+                </tbody>
+            </table>
         </div>
         <div class="col-lg-2">
-
         </div>
     </div>
 {{end}}
 
-{{define "script"}}{{end}}
+{{define "script"}}
+    <script src="/res/js/datatables.min.js"></script>
+
+    <script>
+        var TimeLogsTable = $("#timeLogsTable").DataTable({
+            "paging": false,
+            "ordering": true,
+            "info": true,
+            "columnDefs": [
+                {
+                    "render": function (data) {
+                        var date = new Date(data * 1000);
+                        if (data == 0) {
+                            return "";
+                        }
+                        return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+                    },
+                    "targets": [1, 2]
+                }
+            ]
+        });
+
+        var timeLogs = []
+
+        {{range .TimeLogs}}
+        timeLogs.push(["{{.UserID}}", {{.TimeIn}}, {{.TimeOut}}, "{{.SeasonId}}"]);
+        {{end}}
+
+        timeLogs.forEach(function (data) {
+            TimeLogsTable.row.add(data).draw();
+        })
+
+    </script>
+{{end}}
+
+{{define "head"}}
+    <link href="/res/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+{{end}}

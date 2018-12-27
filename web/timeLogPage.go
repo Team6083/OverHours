@@ -30,6 +30,16 @@ func (web *Web) StudentCheckinPOST(w http.ResponseWriter, r *http.Request) {
 
 		stuId := r.Form["studentId"][0]
 
+		user, err := web.database.GetUserByUserName(session.Username)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+		if user.Username != stuId && !user.CheckPermissionLevel(models.PermissionLeader) {
+			handleWebErr(w, AuthNoPermission)
+			return
+		}
+
 		fmt.Printf("%s login at %s\n", stuId, time.Now().String())
 		err = web.StudentCheckin(stuId, tempSeason)
 		if err != nil {

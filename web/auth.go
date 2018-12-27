@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"fmt"
+	"github.com/kennhung/OverHours/models"
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -25,6 +26,7 @@ type LoginSession struct {
 var (
 	AuthSessionNotProvided = errors.New("no session provided")
 	AuthWrongSession       = errors.New("wrong session")
+	AuthNoPermission       = errors.New("no permission")
 )
 
 func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession, error) {
@@ -64,9 +66,10 @@ func getSessionToken(r *http.Request) (*string, error) {
 }
 
 const (
-	PageOpen  = 0
-	PageLogin = 1
-	PageAdmin = 2
+	PageOpen   = 0
+	PageLogin  = 1
+	PageLeader = 2
+	PageAdmin  = 3
 )
 
 // Manage page access with different level
@@ -86,6 +89,26 @@ func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level i
 		} else {
 			return nil, err
 		}
+	}
+
+	if level <= PageLogin {
+		return session, nil
+	}
+
+	user, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	var targetLevel int
+	if level == PageLeader {
+		targetLevel = models.PermissionLeader
+	} else if level == PageAdmin {
+		targetLevel = models.PermissionAdmin
+	}
+
+	if user.CheckPermissionLevel(targetLevel) {
+		return session, AuthNoPermission
 	}
 
 	return session, nil
@@ -145,7 +168,7 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 	cred.Username = r.Form["loginUsername"][0]
 	cred.Password = r.Form["loginPassword"][0]
 
-	user, err := web.database.GetUserByName(cred.Username)
+	user, err := web.database.GetUserByUserName(cred.Username)
 
 	var expectedPassword string
 	ok := false
@@ -180,7 +203,11 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 		Expires: time.Now().Add(600 * time.Second),
 	})
 
-	web.database.DB.C("session").Insert(LoginSession{cred.Username, sessionToken})
+	err = web.database.DB.C("session").Insert(LoginSession{cred.Username, sessionToken})
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
 
 	http.Redirect(w, r, "/", 303)
 }

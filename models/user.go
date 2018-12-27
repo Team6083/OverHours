@@ -17,6 +17,21 @@ type User struct {
 	Id              bson.ObjectId `bson:"_id,omitempty"`
 }
 
+const (
+	PermissionMember = 0
+	PermissionLeader = 1
+	PermissionAdmin  = 2
+	PermissionSuper  = 3
+)
+
+func (user *User) CheckPermissionLevel(level int) bool {
+	if user.PermissionLevel >= level {
+		return true
+	} else {
+		return false
+	}
+}
+
 func (database *Database) GetAllUsers() ([]User, error) {
 	var users []User
 	err := database.DB.C("users").Find(bson.M{}).All(&users)
@@ -26,7 +41,7 @@ func (database *Database) GetAllUsers() ([]User, error) {
 	return users, nil
 }
 
-func (database *Database) GetUserByName(name string) (*User, error) {
+func (database *Database) GetUserByUserName(name string) (*User, error) {
 	user := User{}
 	err := database.DB.C("users").Find(bson.M{"username": name}).One(&user)
 	if err != nil {

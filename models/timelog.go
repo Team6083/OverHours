@@ -15,7 +15,7 @@ type TimeLog struct {
 }
 
 func NewTimeLogAtNow(studentId string, seasonId string) TimeLog {
-	return TimeLog{studentId, int64(time.Now().Unix()), 0, seasonId, bson.NewObjectId()}
+	return TimeLog{studentId, time.Now().Unix(), 0, seasonId, bson.NewObjectId()}
 }
 
 func (timeLog *TimeLog) GetDuration() *time.Duration {

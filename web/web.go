@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/kennhung/OverHours/models"
+	"gopkg.in/mgo.v2"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -71,23 +72,38 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := web.database.GetUserByName(session.Username)
+	user, err := web.database.GetUserByUserName(session.Username)
 	if err != nil {
 		handleWebErr(w, err)
 	}
 
+	var timeLogs []models.TimeLog
 	data := struct {
 		UserName    string
 		Disable     string
 		UserAccName string
-	}{"unknown", "readonly='readonly'", ""}
+		TimeLogs    []models.TimeLog
+	}{"unknown", "readonly='readonly'", "", timeLogs}
 
 	if user != nil {
 		data.UserName = user.Name
 		data.UserAccName = user.Username
-		if user.PermissionLevel > 1 {
+		if user.CheckPermissionLevel(models.PermissionLeader) {
 			data.Disable = ""
+
+			timeLogs, err = web.database.GetAllTimeLogs()
+			if err != nil && err != mgo.ErrNotFound {
+				handleWebErr(w, err)
+				return
+			}
+		} else {
+			timeLogs, err = web.database.GetTimeLogsByUser(user.Username)
+			if err != nil && err != mgo.ErrNotFound {
+				handleWebErr(w, err)
+				return
+			}
 		}
+		data.TimeLogs = timeLogs
 	}
 
 	err = template.ExecuteTemplate(w, "base", data)
