@@ -9,7 +9,7 @@
             <h2>Team 6083 - OverHours</h2>
             <h3>Current login: <span class="badge badge-info">{{.UserName}}</span></h3>
 
-            <form method="post" action="/student/checkinPost">
+            <form method="post" action="/timeLog/checkinPost">
                 <div class="input-group mb-3 mt-3">
                     <input type="text" class="form-control" name="studentId" placeholder="Students's Id"
                            value="{{.UserAccName}}" {{.Disable}}>
@@ -46,18 +46,17 @@
 
 {{define "script"}}
     <script src="/res/js/datatables.min.js"></script>
-
     <script>
         var TimeLogsTable = $("#timeLogsTable").DataTable({
             "paging": false,
-            "ordering": true,
+            "order": [ 1, 'dec' ],
             "info": true,
             "columnDefs": [
                 {
                     "render": function (data) {
                         var date = new Date(data * 1000);
                         if (data == 0) {
-                            return "";
+                            return "<a class=\"btn btn-primary\" href=\"/timeLog/checkout?studentId={{.UserAccName}}\">CheckOut</a>";
                         }
                         return date.toLocaleDateString() + " " + date.toLocaleTimeString();
                     },

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (web *Web) StudentCheckinPOST(w http.ResponseWriter, r *http.Request) {
+func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
 	session, err := web.pageAccessManage(w, r, PageLogin, false)
 	if err != nil {
 		handleWebErr(w, err)
@@ -40,7 +40,7 @@ func (web *Web) StudentCheckinPOST(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Printf("%s login at %s\n", stuId, time.Now().String())
+		fmt.Printf("%s checkin at %s\n", stuId, time.Now().String())
 		err = web.StudentCheckin(stuId, tempSeason)
 		if err != nil && err != AlreadyCheckInError {
 			handleWebErr(w, err)
@@ -54,7 +54,64 @@ func (web *Web) StudentCheckinPOST(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, false)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session != nil {
+		var studentId string
+		status, ok := r.URL.Query()["studentId"]
+		if ok && len(status[0]) >= 1 {
+			studentId = status[0]
+		}
+
+		user, err := web.database.GetUserByUserName(session.Username)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+		if user.Username != studentId && !user.CheckPermissionLevel(models.PermissionLeader) {
+			handleWebErr(w, AuthNoPermission)
+			return
+		}
+
+		fmt.Printf("%s checkout at %s\n", studentId, time.Now().String())
+		err = web.StudentCheckOut(studentId)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+	} else {
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return
+}
+
 var AlreadyCheckInError = errors.New("already checkin")
+var AlreadyCheckOutError = errors.New("already checkout")
+
+func (web *Web) StudentCheckOut(studentId string) error {
+	timeLog, err := web.database.GetLastLogByUser(studentId)
+	if err != nil {
+		return err
+	}
+
+	if !timeLog.IsOut() {
+		timeLog.TimeOut = time.Now().Unix()
+		_, err = web.database.SaveTimeLog(timeLog)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else {
+		return AlreadyCheckOutError
+	}
+}
 
 func (web *Web) StudentCheckin(studentId string, seasonId string) error {
 	lastLog, err := web.database.GetLastLogByUser(studentId)

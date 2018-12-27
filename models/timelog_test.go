@@ -45,7 +45,7 @@ func TestDatabase_GetLastLogByUser(t *testing.T) {
 	}
 	assert.Nil(t, err)
 
-	assert.Equal(t, timeLog1.TimeIn, timeLog.TimeIn)
+	assert.Equal(t, timeLog2.TimeIn, timeLog.TimeIn)
 
 	database.DeleteTimeLog(&timeLog1)
 	database.DeleteTimeLog(&timeLog2)
