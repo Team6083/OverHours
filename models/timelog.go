@@ -7,12 +7,24 @@ import (
 )
 
 type TimeLog struct {
-	UserID   string
-	TimeIn   time.Time
-	TimeOut  time.Time
-	SeasonId string
-	LogId    string
+	UserID   string        `userId`
+	TimeIn   int64         `timeIn`
+	TimeOut  int64         `timeOut`
+	SeasonId string        `seasonId`
 	Id       bson.ObjectId `bson:"_id,omitempty"`
+}
+
+func (timeLog *TimeLog) GetDuration() *time.Duration {
+	duration := timeLog.GetOutTime().Sub(timeLog.GetInTime())
+	return &duration
+}
+
+func (timeLog *TimeLog) GetInTime() time.Time {
+	return time.Unix(timeLog.TimeIn, 0)
+}
+
+func (timeLog *TimeLog) GetOutTime() time.Time {
+	return time.Unix(timeLog.TimeOut, 0)
 }
 
 func (database *Database) GetAllTimeLogs() ([]TimeLog, error) {
@@ -33,6 +45,15 @@ func (database *Database) GetTimeLogsByUser(userId string) ([]TimeLog, error) {
 		return nil, err
 	}
 	return timeLogs, nil
+}
+
+func (database *Database) GetLastLogByUser(userId string) (*TimeLog, error) {
+	var timeLogs TimeLog
+	err := database.DB.C("timeLogs").Find(bson.M{"userId": userId}).Sort("+timeIn").One(&timeLogs)
+	if err != nil {
+		return nil, err
+	}
+	return &timeLogs, nil
 }
 
 func (database *Database) SaveTimeLog(log *TimeLog) (*mgo.ChangeInfo, error) {

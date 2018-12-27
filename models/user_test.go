@@ -11,7 +11,7 @@ func TestUser(t *testing.T) {
 
 	user := User{"TestUser", "testuser", "password", "user@user.team6083", "testUID", 0, 2019, 2019, bson.NewObjectId()}
 
-	err := database.SaveUser(user)
+	_, err := database.SaveUser(user)
 	if err != nil {
 		panic(err)
 		return
