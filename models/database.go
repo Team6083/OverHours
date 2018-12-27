@@ -18,6 +18,17 @@ type DatabaseConfig struct {
 	DBName   string `json:"DBName"`
 }
 
+func OpenDataBaseWithEnvVar(hostName string, password string, dbName string) (*Database, error) {
+	dbConfig := DatabaseConfig{hostName, password, dbName}
+
+	database, err := OpenDataBaseWithConfig(&dbConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return database, nil
+}
+
 func OpenDataBase(DbConfigPath string) (*Database, error) {
 	var config DatabaseConfig
 	configFile, err := os.Open(DbConfigPath)

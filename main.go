@@ -5,6 +5,7 @@ import (
 	"github.com/kennhung/OverHours/web"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"os"
 	"time"
 )
 
@@ -19,7 +20,7 @@ type Person struct {
 func main() {
 	log.Print("OverHours Starting at", time.Now())
 
-	database, err := models.OpenDataBase(DbConfigPath)
+	database, err := models.OpenDataBaseWithEnvVar(os.Getenv("host"), os.Getenv("psw"), os.Getenv("dbName"))
 	if err != nil {
 		log.Fatal(err)
 	}
