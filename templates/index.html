@@ -53,10 +53,11 @@
             "info": true,
             "columnDefs": [
                 {
-                    "render": function (data) {
+                    "render": function (data, type, row) {
                         var date = new Date(data * 1000);
                         if (data == 0) {
-                            return "<a class=\"btn btn-primary\" href=\"/timeLog/checkout?studentId={{.UserAccName}}\">CheckOut</a>";
+                            return "<a class=\"btn btn-primary\" href=\"/timeLog/checkout?studentId="+row[0]+"\">CheckOut</a>";
+                            //TODO fix checkout others
                         }
                         return date.toLocaleDateString() + " " + date.toLocaleTimeString();
                     },
