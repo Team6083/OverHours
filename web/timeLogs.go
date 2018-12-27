@@ -94,6 +94,7 @@ func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
 
 var AlreadyCheckInError = errors.New("already checkin")
 var AlreadyCheckOutError = errors.New("already checkout")
+var StudentNotExistError = errors.New("student doesn't exist")
 
 func (web *Web) StudentCheckOut(studentId string) error {
 	timeLog, err := web.database.GetLastLogByUser(studentId)
@@ -114,6 +115,15 @@ func (web *Web) StudentCheckOut(studentId string) error {
 }
 
 func (web *Web) StudentCheckin(studentId string, seasonId string) error {
+
+	exist, err := web.database.CheckUserExist(studentId)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		return StudentNotExistError
+	}
+
 	lastLog, err := web.database.GetLastLogByUser(studentId)
 	if err != nil && err != mgo.ErrNotFound {
 		return err

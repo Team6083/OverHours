@@ -24,6 +24,17 @@ const (
 	PermissionSuper  = 3
 )
 
+func (database *Database) CheckUserExist(studentName string) (bool, error) {
+	_, err := database.GetUserByUserName(studentName)
+	if err == mgo.ErrNotFound {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (user *User) CheckPermissionLevel(level int) bool {
 	if user.PermissionLevel >= level {
 		return true
