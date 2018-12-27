@@ -42,7 +42,7 @@ func (web *Web) StudentCheckinPOST(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Printf("%s login at %s\n", stuId, time.Now().String())
 		err = web.StudentCheckin(stuId, tempSeason)
-		if err != nil {
+		if err != nil && err != AlreadyCheckInError {
 			handleWebErr(w, err)
 			return
 		}
