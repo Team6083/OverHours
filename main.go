@@ -1,15 +1,12 @@
 package main
 
 import (
-	"crypto/tls"
 	"github.com/kennhung/OverHours/models"
 	"github.com/kennhung/OverHours/web"
 	_ "github.com/mattn/go-sqlite3"
 	"gopkg.in/mgo.v2"
 	"log"
-	"net"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -23,32 +20,41 @@ type Person struct {
 
 func main() {
 	log.Print("OverHours Starting at", time.Now())
-	webPort, err := strconv.Atoi(os.Getenv("PORT"))
-	if err != nil {
-		panic(err)
+
+	dialInfo := &mgo.DialInfo{
+		Addrs:     []string{""},
+		Direct:    false,
+		Timeout:   time.Second * 1,
+		Database:  "overhourstest",
+		Username:  "admin",
+		Password:  "kenn@2001",
+		PoolLimit: 4096, // Session.SetPoolLimit
 	}
 
-	dialInfo, err := mgo.ParseURL(os.Getenv("host"))
-	if err != nil {
-		panic(err)
-	}
-
-	tlsConfig := &tls.Config{}
-	dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
-		conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
-		return conn, err
-	}
+	dialInfo.Addrs[0] = getenv("host", dialInfo.Addrs[0])
+	dialInfo.Database = getenv("db", dialInfo.Database)
+	dialInfo.Username = getenv("Username", dialInfo.Username)
+	dialInfo.Password = getenv("Password", dialInfo.Password)
 
 	session, err := mgo.DialWithInfo(dialInfo)
-	if err != nil {
+	if nil != err {
 		panic(err)
 	}
+	defer session.Close()
 
-	var database models.Database
-	database.Session = session
-	database.DB = session.DB(os.Getenv("db"))
+	db := session.DB("overhourstest")
+
+	database := models.Database{session, &models.DatabaseConfig{"", "", "", ""}, db}
 
 	web := web.NewWeb(&database)
 	web.ServeWebInterface(webPort)
 	defer database.Session.Close()
+}
+
+func getenv(key, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+	return value
 }

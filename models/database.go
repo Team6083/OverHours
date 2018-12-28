@@ -8,18 +8,19 @@ import (
 
 type Database struct {
 	Session *mgo.Session
-	config  *DatabaseConfig
+	Config  *DatabaseConfig
 	DB      *mgo.Database
 }
 
 type DatabaseConfig struct {
 	Hosts    string `json:"hosts"`
+	User     string `json:"user"`
 	Password string `json:"password"`
 	DBName   string `json:"DBName"`
 }
 
-func OpenDataBaseWithEnvVar(hostName string, password string, dbName string) (*Database, error) {
-	dbConfig := DatabaseConfig{hostName, password, dbName}
+func OpenDataBase(hostName string, user string, password string, dbName string) (*Database, error) {
+	dbConfig := DatabaseConfig{hostName, user, password, dbName}
 
 	database, err := OpenDataBaseWithConfig(&dbConfig)
 	if err != nil {
@@ -29,7 +30,7 @@ func OpenDataBaseWithEnvVar(hostName string, password string, dbName string) (*D
 	return database, nil
 }
 
-func OpenDataBase(DbConfigPath string) (*Database, error) {
+func OpenDataBaseWithConfigPath(DbConfigPath string) (*Database, error) {
 	var config DatabaseConfig
 	configFile, err := os.Open(DbConfigPath)
 	if err != nil {
@@ -50,7 +51,7 @@ func OpenDataBase(DbConfigPath string) (*Database, error) {
 
 func OpenDataBaseWithConfig(config *DatabaseConfig) (*Database, error) {
 	database := new(Database)
-	database.config = config
+	database.Config = config
 
 	session, err := mgo.Dial(config.Hosts)
 
@@ -60,6 +61,6 @@ func OpenDataBaseWithConfig(config *DatabaseConfig) (*Database, error) {
 	session.SetMode(mgo.Strong, true)
 
 	database.Session = session
-	database.DB = session.DB(database.config.DBName)
+	database.DB = session.DB(database.Config.DBName)
 	return database, nil
 }
