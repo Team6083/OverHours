@@ -5,10 +5,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kennhung/OverHours/models"
 	"gopkg.in/mgo.v2"
+	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
-	"text/template"
 )
 
 type Web struct {
@@ -51,6 +51,7 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/loginPost", web.LoginPOST).Methods("POST")
 	router.HandleFunc("/logout", web.LogoutHandler).Methods("GET")
 	// Student Login
+	router.HandleFunc("/timeLog", web.TimeLogGET).Methods("GET")
 	router.HandleFunc("/timeLog/checkinPost", web.TimeLogCheckinPOST).Methods("POST")
 	router.HandleFunc("/timeLog/checkout", web.TimeLogCheckoutGET).Methods("GET")
 
@@ -84,7 +85,7 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		Disable     string
 		UserAccName string
 		TimeLogs    []models.TimeLog
-	}{"unknown", "readonly='readonly'", "", timeLogs}
+	}{"unknown", "readonly", "", timeLogs}
 
 	if user != nil {
 		data.UserName = user.Name

@@ -1,0 +1,94 @@
+{{define "title"}}TimeLogs{{end}}
+
+{{define "body"}}
+    <div class="mt-5">
+    </div>
+    <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 col">
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 col">
+            <table id="timeLogsTable" class="table table-hover">
+                <thead>
+                <tr>
+                    <th data-priority="6"><input type="checkbox" id="timeLogCheckAll"></th>
+                    <th data-priority="6">Id</th>
+                    <th data-priority="1">user</th>
+                    <th data-priority="2">time in</th>
+                    <th data-priority="3">time out</th>
+                    <th data-priority=4>season</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+        <div class="col-lg-2">
+        </div>
+    </div>
+{{end}}
+
+{{define "script"}}
+    <script src="/res/js/datatables.min.js"></script>
+    <script>
+        var TimeLogsTable = $("#timeLogsTable").DataTable({
+            "order": [1, 'dec'],
+            "info": true,
+            "columnDefs": [
+                {
+                    "render": function (data, type, row) {
+                        return "<input type=\"checkbox\" name='timeLogCheck[]' value='" + row[2] + "'>";
+                    },
+                    "width": "5%",
+                    "targets": 0,
+                    "sorting": false
+                },
+                {
+                    "render": function (data, type, row) {
+                        var date = new Date(data * 1000);
+                        if (data === 0) {
+                            return "<a class=\"btn btn-primary\" href=\"/timeLog/checkout?studentId=" + row[2] + "\">CheckOut</a>";
+                        }
+                        return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+                    },
+                    "targets": [3, 4]
+                }
+            ]
+        });
+
+        var timeLogs = [];
+
+        {{range .TimeLogs}}
+        timeLogs.push(["",{{.Id}}, "{{.UserID}}", {{.TimeIn}}, {{.TimeOut}}, "{{.SeasonId}}"]);
+        {{end}}
+
+        timeLogs.forEach(function (data) {
+            TimeLogsTable.row.add(data).draw();
+        })
+    </script>
+
+    <script>
+        $("#timeLogCheckAll").click(function () {
+            if ($("#timeLogCheckAll").prop("checked")) {
+                $("input[name='timeLogCheck[]']").each(function () {
+                    $(this).prop("checked", true);
+                });
+            } else {
+                $("input[name='timeLogCheck[]']").each(function () {
+                    $(this).prop("checked", false);
+                });
+            }
+        });
+
+
+    </script>
+{{end}}
+
+{{define "head"}}
+    <link href="/res/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+{{end}}

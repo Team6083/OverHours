@@ -9,6 +9,63 @@ import (
 	"time"
 )
 
+// Handlers
+
+func (web *Web) TimeLogGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	webTemplate, err := web.parseFiles("templates/timeLogs.html", "templates/base.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	user, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+	}
+
+	var timeLogs []models.TimeLog
+	data := struct {
+		UserName    string
+		UserAccName string
+		TimeLogs    []models.TimeLog
+	}{"unknown", "", timeLogs}
+
+	if user != nil {
+		data.UserName = user.Name
+		data.UserAccName = user.Username
+		if user.CheckPermissionLevel(models.PermissionLeader) {
+			timeLogs, err = web.database.GetAllTimeLogs()
+			if err != nil && err != mgo.ErrNotFound {
+				handleWebErr(w, err)
+				return
+			}
+		} else {
+			timeLogs, err = web.database.GetTimeLogsByUser(user.Username)
+			if err != nil && err != mgo.ErrNotFound {
+				handleWebErr(w, err)
+				return
+			}
+		}
+		data.TimeLogs = timeLogs
+	}
+
+	err = webTemplate.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+}
+
 func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
 	session, err := web.pageAccessManage(w, r, PageLogin, false)
 	if err != nil {
@@ -91,6 +148,8 @@ func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return
 }
+
+// Checkin and Checkout
 
 var AlreadyCheckInError = errors.New("already checkin")
 var AlreadyCheckOutError = errors.New("already checkout")
