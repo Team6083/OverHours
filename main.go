@@ -22,7 +22,7 @@ type Person struct {
 func main() {
 	log.Print("OverHours Starting at", time.Now())
 
-	var webPort, err = strconv.Atoi(getenv("port", "80"))
+	var webPort, err = strconv.Atoi(getenv("PORT", "80"))
 	if err != nil {
 		panic(err)
 	}
