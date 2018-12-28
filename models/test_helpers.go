@@ -6,7 +6,7 @@ import (
 )
 
 func SetupTestDb(t *testing.T) *Database {
-	database, err := OpenDataBaseWithConfigPath("../conf/testDatabase.json")
+	database, err := OpenDataBase("127.0.0.1", "", "", "OverHoursTest")
 	if err != nil {
 		panic(err)
 	}

@@ -23,11 +23,12 @@ func main() {
 		panic(err)
 	}
 
-	var host = getenv("host", "")
-	var dbName = getenv("db", "")
-	var user = getenv("Username", "")
-	var pass = getenv("Password", "")
+	var host = getenv("host", "127.0.0.1")
+	var dbName = getenv("db", "OverHours")
+	var user = getenv("hoursUser", "")
+	var pass = getenv("hoursPassword", "")
 
+	log.Printf("Connecting to db at %s/%s with username:  %s", host, dbName, user)
 	database, err := models.OpenDataBase(host, user, pass, dbName)
 	if err != nil {
 		panic(err)
