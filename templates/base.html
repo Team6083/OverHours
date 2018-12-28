@@ -45,7 +45,7 @@
             </li>
         </ul>
     </div>
-    <span class="navbar-text mt-2 mt-lg-0 mr-2 text-light" id="navUser"></span>
+    <span class="navbar-text mt-2 mt-lg-0 mr-2 text-dark" id="navUser">{{if (avail "UserName" .)}}{{.UserName}}{{else}}n/a{{end}}</span>
     <a class="btn btn-outline-dark" href="/logout">Logout</a>
 </nav>
 

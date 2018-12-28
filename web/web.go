@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"reflect"
 )
 
 type Web struct {
@@ -18,8 +19,23 @@ type Web struct {
 
 const tempSeason string = "tempSeason"
 
+func avail(name string, data interface{}) bool {
+	v := reflect.ValueOf(data)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return false
+	}
+	return v.FieldByName(name).IsValid()
+}
+
 func NewWeb(database *models.Database) *Web {
 	web := &Web{database: database}
+	web.templateHelpers = template.FuncMap{
+		"avail": avail,
+	}
+
 	return web
 }
 
