@@ -36,8 +36,7 @@ func (web *Web) UsersGET(w http.ResponseWriter, r *http.Request) {
 	}{users}
 
 	if user != nil {
-
-		if user.CheckPermissionLevel(models.PermissionLeader) {
+		if user.CheckPermissionLevel(models.PermissionAdmin) {
 			users, err = web.database.GetAllUsers()
 			if err != nil && err != mgo.ErrNotFound {
 				handleWebErr(w, err)
@@ -47,6 +46,7 @@ func (web *Web) UsersGET(w http.ResponseWriter, r *http.Request) {
 
 		}
 	}
+	data.Users = users
 
 	err = webTemplate.ExecuteTemplate(w, "base", data)
 	if err != nil {

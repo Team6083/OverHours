@@ -124,6 +124,6 @@ func (web *Web) parseFiles(filenames ...string) (*template.Template, error) {
 		paths = append(paths, filepath.Join(".", filename))
 	}
 
-	template := template.New("base").Funcs(web.templateHelpers)
+	template := template.New("").Funcs(web.templateHelpers)
 	return template.ParseFiles(paths...)
 }

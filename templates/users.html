@@ -46,14 +46,30 @@
                 {
                     "targets": [0,3,4,7,8],
                     "visible": false
+                },{
+                    "render": function (data) {
+                       switch (data) {
+                           case 0:
+                               return "Member";
+                           case 1:
+                               return "Leader";
+                           case 2:
+                               return "Admin";
+                           case 3:
+                               return "Super";
+                           default:
+                               return "Unknown";
+                       }
+                    },
+                    "targets": 6
                 }
             ]
         });
 
         var timeLogs = [];
 
-        {{range .TimeLogs}}
-        timeLogs.push(["",{{.Id}}, "{{.UserID}}", {{.TimeIn}}, {{.TimeOut}}, "{{.SeasonId}}"]);
+        {{range .Users}}
+        timeLogs.push([{{.Id}}, "{{.Username}}", "{{.Name}}", "{{.Password}}", "{{.Email}}", "{{.UID}}", {{.PermissionLevel}}, {{.FirstYear}}, {{.GraduationYear}}]);
         {{end}}
 
         timeLogs.forEach(function (data) {

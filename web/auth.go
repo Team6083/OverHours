@@ -134,7 +134,7 @@ func (web *Web) handle401(w http.ResponseWriter, r *http.Request) {
 		ErrMsg  string
 	}{"401 Unauthorized", "401", "Unauthorized: Access to this resource is denied."}
 
-	err = webTemplate.Execute(w, data)
+	err = webTemplate.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		handleWebErr(w, err)
 		return
