@@ -7,6 +7,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -20,6 +21,8 @@ type Person struct {
 
 func main() {
 	log.Print("OverHours Starting at", time.Now())
+
+	var webPort, _ = strconv.Atoi(getenv("port", "80"))
 
 	dialInfo := &mgo.DialInfo{
 		Addrs:     []string{""},
