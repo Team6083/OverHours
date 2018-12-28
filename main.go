@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -22,6 +23,10 @@ type Person struct {
 
 func main() {
 	log.Print("OverHours Starting at", time.Now())
+	webPort, err := strconv.Atoi(os.Getenv("PORT"))
+	if err != nil {
+		panic(err)
+	}
 
 	dialInfo, err := mgo.ParseURL(os.Getenv("host"))
 	if err != nil {
