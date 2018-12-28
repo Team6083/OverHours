@@ -22,7 +22,10 @@ type Person struct {
 func main() {
 	log.Print("OverHours Starting at", time.Now())
 
-	var webPort, _ = strconv.Atoi(getenv("port", "80"))
+	var webPort, err = strconv.Atoi(getenv("port", "80"))
+	if err != nil {
+		panic(err)
+	}
 
 	dialInfo := &mgo.DialInfo{
 		Addrs:     []string{""},
