@@ -4,15 +4,11 @@ import (
 	"github.com/kennhung/OverHours/models"
 	"github.com/kennhung/OverHours/web"
 	_ "github.com/mattn/go-sqlite3"
-	"gopkg.in/mgo.v2"
 	"log"
 	"os"
 	"strconv"
 	"time"
 )
-
-const DbConfigPath = "conf/database.json"
-const webPort = 80
 
 type Person struct {
 	Name  string
@@ -27,34 +23,18 @@ func main() {
 		panic(err)
 	}
 
-	dialInfo := &mgo.DialInfo{
-		Addrs:     []string{""},
-		Direct:    false,
-		Timeout:   time.Second * 1,
-		Database:  "overhourstest",
-		Username:  "admin",
-		Password:  "kenn@2001",
-		PoolLimit: 4096, // Session.SetPoolLimit
-	}
+	var host = getenv("host", "")
+	var dbName = getenv("db", "")
+	var user = getenv("Username", "")
+	var pass = getenv("Password", "")
 
-	dialInfo.Addrs[0] = getenv("host", dialInfo.Addrs[0])
-	dialInfo.Database = getenv("db", dialInfo.Database)
-	dialInfo.Username = getenv("Username", dialInfo.Username)
-	dialInfo.Password = getenv("Password", dialInfo.Password)
-
-	session, err := mgo.DialWithInfo(dialInfo)
-	if nil != err {
+	database, err := models.OpenDataBase(host, user, pass, dbName)
+	if err != nil {
 		panic(err)
 	}
-	defer session.Close()
 
-	db := session.DB("overhourstest")
-
-	database := models.Database{session, &models.DatabaseConfig{"", "", "", ""}, db}
-
-	web := web.NewWeb(&database)
-	web.ServeWebInterface(webPort)
-	defer database.Session.Close()
+	webServer := web.NewWeb(database)
+	webServer.ServeWebInterface(webPort)
 }
 
 func getenv(key, fallback string) string {
