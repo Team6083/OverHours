@@ -1,4 +1,4 @@
-{{define "title"}}TimeLogs{{end}}
+{{define "title"}}Users{{end}}
 
 {{define "body"}}
     <div class="mt-5">
@@ -15,12 +15,15 @@
             <table id="timeLogsTable" class="table table-hover">
                 <thead>
                 <tr>
-                    <th><input type="checkbox" id="timeLogCheckAll"></th>
                     <th>Id</th>
-                    <th>user</th>
-                    <th>time in</th>
-                    <th>time out</th>
-                    <th>season</th>
+                    <th>userName</th>
+                    <th>name</th>
+                    <th>password</th>
+                    <th>email</th>
+                    <th>uid</th>
+                    <th>pLevel</th>
+                    <th>firstYear</th>
+                    <th>GraduationYear</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -37,26 +40,12 @@
     <script src="/res/js/datatables.min.js"></script>
     <script>
         var TimeLogsTable = $("#timeLogsTable").DataTable({
-            "order": [3, 'dec'],
+            "order": [1, 'dec'],
             "info": true,
             "columnDefs": [
                 {
-                    "render": function (data, type, row) {
-                        return "<input type=\"checkbox\" name='timeLogCheck[]' value='" + row[2] + "'>";
-                    },
-                    "width": "5%",
-                    "targets": 0,
-                    "sorting": false
-                },
-                {
-                    "render": function (data, type, row) {
-                        var date = new Date(data * 1000);
-                        if (data === 0) {
-                            return "<a class=\"btn btn-primary\" href=\"/timeLog/checkout?studentId=" + row[2] + "\">CheckOut</a>";
-                        }
-                        return date.toLocaleDateString() + " " + date.toLocaleTimeString();
-                    },
-                    "targets": [3, 4]
+                    "targets": [0,3,4,7,8],
+                    "visible": false
                 }
             ]
         });

@@ -50,10 +50,12 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/login", web.LoginHandler).Methods("GET")
 	router.HandleFunc("/loginPost", web.LoginPOST).Methods("POST")
 	router.HandleFunc("/logout", web.LogoutHandler).Methods("GET")
-	// Student Login
+	// Time Logs
 	router.HandleFunc("/timeLog", web.TimeLogGET).Methods("GET")
 	router.HandleFunc("/timeLog/checkinPost", web.TimeLogCheckinPOST).Methods("POST")
 	router.HandleFunc("/timeLog/checkout", web.TimeLogCheckoutGET).Methods("GET")
+	// Users
+	router.HandleFunc("/users", web.UsersGET).Methods("GET")
 
 	return router
 }
