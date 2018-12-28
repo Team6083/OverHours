@@ -107,7 +107,10 @@ func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level i
 		targetLevel = models.PermissionAdmin
 	}
 
-	if user.CheckPermissionLevel(targetLevel) {
+	if !user.CheckPermissionLevel(targetLevel) {
+		if autoRedirect {
+			web.handle401(w, r)
+		}
 		return session, AuthNoPermission
 	}
 
@@ -116,6 +119,26 @@ func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level i
 
 func (web *Web) redirectToLoginPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login?status=1&redirect="+r.RequestURI, http.StatusSeeOther)
+}
+
+func (web *Web) handle401(w http.ResponseWriter, r *http.Request) {
+	webTemplate, err := web.parseFiles("templates/errorBase.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	data := struct {
+		Title   string
+		ErrCode string
+		ErrMsg  string
+	}{"401 Unauthorized", "401", "Unauthorized: Access to this resource is denied."}
+
+	err = webTemplate.Execute(w, data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
 }
 
 func (web *Web) LogoutHandler(w http.ResponseWriter, r *http.Request) {
