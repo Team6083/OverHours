@@ -52,7 +52,7 @@ func (database *Database) GetAllTimeLogs() ([]TimeLog, error) {
 
 func (database *Database) GetTimeLogsByUser(userId string) ([]TimeLog, error) {
 	var timeLogs []TimeLog
-	err := database.DB.C("timeLogs").Find(bson.M{"userId": userId}).All(&timeLogs)
+	err := database.DB.C("timeLogs").Find(bson.M{"userid": userId}).All(&timeLogs)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (database *Database) GetTimeLogsByUser(userId string) ([]TimeLog, error) {
 
 func (database *Database) GetLastLogByUser(userId string) (*TimeLog, error) {
 	var timeLog TimeLog
-	err := database.DB.C("timeLogs").Find(bson.M{"userId": userId}).Sort("-timeIn").One(&timeLog)
+	err := database.DB.C("timeLogs").Find(bson.M{"userid": userId}).Sort("-timein").One(&timeLog)
 	if err != nil {
 		return nil, err
 	}
