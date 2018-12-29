@@ -1,1 +1,1 @@
-web: OverHours
+web: go build -i -o
