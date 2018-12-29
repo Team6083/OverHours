@@ -2,7 +2,6 @@ package web
 
 import (
 	"errors"
-	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
@@ -211,11 +210,7 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a new random session token
-	v4UUID, err := uuid.NewV4()
-	if err != nil {
-		fmt.Printf("Something went wrong: %s", err)
-		return
-	}
+	v4UUID := uuid.NewV4()
 	sessionToken := v4UUID.String()
 
 	// Finally, we set the client cookie for "session_token" as the session token we just generated
