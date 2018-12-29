@@ -15,6 +15,9 @@ jobs:
       - checkout
       - run: mkdir -p $TEST_RESULTS
       - run:
+          name: Go Get Dep
+          command: go get -u https://github.com/golang/dep
+      - run:
           name: run build
           command: |
             dep ensure
@@ -25,9 +28,6 @@ jobs:
             go fmt ./...
             go vet ./...
             go test -v ./...
-      - save_cache:
-          keys:
-            - v1-pkg-cache
       - store_artifacts:
           path: /tmp/test-results
           destination: raw-test-output
@@ -36,9 +36,7 @@ jobs:
   deploy:
     <<: *container_config
     steps:
-      - restore_cache:
-          keys:
-            - v1-pkg-cache
+      - checkout
       - run:
           name: Deploy Master to Heroku
           command: |
