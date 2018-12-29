@@ -1,7 +1,7 @@
 package web
 
 import (
-	"github.com/kennhung/OverHours/models"
+	"github.com/Team6083/OverHours/models"
 	"gopkg.in/mgo.v2"
 	"net/http"
 )

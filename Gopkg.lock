@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  branch = "master"
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   pruneopts = "UT"
-  revision = "d8f796af33cc11cb798c1aaeb27a4ebc5099927d"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:c79fb010be38a59d657c48c6ba1d003a8aa651fa56b579d959d74573b7dff8e1"
@@ -18,56 +18,52 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:39709b184cbe5b2aecce843ae0223840dd5cde1f55bb80281a6a3b0a0ca304ed"
+  digest = "1:e73f5b0152105f18bc131fba127d9949305c8693f8a762588a82a48f61756f5f"
   name = "github.com/gorilla/mux"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ac112f7d75a0714af1bd86ab17749b31f7809640"
+  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
+  version = "v1.6.2"
 
 [[projects]]
-  digest = "1:f42beb8cbc61b8824d4c75233c21f312decf860d61c383c08d38a648bcd9d67b"
+  digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
   name = "github.com/gorilla/websocket"
   packages = ["."]
   pruneopts = "UT"
-  revision = "a69d9f6de432e2c6b296a947d8a5ee88f68522cf"
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
+  version = "v1.4.0"
 
 [[projects]]
-  digest = "1:d0aa7f08114ee467867d45a561722599f99f1b8e0ee283bc4ac44254d398b8dc"
+  digest = "1:4a49346ca45376a2bba679ca0e83bec949d780d4e927931317904bad482943ec"
   name = "github.com/mattn/go-sqlite3"
   packages = ["."]
   pruneopts = "UT"
-  revision = "5160b48509cf5c877bc22c11c373f8c7738cdb38"
-  version = "v1.3.0"
+  revision = "c7c4067b79cc51e6dfdcef5c702e74b1e0fa7c75"
+  version = "v1.10.0"
 
 [[projects]]
-  branch = "master"
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   pruneopts = "UT"
-  revision = "5d4384ee4fb2527b0a1256a821ebfc92f91efefc"
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:a3b8912deeef29007fab9a13a9f21b9e9b59c621a2ed61e2fe7b37320a71fbd5"
+  digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
   name = "github.com/satori/go.uuid"
   packages = ["."]
   pruneopts = "UT"
-  revision = "b2ce2384e17bbe0c6d34077efa39dbab3e09123b"
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
 
 [[projects]]
-  digest = "1:1f37c313333ab92ceaa17b1f7f4427e316f58147d0a5dce1665e2d3091851e9a"
+  digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   pruneopts = "UT"
-  revision = "890a5c3458b43e6104ff5da8dfa139d013d77544"
-
-[[projects]]
-  digest = "1:6ad2104db8f34b8656382ef0a7297b9a5cc42e7bdce95d968e02b92fc97470d1"
-  name = "golang.org/x/net"
-  packages = ["context"]
-  pruneopts = "UT"
-  revision = "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "v2"

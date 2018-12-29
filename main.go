@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/kennhung/OverHours/models"
-	"github.com/kennhung/OverHours/web"
+	"github.com/Team6083/OverHours/models"
+	"github.com/Team6083/OverHours/web"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
