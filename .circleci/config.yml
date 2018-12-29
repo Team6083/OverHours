@@ -15,9 +15,6 @@ jobs:
       - checkout
       - run: mkdir -p $TEST_RESULTS
       - run:
-          name: Go Get Dep
-          command: go get -u https://github.com/golang/dep
-      - run:
           name: run build
           command: |
             dep ensure
