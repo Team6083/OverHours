@@ -7,10 +7,10 @@ import (
 )
 
 type TimeLog struct {
-	UserID   string        `userId`
-	TimeIn   int64         `timeIn`
-	TimeOut  int64         `timeOut`
-	SeasonId string        `seasonId`
+	UserID   string        `string:"userId"`
+	TimeIn   int64         `string:"timeIn"`
+	TimeOut  int64         `string:"timeOut"`
+	SeasonId string        `string:"seasonId"`
 	Id       bson.ObjectId `bson:"_id,omitempty"`
 }
 

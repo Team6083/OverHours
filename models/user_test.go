@@ -14,13 +14,11 @@ func TestUser(t *testing.T) {
 	_, err := database.SaveUser(user)
 	if err != nil {
 		panic(err)
-		return
 	}
 
 	user1, err := database.GetUserByUID(user.UID)
 	if err != nil {
 		panic(err)
-		return
 	}
 
 	assert.NotNil(t, user1)
@@ -35,6 +33,5 @@ func TestUser(t *testing.T) {
 	err = database.DeleteUser(*user1)
 	if err != nil {
 		panic(err)
-		return
 	}
 }
