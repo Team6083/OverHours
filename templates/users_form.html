@@ -26,7 +26,7 @@
                                 <span class="input-group-text" id="inputGroupPrepend">@</span>
                             </div>
                             <input type="text" class="form-control" id="inputUserName" name="userName"
-                                   placeholder="Username" required value="{{.UserName}}">
+                                   placeholder="Username" required value="{{.UserName}}" readonly>
                             <div class="invalid-feedback">
                                 Please choose a username.
                             </div>
@@ -73,21 +73,21 @@
                 <div class="form-row">
                     <div class="form-group col-md-2">
                         <label for="inputFirstYear">FirstYear</label>
-                        <input type="email" class="form-control" id="inputFirstYear" name="firstYear"
+                        <input type="number" class="form-control" id="inputFirstYear" name="firstYear"
                                placeholder="FirstYear" value="{{if ne .FirstY 0}}{{.FirstY}}{{end}}">
                     </div>
                     <div class="form-group col-md-2">
                         <label for="inputGraduationYear">GraduationYear</label>
-                        <input type="text" class="form-control" id="inputGraduationYear" name="graduationYear"
+                        <input type="number" class="form-control" id="inputGraduationYear" name="graduationYear"
                                placeholder="GraduationYear" value="{{if ne .GradY 0}}{{.GradY}}{{end}}">
                     </div>
                     <div class="form-group col-md-4">
                         <label for="inputPLevel">Permission Level</label>
                         <select id="inputPLevel" class="form-control" name="pLevel" required>
-                            <option>Member</option>
-                            <option>Leader</option>
-                            <option>Admin</option>
-                            <option>Super</option>
+                            <option {{if lt .PLevel 0}}disabled{{end}}>Member</option>
+                            <option {{if lt .PLevel 1}}disabled{{end}}>Leader</option>
+                            <option {{if lt .PLevel 2}}disabled{{end}}>Admin</option>
+                            <option {{if lt .PLevel 3}}disabled{{end}}>Super</option>
                         </select>
                     </div>
                 </div>

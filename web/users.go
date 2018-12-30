@@ -5,6 +5,7 @@ import (
 	"github.com/Team6083/OverHours/models"
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"strconv"
 )
@@ -93,7 +94,8 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 		Email    string
 		FirstY   int
 		GradY    int
-	}{"", "", "", "", "", "", 0, 0}
+		PLevel   int
+	}{"", "", "", "", "", "", 0, 0, 0}
 
 	editTargetUserName, ok := r.URL.Query()["edit"]
 	if ok {
@@ -112,6 +114,7 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 				data.Email = editUser.Email
 				data.FirstY = editUser.FirstYear
 				data.GradY = editUser.GraduationYear
+				data.PLevel = editUser.PermissionLevel
 			}
 		}
 	}
@@ -131,6 +134,12 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 
 	if session == nil {
 		web.handle401(w, r)
+		return
+	}
+
+	currUser, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
 		return
 	}
 
@@ -180,6 +189,18 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		user.PermissionLevel = models.PermissionMember
 	}
 
+	if olduser != nil {
+		if currUser.PermissionLevel <= olduser.PermissionLevel && currUser.Username != user.Username {
+			handleBadRequest(w, errors.New("you didn't have the permission to edit this user"))
+			return
+		}
+	}
+
+	if !currUser.CheckPermissionLevel(user.PermissionLevel) {
+		handleBadRequest(w, errors.New("you didn't have the permission to change to permission level to "+pLevel))
+		return
+	}
+
 	if r.Form["email"] != nil {
 		datas.email = r.Form["email"][0]
 	}
@@ -217,6 +238,12 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 			handleWebErr(w, err)
 			return
 		}
+	}
+
+	if olduser != nil {
+		user.Id = olduser.Id
+	} else {
+		user.Id = bson.NewObjectId()
 	}
 
 	_, err = web.database.SaveUser(*user)
