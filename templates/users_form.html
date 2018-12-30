@@ -1,0 +1,149 @@
+{{define "title"}}Users Form{{end}}
+
+{{define "body"}}
+    <div class="mt-5">
+    </div>
+    <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 col">
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 col">
+            <form class="needs-validation" method="POST" action="/users/form/submit" autocomplete="nope" novalidate>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="editUUID">UUID</label>
+                        <input type="text" class="form-control" id="editUUID" name="uuid" placeholder="new UUID"
+                               disabled>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="inputUserName">UserName</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="inputGroupPrepend">@</span>
+                            </div>
+                            <input type="text" class="form-control" id="inputUserName" name="userName"
+                                   placeholder="Username" required value="{{.UserName}}">
+                            <div class="invalid-feedback">
+                                Please choose a username.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="inputName">Display Name</label>
+                        <input type="text" class="form-control" id="inputName" name="name" placeholder="Your name"
+                               required value="{{.Name}}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="inputPassword">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="inputPassword" name="password"
+                                   placeholder="Password"
+                                   autocomplete="new-password" required value="{{.Password}}" disabled>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-secondary" id="pswShowBtn">Show</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="inputConfirmPassword">Confirm Password</label>
+                        <input type="password" class="form-control" id="inputConfirmPassword" name="confirmPassword"
+                               placeholder="Confirm Password"
+                               autocomplete="new-password" required value="{{.Password}}" disabled>
+                    </div>
+                    <div class="col-md-4 mb-md-0 mb-2">
+                        <label id="genePswLabel" class="invisible">Generated: <span class="badge badge-info"
+                                                                                    id="genePsw"></span> </label><br>
+                        <button type="button" id="pswGeneBtn" class="btn btn-success">Generate password
+                        </button>
+                        <button type="button" id="pswEditBtn" class="btn btn-warning">Edit password
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputEmail">Email address</label>
+                    <input type="email" class="form-control" id="inputEmail" placeholder="Email" name="email"
+                           value="{{.Email}}">
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-2">
+                        <label for="inputFirstYear">FirstYear</label>
+                        <input type="email" class="form-control" id="inputFirstYear" name="firstYear"
+                               placeholder="FirstYear" value="{{if ne .FirstY 0}}{{.FirstY}}{{end}}">
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="inputGraduationYear">GraduationYear</label>
+                        <input type="text" class="form-control" id="inputGraduationYear" name="graduationYear"
+                               placeholder="GraduationYear" value="{{if ne .GradY 0}}{{.GradY}}{{end}}">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="inputPLevel">Permission Level</label>
+                        <select id="inputPLevel" class="form-control" name="pLevel" required>
+                            <option>Member</option>
+                            <option>Leader</option>
+                            <option>Admin</option>
+                            <option>Super</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Sign in</button>
+            </form>
+        </div>
+        <div class="col-lg-2">
+        </div>
+    </div>
+{{end}}
+
+{{define "script"}}
+    <script>
+        (function () {
+            'use strict';
+            window.addEventListener('load', function () {
+                // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                var forms = document.getElementsByClassName('needs-validation');
+                // Loop over them and prevent submission
+                var validation = Array.prototype.filter.call(forms, function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+
+    <script>
+
+        $("#pswGeneBtn").on('click', function () {
+            let psw = generatePassword();
+
+            $("#inputPassword").val(psw);
+            $("#inputConfirmPassword").val(psw);
+            $("#genePsw").html(psw);
+            $("#genePswLabel").removeClass("invisible");
+            $("#inputPassword").removeAttr("disabled");
+        });
+
+        $("#pswShowBtn").on('click', function () {
+            $("#inputPassword").prop("type", "text");
+        });
+
+        $("#pswEditBtn").on('click', function () {
+            $("#inputPassword").removeAttr("disabled");
+            $("#inputConfirmPassword").removeAttr("disabled");
+        })
+
+    </script>
+{{end}}
+
+{{define "head"}}
+
+{{end}}

@@ -43,6 +43,10 @@ func handleWebErr(w http.ResponseWriter, err error) {
 	http.Error(w, "Internal server error: "+err.Error(), 500)
 }
 
+func handleBadRequest(w http.ResponseWriter, err error) {
+	http.Error(w, "Bad request error: "+err.Error(), http.StatusBadRequest)
+}
+
 func (web *Web) ServeWebInterface(webPort int) {
 	//go web.ServeSocketInterface(8000)
 
@@ -72,6 +76,8 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/timeLog/checkout", web.TimeLogCheckoutGET).Methods("GET")
 	// Users
 	router.HandleFunc("/users", web.UsersGET).Methods("GET")
+	router.HandleFunc("/users/form", web.UsersFormGET).Methods("GET")
+	router.HandleFunc("/users/form/submit", web.UsersFormPOST).Methods("POST")
 
 	return router
 }
