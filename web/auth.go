@@ -153,11 +153,17 @@ func (web *Web) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 func (web *Web) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
-		Status int
-	}{0}
+		Status   int
+		Redirect string
+	}{0, ""}
 	status, ok := r.URL.Query()["status"]
 	if ok && len(status[0]) >= 1 {
 		data.Status, _ = strconv.Atoi(status[0])
+	}
+
+	redirect, ok := r.URL.Query()["redirect"]
+	if ok && len(redirect[0]) >= 1 {
+		data.Redirect = redirect[0]
 	}
 
 	template, err := web.parseFiles("templates/login.html", "templates/base.html")
@@ -227,5 +233,9 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", 303)
+	if r.Form["redirect"] != nil {
+		http.Redirect(w, r, r.Form["redirect"][0], 303)
+	} else {
+		http.Redirect(w, r, "/", 303)
+	}
 }

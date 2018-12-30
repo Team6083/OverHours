@@ -28,6 +28,7 @@
                     <input type="password" class="form-control" id="passwordInput" name="loginPassword"
                            placeholder="Password">
                 </div>
+                {{if ne .Redirect ""}}<input type="hidden" name="redirect" value="{{.Redirect}}">{{end}}
                 <button type="submit" class="btn btn-primary">Submit</button>
             </form>
         </div>
