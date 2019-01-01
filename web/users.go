@@ -47,7 +47,17 @@ func (web *Web) UsersGET(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
+			tempUsers, err := web.database.GetAllUsers()
+			if err != nil && err != mgo.ErrNotFound {
+				handleWebErr(w, err)
+				return
+			}
 
+			for _, userData := range tempUsers {
+				if userData.PermissionLevel < user.PermissionLevel {
+					users = append(users, userData)
+				}
+			}
 		}
 	}
 	data.Users = users
