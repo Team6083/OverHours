@@ -163,6 +163,26 @@ func (web *Web) handle401(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (web *Web) handle403(w http.ResponseWriter, r *http.Request) {
+	webTemplate, err := web.parseFiles("templates/errorBase.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	data := struct {
+		Title   string
+		ErrCode string
+		ErrMsg  string
+	}{"403 Forbidden", "403", "Forbidden: You doesn't have the access to this resource."}
+
+	err = webTemplate.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+}
+
 func (web *Web) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	sessionToken, err := getSessionToken(r)
 	if err != nil {
