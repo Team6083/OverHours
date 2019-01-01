@@ -6,13 +6,13 @@
     <div class="row">
         <div class="col-lg-2"></div>
         <div class="col-lg-8 col">
-
+            <a class="btn btn-primary" href="/users/form">New User</a>
         </div>
     </div>
-    <div class="row">
+    <div class="row mt-3">
         <div class="col-lg-2"></div>
-        <div class="col-lg-8 col">
-            <table id="timeLogsTable" class="table table-hover">
+        <div class="col-lg-8 col" style="overflow-x: scroll;">
+            <table id="usersTable" class="table table-hover">
                 <thead>
                 <tr>
                     <th>Id</th>
@@ -20,7 +20,7 @@
                     <th>name</th>
                     <th>password</th>
                     <th>email</th>
-                    <th>uid</th>
+                    <th>uuid</th>
                     <th>pLevel</th>
                     <th>firstYear</th>
                     <th>GraduationYear</th>
@@ -37,14 +37,18 @@
 {{end}}
 
 {{define "script"}}
+    <script>
+        $("#nav-users").addClass("active");
+    </script>
+
     <script src="/res/js/datatables.min.js"></script>
     <script>
-        var TimeLogsTable = $("#timeLogsTable").DataTable({
+        var UsersTable = $("#usersTable").DataTable({
             "order": [1, 'dec'],
             "info": true,
             "columnDefs": [
                 {
-                    "targets": [0,3,4,7,8],
+                    "targets": [0,3,5,7,8],
                     "visible": false
                 },{
                     "render": function (data) {
@@ -62,35 +66,25 @@
                        }
                     },
                     "targets": 6
+                },
+                {
+                    "render": function (data) {
+                        return "<a href=\"/users/form?edit="+data+"\" class=\"text-body\">"+data+"</a>";
+                    },
+                    "targets": 1
                 }
             ]
         });
 
-        var timeLogs = [];
+        var users = [];
 
         {{range .Users}}
-        timeLogs.push([{{.Id}}, "{{.Username}}", "{{.Name}}", "{{.Password}}", "{{.Email}}", "{{.UID}}", {{.PermissionLevel}}, {{.FirstYear}}, {{.GraduationYear}}]);
+        users.push([{{.Id}}, "{{.Username}}", "{{.Name}}", "{{.Password}}", "{{.Email}}", "{{.UUID}}", {{.PermissionLevel}}, {{.FirstYear}}, {{.GraduationYear}}]);
         {{end}}
 
-        timeLogs.forEach(function (data) {
-            TimeLogsTable.row.add(data).draw();
+        users.forEach(function (data) {
+            UsersTable.row.add(data).draw();
         })
-    </script>
-
-    <script>
-        $("#timeLogCheckAll").click(function () {
-            if ($("#timeLogCheckAll").prop("checked")) {
-                $("input[name='timeLogCheck[]']").each(function () {
-                    $(this).prop("checked", true);
-                });
-            } else {
-                $("input[name='timeLogCheck[]']").each(function () {
-                    $(this).prop("checked", false);
-                });
-            }
-        });
-
-
     </script>
 {{end}}
 

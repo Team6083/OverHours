@@ -1,0 +1,128 @@
+{{define "title"}}Users Form{{end}}
+
+{{define "body"}}
+    <div class="mt-5">
+    </div>
+    <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 col">
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 col">
+            <form class="needs-validation" method="POST" action="/timeLog/form/submit" autocomplete="off" novalidate>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="editId">Id</label>
+                        <input type="text" class="form-control" id="editId" name="id" placeholder="new Id" readonly
+                               value="{{.EditTimeLog.Id.Hex}}" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="editUserID">UserID</label>
+                        <input type="text" class="form-control" id="editUserID" name="userId" placeholder="UserID"
+                               value="{{.EditTimeLog.UserID}}" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="editSeasonId">Season Id</label>
+                        <input type="text" class="form-control" id="editSeasonId" name="seasonId"
+                               value="{{.EditTimeLog.SeasonId}}" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="editTimeIn">Time In
+                            <button type="button" id="timeInNowBtn" class="btn btn-info btn-sm">Now
+                            </button>
+                        </label>
+                        <input type="text" class="form-control" id="editTimeIn" name="timeIn" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="editTimeOut">Time Out
+                            <button type="button" id="timeOutClearBtn" class="btn btn-warning btn-sm">Clear Time Out
+                            </button>
+                            <button type="button" id="timeOutNowBtn" class="btn btn-info btn-sm">Now
+                            </button>
+                        </label>
+                        <input type="text" class="form-control" id="editTimeOut" name="timeOut">
+                    </div>
+                    <div class="col-md-4 mt-md-4">
+
+                    </div>
+                </div>
+                <div class="form-row mt-md-5">
+                    <button type="submit" class="btn btn-block btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-lg-2">
+        </div>
+    </div>
+{{end}}
+
+{{define "script"}}
+    <script>
+        $("#nav-timeLog").addClass("active");
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        (function () {
+            'use strict';
+            window.addEventListener('load', function () {
+                // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                let forms = document.getElementsByClassName('needs-validation');
+                // Loop over them and prevent submission
+                let validation = Array.prototype.filter.call(forms, function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+
+    <script>
+        const config = {
+            enableTime: true,
+            time_24hr: true,
+            static: false,
+            altInput: true,
+            altFormat: "Y/m/j K h:i:S",
+            dateFormat: "U",
+        };
+
+        tI = flatpickr("#editTimeIn", config);
+        tO = flatpickr("#editTimeOut", config);
+
+        $("#timeOutClearBtn").on('click', function () {
+            tO.clear();
+        });
+
+        {{if eq .EditTimeLog.TimeIn 0}}
+        tI.setDate(new Date());
+        {{else}}
+        tI.setDate(new Date(({{.EditTimeLog.TimeIn}})*1000));
+        {{end}}
+
+        {{if ne .EditTimeLog.TimeOut 0}}
+        tO.setDate(new Date(({{.EditTimeLog.TimeOut}})*1000));
+        {{end}}
+
+        $("#timeInNowBtn").on('click', function () {
+            tI.setDate(new Date());
+        });
+
+        $("#timeOutNowBtn").on('click', function () {
+            tO.setDate(new Date());
+        });
+    </script>
+{{end}}
+
+{{define "head"}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{{end}}

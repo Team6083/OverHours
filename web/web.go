@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"reflect"
+	"time"
 )
 
 type Web struct {
@@ -30,10 +31,15 @@ func avail(name string, data interface{}) bool {
 	return v.FieldByName(name).IsValid()
 }
 
+func getSecFromDuration(duration time.Duration) int64 {
+	return int64(duration.Seconds())
+}
+
 func NewWeb(database *models.Database) *Web {
 	web := &Web{database: database}
 	web.templateHelpers = template.FuncMap{
-		"avail": avail,
+		"avail":              avail,
+		"getSecFromDuration": getSecFromDuration,
 	}
 
 	return web
@@ -41,6 +47,10 @@ func NewWeb(database *models.Database) *Web {
 
 func handleWebErr(w http.ResponseWriter, err error) {
 	http.Error(w, "Internal server error: "+err.Error(), 500)
+}
+
+func handleBadRequest(w http.ResponseWriter, err error) {
+	http.Error(w, "Bad request error: "+err.Error(), http.StatusBadRequest)
 }
 
 func (web *Web) ServeWebInterface(webPort int) {
@@ -68,10 +78,16 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/logout", web.LogoutHandler).Methods("GET")
 	// Time Logs
 	router.HandleFunc("/timeLog", web.TimeLogGET).Methods("GET")
+	router.HandleFunc("/timeLog/form", web.TimeLogFormGET).Methods("GET")
+	router.HandleFunc("/timeLog/form/submit", web.TimeLogFormPOST).Methods("POST")
 	router.HandleFunc("/timeLog/checkinPost", web.TimeLogCheckinPOST).Methods("POST")
 	router.HandleFunc("/timeLog/checkout", web.TimeLogCheckoutGET).Methods("GET")
 	// Users
 	router.HandleFunc("/users", web.UsersGET).Methods("GET")
+	router.HandleFunc("/users/form", web.UsersFormGET).Methods("GET")
+	router.HandleFunc("/users/form/submit", web.UsersFormPOST).Methods("POST")
+	// Boards
+	router.HandleFunc("/board/ranking", web.leaderboardGET).Methods("GET")
 
 	return router
 }

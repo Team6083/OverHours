@@ -10,7 +10,7 @@ type User struct {
 	Username        string
 	Password        string
 	Email           string
-	UID             string
+	UUID            string
 	PermissionLevel int
 	FirstYear       int
 	GraduationYear  int
@@ -63,7 +63,7 @@ func (database *Database) GetUserByUserName(name string) (*User, error) {
 
 func (database *Database) GetUserByUID(uid string) (*User, error) {
 	user := User{}
-	err := database.DB.C("users").Find(bson.M{"uid": uid}).One(&user)
+	err := database.DB.C("users").Find(bson.M{"uuid": uid}).One(&user)
 	if err != nil {
 		return nil, err
 	}

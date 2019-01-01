@@ -1,0 +1,79 @@
+{{define "title"}}TimeLogs{{end}}
+
+{{define "body"}}
+    <div class="mt-5">
+    </div>
+    <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 col">
+            {{if (avail "UserRank" .)}}
+                {{if ne .UserRank 0}}
+                    <div class="text-center"><h3>You are no. <span class="badge badge-info">{{.UserRank}}</span></h3>
+                    </div>
+                {{end}}
+            {{end}}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 col" style="overflow-x: scroll">
+            <table id="leaderboardTable" class="table table-hover">
+                <thead>
+                <tr>
+                    <th>ranking</th>
+                    <th>user</th>
+                    <th>total time</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+        <div class="col-lg-2">
+        </div>
+    </div>
+{{end}}
+
+{{define "script"}}
+    <script>
+        $("#nav-leaderboard").addClass("active");
+    </script>
+    <script src="/res/js/datatables.min.js"></script>
+    <script>
+        var LeaderboardTable = $("#leaderboardTable").DataTable({
+            "order": [0, 'asc'],
+            "ordering": false,
+            "info": true,
+            "columnDefs": [
+                {
+                    "render": function (data, type, row, meta) {
+                        return meta.row + 1;
+                    },
+                    "width": "10%",
+                    "targets": 0
+                },
+                {
+                    "render": function (data) {
+                        return secondToString(data);
+                    },
+                    "targets": 2
+                }
+            ]
+        });
+
+        var timeLogSummary = [];
+
+        {{range .Ranking}}
+        timeLogSummary.push([undefined, {{.UserID}}, {{(getSecFromDuration .TotalTime)}}]);
+        {{end}}
+
+        timeLogSummary.forEach(function (data) {
+            LeaderboardTable.row.add(data).draw();
+        })
+    </script>
+{{end}}
+
+{{define "head"}}
+    <link href="/res/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+{{end}}

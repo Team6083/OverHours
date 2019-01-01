@@ -11,7 +11,7 @@
     </div>
     <div class="row">
         <div class="col-lg-2"></div>
-        <div class="col-lg-8 col">
+        <div class="col-lg-8 col" style="overflow-x: scroll;">
             <table id="timeLogsTable" class="table table-hover">
                 <thead>
                 <tr>
@@ -34,6 +34,9 @@
 {{end}}
 
 {{define "script"}}
+    <script>
+        $("#nav-timeLog").addClass("active");
+    </script>
     <script src="/res/js/datatables.min.js"></script>
     <script>
         var TimeLogsTable = $("#timeLogsTable").DataTable({
@@ -47,6 +50,12 @@
                     "width": "5%",
                     "targets": 0,
                     "sorting": false
+                },
+                {
+                    "render": function (data) {
+                        return "<a href=\"/timeLog/form?edit="+data+"\" class=\"text-body\">"+data+"</a>";
+                    },
+                    "targets": 1
                 },
                 {
                     "render": function (data, type, row) {
