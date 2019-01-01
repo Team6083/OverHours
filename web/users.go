@@ -54,7 +54,7 @@ func (web *Web) UsersGET(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, userData := range tempUsers {
-				if userData.PermissionLevel < user.PermissionLevel {
+				if userData.PermissionLevel < user.PermissionLevel || userData.Username == user.Username {
 					users = append(users, userData)
 				}
 			}
