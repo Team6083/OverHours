@@ -308,12 +308,14 @@ func setSessionCookie(w http.ResponseWriter, session LoginSession) {
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   session.SessionToken,
+		Path:    "/",
 		Expires: time.Unix(session.validate, 0),
 	})
 
 	http.SetCookie(w, &http.Cookie{
 		Name:    "userName",
 		Value:   session.Username,
+		Path:    "/",
 		Expires: time.Unix(session.validate, 0),
 	})
 }
@@ -322,12 +324,14 @@ func resetSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   "",
+		Path:    "/",
 		Expires: time.Now(),
 	})
 
 	http.SetCookie(w, &http.Cookie{
 		Name:    "userName",
 		Value:   "",
+		Path:    "/",
 		Expires: time.Now(),
 	})
 }
