@@ -78,6 +78,8 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/logout", web.LogoutHandler).Methods("GET")
 	// Time Logs
 	router.HandleFunc("/timeLog", web.TimeLogGET).Methods("GET")
+	router.HandleFunc("/timeLog/form", web.TimeLogFormGET).Methods("GET")
+	router.HandleFunc("/timeLog/form/submit", web.TimeLogFormPOST).Methods("POST")
 	router.HandleFunc("/timeLog/checkinPost", web.TimeLogCheckinPOST).Methods("POST")
 	router.HandleFunc("/timeLog/checkout", web.TimeLogCheckoutGET).Methods("GET")
 	// Users

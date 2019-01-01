@@ -65,6 +65,15 @@ func (database *Database) GetTimeLogsByUser(userId string) ([]TimeLog, error) {
 	return timeLogs, nil
 }
 
+func (database *Database) GetTimeLogById(Id string) (*TimeLog, error) {
+	var timeLog TimeLog
+	err := database.DB.C("timeLogs").FindId(bson.ObjectIdHex(Id)).One(&timeLog)
+	if err != nil {
+		return nil, err
+	}
+	return &timeLog, nil
+}
+
 func (database *Database) GetTimeLogsBySeason(seasonId string) ([]TimeLog, error) {
 	var timeLogs []TimeLog
 	err := database.DB.C("timeLogs").Find(bson.M{"seasonid": seasonId}).All(&timeLogs)

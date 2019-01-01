@@ -52,7 +52,9 @@
                     "sorting": false
                 },
                 {
-                    "visible": true,
+                    "render": function (data) {
+                        return "<a href=\"/timeLog/form?edit="+data+"\" class=\"text-body\">"+data+"</a>";
+                    },
                     "targets": 1
                 },
                 {

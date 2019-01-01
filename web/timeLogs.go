@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -64,6 +66,98 @@ func (web *Web) TimeLogGET(w http.ResponseWriter, r *http.Request) {
 		handleWebErr(w, err)
 		return
 	}
+}
+
+func (web *Web) TimeLogFormGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		web.handle401(w, r)
+		return
+	}
+
+	template, err := web.parseFiles("templates/timeLogs_form.html", "templates/base.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	data := struct {
+		EditTimeLog models.TimeLog
+	}{models.TimeLog{"", 0, 0, "", bson.NewObjectId()}}
+
+	editTargetLogId, ok := r.URL.Query()["edit"]
+	if ok {
+		timeLog, err := web.database.GetTimeLogById(editTargetLogId[0])
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+		data.EditTimeLog = *timeLog
+	}
+
+	err = template.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+	}
+}
+
+func (web *Web) TimeLogFormPOST(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		web.handle401(w, r)
+		return
+	}
+
+	err = r.ParseForm()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if r.Form["id"] == nil || r.Form["userId"] == nil || r.Form["seasonId"] == nil || r.Form["timeIn"] == nil {
+		handleBadRequest(w, errors.New("some fields are missing "+r.Form.Encode()))
+		return
+	}
+
+	timeLog := new(models.TimeLog)
+
+	timeLog.Id = bson.ObjectIdHex(r.Form["id"][0])
+	timeLog.UserID = r.Form["userId"][0]
+	timeLog.SeasonId = r.Form["seasonId"][0]
+	timeIn, err := strconv.ParseInt(r.Form["timeIn"][0], 10, 64)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	timeLog.TimeIn = timeIn
+	if r.Form["timeOut"][0] != "" {
+		timeOut, err := strconv.ParseInt(r.Form["timeOut"][0], 10, 64)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+		timeLog.TimeOut = timeOut
+	} else {
+		timeLog.TimeOut = 0
+	}
+
+	_, err = web.database.SaveTimeLog(timeLog)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/timeLog", http.StatusSeeOther)
 }
 
 func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
