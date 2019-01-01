@@ -45,6 +45,9 @@
 {{end}}
 
 {{define "script"}}
+    <script>
+        $("#nav-home").addClass("active");
+    </script>
     <script src="/res/js/datatables.min.js"></script>
     <script>
         var TimeLogsTable = $("#timeLogsTable").DataTable({

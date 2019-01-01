@@ -182,11 +182,7 @@ func (web *Web) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:    "session_token",
-		Value:   "",
-		Expires: time.Now(),
-	})
+	resetSessionCookie(w)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -262,7 +258,7 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 	loginSession := newLoginSession(cred.Username)
 
 	// Finally, we set the client cookie for "session_token" as the session token we just generated
-	setSessionCookie(w, loginSession.SessionToken)
+	setSessionCookie(w, *loginSession)
 
 	_, err = web.storeSession(loginSession)
 	if err != nil {
@@ -280,15 +276,35 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 func (web *Web) renewSession(w http.ResponseWriter, session *LoginSession) error {
 	session.renew()
 	_, err := web.storeSession(session)
-	setSessionCookie(w, session.SessionToken)
+	setSessionCookie(w, *session)
 	return err
 }
 
-func setSessionCookie(w http.ResponseWriter, sessionToken string) {
+func setSessionCookie(w http.ResponseWriter, session LoginSession) {
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
-		Value:   sessionToken,
-		Expires: time.Now().Add(600 * time.Second),
+		Value:   session.SessionToken,
+		Expires: time.Unix(session.validate, 0),
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "userName",
+		Value:   session.Username,
+		Expires: time.Unix(session.validate, 0),
+	})
+}
+
+func resetSessionCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   "",
+		Expires: time.Now(),
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "userName",
+		Value:   "",
+		Expires: time.Now(),
 	})
 }
 

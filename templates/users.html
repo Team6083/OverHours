@@ -37,6 +37,10 @@
 {{end}}
 
 {{define "script"}}
+    <script>
+        $("#nav-users").addClass("active");
+    </script>
+
     <script src="/res/js/datatables.min.js"></script>
     <script>
         var UsersTable = $("#usersTable").DataTable({
