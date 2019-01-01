@@ -96,7 +96,6 @@ func TestDatabase_GetRankingBySeason(t *testing.T) {
 			_, err := Database.SaveTimeLog(&timelog)
 			if err != nil {
 				panic(err)
-				break
 			}
 		}
 	}
@@ -125,7 +124,6 @@ func TestDatabase_GetTimeLogsBySeason(t *testing.T) {
 			_, err := Database.SaveTimeLog(&timelog)
 			if err != nil {
 				panic(err)
-				break
 			}
 		}
 	}
