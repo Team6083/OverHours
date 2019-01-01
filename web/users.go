@@ -11,7 +11,7 @@ import (
 )
 
 func (web *Web) UsersGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageAdmin, true)
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
 	if err != nil {
 		if err != AuthNoPermission {
 			handleWebErr(w, err)
@@ -85,7 +85,7 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := struct {
+	editDate := struct {
 		Id       string
 		UUID     string
 		UserName string
@@ -95,9 +95,23 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 		FirstY   int
 		GradY    int
 		PLevel   int
-		CPLevel  int
-		New      bool
-	}{"", "", "", "", "", "", 0, 0, 0, user.PermissionLevel, true}
+	}{"", "", "", "", "", "", 0, 0, 0}
+
+	data := struct {
+		EditUser struct {
+			Id       string
+			UUID     string
+			UserName string
+			Name     string
+			Password string
+			Email    string
+			FirstY   int
+			GradY    int
+			PLevel   int
+		}
+		New         bool
+		CurrentUser models.User
+	}{editDate, true, *user}
 
 	editTargetUserName, ok := r.URL.Query()["edit"]
 	if ok {
@@ -108,15 +122,15 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 		}
 		if editUser != nil {
 			if user.PermissionLevel > editUser.PermissionLevel || user.Username == editUser.Username || user.CheckPermissionLevel(models.PermissionSuper) {
-				data.Id = editUser.Id.String()
-				data.UserName = editUser.Username
-				data.Name = editUser.Name
-				data.UUID = editUser.UUID
-				data.Password = editUser.Password
-				data.Email = editUser.Email
-				data.FirstY = editUser.FirstYear
-				data.GradY = editUser.GraduationYear
-				data.PLevel = editUser.PermissionLevel
+				data.EditUser.Id = editUser.Id.String()
+				data.EditUser.UserName = editUser.Username
+				data.EditUser.Name = editUser.Name
+				data.EditUser.UUID = editUser.UUID
+				data.EditUser.Password = editUser.Password
+				data.EditUser.Email = editUser.Email
+				data.EditUser.FirstY = editUser.FirstYear
+				data.EditUser.GradY = editUser.GraduationYear
+				data.EditUser.PLevel = editUser.PermissionLevel
 				data.New = false
 			}
 		}
@@ -173,7 +187,7 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 	user.Name = r.Form["name"][0]
 	pLevel := r.Form["pLevel"][0]
 
-	olduser, err := web.database.GetUserByUserName(user.Username)
+	oldUser, err := web.database.GetUserByUserName(user.Username)
 	if err != nil && err != mgo.ErrNotFound {
 		handleWebErr(w, err)
 		return
@@ -192,8 +206,8 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		user.PermissionLevel = models.PermissionMember
 	}
 
-	if olduser != nil {
-		if currUser.PermissionLevel <= olduser.PermissionLevel && currUser.Username != user.Username {
+	if oldUser != nil {
+		if currUser.PermissionLevel <= oldUser.PermissionLevel && currUser.Username != user.Username {
 			handleBadRequest(w, errors.New("you didn't have the permission to edit this user"))
 			return
 		}
@@ -216,8 +230,8 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 	if r.Form["password"] != nil {
 		user.Password = r.Form["password"][0]
 	} else {
-		if olduser != nil {
-			user.Password = olduser.Password
+		if oldUser != nil {
+			user.Password = oldUser.Password
 		}
 	}
 	if r.Form["UUID"] != nil {
@@ -243,8 +257,8 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if olduser != nil {
-		user.Id = olduser.Id
+	if oldUser != nil {
+		user.Id = oldUser.Id
 	} else {
 		user.Id = bson.NewObjectId()
 	}

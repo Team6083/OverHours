@@ -17,7 +17,7 @@
                     <div class="form-group col-md-6">
                         <label for="editUUID">UUID</label>
                         <input type="text" class="form-control" id="editUUID" name="uuid" placeholder="new UUID"
-                               disabled value="{{if ne .UUID ""}}{{.UUID}}{{end}}">
+                               disabled value="{{if ne .EditUser.UUID ""}}{{.EditUser.UUID}}{{end}}">
                     </div>
                     <div class="form-group col-md-3">
                         <label for="inputUserName">UserName</label>
@@ -26,7 +26,8 @@
                                 <span class="input-group-text" id="inputGroupPrepend">@</span>
                             </div>
                             <input type="text" class="form-control" id="inputUserName" name="userName"
-                                   placeholder="Username" required value="{{.UserName}}" {{if .New}}{{else}}readonly{{end}}>
+                                   placeholder="Username" required value="{{.EditUser.UserName}}"
+                                   {{if .New}}{{else}}readonly{{end}}>
                             <div class="invalid-feedback">
                                 Please choose a username.
                             </div>
@@ -35,26 +36,30 @@
                     <div class="form-group col-md-3">
                         <label for="inputName">Display Name</label>
                         <input type="text" class="form-control" id="inputName" name="name" placeholder="Your name"
-                               required value="{{.Name}}">
+                               required value="{{.EditUser.Name}}">
+                        <div class="invalid-feedback">
+                            Please choose a name.
+                        </div>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label for="inputPassword">Password</label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" id="inputPassword" name="password"
-                                   placeholder="Password"
-                                   autocomplete="new-password" required value="{{.Password}}" disabled>
-                            <div class="input-group-append">
-                                <button type="button" class="btn btn-secondary" id="pswShowBtn">Show</button>
-                            </div>
+                        <input type="password" class="form-control" id="inputPassword" name="password"
+                               placeholder="Password"
+                               autocomplete="new-password" required value="{{.EditUser.Password}}" {{if .New}}{{else}}disabled{{end}}>
+                        <div class="invalid-feedback">
+                            Please choose a password.
                         </div>
                     </div>
                     <div class="form-group col-md-4">
                         <label for="inputConfirmPassword">Confirm Password</label>
                         <input type="password" class="form-control" id="inputConfirmPassword" name="confirmPassword"
                                placeholder="Confirm Password"
-                               autocomplete="new-password" required value="{{.Password}}" disabled>
+                               autocomplete="new-password" value="{{.EditUser.Password}}" {{if .New}}{{else}}disabled{{end}}>
+                        <div class="invalid-feedback">
+                            Password dose not match.
+                        </div>
                     </div>
                     <div class="col-md-4 mb-md-0 mb-2">
                         <label id="genePswLabel" class="invisible">Generated: <span class="badge badge-info"
@@ -68,30 +73,39 @@
                 <div class="form-group">
                     <label for="inputEmail">Email address</label>
                     <input type="email" class="form-control" id="inputEmail" placeholder="Email" name="email"
-                           value="{{.Email}}">
+                           value="{{.EditUser.Email}}">
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-2">
                         <label for="inputFirstYear">FirstYear</label>
                         <input type="number" class="form-control" id="inputFirstYear" name="firstYear"
-                               placeholder="FirstYear" value="{{if ne .FirstY 0}}{{.FirstY}}{{end}}">
+                               placeholder="FirstYear" value="{{if ne .EditUser.FirstY 0}}{{.EditUser.FirstY}}{{end}}">
                     </div>
                     <div class="form-group col-md-2">
                         <label for="inputGraduationYear">GraduationYear</label>
                         <input type="number" class="form-control" id="inputGraduationYear" name="graduationYear"
-                               placeholder="GraduationYear" value="{{if ne .GradY 0}}{{.GradY}}{{end}}">
+                               placeholder="GraduationYear"
+                               value="{{if ne .EditUser.GradY 0}}{{.EditUser.GradY}}{{end}}">
                     </div>
                     <div class="form-group col-md-4">
                         <label for="inputPLevel">Permission Level</label>
                         <select id="inputPLevel" class="form-control" name="pLevel" required>
-                            <option {{if eq .PLevel 0}}selected{{end}} {{if lt .CPLevel 0}}disabled{{end}}>Member</option>
-                            <option {{if eq .PLevel 1}}selected{{end}} {{if lt .CPLevel 1}}disabled{{end}}>Leader</option>
-                            <option {{if eq .PLevel 2}}selected{{end}} {{if lt .CPLevel 2}}disabled{{end}}>Admin</option>
-                            <option {{if eq .PLevel 3}}selected{{end}} {{if lt .CPLevel 3}}disabled{{end}}>Super</option>
+                            <option {{if eq .EditUser.PLevel 0}}selected{{end}} {{if lt .CurrentUser.PermissionLevel 0}}disabled{{end}}>
+                                Member
+                            </option>
+                            <option {{if eq .EditUser.PLevel 1}}selected{{end}} {{if lt .CurrentUser.PermissionLevel 1}}disabled{{end}}>
+                                Leader
+                            </option>
+                            <option {{if eq .EditUser.PLevel 2}}selected{{end}} {{if lt .CurrentUser.PermissionLevel 2}}disabled{{end}}>
+                                Admin
+                            </option>
+                            <option {{if eq .EditUser.PLevel 3}}selected{{end}} {{if lt .CurrentUser.PermissionLevel 3}}disabled{{end}}>
+                                Super
+                            </option>
                         </select>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Sign in</button>
+                <button type="submit" class="btn btn-primary">Save</button>
             </form>
         </div>
         <div class="col-lg-2">
@@ -109,9 +123,16 @@
                 // Loop over them and prevent submission
                 var validation = Array.prototype.filter.call(forms, function (form) {
                     form.addEventListener('submit', function (event) {
+                        const psw = $("#inputPassword").val();
+                        const pswConfirm = $("#inputConfirmPassword").val();
                         if (form.checkValidity() === false) {
                             event.preventDefault();
                             event.stopPropagation();
+                        }
+                        if(psw !== pswConfirm){
+                            event.preventDefault();
+                            event.stopPropagation();
+                            $("#inputConfirmPassword")[0].setCustomValidity("Passwords Don't Match");
                         }
                         form.classList.add('was-validated');
                     }, false);
@@ -130,10 +151,6 @@
             $("#genePsw").html(psw);
             $("#genePswLabel").removeClass("invisible");
             $("#inputPassword").removeAttr("disabled");
-        });
-
-        $("#pswShowBtn").on('click', function () {
-            $("#inputPassword").prop("type", "text");
         });
 
         $("#pswEditBtn").on('click', function () {
