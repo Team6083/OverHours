@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"reflect"
+	"time"
 )
 
 type Web struct {
@@ -30,10 +31,15 @@ func avail(name string, data interface{}) bool {
 	return v.FieldByName(name).IsValid()
 }
 
+func getSecFromDuration(duration time.Duration) int64 {
+	return int64(duration.Seconds())
+}
+
 func NewWeb(database *models.Database) *Web {
 	web := &Web{database: database}
 	web.templateHelpers = template.FuncMap{
-		"avail": avail,
+		"avail":              avail,
+		"getSecFromDuration": getSecFromDuration,
 	}
 
 	return web
@@ -78,6 +84,8 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/users", web.UsersGET).Methods("GET")
 	router.HandleFunc("/users/form", web.UsersFormGET).Methods("GET")
 	router.HandleFunc("/users/form/submit", web.UsersFormPOST).Methods("POST")
+	// Boards
+	router.HandleFunc("/board/ranking", web.leaderboardGET).Methods("GET")
 
 	return router
 }
