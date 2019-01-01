@@ -88,7 +88,7 @@ func (web *Web) TimeLogFormGET(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		EditTimeLog models.TimeLog
-	}{models.TimeLog{"", 0, 0, "", bson.NewObjectId()}}
+	}{models.TimeLog{Id: bson.NewObjectId()}}
 
 	editTargetLogId, ok := r.URL.Query()["edit"]
 	if ok {
