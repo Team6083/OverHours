@@ -95,7 +95,9 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 		FirstY   int
 		GradY    int
 		PLevel   int
-	}{"", "", "", "", "", "", 0, 0, 0}
+		CPLevel  int
+		New      bool
+	}{"", "", "", "", "", "", 0, 0, 0, user.PermissionLevel, true}
 
 	editTargetUserName, ok := r.URL.Query()["edit"]
 	if ok {
@@ -115,6 +117,7 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 				data.FirstY = editUser.FirstYear
 				data.GradY = editUser.GraduationYear
 				data.PLevel = editUser.PermissionLevel
+				data.New = false
 			}
 		}
 	}
