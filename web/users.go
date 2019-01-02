@@ -229,7 +229,7 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Form["email"] != nil {
-		datas.email = r.Form["email"][0]
+		user.Email = r.Form["email"][0]
 	}
 	if r.Form["firstYear"] != nil {
 		datas.firstYStr = r.Form["firstYear"][0]
