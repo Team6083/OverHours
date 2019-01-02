@@ -142,20 +142,10 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	if user != nil {
 		data.UserName = user.Name
 		data.UserAccName = user.Username
-		if user.CheckPermissionLevel(models.PermissionLeader) {
-			data.Disable = ""
-
-			timeLogs, err = web.database.GetAllTimeLogs()
-			if err != nil && err != mgo.ErrNotFound {
-				handleWebErr(w, err)
-				return
-			}
-		} else {
-			timeLogs, err = web.database.GetTimeLogsByUser(user.Username)
-			if err != nil && err != mgo.ErrNotFound {
-				handleWebErr(w, err)
-				return
-			}
+		timeLogs, err = web.database.GetTimeLogsByUser(user.Username)
+		if err != nil && err != mgo.ErrNotFound {
+			handleWebErr(w, err)
+			return
 		}
 		data.TimeLogs = timeLogs
 	}
