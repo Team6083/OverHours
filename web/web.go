@@ -133,15 +133,19 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	var timeLogs []models.TimeLog
 	data := struct {
-		UserName    string
-		Disable     string
-		UserAccName string
-		TimeLogs    []models.TimeLog
-	}{"unknown", "readonly", "", timeLogs}
+		UserName      string
+		Disable       string
+		UserAccName   string
+		TimeLogs      []models.TimeLog
+		CurrentSeason string
+	}{"unknown", "readonly", "", timeLogs, web.settings.SeasonId}
 
 	if user != nil {
 		data.UserName = user.Name
 		data.UserAccName = user.Username
+		if user.CheckPermissionLevel(models.PermissionLeader) {
+			data.Disable = ""
+		}
 		timeLogs, err = web.database.GetTimeLogsByUser(user.Username)
 		if err != nil && err != mgo.ErrNotFound {
 			handleWebErr(w, err)
