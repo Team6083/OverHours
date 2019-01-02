@@ -53,9 +53,15 @@
                 },
                 {
                     "render": function (data) {
-                        return "<a href=\"/timeLog/form?edit="+data+"\" class=\"text-body\">"+data+"</a>";
+                        return "<a href=\"/timeLog/form?edit=" + data + "\" class=\"text-body\">" + data + "</a>";
                     },
                     "targets": 1
+                },
+                {
+                    "render": function (data) {
+                        return names[data];
+                    },
+                    "targets": 2
                 },
                 {
                     "render": function (data, type, row) {
@@ -74,6 +80,12 @@
 
         {{range .TimeLogs}}
         timeLogs.push(["",{{.Id}}, "{{.UserID}}", {{.TimeIn}}, {{.TimeOut}}, "{{.SeasonId}}"]);
+        {{end}}
+
+        var names = {};
+
+        {{range $key, $value := .UserNames}}
+        names["{{ $key}}"] = {{ $value}};
         {{end}}
 
         timeLogs.forEach(function (data) {

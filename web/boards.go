@@ -48,11 +48,18 @@ func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	names, err := web.database.GetUserNameMap()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
 	data := struct {
 		Ranking       []models.TimeLogSummary
 		UserTotalTime time.Duration
 		UserRank      int
-	}{ranking, models.CalculateTotalTimes(userTimeLogs), 0}
+		UserNames     map[string]string
+	}{ranking, models.CalculateTotalTimes(userTimeLogs), 0, names}
 
 	for i, rData := range ranking {
 		if rData.UserID == currentUser.Username {

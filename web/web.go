@@ -131,14 +131,21 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		handleWebErr(w, err)
 	}
 
+	names, err := web.database.GetUserNameMap()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
 	var timeLogs []models.TimeLog
 	data := struct {
 		UserName      string
 		Disable       string
 		UserAccName   string
 		TimeLogs      []models.TimeLog
+		UserNames     map[string]string
 		CurrentSeason string
-	}{"unknown", "readonly", "", timeLogs, web.settings.SeasonId}
+	}{"unknown", "readonly", "", timeLogs, names, web.settings.SeasonId}
 
 	if user != nil {
 		data.UserName = user.Name

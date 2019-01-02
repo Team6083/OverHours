@@ -52,14 +52,20 @@
     <script>
         var TimeLogsTable = $("#timeLogsTable").DataTable({
             "paging": false,
-            "order": [ 1, 'dec' ],
+            "order": [1, 'dec'],
             "info": true,
             "columnDefs": [
+                {
+                    "render": function (data) {
+                        return names[data];
+                    },
+                    "targets": 0
+                },
                 {
                     "render": function (data, type, row) {
                         var date = new Date(data * 1000);
                         if (data == 0) {
-                            return "<a class=\"btn btn-primary\" href=\"/timeLog/checkout?studentId="+row[0]+"\">CheckOut</a>";
+                            return "<a class=\"btn btn-primary\" href=\"/timeLog/checkout?studentId=" + row[0] + "\">CheckOut</a>";
                         }
                         return date.toLocaleDateString() + " " + date.toLocaleTimeString();
                     },
@@ -72,6 +78,12 @@
 
         {{range .TimeLogs}}
         timeLogs.push(["{{.UserID}}", {{.TimeIn}}, {{.TimeOut}}, "{{.SeasonId}}"]);
+        {{end}}
+
+        var names = {};
+
+        {{range $key, $value := .UserNames}}
+        names["{{ $key}}"] = {{ $value}};
         {{end}}
 
         timeLogs.forEach(function (data) {

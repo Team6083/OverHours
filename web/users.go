@@ -279,5 +279,12 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/users", http.StatusSeeOther)
+	var redirectURI string
+	if currUser.CheckPermissionLevel(models.PermissionLeader) {
+		redirectURI = "/users"
+	} else {
+		redirectURI = "/"
+	}
+
+	http.Redirect(w, r, redirectURI, http.StatusSeeOther)
 }

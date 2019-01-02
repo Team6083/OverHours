@@ -59,6 +59,12 @@
                 },
                 {
                     "render": function (data) {
+                        return names[data];
+                    },
+                    "targets": 1
+                },
+                {
+                    "render": function (data) {
                         return secondToString(data);
                     },
                     "targets": 2
@@ -70,6 +76,12 @@
 
         {{range .Ranking}}
         timeLogSummary.push([undefined, {{.UserID}}, {{(getSecFromDuration .TotalTime)}}]);
+        {{end}}
+
+        var names = {};
+
+        {{range $key, $value := .UserNames}}
+        names["{{ $key}}"] = {{ $value}};
         {{end}}
 
         timeLogSummary.forEach(function (data) {
