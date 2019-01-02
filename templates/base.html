@@ -49,7 +49,7 @@
                 </li>
             </ul>
         </div>
-        <span class="navbar-text text-dark mr-md-2" id="navUser"></span>
+        <a id="userNameA"><span class="navbar-text text-dark mr-md-2" id="navUser"></span></a>
         <a class="btn btn-outline-dark" href="/logout" id="logoutBtn">Logout</a>
     </nav>
 
@@ -78,8 +78,10 @@
     <script>
         if (readCookie("session_token") !== null) {
             $("#navUser").html(readCookie("userName"));
+            $("#userNameA").attr("href", "/users/form?edit="+readCookie("userName"));
         } else {
             $("#logoutBtn").addClass("d-none");
+            $("#userNameA").attr("href", "#");
         }
     </script>
     {{template "script" .}}
