@@ -35,7 +35,7 @@ func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ranking, err := web.database.GetRankingBySeason("tempSeason")
+	ranking, err := web.database.GetRankingBySeason(web.settings.SeasonId)
 	if err != nil {
 		handleWebErr(w, err)
 		return

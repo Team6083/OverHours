@@ -19,8 +19,6 @@ type Web struct {
 	settings        *models.Setting
 }
 
-const tempSeason string = "tempSeason"
-
 func avail(name string, data interface{}) bool {
 	v := reflect.ValueOf(data)
 	if v.Kind() == reflect.Ptr {
