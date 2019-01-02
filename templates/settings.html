@@ -1,0 +1,60 @@
+{{define "title"}}Home{{end}}
+
+{{define "body"}}
+    <div class="mt-5">
+    </div>
+    <div class="row">
+        <div class="col-lg-2">
+        </div>
+        <div class="col-lg col-sm">
+            <form class="needs-validation" method="POST" action="/settings/submit" autocomplete="off" novalidate>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="editSeasonId">SeasonId</label>
+                        <input type="text" class="form-control" id="editSeasonId" name="seasonId"
+                               placeholder="season id"
+                               value="{{.Settings.SeasonId}}" required>
+                        <div class="invalid-feedback">
+                            Please provide a season id.
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <button type="submit" class="btn btn-block btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-lg-2">
+        </div>
+    </div>
+{{end}}
+
+{{define "script"}}
+    <script>
+        $("#nav-settings").addClass("active");
+    </script>
+
+    <script>
+        (function () {
+            'use strict';
+            window.addEventListener('load', function () {
+                // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                let forms = document.getElementsByClassName('needs-validation');
+                // Loop over them and prevent submission
+                let validation = Array.prototype.filter.call(forms, function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+{{end}}
+
+{{define "head"}}
+
+{{end}}
