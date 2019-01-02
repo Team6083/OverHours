@@ -7,8 +7,8 @@
         <div class="col-lg-2"></div>
         <div class="col-lg-8 col">
             <h2>Team 6083 - OverHours</h2>
-            <h3>Current login: <span class="badge badge-info">{{.UserName}}</span></h3>
-            <h3>Season: <span class="badge badge-info">{{.CurrentSeason}}</span></h3>
+            <h3>Current login: <span class="badge badge-dark">{{.UserName}}</span></h3>
+            <h3>Season: <span class="badge badge-info badge-pill">{{.CurrentSeason}}</span></h3>
             <form method="post" action="/timeLog/checkinPost">
                 <div class="input-group mb-3 mt-3">
                     <input type="text" class="form-control" name="studentId" placeholder="Students's Id"
