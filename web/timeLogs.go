@@ -192,7 +192,7 @@ func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
 		}
 
 		fmt.Printf("%s checkin at %s\n", stuId, time.Now().String())
-		err = web.StudentCheckin(stuId, tempSeason)
+		err = web.StudentCheckin(stuId, web.settings.SeasonId)
 		if err != nil && err != AlreadyCheckInError {
 			handleWebErr(w, err)
 			return

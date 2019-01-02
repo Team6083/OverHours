@@ -16,9 +16,8 @@ import (
 type Web struct {
 	database        *models.Database
 	templateHelpers template.FuncMap
+	settings        *models.Setting
 }
-
-const tempSeason string = "tempSeason"
 
 func avail(name string, data interface{}) bool {
 	v := reflect.ValueOf(data)
@@ -42,7 +41,22 @@ func NewWeb(database *models.Database) *Web {
 		"getSecFromDuration": getSecFromDuration,
 	}
 
+	err := web.readSettings()
+	if err != nil {
+		panic(err)
+	}
+
 	return web
+}
+
+func (web *Web) readSettings() error {
+	settings, err := web.database.GetSetting()
+	if err != nil {
+		return err
+	}
+
+	web.settings = settings
+	return nil
 }
 
 func handleWebErr(w http.ResponseWriter, err error) {
@@ -76,6 +90,10 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/login", web.LoginHandler).Methods("GET")
 	router.HandleFunc("/loginPost", web.LoginPOST).Methods("POST")
 	router.HandleFunc("/logout", web.LogoutHandler).Methods("GET")
+	// Setting
+	router.HandleFunc("/settings", web.SettingsGET).Methods("GET")
+	router.HandleFunc("/settings/submit", web.SettingsPOST).Methods("POST")
+	router.HandleFunc("/settings/renew", web.RenewSettingsGET).Methods("GET")
 	// Time Logs
 	router.HandleFunc("/timeLog", web.TimeLogGET).Methods("GET")
 	router.HandleFunc("/timeLog/form", web.TimeLogFormGET).Methods("GET")
@@ -115,29 +133,23 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	var timeLogs []models.TimeLog
 	data := struct {
-		UserName    string
-		Disable     string
-		UserAccName string
-		TimeLogs    []models.TimeLog
-	}{"unknown", "readonly", "", timeLogs}
+		UserName      string
+		Disable       string
+		UserAccName   string
+		TimeLogs      []models.TimeLog
+		CurrentSeason string
+	}{"unknown", "readonly", "", timeLogs, web.settings.SeasonId}
 
 	if user != nil {
 		data.UserName = user.Name
 		data.UserAccName = user.Username
 		if user.CheckPermissionLevel(models.PermissionLeader) {
 			data.Disable = ""
-
-			timeLogs, err = web.database.GetAllTimeLogs()
-			if err != nil && err != mgo.ErrNotFound {
-				handleWebErr(w, err)
-				return
-			}
-		} else {
-			timeLogs, err = web.database.GetTimeLogsByUser(user.Username)
-			if err != nil && err != mgo.ErrNotFound {
-				handleWebErr(w, err)
-				return
-			}
+		}
+		timeLogs, err = web.database.GetTimeLogsByUser(user.Username)
+		if err != nil && err != mgo.ErrNotFound {
+			handleWebErr(w, err)
+			return
 		}
 		data.TimeLogs = timeLogs
 	}
