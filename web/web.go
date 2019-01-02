@@ -16,6 +16,7 @@ import (
 type Web struct {
 	database        *models.Database
 	templateHelpers template.FuncMap
+	settings        *models.Setting
 }
 
 const tempSeason string = "tempSeason"
@@ -42,7 +43,22 @@ func NewWeb(database *models.Database) *Web {
 		"getSecFromDuration": getSecFromDuration,
 	}
 
+	err := web.readSettings()
+	if err != nil {
+		panic(err)
+	}
+
 	return web
+}
+
+func (web *Web) readSettings() error {
+	settings, err := web.database.GetSetting()
+	if err != nil {
+		return err
+	}
+
+	web.settings = settings
+	return nil
 }
 
 func handleWebErr(w http.ResponseWriter, err error) {
@@ -79,6 +95,7 @@ func (web *Web) newHandler() http.Handler {
 	// Setting
 	router.HandleFunc("/settings", web.SettingsGET).Methods("GET")
 	router.HandleFunc("/settings/submit", web.SettingsPOST).Methods("POST")
+	router.HandleFunc("/settings/renew", web.RenewSettingsGET).Methods("GET")
 	// Time Logs
 	router.HandleFunc("/timeLog", web.TimeLogGET).Methods("GET")
 	router.HandleFunc("/timeLog/form", web.TimeLogFormGET).Methods("GET")

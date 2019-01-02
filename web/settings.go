@@ -94,5 +94,14 @@ func (web *Web) SettingsPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.Redirect(w, r, "/settings/renew", http.StatusSeeOther)
+}
+
+func (web *Web) RenewSettingsGET(w http.ResponseWriter, r *http.Request) {
+	err := web.readSettings()
+	if err != nil {
+		panic(err)
+	}
+
 	http.Redirect(w, r, "/settings", http.StatusSeeOther)
 }
