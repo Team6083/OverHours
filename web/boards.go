@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/Team6083/OverHours/models"
 	"net/http"
+	"time"
 )
 
 func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
@@ -41,10 +42,17 @@ func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userTimeLogs, err := web.database.GetTimeLogsByUserWithSpecificSeason(currentUser.Username, web.settings.SeasonId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
 	data := struct {
-		Ranking  []models.TimeLogSummary
-		UserRank int
-	}{ranking, 0}
+		Ranking       []models.TimeLogSummary
+		UserTotalTime time.Duration
+		UserRank      int
+	}{ranking, models.CalculateTotalTimes(userTimeLogs), 0}
 
 	for i, rData := range ranking {
 		if rData.UserID == currentUser.Username {

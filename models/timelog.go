@@ -83,6 +83,15 @@ func (database *Database) GetTimeLogsBySeason(seasonId string) ([]TimeLog, error
 	return timeLogs, nil
 }
 
+func (database *Database) GetTimeLogsByUserWithSpecificSeason(userId string, seasonId string) ([]TimeLog, error) {
+	var timeLogs []TimeLog
+	err := database.DB.C("timeLogs").Find(bson.M{"userid": userId, "seasonid": seasonId}).All(&timeLogs)
+	if err != nil {
+		return nil, err
+	}
+	return timeLogs, nil
+}
+
 func (database *Database) GetLastLogByUser(userId string) (*TimeLog, error) {
 	var timeLog TimeLog
 	err := database.DB.C("timeLogs").Find(bson.M{"userid": userId}).Sort("-timein").One(&timeLog)
@@ -119,6 +128,14 @@ func (database *Database) GetRankingBySeason(seasonId string) ([]TimeLogSummary,
 	logsSummaries := GetTimeLogsSummary(seasonLogs)
 
 	return SortTimeLogSummary(logsSummaries), nil
+}
+
+func CalculateTotalTimes(timeLogs []TimeLog) time.Duration {
+	var totlaTime time.Duration
+	for _, timeLog := range timeLogs {
+		totlaTime = time.Duration(totlaTime.Nanoseconds()+timeLog.GetDuration().Nanoseconds()) * time.Nanosecond
+	}
+	return totlaTime
 }
 
 func GetTimeLogsSummary(seasonLogs []TimeLog) []TimeLogSummary {
