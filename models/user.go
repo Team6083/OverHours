@@ -35,6 +35,21 @@ func (database *Database) CheckUserExist(studentName string) (bool, error) {
 	return true, nil
 }
 
+func (database *Database) GetUserNameMap() (map[string]string, error) {
+	names := make(map[string]string)
+
+	users, err := database.GetAllUsers()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range users {
+		names[user.Username] = user.Name
+	}
+
+	return names, nil
+}
+
 func (user *User) CheckPermissionLevel(level int) bool {
 	if user.PermissionLevel >= level {
 		return true

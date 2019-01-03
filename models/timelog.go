@@ -101,6 +101,16 @@ func (database *Database) GetLastLogByUser(userId string) (*TimeLog, error) {
 	return &timeLog, nil
 }
 
+func (database *Database) GetAllUnfinishedTimeLogs() ([]TimeLog, error) {
+	var timeLogs []TimeLog
+	err := database.DB.C("timeLogs").Find(bson.M{"timeout": 0}).All(&timeLogs)
+	if err != nil {
+		return nil, err
+	}
+
+	return timeLogs, nil
+}
+
 func (database *Database) SaveTimeLog(log *TimeLog) (*mgo.ChangeInfo, error) {
 	change, err := database.DB.C("timeLogs").UpsertId(log.Id, log)
 	if err != nil {

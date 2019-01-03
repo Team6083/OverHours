@@ -131,22 +131,31 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		handleWebErr(w, err)
 	}
 
+	names, err := web.database.GetUserNameMap()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
 	var timeLogs []models.TimeLog
 	data := struct {
 		UserName      string
-		Disable       string
+		Readonly      string
+		Disable       bool
 		UserAccName   string
 		TimeLogs      []models.TimeLog
+		UserNames     map[string]string
 		CurrentSeason string
-	}{"unknown", "readonly", "", timeLogs, web.settings.SeasonId}
+	}{"unknown", "readonly", true, "", timeLogs, names, web.settings.SeasonId}
 
 	if user != nil {
 		data.UserName = user.Name
 		data.UserAccName = user.Username
 		if user.CheckPermissionLevel(models.PermissionLeader) {
-			data.Disable = ""
+			data.Readonly = ""
+			data.Disable = false
 		}
-		timeLogs, err = web.database.GetTimeLogsByUser(user.Username)
+		timeLogs, err = web.database.GetAllUnfinishedTimeLogs()
 		if err != nil && err != mgo.ErrNotFound {
 			handleWebErr(w, err)
 			return

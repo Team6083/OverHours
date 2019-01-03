@@ -12,7 +12,7 @@
             <form method="post" action="/timeLog/checkinPost">
                 <div class="input-group mb-3 mt-3">
                     <input type="text" class="form-control" name="studentId" placeholder="Students's Id"
-                           value="{{.UserAccName}}" {{.Disable}}>
+                           value="{{.UserAccName}}" {{.Readonly}}>
                     <div class="input-group-append">
                         <button class="btn btn-outline-secondary" type="submit" id="stu-submit">Checkin</button>
                     </div>
@@ -24,20 +24,22 @@
         <div class="col-lg-2">
 
         </div>
-        <div class="col-lg col-sm" style="overflow-x: scroll;">
-            <table id="timeLogsTable" class="table table-hover">
-                <thead>
-                <tr>
-                    <th>user</th>
-                    <th>time in</th>
-                    <th>time out</th>
-                    <th>season</th>
-                </tr>
-                </thead>
-                <tbody>
+        <div class="col-lg col-sm">
+            <div style="overflow-x: scroll;">
+                <table id="timeLogsTable" class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>user</th>
+                        <th>time in</th>
+                        <th>time out</th>
+                        <th>season</th>
+                    </tr>
+                    </thead>
+                    <tbody>
 
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div class="col-lg-2">
         </div>
@@ -52,14 +54,29 @@
     <script>
         var TimeLogsTable = $("#timeLogsTable").DataTable({
             "paging": false,
-            "order": [ 1, 'dec' ],
+            "order": [1, 'dec'],
             "info": true,
+            "language": {
+                "emptyTable": "No member currently checkin"
+            },
             "columnDefs": [
+                {
+                    "render": function (data) {
+                        return names[data];
+                    },
+                    "targets": 0
+                },
                 {
                     "render": function (data, type, row) {
                         var date = new Date(data * 1000);
-                        if (data == 0) {
-                            return "<a class=\"btn btn-primary\" href=\"/timeLog/checkout?studentId="+row[0]+"\">CheckOut</a>";
+                        if (data === 0) {
+                            let userAcc = {{.UserAccName}};
+                            let disabled = {{.Disable}};
+                            if (userAcc === row[0] || !disabled) {
+                                return "<a class=\"btn btn-primary \" href=\"/timeLog/checkout?studentId=" + row[0] + "\" >CheckOut</a>";
+                            } else {
+                                return "";
+                            }
                         }
                         return date.toLocaleDateString() + " " + date.toLocaleTimeString();
                     },
@@ -68,16 +85,21 @@
             ]
         });
 
-        var timeLogs = []
+        var timeLogs = [];
 
         {{range .TimeLogs}}
         timeLogs.push(["{{.UserID}}", {{.TimeIn}}, {{.TimeOut}}, "{{.SeasonId}}"]);
         {{end}}
 
+        var names = {};
+
+        {{range $key, $value := .UserNames}}
+        names["{{ $key}}"] = {{ $value}};
+        {{end}}
+
         timeLogs.forEach(function (data) {
             TimeLogsTable.row.add(data).draw();
-        })
-
+        });
     </script>
 {{end}}
 

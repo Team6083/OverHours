@@ -35,12 +35,19 @@ func (web *Web) TimeLogGET(w http.ResponseWriter, r *http.Request) {
 		handleWebErr(w, err)
 	}
 
+	names, err := web.database.GetUserNameMap()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
 	var timeLogs []models.TimeLog
 	data := struct {
 		UserName    string
 		UserAccName string
 		TimeLogs    []models.TimeLog
-	}{"unknown", "", timeLogs}
+		UserNames   map[string]string
+	}{"unknown", "", timeLogs, names}
 
 	if user != nil {
 		data.UserName = user.Name
