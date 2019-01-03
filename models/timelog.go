@@ -143,7 +143,9 @@ func (database *Database) GetRankingBySeason(seasonId string) ([]TimeLogSummary,
 func CalculateTotalTimes(timeLogs []TimeLog) time.Duration {
 	var totlaTime time.Duration
 	for _, timeLog := range timeLogs {
-		totlaTime = time.Duration(totlaTime.Nanoseconds()+timeLog.GetDuration().Nanoseconds()) * time.Nanosecond
+		if timeLog.IsOut() {
+			totlaTime = time.Duration(totlaTime.Nanoseconds()+timeLog.GetDuration().Nanoseconds()) * time.Nanosecond
+		}
 	}
 	return totlaTime
 }
