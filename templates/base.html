@@ -48,7 +48,7 @@
                     </a>
                 </li>
             </ul>
-            <span class="navbar-text text-dark mr-md-2" id="navUser"></span> <a id="userNameA"><span class="badge badge-success">Edit profile</span></a>
+            <div id="userBar"><span class="navbar-text text-dark mr-md-2" id="navUser"></span> <a id="userNameA"><span class="badge badge-success">Edit profile</span></a></div>
         </div>
         <a class="btn btn-outline-dark ml-md-2" href="/logout" id="logoutBtn">Logout</a>
     </nav>
@@ -82,6 +82,7 @@
             $("#userNameA").attr("href", "/users/form?edit=" + readCookie("userName"));
         } else {
             $("#logoutBtn").addClass("d-none");
+            $("#userBar").addClass("d-none");
             $("#userNameA").attr("href", "#");
         }
     </script>
