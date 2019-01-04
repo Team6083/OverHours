@@ -263,7 +263,12 @@ func (web *Web) StudentCheckOut(studentId string) error {
 	}
 
 	if !timeLog.IsOut() {
-		timeLog.TimeOut = time.Now().Unix()
+		if web.settings.CheckIfExceedLastOut(time.Now()) {
+			timeLog.TimeOut = -1
+		} else {
+			timeLog.TimeOut = time.Now().Unix()
+		}
+
 		_, err = web.database.SaveTimeLog(timeLog)
 		if err != nil {
 			return err

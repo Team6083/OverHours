@@ -18,6 +18,15 @@
                             Please provide a season id.
                         </div>
                     </div>
+                    <div class="form-group col-md-4">
+                        <label for="editLastOut">Last Out</label>
+                        <input type="text" class="form-control" id="editLastOut" name="lastOut"
+                               placeholder="season id"
+                               value="{{.Settings.LastOut}}" required>
+                        <div class="invalid-feedback">
+                            Please provide a time.
+                        </div>
+                    </div>
                 </div>
                 <div class="form-row">
                     <button type="submit" class="btn btn-block btn-primary">Save</button>

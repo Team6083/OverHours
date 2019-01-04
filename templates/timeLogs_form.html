@@ -44,6 +44,8 @@
                             </button>
                             <button type="button" id="timeOutNowBtn" class="btn btn-info btn-sm">Now
                             </button>
+                            <button type="button" id="timeOutExceedBtn" class="btn btn-danger btn-sm">Exceed
+                            </button>
                         </label>
                         <input type="text" class="form-control" id="editTimeOut" name="timeOut">
                     </div>
@@ -106,11 +108,15 @@
         {{if eq .EditTimeLog.TimeIn 0}}
         tI.setDate(new Date());
         {{else}}
-        tI.setDate(new Date(({{.EditTimeLog.TimeIn}})*1000));
+        tI.setDate(new Date(({{.EditTimeLog.TimeIn}}) * 1000));
         {{end}}
 
-        {{if ne .EditTimeLog.TimeOut 0}}
-        tO.setDate(new Date(({{.EditTimeLog.TimeOut}})*1000));
+        {{if eq .EditTimeLog.TimeOut 0}}
+        {{else if eq .EditTimeLog.TimeOut -1}}
+        tO.clear();
+        $("#editTimeOut").val(-1).parent().children().eq(2).val("Limit Exceed");
+        {{else}}
+        tO.setDate(new Date(({{.EditTimeLog.TimeOut}}) * 1000));
         {{end}}
 
         $("#timeInNowBtn").on('click', function () {
@@ -120,6 +126,11 @@
         $("#timeOutNowBtn").on('click', function () {
             tO.setDate(new Date());
         });
+
+        $("#timeOutExceedBtn").on('click', function () {
+            tO.clear();
+            $("#editTimeOut").val(-1).parent().children().eq(2).val("Limit Exceed");
+        })
     </script>
 {{end}}
 
