@@ -54,7 +54,12 @@
                     </div>
                 </div>
                 <div class="form-row mt-md-5">
-                    <button type="submit" class="btn btn-block btn-primary">Save</button>
+                    <div class="col-md-8">
+                        <button type="submit" class="btn btn-block btn-primary">Save</button>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" id="logDelBtn" class="btn btn-block btn-danger">Delete</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -130,8 +135,16 @@
         $("#timeOutExceedBtn").on('click', function () {
             tO.clear();
             $("#editTimeOut").val(-1).parent().children().eq(2).val("Limit Exceed");
-        })
+        });
+
+        $("#logDelBtn").on('click', function () {
+            const r = confirm("are you sure you want to delete log: {{.EditTimeLog.Id.Hex}}, from user: {{.EditTimeLog.UserID}} ?");
+            if (r === true) {
+                document.location.href = document.location.origin + "/timeLog/delete/" +{{.EditTimeLog.Id.Hex}};
+            }
+        });
     </script>
+
 {{end}}
 
 {{define "head"}}

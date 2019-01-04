@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Team6083/OverHours/models"
+	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
@@ -159,6 +160,35 @@ func (web *Web) TimeLogFormPOST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = web.database.SaveTimeLog(timeLog)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/timeLog", http.StatusSeeOther)
+}
+
+func (web *Web) TimeLogDelete(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	vars := mux.Vars(r)
+	targetId := vars["id"]
+
+	timeLog, err := web.database.GetTimeLogById(targetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	err = web.database.DeleteTimeLog(timeLog)
 	if err != nil {
 		handleWebErr(w, err)
 		return
