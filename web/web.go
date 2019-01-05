@@ -100,6 +100,7 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/timeLog/form/submit", web.TimeLogFormPOST).Methods("POST")
 	router.HandleFunc("/timeLog/checkinPost", web.TimeLogCheckinPOST).Methods("POST")
 	router.HandleFunc("/timeLog/checkout", web.TimeLogCheckoutGET).Methods("GET")
+	router.HandleFunc("/timeLog/delete/{id}", web.TimeLogDelete).Methods("GET")
 	// Users
 	router.HandleFunc("/users", web.UsersGET).Methods("GET")
 	router.HandleFunc("/users/form", web.UsersFormGET).Methods("GET")

@@ -3,6 +3,7 @@ package web
 import (
 	"github.com/Team6083/OverHours/models"
 	"net/http"
+	"strconv"
 )
 
 func (web *Web) SettingsGET(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +87,15 @@ func (web *Web) SettingsPOST(w http.ResponseWriter, r *http.Request) {
 
 	if r.Form["seasonId"] != nil {
 		settings.SeasonId = r.Form["seasonId"][0]
+	}
+
+	if r.Form["lastOut"] != nil {
+		lastOut, err := strconv.Atoi(r.Form["lastOut"][0])
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+		settings.LastOut = lastOut
 	}
 
 	_, err = web.database.SaveSetting(settings)

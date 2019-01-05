@@ -30,7 +30,7 @@ func (timeLog *TimeLog) GetDuration() *time.Duration {
 }
 
 func (timeLog *TimeLog) IsOut() bool {
-	if timeLog.TimeOut == 0 {
+	if timeLog.TimeOut == 0 || timeLog.TimeOut == -1 {
 		return false
 	} else {
 		return true
@@ -103,7 +103,7 @@ func (database *Database) GetLastLogByUser(userId string) (*TimeLog, error) {
 
 func (database *Database) GetAllUnfinishedTimeLogs() ([]TimeLog, error) {
 	var timeLogs []TimeLog
-	err := database.DB.C("timeLogs").Find(bson.M{"timeout": 0}).All(&timeLogs)
+	err := database.DB.C("timeLogs").Find(bson.M{"timeout": bson.M{"$lte": 0}}).All(&timeLogs)
 	if err != nil {
 		return nil, err
 	}
