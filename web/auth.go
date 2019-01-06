@@ -24,6 +24,7 @@ var (
 	AuthSessionNotProvided = errors.New("no session provided")
 	AuthWrongSession       = errors.New("wrong session")
 	AuthNoPermission       = errors.New("no permission")
+	AuthTimeExpired        = errors.New("valid time expired")
 )
 
 func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession, error) {
@@ -42,6 +43,10 @@ func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession
 			return nil, AuthWrongSession
 		}
 		return nil, err
+	}
+
+	if result.validate < time.Now().Unix() {
+		return nil, AuthTimeExpired
 	}
 
 	return result, nil
