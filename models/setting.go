@@ -3,6 +3,7 @@ package models
 import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"log"
 	"time"
 )
 
@@ -33,7 +34,7 @@ func (database *Database) SaveSetting(setting *Setting) (*mgo.ChangeInfo, error)
 func (setting Setting) GetTimeZone() *time.Location {
 	local, err := time.LoadLocation(setting.TimeZone)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 		return time.Local
 	}
 	return local
