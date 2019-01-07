@@ -11,12 +11,12 @@ import (
 	"time"
 )
 
-const sessionTimeout time.Duration = 10 * time.Minute
+const sessionTimeout time.Duration = 20 * time.Minute
 
 type LoginSession struct {
 	Username     string
 	SessionToken string
-	validate     int64
+	Validate     int64
 }
 
 // Check auth status
@@ -45,7 +45,7 @@ func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession
 		return nil, err
 	}
 
-	if result.validate < time.Now().Unix() {
+	if result.Validate < time.Now().Unix() {
 		return nil, AuthTimeExpired
 	}
 
@@ -314,14 +314,14 @@ func setSessionCookie(w http.ResponseWriter, session LoginSession) {
 		Name:    "session_token",
 		Value:   session.SessionToken,
 		Path:    "/",
-		Expires: time.Unix(session.validate, 0),
+		Expires: time.Unix(session.Validate, 0),
 	})
 
 	http.SetCookie(w, &http.Cookie{
 		Name:    "userName",
 		Value:   session.Username,
 		Path:    "/",
-		Expires: time.Unix(session.validate, 0),
+		Expires: time.Unix(session.Validate, 0),
 	})
 }
 
@@ -346,13 +346,13 @@ func newLoginSession(username string) *LoginSession {
 
 	session.Username = username
 	session.SessionToken = newSessionToken()
-	session.validate = time.Now().Add(sessionTimeout).Unix()
+	session.Validate = time.Now().Add(sessionTimeout).Unix()
 	return session
 }
 
 func (session *LoginSession) renew() {
 	session.SessionToken = newSessionToken()
-	session.validate = time.Now().Add(sessionTimeout).Unix()
+	session.Validate = time.Now().Add(sessionTimeout).Unix()
 }
 
 func newSessionToken() string {
