@@ -57,7 +57,7 @@ function secondToString(sec) {
         out += calc + "m ";
         sec = sec - calc * min;
     }
-    out += sec+"s";
+    out += sec + "s";
 
     return out;
 }

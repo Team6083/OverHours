@@ -7,8 +7,8 @@
         <div class="col-lg-2"></div>
         <div class="col-lg-8 col">
             <h2>Team 6083 - OverHours</h2>
-            <h3>Current login: <span class="badge badge-dark">{{.UserName}}</span></h3>
-            <h3>Season: <span class="badge badge-info badge-pill">{{.CurrentSeason}}</span></h3>
+            <h4>Current login: <span class="badge badge-dark">{{.UserName}}</span> / Season: <span
+                        class="badge badge-primary badge-pill">{{.CurrentSeason}}</span></h4>
             <form method="post" action="/timeLog/checkinPost">
                 <div class="input-group mb-3 mt-3">
                     <input type="text" class="form-control" name="studentId" placeholder="Students's Id"
@@ -18,6 +18,7 @@
                     </div>
                 </div>
             </form>
+
         </div>
     </div>
     <div class="row">
@@ -54,7 +55,7 @@
     <script>
         var TimeLogsTable = $("#timeLogsTable").DataTable({
             "paging": false,
-            "order": [1, 'dec'],
+            "order": [1, 'desc'],
             "info": true,
             "language": {
                 "emptyTable": "No member currently checkin"
@@ -73,7 +74,7 @@
                             let userAcc = {{.UserAccName}};
                             let disabled = {{.Disable}};
                             if (userAcc === row[0] || !disabled) {
-                                return "<a class=\"btn btn-primary \" href=\"/timeLog/checkout?studentId=" + row[0] + "\" >CheckOut</a>";
+                                return "<button  class=\"btn btn-primary checkOutBtn\" target=\"" + row[0] + "\" >CheckOut</button >";
                             } else {
                                 return "";
                             }
@@ -102,7 +103,25 @@
         timeLogs.forEach(function (data) {
             TimeLogsTable.row.add(data).draw();
         });
+
+        $("#timeLogsTable_wrapper").children().eq(0).children().eq(0).append("Count: <span id=\"timeLogsTableCount\"></span>");
+        $("#timeLogsTableCount").html(TimeLogsTable.data().length);
+
+        $(".checkOutBtn").on('click', function () {
+            let target = $(this).attr("target");
+            if (target !== {{.UserAccName}}) {
+                let r = confirm("WARNING!!!! You are going to checkout other people, please confirm. Target: " + target);
+                if (r) {
+                    document.location.href = "/timeLog/checkout?studentId=" + target;
+                }
+                return;
+            } else {
+                document.location.href = "/timeLog/checkout?studentId=" + target;
+            }
+        });
     </script>
+
+
 {{end}}
 
 {{define "head"}}

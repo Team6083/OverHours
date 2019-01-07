@@ -98,6 +98,10 @@ func (web *Web) SettingsPOST(w http.ResponseWriter, r *http.Request) {
 		settings.LastOut = lastOut
 	}
 
+	if r.Form["timezone"] != nil {
+		settings.TimeZone = r.Form["timezone"][0]
+	}
+
 	_, err = web.database.SaveSetting(settings)
 	if err != nil {
 		handleWebErr(w, err)

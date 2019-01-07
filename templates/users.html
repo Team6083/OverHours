@@ -44,8 +44,9 @@
     <script src="/res/js/datatables.min.js"></script>
     <script>
         var UsersTable = $("#usersTable").DataTable({
-            "order": [1, 'dec'],
+            "order": [1, 'asc'],
             "info": true,
+            "pageLength": 50,
             "columnDefs": [
                 {
                     "targets": [0,3,5,7,8],
