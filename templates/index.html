@@ -54,7 +54,7 @@
     <script>
         var TimeLogsTable = $("#timeLogsTable").DataTable({
             "paging": false,
-            "order": [1, 'dec'],
+            "order": [1, 'desc'],
             "info": true,
             "language": {
                 "emptyTable": "No member currently checkin"
@@ -103,7 +103,7 @@
             TimeLogsTable.row.add(data).draw();
         });
 
-        $("#timeLogsTable_wrapper").children().eq(0).children().eq(0).append("<h5>Count: <span id='timeLogsTableCount' class=\"badge badge-pill badge-info\"></span></h5>");
+        $("#timeLogsTable_wrapper").children().eq(0).children().eq(0).append("Count: <span id=\"timeLogsTableCount\"></span>");
         $("#timeLogsTableCount").html(TimeLogsTable.data().length);
     </script>
 
