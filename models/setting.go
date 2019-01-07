@@ -9,6 +9,7 @@ import (
 type Setting struct {
 	SeasonId string
 	LastOut  int
+	TimeZone string
 	Id       bson.ObjectId `bson:"_id,omitempty"`
 }
 
@@ -29,8 +30,17 @@ func (database *Database) SaveSetting(setting *Setting) (*mgo.ChangeInfo, error)
 	return change, nil
 }
 
+func (setting Setting) GetTimeZone() *time.Location {
+	local, err := time.LoadLocation(setting.TimeZone)
+	if err != nil {
+		panic(err)
+		return time.Local
+	}
+	return local
+}
+
 func (setting *Setting) CheckIfExceedLastOut(t time.Time) bool {
-	hour, min, sec := t.Clock()
+	hour, min, sec := t.In(setting.GetTimeZone()).Clock()
 
 	tCalc := hour*60*60 + min*60 + sec
 	if tCalc > setting.LastOut {
