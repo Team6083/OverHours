@@ -7,7 +7,8 @@
         <div class="col-lg-2"></div>
         <div class="col-lg-8 col">
             <h2>Team 6083 - OverHours</h2>
-            <h4>Current login: <span class="badge badge-dark">{{.UserName}}</span> / Season: <span class="badge badge-primary badge-pill">{{.CurrentSeason}}</span></h4>
+            <h4>Current login: <span class="badge badge-dark">{{.UserName}}</span> / Season: <span
+                        class="badge badge-primary badge-pill">{{.CurrentSeason}}</span></h4>
             <form method="post" action="/timeLog/checkinPost">
                 <div class="input-group mb-3 mt-3">
                     <input type="text" class="form-control" name="studentId" placeholder="Students's Id"
@@ -73,7 +74,7 @@
                             let userAcc = {{.UserAccName}};
                             let disabled = {{.Disable}};
                             if (userAcc === row[0] || !disabled) {
-                                return "<a class=\"btn btn-primary \" href=\"/timeLog/checkout?studentId=" + row[0] + "\" >CheckOut</a>";
+                                return "<button  class=\"btn btn-primary checkOutBtn\" target=\"" + row[0] + "\" >CheckOut</button >";
                             } else {
                                 return "";
                             }
@@ -105,6 +106,19 @@
 
         $("#timeLogsTable_wrapper").children().eq(0).children().eq(0).append("Count: <span id=\"timeLogsTableCount\"></span>");
         $("#timeLogsTableCount").html(TimeLogsTable.data().length);
+
+        $(".checkOutBtn").on('click', function () {
+            let target = $(this).attr("target");
+            if (target !== {{.UserAccName}}) {
+                let r = confirm("WARNING!!!! You are going to checkout other people, please confirm. Target: " + target);
+                if (r) {
+                    document.location.href = "/timeLog/checkout?studentId=" + target;
+                }
+                return
+            } else{
+                document.location.href = "/timeLog/checkout?studentId=" + target;
+            }
+        });
     </script>
 
 
