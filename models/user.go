@@ -6,15 +6,16 @@ import (
 )
 
 type User struct {
-	Name            string
-	Username        string
-	Password        string
-	Email           string
-	UUID            string
-	PermissionLevel int
-	FirstYear       int
-	GraduationYear  int
-	Id              bson.ObjectId `bson:"_id,omitempty"`
+	Name               string
+	Username           string
+	Password           string
+	Email              string
+	UUID               string
+	PermissionLevel    int
+	FirstYear          int
+	GraduationYear     int
+	PasswordNeedChange bool
+	Id                 bson.ObjectId `bson:"_id,omitempty"`
 }
 
 const (

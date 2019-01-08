@@ -294,7 +294,10 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Form["redirect"] != nil {
+	if user.PasswordNeedChange {
+		//TODO add change psw
+		http.Redirect(w, r, "/", 303)
+	} else if r.Form["redirect"] != nil {
 		http.Redirect(w, r, r.Form["redirect"][0], 303)
 	} else {
 		http.Redirect(w, r, "/", 303)
