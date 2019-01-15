@@ -19,10 +19,21 @@
             <form method="post" action="/loginPost">
                 <div class="form-group">
                     <label for="usernameInput">User Name</label>
-                    <input type="text" class="form-control" id="usernameInput" name="loginUsername"
-                           placeholder="Enter user name">
-                    <small id="emailHelp" class="form-text text-muted">Input your user name.</small>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="usernameInput" name="loginUsername"
+                               placeholder="Enter user name">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                                    data-toggle="dropdown">Select your name
+                            </button>
+                            <div class="dropdown-menu" id="usernameDropdown">
+
+                            </div>
+                        </div>
+                    </div>
+                    <small id="usernameHelp" class="form-text text-muted">Input your user name.</small>
                 </div>
+
                 <div class="form-group">
                     <label for="passwordInput">Password</label>
                     <input type="password" class="form-control" id="passwordInput" name="loginPassword"
@@ -35,5 +46,23 @@
     </div>
 {{end}}
 
-{{define "script"}}{{end}}
+{{define "script"}}
+    <script>
+        var names = {};
+
+        {{range $key, $value := .UserNames}}
+        names["{{ $key}}"] = {{ $value}};
+        {{end}}
+
+        for (let key in names) {
+            $("#usernameDropdown").append("<a class=\"dropdown-item usernameSelect\" value=\"" + key + "\">" + names[key] + "</a>")
+        }
+
+        $(".usernameSelect").on('click', function () {
+            let username = $(this).attr('value');
+            $("#usernameInput").val(username);
+        });
+
+    </script>
+{{end}}
 {{define "head"}}{{end}}

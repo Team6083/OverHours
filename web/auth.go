@@ -216,10 +216,17 @@ func (web *Web) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handle login page
 func (web *Web) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	names, err := web.database.GetUserNameMap()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
 	data := struct {
-		Status   int
-		Redirect string
-	}{0, ""}
+		Status    int
+		Redirect  string
+		UserNames map[string]string
+	}{0, "", names}
 	status, ok := r.URL.Query()["status"]
 	if ok && len(status[0]) >= 1 {
 		data.Status, _ = strconv.Atoi(status[0])
