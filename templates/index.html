@@ -68,7 +68,15 @@
                     "targets": 0
                 },
                 {
-                    "render": renderTimeLogsTimeStamp,
+                    "render": function (data, type, row) {
+                        let userAcc = {{.UserAccName}};
+                        let disabled = {{.Disable}};
+                        if (userAcc === row[0] || !disabled) {
+                            return renderTimeLogsTimeStamp(data, type, "<button  class=\"btn btn-primary checkOutBtn\" target=\""+ row[0] +"\">CheckOut</button>");
+                        } else{
+                            return renderTimeLogsTimeStamp(data, type, "");
+                        }
+                    },
                     "targets": [1, 2]
                 }
             ]

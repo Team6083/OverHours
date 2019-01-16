@@ -62,11 +62,11 @@ function secondToString(sec) {
     return out;
 }
 
-function renderTimeLogsTimeStamp(data, type, row) {
+function renderTimeLogsTimeStamp(data, type, checkoutLink) {
     if (type === 'display') {
         let date = new Date(data * 1000);
         if (data === 0) {
-            return "<a class=\"btn btn-primary\" href=\"/timeLog/checkout?studentId=" + row[2] + "\">CheckOut</a>";
+            return checkoutLink;
         } else if (data === -1) {
             return "<span class=\"badge badge-danger\">Last checkout time exceed. (Please contact Moderators)</span>";
         }
@@ -75,4 +75,3 @@ function renderTimeLogsTimeStamp(data, type, row) {
         return data;
     }
 }
-
