@@ -73,7 +73,9 @@
                     "targets": 2
                 },
                 {
-                    "render": renderTimeLogsTimeStamp,
+                    "render": function (data, type) {
+                        return renderTimeLogsTimeStamp(data, type, "Current in");
+                    },
                     "targets": [3, 4]
                 }
             ]
