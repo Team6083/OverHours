@@ -40,11 +40,14 @@ func (setting Setting) GetTimeZone() *time.Location {
 	return local
 }
 
-func (setting *Setting) CheckIfExceedLastOut(t time.Time) bool {
-	hour, min, sec := t.In(setting.GetTimeZone()).Clock()
+func (setting *Setting) CheckIfExceedLastOut(timeIn time.Time, t time.Time) bool {
+	timeZoneT := t.In(setting.GetTimeZone())
+	hour, min, sec := timeZoneT.Clock()
+	year, _, _ := timeIn.In(setting.GetTimeZone()).Date()
+	tYear, _, _ := timeZoneT.Date()
 
 	tCalc := hour*60*60 + min*60 + sec
-	if tCalc > setting.LastOut {
+	if tCalc > setting.LastOut || (year*365+timeIn.In(setting.GetTimeZone()).YearDay()) < (tYear*365+timeZoneT.YearDay()) {
 		return true
 	} else {
 		return false
