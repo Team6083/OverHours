@@ -198,7 +198,7 @@ func (web *Web) TimeLogDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, false)
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
 	if err != nil {
 		handleWebErr(w, err)
 		return
@@ -243,7 +243,7 @@ func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, false)
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
 	if err != nil {
 		handleWebErr(w, err)
 		return
@@ -293,7 +293,7 @@ func (web *Web) StudentCheckOut(studentId string) error {
 	}
 
 	if !timeLog.IsOut() {
-		if web.settings.CheckIfExceedLastOut(time.Now()) {
+		if web.settings.CheckIfExceedLastOut(timeLog.GetInTime(), time.Now()) {
 			timeLog.TimeOut = -1
 		} else {
 			timeLog.TimeOut = time.Now().Unix()
