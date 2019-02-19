@@ -102,6 +102,17 @@ func (web *Web) SettingsPOST(w http.ResponseWriter, r *http.Request) {
 		settings.TimeZone = r.Form["timezone"][0]
 	}
 
+	if r.Form["checkinLimit"] != nil {
+		switch r.Form["checkinLimit"][0] {
+		case "admin":
+			settings.CheckinLimit = 2
+		case "leader":
+			settings.CheckinLimit = 1
+		case "everyone":
+			settings.CheckinLimit = 0
+		}
+	}
+
 	_, err = web.database.SaveSetting(settings)
 	if err != nil {
 		handleWebErr(w, err)

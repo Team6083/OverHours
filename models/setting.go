@@ -8,10 +8,11 @@ import (
 )
 
 type Setting struct {
-	SeasonId string
-	LastOut  int
-	TimeZone string
-	Id       bson.ObjectId `bson:"_id,omitempty"`
+	SeasonId     string
+	LastOut      int
+	TimeZone     string
+	CheckinLimit int
+	Id           bson.ObjectId `bson:"_id,omitempty"`
 }
 
 func (database *Database) GetSetting() (*Setting, error) {

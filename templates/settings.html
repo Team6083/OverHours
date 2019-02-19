@@ -9,7 +9,7 @@
         <div class="col-lg col-sm">
             <form class="needs-validation" method="POST" action="/settings/submit" autocomplete="off" novalidate>
                 <div class="form-row">
-                    <div class="form-group col-md-4">
+                    <div class="form-group col-md-3">
                         <label for="editSeasonId">SeasonId</label>
                         <input type="text" class="form-control" id="editSeasonId" name="seasonId"
                                placeholder="season id" value="{{.Settings.SeasonId}}" required>
@@ -17,13 +17,22 @@
                             Please provide a season id.
                         </div>
                     </div>
-                    <div class="form-group col-md-4">
+                    <div class="form-group col-md-2">
                         <label for="editLastOut">Last Out</label>
                         <input type="text" class="form-control" id="editLastOut" placeholder="season id">
                         <input type="hidden" id="fieldLastOut" name="lastOut" value="{{.Settings.LastOut}}" required>
                         <div class="invalid-feedback">
                             Please provide a time.
                         </div>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="editCheckinLimit">Checkin Limit</label>
+                        <select id="editCheckinLimit" name="checkinLimit" class="form-control">
+                            <option selected disabled></option>
+                            <option value="admin">Admin only</option>
+                            <option value="leader">Leaders</option>
+                            <option value="everyone">Everyone</option>
+                        </select>
                     </div>
                     <div class="form-group col-md-4">
                         <label for="editTimeZone">Time Zone</label>
@@ -162,6 +171,16 @@
 
         $("#editTimeZone option").filter(function () {
             return $(this).val() === {{.Settings.TimeZone}};
+        }).prop('selected', true);
+
+        $("#editCheckinLimit option").filter(function () {
+            {{if eq .Settings.CheckinLimit 0}}
+            return $(this).val() === "everyone";
+            {{else if eq .Settings.CheckinLimit 1}}
+            return $(this).val() === "leader";
+            {{else if eq .Settings.CheckinLimit 2}}
+            return $(this).val() === "admin";
+            {{end}}
         }).prop('selected', true);
     </script>
 {{end}}
