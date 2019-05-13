@@ -8,11 +8,12 @@ import (
 )
 
 type Setting struct {
-	SeasonId     string
-	LastOut      int
-	TimeZone     string
-	CheckinLimit int
-	Id           bson.ObjectId `bson:"_id,omitempty"`
+	SeasonId      string
+	LastOut       int
+	TimeZone      string
+	CheckinLimit  int
+	CheckoutLimit int
+	Id            bson.ObjectId `bson:"_id,omitempty"`
 }
 
 func (database *Database) GetSetting() (*Setting, error) {
@@ -53,4 +54,18 @@ func (setting *Setting) CheckIfExceedLastOut(timeIn time.Time, t time.Time) bool
 	} else {
 		return false
 	}
+}
+
+func (settings *Setting) CheckIfCanCheckIn(user *User) bool {
+	if !(settings.CheckinLimit == 2 && !user.CheckPermissionLevel(PermissionAdmin)) && !(settings.CheckinLimit == 1 && !user.CheckPermissionLevel(PermissionLeader)) {
+		return true
+	}
+	return false
+}
+
+func (settings *Setting) CheckIfCanCheckOut(user *User) bool {
+	if !(settings.CheckoutLimit == 2 && !user.CheckPermissionLevel(PermissionAdmin)) && !(settings.CheckoutLimit == 1 && !user.CheckPermissionLevel(PermissionLeader)) {
+		return true
+	}
+	return false
 }

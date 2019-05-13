@@ -147,7 +147,9 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		TimeLogs      []models.TimeLog
 		UserNames     map[string]string
 		CurrentSeason string
-	}{"unknown", "readonly", true, "", timeLogs, names, web.settings.SeasonId}
+		CanCheckIn    bool
+		CanCheckOut   bool
+	}{"unknown", "readonly", true, "", timeLogs, names, web.settings.SeasonId, false, false}
 
 	if user != nil {
 		data.UserName = user.Name
@@ -162,6 +164,14 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		data.TimeLogs = timeLogs
+
+		if web.settings.CheckIfCanCheckIn(user) {
+			data.CanCheckIn = true
+		}
+
+		if web.settings.CheckIfCanCheckOut(user) {
+			data.CanCheckOut = true
+		}
 	}
 
 	err = template.ExecuteTemplate(w, "base", data)

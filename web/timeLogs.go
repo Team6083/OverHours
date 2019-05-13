@@ -228,7 +228,7 @@ func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if !(web.settings.CheckinLimit == 2 && !user.CheckPermissionLevel(models.PermissionAdmin)) && !(web.settings.CheckinLimit == 1 && !user.CheckPermissionLevel(models.PermissionLeader)) {
+		if web.settings.CheckIfCanCheckIn(user) {
 			fmt.Printf("%s checkin at %s\n", stuId, time.Now().String())
 			err = web.StudentCheckin(stuId, web.settings.SeasonId)
 			if err != nil && err != AlreadyCheckInError {
@@ -269,12 +269,15 @@ func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Printf("%s checkout at %s\n", studentId, time.Now().String())
-		err = web.StudentCheckOut(studentId)
-		if err != nil {
-			handleWebErr(w, err)
-			return
+		if web.settings.CheckIfCanCheckOut(user) {
+			fmt.Printf("%s checkout at %s\n", studentId, time.Now().String())
+			err = web.StudentCheckOut(studentId)
+			if err != nil {
+				handleWebErr(w, err)
+				return
+			}
 		}
+
 	} else {
 		return
 	}

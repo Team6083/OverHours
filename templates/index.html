@@ -14,13 +14,30 @@
                     <input type="text" class="form-control" name="studentId" placeholder="Students's Id"
                            value="{{.UserAccName}}" {{.Readonly}}>
                     <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="submit" id="stu-submit">Checkin</button>
+                        <button class="btn btn-outline-secondary" type="submit"
+                                id="stu-submit" {{if eq .CanCheckIn false}}  disabled {{end}}>Checkin
+                        </button>
                     </div>
                 </div>
             </form>
-
         </div>
     </div>
+    {{if or (eq .CanCheckIn false) (eq .CanCheckOut false)}}
+        <div class="row mb-2">
+            <div class="col-lg-2"></div>
+            <div class="col-lg-8 col">
+                <strong class="text-danger">
+                    {{if and (eq .CanCheckIn false) (eq .CanCheckOut false)}}
+                        Higher permission required to Checkin and Checkout.
+                    {{else if or (eq .CanCheckIn false) (eq .CanCheckOut false)}}
+                        Due to your permission level, you can only {{if eq .CanCheckIn true}} Checkin {{ else if eq .CanCheckOut true}} Checkout {{end}}.
+                    {{end}}
+                </strong>
+            </div>
+        </div>
+        </div>
+    {{end}}
+
     <div class="row">
         <div class="col-lg-2">
 
@@ -72,8 +89,8 @@
                         let userAcc = {{.UserAccName}};
                         let disabled = {{.Disable}};
                         if (userAcc === row[0] || !disabled) {
-                            return renderTimeLogsTimeStamp(data, type, "<button  class=\"btn btn-primary checkOutBtn\" target=\""+ row[0] +"\">CheckOut</button>");
-                        } else{
+                            return renderTimeLogsTimeStamp(data, type, "<button  class=\"btn btn-primary checkOutBtn\" target=\"" + row[0] + "\" {{if eq .CanCheckOut false}}  disabled {{end}}>CheckOut</button>");
+                        } else {
                             return renderTimeLogsTimeStamp(data, type, "");
                         }
                     },
@@ -113,6 +130,7 @@
                 document.location.href = "/timeLog/checkout?studentId=" + target;
             }
         });
+
     </script>
 
 
