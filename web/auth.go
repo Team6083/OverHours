@@ -118,6 +118,11 @@ func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level i
 		}
 	}
 
+	err = web.renewSession(w, session)
+	if err != nil {
+		handleWebErr(w, err)
+	}
+
 	if level <= PageLogin {
 		return session, nil
 	}
@@ -137,11 +142,6 @@ func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level i
 			web.handle401(w, r)
 		}
 		return session, AuthNoPermission
-	}
-
-	err = web.renewSession(w, session)
-	if err != nil {
-		handleWebErr(w, err)
 	}
 
 	return session, nil
