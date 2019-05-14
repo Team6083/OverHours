@@ -15,7 +15,7 @@ func TestDatabase_GetMeetingsBySeason(t *testing.T) {
 	participant := []string{"1", "2", "3", "4"}
 
 	for i := 0; i < 10; i++ {
-		meeting := Meeting{fmt.Sprintf("meet%d", i), time.Now().Unix(), "seasonTest", "title", "desc", 0, participant, bson.NewObjectId()}
+		meeting := Meeting{fmt.Sprintf("meet%d", i), time.Now().Unix(), "seasonTest", "title", "desc", 0, time.Now().Unix(), participant, bson.NewObjectId()}
 		_, err := Database.SaveMeeting(&meeting)
 		if err != nil {
 			panic(err)
@@ -38,7 +38,7 @@ func TestDatabase_DeleteMeeting(t *testing.T) {
 
 	participant := []string{"1", "2", "3", "4"}
 
-	meeting := Meeting{"m1", time.Now().Unix(), "seasonTest", "title", "desc", 0, participant, bson.NewObjectId()}
+	meeting := Meeting{"m1", time.Now().Unix(), "seasonTest", "title", "desc", 0, time.Now().Unix(), participant, bson.NewObjectId()}
 
 	_, err := database.SaveMeeting(&meeting)
 	if err != nil {
