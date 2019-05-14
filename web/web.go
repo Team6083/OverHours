@@ -60,6 +60,7 @@ func (web *Web) readSettings() error {
 }
 
 func handleWebErr(w http.ResponseWriter, err error) {
+	fmt.Printf("Server internal error: %s\n", err)
 	http.Error(w, "Internal server error: "+err.Error(), 500)
 }
 

@@ -111,6 +111,7 @@ func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level i
 		if err == AuthWrongSession || err == AuthSessionNotProvided {
 			if autoRedirect {
 				web.redirectToLoginPage(w, r)
+				return nil, nil
 			}
 			return nil, err
 		} else {
@@ -301,7 +302,7 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.PasswordNeedChange {
+	if user.PasswordNeedChange && false {
 		//TODO add change psw
 		http.Redirect(w, r, "/", 303)
 	} else if r.Form["redirect"] != nil {
