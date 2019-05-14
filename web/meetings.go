@@ -150,6 +150,13 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 	}
 	meeting.StartTime = startTime
 
+	startCheckinTime, err := strconv.ParseInt(r.Form["startCheckinTime"][0], 10, 64)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	meeting.StartCheckinTime = startCheckinTime
+
 	meeting.Title = r.Form["title"][0]
 	meeting.Description = r.Form["description"][0]
 

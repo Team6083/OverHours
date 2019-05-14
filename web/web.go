@@ -105,6 +105,7 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/timeLog/delete/{id}", web.TimeLogDelete).Methods("GET")
 	// Meetings
 	router.HandleFunc("/meeting", web.MeetingGET).Methods("GET")
+	//router.HandleFunc("/meeting/detail", )
 	router.HandleFunc("/meeting/form", web.MeetingFormGET).Methods("GET")
 	router.HandleFunc("/meeting/form/submit", web.MeetingFormPOST).Methods("POST")
 	// Users
@@ -155,7 +156,8 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		CurrentSeason string
 		CanCheckIn    bool
 		CanCheckOut   bool
-	}{"unknown", "readonly", true, "", timeLogs, names, web.settings.SeasonId, false, false}
+		IncomingMeet  *models.Meeting
+	}{"unknown", "readonly", true, "", timeLogs, names, web.settings.SeasonId, false, false, nil}
 
 	if user != nil {
 		data.UserName = user.Name
@@ -177,6 +179,16 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 		if web.settings.CheckIfCanCheckOut(user) {
 			data.CanCheckOut = true
+		}
+
+		lastMeet, err := web.database.GetLastMeetingsByUserId(user.GetIdentify())
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+
+		if lastMeet.CheckIfMeetingCanCheckInNow(user) {
+			data.IncomingMeet = lastMeet
 		}
 	}
 

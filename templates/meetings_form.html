@@ -39,20 +39,27 @@
                         <input type="text" class="form-control" id="editStartTime" name="startTime" required>
                     </div>
                     <div class="form-group col-md-4">
+                        <label for="editStartCheckinTime">StartCheckinTime
+                            <button type="button" id="startCheckinTimeNowBtn" class="btn btn-info btn-sm">Now
+                            </button>
+                        </label>
+                        <input type="text" class="form-control" id="editStartCheckinTime" name="startCheckinTime" required>
+                    </div>
+                    <div class="form-group col-md-4">
                         <label for="editCheckinLevel">Checkin Level</label>
                         <select class="form-control" name="checkinLevel" id="editCheckinLevel">
                             <option value="0" selected>Everyone</option>
                             <option value="1">Leaders</option>
                         </select>
                     </div>
+                </div>
+                <div class="form-row">
                     <div class="col-md-4">
                         <label for="editTitle">Title</label>
                         <input type="text" class="form-control" id="editTitle" name="title"
                                value="{{.EditMeeting.Title}}">
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="col-md-12">
+                    <div class="col-md-8">
                         <label for="editDescription">Description</label>
                         <textarea type="text" class="form-control" id="editDescription" name="description">{{.EditMeeting.Description}}</textarea>
                     </div>
@@ -123,6 +130,7 @@
         };
 
         tI = flatpickr("#editStartTime", config);
+        sctI = flatpickr("#editStartCheckinTime", config);
 
         {{if eq .EditMeeting.StartTime 0}}
         tI.setDate(new Date());
@@ -130,10 +138,23 @@
         tI.setDate(new Date(({{.EditMeeting.StartTime}}) * 1000));
         {{end}}
 
+        {{if eq .EditMeeting.StartCheckinTime 0}}
+        let startCheckinTime = new Date();
+        startCheckinTime.setHours(startCheckinTime.getHours() - 2);
+        sctI.setDate(startCheckinTime);
+        {{else}}
+        sctI.setDate(new Date(({{.EditMeeting.StartCheckinTime}}) * 1000));
+        {{end}}
+
+
+
         $("#startTimeNowBtn").on('click', function () {
             tI.setDate(new Date());
         });
 
+        $("#startCheckinTimeNowBtn").on('click', function () {
+            sctI.setDate(new Date());
+        });
 
         $("#meetDelBtn").on('click', function () {
             const r = confirm("are you sure you want to delete meeting: {{.EditMeeting.Title}}?");
