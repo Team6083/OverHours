@@ -102,8 +102,18 @@ func (database *Database) GetLastMeetingsByUserId(userId string) (*Meeting, erro
 
 	for index, meet := range meetings {
 		if meet.CheckUserParticipate(userId) == -1 {
-			meetings = append(meetings[:index], meetings[index+1:]...)
+			if index+1 < len(meetings) {
+				copy(meetings[index:], meetings[index+1:])
+				meetings = meetings[:len(meetings)-1]
+			} else {
+				meetings = meetings[:len(meetings)-1]
+			}
+
 		}
+	}
+
+	if len(meetings) == 0 {
+		return nil, nil
 	}
 
 	return &meetings[0], nil

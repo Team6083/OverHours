@@ -187,7 +187,7 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if lastMeet.CheckIfMeetingCanCheckInNow(user) {
+		if lastMeet != nil && lastMeet.CheckIfMeetingCanCheckInNow(user) {
 			data.IncomingMeet = lastMeet
 		}
 	}
