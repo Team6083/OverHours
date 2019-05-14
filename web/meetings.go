@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Team6083/OverHours/models"
+	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -59,6 +60,136 @@ func (web *Web) MeetingGET(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Meetings = meetings
 	}
+
+	err = webTemplate.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+}
+
+func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	user, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	meetId := vars["meetId"]
+
+	meeting, err := web.database.GetMeetingByMeetId(meetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if vars["userId"] != "" {
+		userId := vars["userId"]
+		user, err = web.database.GetUserByUserName(userId)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+	}
+
+	err = web.database.ParticipantCheckin(meeting, user)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	fmt.Println(meeting)
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	user, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	webTemplate, err := web.parseFiles("templates/meetings_detail.html", "templates/base.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	meetId := vars["meetId"]
+
+	meeting, err := web.database.GetMeetingByMeetId(meetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	names, err := web.database.GetUserNameMap()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	type ParticipantsData struct {
+		UserId      string
+		DisplayName string
+		InTime      int64
+		OutTime     int64
+	}
+
+	data := struct {
+		Meeting               *models.Meeting
+		UserNames             map[string]string
+		TimeLogs              []ParticipantsData
+		CanCheckin            bool
+		MeetingStarted        bool
+		MeetingCheckinStarted bool
+		IsLeader              bool
+	}{meeting, names, nil, meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), false}
+
+	logs := make([]ParticipantsData, len(meeting.Participants))
+
+	for index, userId := range meeting.Participants {
+		lastLog, err := web.database.GetLastLogByUser(userId)
+		if err != nil && err != mgo.ErrNotFound {
+			handleWebErr(w, err)
+			return
+		}
+
+		logs[index].DisplayName = names[userId]
+		logs[index].UserId = userId
+
+		if lastLog != nil && lastLog.SeasonId == meeting.GetMeetingLogId() {
+			logs[index].InTime = lastLog.TimeIn
+			logs[index].OutTime = lastLog.TimeOut
+		} else {
+			logs[index].InTime = 0
+			logs[index].OutTime = 0
+		}
+	}
+	data.TimeLogs = logs
 
 	err = webTemplate.ExecuteTemplate(w, "base", data)
 	if err != nil {

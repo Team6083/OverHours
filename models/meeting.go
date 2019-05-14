@@ -22,9 +22,10 @@ type Meeting struct {
 
 // Check auth status
 var UserNotInMeeting = errors.New("this user is not a participant of the meeting")
+var CantCheckinError = errors.New("can't checkin right now")
 
 func (meeting *Meeting) GetMeetingLogId() string {
-	return fmt.Sprintf("meet:%s", meeting.MeetId)
+	return fmt.Sprintf("m:%s", meeting.MeetId)
 }
 
 func (meeting *Meeting) CheckUserParticipate(userId string) int {
@@ -36,11 +37,15 @@ func (meeting *Meeting) CheckUserParticipate(userId string) int {
 	return -1
 }
 
-func (database *Database) ParticipantCheckin(meeting *Meeting, user User) error {
+func (database *Database) ParticipantCheckin(meeting *Meeting, user *User) error {
 	userIndex := meeting.CheckUserParticipate(user.GetIdentify())
 
 	if userIndex == -1 {
 		return UserNotInMeeting
+	}
+
+	if !meeting.CheckIfMeetingCanCheckInNow(user) {
+		return CantCheckinError
 	}
 
 	timeLog := NewTimeLogAtNow(user.GetIdentify(), meeting.GetMeetingLogId())
@@ -120,14 +125,23 @@ func (database *Database) GetLastMeetingsByUserId(userId string) (*Meeting, erro
 }
 
 func (meeting *Meeting) CheckIfMeetingCanCheckInNow(user *User) bool {
-	StartCheckinTime := time.Unix(meeting.StartCheckinTime, 0)
-	if time.Now().After(StartCheckinTime) {
+	if meeting.CheckinStarted() {
 		if meeting.CheckinLevel == 0 || user.CheckPermissionLevel(PermissionLeader) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func (meeting *Meeting) MeetingStarted() bool {
+	StartTime := time.Unix(meeting.StartTime, 0)
+	return time.Now().After(StartTime)
+}
+
+func (meeting *Meeting) CheckinStarted() bool {
+	StartCheckinTime := time.Unix(meeting.StartCheckinTime, 0)
+	return time.Now().After(StartCheckinTime)
 }
 
 func (database *Database) SaveMeeting(meeting *Meeting) (*mgo.ChangeInfo, error) {
