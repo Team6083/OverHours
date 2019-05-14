@@ -129,8 +129,8 @@ func TestDatabase_GetTimeLogsBySeason(t *testing.T) {
 	}
 
 	logs, err := Database.GetTimeLogsBySeason("testSeason")
-	leng := len(logs)
-	assert.Equal(t, 50, leng)
+	length := len(logs)
+	assert.Equal(t, 50, length)
 
 	err = Database.DB.C("timeLogs").DropCollection()
 	if err != nil {

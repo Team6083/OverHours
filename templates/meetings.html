@@ -1,0 +1,138 @@
+{{define "title"}}Meetings{{end}}
+
+{{define "body"}}
+    <div class="mt-5">
+    </div>
+    <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 col">
+            <div class="row">
+                <div class="col-md-6 col">
+                    <a class="btn btn-primary btn-sm" href="/meeting/form">New Meeting</a>
+                </div>
+                <div class="col-md-6 col text-md-right">
+                    <select id="seasonSelector" style="border-radius: .2rem">
+                        <option selected>All</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 col" style="overflow-x: scroll;">
+            <table id="meetingsTable" class="table table-hover">
+                <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>meetId</th>
+                    <th>title</th>
+                    <th>description</th>
+                    <th>time</th>
+                    <th>checkin</th>
+                    <th>participants</th>
+                    <th>season</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+        <div class="col-lg-2">
+        </div>
+    </div>
+{{end}}
+
+{{define "script"}}
+    <script>
+        $("#nav-meeting").addClass("active");
+    </script>
+    <script src="/res/js/datatables.min.js"></script>
+    <script>
+        var MeetingsTable = $("#meetingsTable").DataTable({
+            "order": [4, 'desc'],
+            "info": true,
+            "columnDefs": [
+                {
+                    "visible": false,
+                    "targets": [0, 1]
+                },
+                {
+                    "render": function (data, type, row) {
+                        return "<a href=\"/meeting/form?edit=" + row[1] + "\" class=\"text-body\">" + data + "</a>";
+                    },
+                    "targets": 2
+                },
+                {
+                    "render": function (data, type) {
+                        return renderTimeLogsTimeStamp(data, type, "error time");
+                    },
+                    "width": "20%",
+                    "targets": 4
+                },
+                {
+                    "render": function (data) {
+                        return data.length;
+                    },
+                    "width": "5%",
+                    "targets": 6
+                },
+                {
+                    "render": function (data) {
+                        if(data === 0){
+                            return "Everyone";
+                        } else if(data === 1){
+                            return "Leader";
+                        } else{
+                            return "Error";
+                        }
+                    },
+                    "width": "5%",
+                    "targets": 5
+                }
+            ]
+        });
+
+        var meetings = [];
+
+        {{range .Meetings}}
+        meetings.push([{{.Id}}, "{{.MeetId}}", "{{.Title}}", "{{.Description}}", {{.StartTime}}, {{.CheckinLevel}}, {{.Participants}}, {{.SeasonId}}]);
+        {{end}}
+
+        var seasonIds = [];
+        meetings.forEach(function (data) {
+            if ($.inArray(data[5], seasonIds) === -1) {
+                seasonIds.push(data[5]);
+            }
+            MeetingsTable.row.add(data).draw();
+        });
+
+        seasonIds.forEach(function (data) {
+            $("#seasonSelector").append("<option>" + data + "</option>");
+        });
+    </script>
+
+    <script>
+        $.fn.dataTable.ext.search.push(
+            function (settings, data) {
+                const selectSeason = $("#seasonSelector").val();
+                const season = data[5];
+
+                if ((season === selectSeason) || (selectSeason === "All")) {
+                    return true;
+                }
+                return false;
+            }
+        );
+
+        $("#seasonSelector").on('change ', function () {
+            MeetingsTable.draw();
+        });
+
+    </script>
+{{end}}
+
+{{define "head"}}
+    <link href="/res/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+{{end}}

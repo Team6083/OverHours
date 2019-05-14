@@ -1,0 +1,172 @@
+package web
+
+import (
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"github.com/Team6083/OverHours/models"
+	uuid "github.com/satori/go.uuid"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+	"net/http"
+	"strconv"
+)
+
+func (web *Web) MeetingGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	webTemplate, err := web.parseFiles("templates/meetings.html", "templates/base.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	user, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+	}
+
+	var meetings []models.Meeting
+	data := struct {
+		UserName    string
+		UserAccName string
+		Meetings    []models.Meeting
+	}{"unknown", "", meetings}
+
+	if user != nil {
+		data.UserName = user.Name
+		data.UserAccName = user.Username
+		if user.CheckPermissionLevel(models.PermissionLeader) {
+			meetings, err = web.database.GetAllMeeting()
+			if err != nil && err != mgo.ErrNotFound {
+				handleWebErr(w, err)
+				return
+			}
+		} else {
+			meetings, err = web.database.GetMeetingsByUserId(user.GetIdentify())
+			if err != nil && err != mgo.ErrNotFound {
+				handleWebErr(w, err)
+				return
+			}
+		}
+		data.Meetings = meetings
+	}
+
+	err = webTemplate.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+}
+
+func (web *Web) MeetingFormGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		web.handle401(w, r)
+		return
+	}
+
+	template, err := web.parseFiles("templates/meetings_form.html", "templates/base.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	names, err := web.database.GetUserNameMap()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	data := struct {
+		EditMeeting models.Meeting
+		UserNames   map[string]string
+	}{models.Meeting{Id: bson.NewObjectId(), MeetId: base64.URLEncoding.EncodeToString(uuid.NewV4().Bytes())}, names}
+
+	editTargetMeetId, ok := r.URL.Query()["edit"]
+	if ok {
+		meeting, err := web.database.GetMeetingByMeetId(editTargetMeetId[0])
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+		data.EditMeeting = *meeting
+	}
+
+	err = template.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+	}
+}
+
+func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		web.handle401(w, r)
+		return
+	}
+
+	err = r.ParseForm()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if r.Form["id"] == nil || r.Form["meetId"] == nil || r.Form["seasonId"] == nil || r.Form["startTime"] == nil {
+		handleBadRequest(w, errors.New("some fields are missing "+r.Form.Encode()))
+		return
+	}
+
+	fmt.Println(r.Form)
+
+	meeting := new(models.Meeting)
+
+	meeting.Id = bson.ObjectIdHex(r.Form["id"][0])
+	meeting.MeetId = r.Form["meetId"][0]
+	meeting.SeasonId = r.Form["seasonId"][0]
+
+	startTime, err := strconv.ParseInt(r.Form["startTime"][0], 10, 64)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	meeting.StartTime = startTime
+
+	meeting.Title = r.Form["title"][0]
+	meeting.Description = r.Form["description"][0]
+
+	checkinLevel, err := strconv.Atoi(r.Form["checkinLevel"][0])
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	meeting.CheckinLevel = checkinLevel
+
+	meeting.Participants = r.Form["userSelect"]
+
+	_, err = web.database.SaveMeeting(meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/meeting", http.StatusSeeOther)
+}
