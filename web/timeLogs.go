@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Team6083/OverHours/models"
@@ -72,6 +73,58 @@ func (web *Web) TimeLogGET(w http.ResponseWriter, r *http.Request) {
 	err = webTemplate.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		handleWebErr(w, err)
+		return
+	}
+}
+
+func (web *Web) TimeLogDatatable(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	user, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+	}
+
+	var timeLogs []models.TimeLog
+
+	if user != nil {
+		if user.CheckPermissionLevel(models.PermissionLeader) {
+			timeLogs, err = web.database.GetAllTimeLogs()
+			if err != nil {
+				handleWebErr(w, err)
+				return
+			}
+		} else {
+			timeLogs, err = web.database.GetTimeLogsByUser(user.Username)
+			if err != nil {
+				handleWebErr(w, err)
+				return
+			}
+		}
+	}
+
+	data := struct {
+		Data   []models.TimeLog `json:"data"`
+		Length int              `json:"length"`
+	}{timeLogs, len(timeLogs)}
+
+	b, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(b)
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 }
@@ -228,7 +281,7 @@ func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if !(web.settings.CheckinLimit == 2 && !user.CheckPermissionLevel(models.PermissionAdmin)) && !(web.settings.CheckinLimit == 1 && !user.CheckPermissionLevel(models.PermissionLeader)) {
+		if web.settings.CheckIfCanCheckIn(user) {
 			fmt.Printf("%s checkin at %s\n", stuId, time.Now().String())
 			err = web.StudentCheckin(stuId, web.settings.SeasonId)
 			if err != nil && err != AlreadyCheckInError {
@@ -269,12 +322,15 @@ func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Printf("%s checkout at %s\n", studentId, time.Now().String())
-		err = web.StudentCheckOut(studentId)
-		if err != nil {
-			handleWebErr(w, err)
-			return
+		if web.settings.CheckIfCanCheckOut(user) {
+			fmt.Printf("%s checkout at %s\n", studentId, time.Now().String())
+			err = web.StudentCheckOut(studentId)
+			if err != nil {
+				handleWebErr(w, err)
+				return
+			}
 		}
+
 	} else {
 		return
 	}

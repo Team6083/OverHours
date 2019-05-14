@@ -9,7 +9,7 @@
         <div class="col-lg col-sm">
             <form class="needs-validation" method="POST" action="/settings/submit" autocomplete="off" novalidate>
                 <div class="form-row">
-                    <div class="form-group col-md-3">
+                    <div class="form-group col-md-3 col">
                         <label for="editSeasonId">SeasonId</label>
                         <input type="text" class="form-control" id="editSeasonId" name="seasonId"
                                placeholder="season id" value="{{.Settings.SeasonId}}" required>
@@ -17,24 +17,22 @@
                             Please provide a season id.
                         </div>
                     </div>
-                    <div class="form-group col-md-2">
+                    <div class="form-group col-md-3 col">
                         <label for="editLastOut">Last Out</label>
-                        <input type="text" class="form-control" id="editLastOut" placeholder="season id">
-                        <input type="hidden" id="fieldLastOut" name="lastOut" value="{{.Settings.LastOut}}" required>
-                        <div class="invalid-feedback">
-                            Please provide a time.
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="editLastOut">
+                            <input type="hidden" id="fieldLastOut" name="lastOut" value="{{.Settings.LastOut}}"
+                                   required>
+                            <div class="invalid-feedback">
+                                Please provide a time.
+                            </div>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" id="lastOutDisable">Disable
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group col-md-3">
-                        <label for="editCheckinLimit">Checkin Limit</label>
-                        <select id="editCheckinLimit" name="checkinLimit" class="form-control">
-                            <option selected disabled></option>
-                            <option value="admin">Admin only</option>
-                            <option value="leader">Leaders</option>
-                            <option value="everyone">Everyone</option>
-                        </select>
-                    </div>
-                    <div class="form-group col-md-4">
+                    <div class="form-group col-md-6 col">
                         <label for="editTimeZone">Time Zone</label>
                         <select id="editTimeZone" name="timezone" class="form-control">
                             <option selected disabled></option>
@@ -67,9 +65,15 @@
                             <option value="Atlantic/Cape_Verde">(GMT-01:00) Cape Verde Is.</option>
                             <option value="Atlantic/Azores">(GMT-01:00) Azores</option>
                             <option value="Africa/Casablanca">(GMT+00:00) Casablanca, Monrovia, Reykjavik</option>
-                            <option value="Etc/Greenwich">(GMT+00:00) Greenwich Mean Time : Dublin, Edinburgh, Lisbon, London</option>
-                            <option value="Europe/Amsterdam">(GMT+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna</option>
-                            <option value="Europe/Belgrade">(GMT+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague</option>
+                            <option value="Etc/Greenwich">(GMT+00:00) Greenwich Mean Time : Dublin, Edinburgh, Lisbon,
+                                London
+                            </option>
+                            <option value="Europe/Amsterdam">(GMT+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm,
+                                Vienna
+                            </option>
+                            <option value="Europe/Belgrade">(GMT+01:00) Belgrade, Bratislava, Budapest, Ljubljana,
+                                Prague
+                            </option>
                             <option value="Europe/Brussels">(GMT+01:00) Brussels, Copenhagen, Madrid, Paris</option>
                             <option value="Europe/Sarajevo">(GMT+01:00) Sarajevo, Skopje, Warsaw, Zagreb</option>
                             <option value="Africa/Lagos">(GMT+01:00) West Central Africa</option>
@@ -78,7 +82,8 @@
                             <option value="Asia/Beirut">(GMT+02:00) Beirut</option>
                             <option value="Africa/Cairo">(GMT+02:00) Cairo</option>
                             <option value="Africa/Harare">(GMT+02:00) Harare, Pretoria</option>
-                            <option value="Europe/Helsinki">(GMT+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius</option>
+                            <option value="Europe/Helsinki">(GMT+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius
+                            </option>
                             <option value="Asia/Jerusalem">(GMT+02:00) Jerusalem</option>
                             <option value="Europe/Minsk">(GMT+02:00) Minsk</option>
                             <option value="Africa/Windhoek">(GMT+02:00) Windhoek</option>
@@ -124,6 +129,26 @@
                     </div>
                 </div>
                 <div class="form-row">
+                    <div class="form-group col-md-6 col-6">
+                        <label for="editCheckinLimit">Checkin Limit</label>
+                        <select id="editCheckinLimit" name="checkinLimit" class="form-control">
+                            <option selected disabled></option>
+                            <option value="admin">Admin only</option>
+                            <option value="leader">Leaders</option>
+                            <option value="everyone">Everyone</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6 col-6">
+                        <label for="editCheckoutLimit">Checkout Limit</label>
+                        <select id="editCheckoutLimit" name="checkoutLimit" class="form-control">
+                            <option selected disabled></option>
+                            <option value="admin">Admin only</option>
+                            <option value="leader">Leaders</option>
+                            <option value="everyone">Everyone</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
                     <button type="submit" class="btn btn-block btn-primary">Save</button>
                 </div>
             </form>
@@ -160,13 +185,26 @@
 
         const lastOut = $("#editLastOut");
         lastOut.timepicker();
+
+
         let currLastOut = new Date();
         currLastOut.setHours(0, 0, 0, 0);
+        {{if ne .Settings.LastOut -1}}
         currLastOut = new Date(currLastOut.getTime() + {{.Settings.LastOut}}* 1000);
+        {{end}}
         lastOut.timepicker('setTime', currLastOut);
+
+        {{if eq .Settings.LastOut -1}}
+        lastOut.val("disabled");
+        {{end}}
 
         lastOut.on('changeTime', function () {
             $("#fieldLastOut").val(lastOut.timepicker('getSecondsFromMidnight'));
+        });
+
+        $("#lastOutDisable").on('click', () => {
+            $("#editLastOut").val("disabled");
+            $("#fieldLastOut").val(-1);
         });
 
         $("#editTimeZone option").filter(function () {
@@ -179,6 +217,16 @@
             {{else if eq .Settings.CheckinLimit 1}}
             return $(this).val() === "leader";
             {{else if eq .Settings.CheckinLimit 2}}
+            return $(this).val() === "admin";
+            {{end}}
+        }).prop('selected', true);
+
+        $("#editCheckoutLimit option").filter(function () {
+            {{if eq .Settings.CheckoutLimit 0}}
+            return $(this).val() === "everyone";
+            {{else if eq .Settings.CheckoutLimit 1}}
+            return $(this).val() === "leader";
+            {{else if eq .Settings.CheckoutLimit 2}}
             return $(this).val() === "admin";
             {{end}}
         }).prop('selected', true);

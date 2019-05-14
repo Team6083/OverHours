@@ -8,11 +8,12 @@ import (
 )
 
 type Setting struct {
-	SeasonId     string
-	LastOut      int
-	TimeZone     string
-	CheckinLimit int
-	Id           bson.ObjectId `bson:"_id,omitempty"`
+	SeasonId      string
+	LastOut       int
+	TimeZone      string
+	CheckinLimit  int
+	CheckoutLimit int
+	Id            bson.ObjectId `bson:"_id,omitempty"`
 }
 
 func (database *Database) GetSetting() (*Setting, error) {
@@ -32,8 +33,8 @@ func (database *Database) SaveSetting(setting *Setting) (*mgo.ChangeInfo, error)
 	return change, nil
 }
 
-func (setting Setting) GetTimeZone() *time.Location {
-	local, err := time.LoadLocation(setting.TimeZone)
+func (settings Setting) GetTimeZone() *time.Location {
+	local, err := time.LoadLocation(settings.TimeZone)
 	if err != nil {
 		log.Fatal(err)
 		return time.Local
@@ -41,16 +42,33 @@ func (setting Setting) GetTimeZone() *time.Location {
 	return local
 }
 
-func (setting *Setting) CheckIfExceedLastOut(timeIn time.Time, t time.Time) bool {
-	timeZoneT := t.In(setting.GetTimeZone())
+func (settings *Setting) CheckIfExceedLastOut(timeIn time.Time, t time.Time) bool {
+	if settings.LastOut == -1 {
+		return false
+	}
+	timeZoneT := t.In(settings.GetTimeZone())
 	hour, min, sec := timeZoneT.Clock()
-	year, _, _ := timeIn.In(setting.GetTimeZone()).Date()
+	year, _, _ := timeIn.In(settings.GetTimeZone()).Date()
 	tYear, _, _ := timeZoneT.Date()
 
 	tCalc := hour*60*60 + min*60 + sec
-	if tCalc > setting.LastOut || (year*365+timeIn.In(setting.GetTimeZone()).YearDay()) < (tYear*365+timeZoneT.YearDay()) {
+	if tCalc > settings.LastOut || (year*365+timeIn.In(settings.GetTimeZone()).YearDay()) < (tYear*365+timeZoneT.YearDay()) {
 		return true
 	} else {
 		return false
 	}
+}
+
+func (settings *Setting) CheckIfCanCheckIn(user *User) bool {
+	if !(settings.CheckinLimit == 2 && !user.CheckPermissionLevel(PermissionAdmin)) && !(settings.CheckinLimit == 1 && !user.CheckPermissionLevel(PermissionLeader)) {
+		return true
+	}
+	return false
+}
+
+func (settings *Setting) CheckIfCanCheckOut(user *User) bool {
+	if !(settings.CheckoutLimit == 2 && !user.CheckPermissionLevel(PermissionAdmin)) && !(settings.CheckoutLimit == 1 && !user.CheckPermissionLevel(PermissionLeader)) {
+		return true
+	}
+	return false
 }

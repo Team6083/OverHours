@@ -113,6 +113,17 @@ func (web *Web) SettingsPOST(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if r.Form["checkoutLimit"] != nil {
+		switch r.Form["checkoutLimit"][0] {
+		case "admin":
+			settings.CheckoutLimit = 2
+		case "leader":
+			settings.CheckoutLimit = 1
+		case "everyone":
+			settings.CheckoutLimit = 0
+		}
+	}
+
 	_, err = web.database.SaveSetting(settings)
 	if err != nil {
 		handleWebErr(w, err)

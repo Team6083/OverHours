@@ -45,10 +45,14 @@ func (timeLog *TimeLog) GetOutTime() time.Time {
 	return time.Unix(timeLog.TimeOut, 0)
 }
 
+func (database *Database) GetAllTimeLogsQuery() *mgo.Query {
+	return database.DB.C("timeLogs").Find(bson.M{})
+}
+
 func (database *Database) GetAllTimeLogs() ([]TimeLog, error) {
 	var timeLogs []TimeLog
 
-	err := database.DB.C("timeLogs").Find(bson.M{}).All(&timeLogs)
+	err := database.GetAllTimeLogsQuery().All(&timeLogs)
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +60,13 @@ func (database *Database) GetAllTimeLogs() ([]TimeLog, error) {
 	return timeLogs, nil
 }
 
+func (database *Database) GetTimeLogsQueryByUser(userId string) *mgo.Query {
+	return database.DB.C("timeLogs").Find(bson.M{"userid": userId})
+}
+
 func (database *Database) GetTimeLogsByUser(userId string) ([]TimeLog, error) {
 	var timeLogs []TimeLog
-	err := database.DB.C("timeLogs").Find(bson.M{"userid": userId}).All(&timeLogs)
+	err := database.GetTimeLogsQueryByUser(userId).All(&timeLogs)
 	if err != nil {
 		return nil, err
 	}

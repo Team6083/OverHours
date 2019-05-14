@@ -60,6 +60,7 @@ func (web *Web) readSettings() error {
 }
 
 func handleWebErr(w http.ResponseWriter, err error) {
+	fmt.Printf("Server internal error: %s\n", err)
 	http.Error(w, "Internal server error: "+err.Error(), 500)
 }
 
@@ -96,6 +97,7 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/settings/renew", web.RenewSettingsGET).Methods("GET")
 	// Time Logs
 	router.HandleFunc("/timeLog", web.TimeLogGET).Methods("GET")
+	router.HandleFunc("/timeLog/datatable", web.TimeLogDatatable).Methods("GET")
 	router.HandleFunc("/timeLog/form", web.TimeLogFormGET).Methods("GET")
 	router.HandleFunc("/timeLog/form/submit", web.TimeLogFormPOST).Methods("POST")
 	router.HandleFunc("/timeLog/checkinPost", web.TimeLogCheckinPOST).Methods("POST")
@@ -147,7 +149,9 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		TimeLogs      []models.TimeLog
 		UserNames     map[string]string
 		CurrentSeason string
-	}{"unknown", "readonly", true, "", timeLogs, names, web.settings.SeasonId}
+		CanCheckIn    bool
+		CanCheckOut   bool
+	}{"unknown", "readonly", true, "", timeLogs, names, web.settings.SeasonId, false, false}
 
 	if user != nil {
 		data.UserName = user.Name
@@ -162,6 +166,14 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		data.TimeLogs = timeLogs
+
+		if web.settings.CheckIfCanCheckIn(user) {
+			data.CanCheckIn = true
+		}
+
+		if web.settings.CheckIfCanCheckOut(user) {
+			data.CanCheckOut = true
+		}
 	}
 
 	err = template.ExecuteTemplate(w, "base", data)
