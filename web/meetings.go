@@ -167,7 +167,7 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 		MeetingStarted        bool
 		MeetingCheckinStarted bool
 		IsLeader              bool
-	}{meeting, names, nil, meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), false}
+	}{meeting, names, nil, meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionLeader)}
 
 	logs := make([]ParticipantsData, len(meeting.Participants))
 

@@ -12,7 +12,19 @@
                     <h5>Time: <span class="badge badge-dark" id="startTime"></span></h5>
                     <p>{{.Meeting.Description}}</p>
 
-                    <div class="text-center">
+                    {{if .IsLeader}}
+                        <a class="btn btn-sm btn-secondary  "
+                           href="/meeting/form?edit={{.Meeting.MeetId}}">Edit</a>
+
+                        <a class="btn btn-sm btn-success"
+                           href="/meeting/modify/{{.Meeting.MeetId}}/openCheckin">Open Checkin Now</a>
+
+                        <a class="btn btn-sm btn-danger"
+                           href="/meeting/modify/{{.Meeting.MeetId}}/removeAllLog">Remove All Log</a>
+                    {{end}}
+
+
+                    <div class="text-center mt-3">
                         <a class="btn btn-block btn-primary  {{if not .CanCheckin}}disabled{{end}}"
                            href="/meeting/checkin/{{.Meeting.MeetId}}">Checkin</a>
 
@@ -81,7 +93,7 @@
             let td2 = document.createElement("td");
             td2.innerText = names[name];
             let td3 = document.createElement("td");
-            td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "<a class=\"btn btn-sm btn-warning\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>");
+            td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if .CanCheckin}}<a class=\"btn btn-sm btn-warning\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
 
             let td4 = document.createElement("td");
             td4.innerHTML = "";
