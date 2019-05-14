@@ -49,8 +49,20 @@
     <script src="/res/js/datatables.min.js"></script>
     <script>
         var TimeLogsTable = $("#timeLogsTable").DataTable({
+            "ajax": {
+                "type": "GET",
+                "url": "/timeLog/datatable"
+            },
             "order": [[4, 'desc'], [3, 'desc']],
             "info": true,
+            "columns": [
+                {},
+                { data: 'Id' },
+                { data: 'UserID' },
+                { data: 'TimeIn' },
+                { data: 'TimeOut' },
+                { data: 'SeasonId' }
+            ],
             "columnDefs": [
                 {
                     "render": function (data, type, row) {
@@ -83,9 +95,9 @@
 
         var timeLogs = [];
 
-        {{range .TimeLogs}}
-        timeLogs.push(["",{{.Id}}, "{{.UserID}}", {{.TimeIn}}, {{.TimeOut}}, "{{.SeasonId}}"]);
-        {{end}}
+{{/*        {{range .TimeLogs}}*/}}
+{{/*        timeLogs.push(["",{{.Id}}, "{{.UserID}}", {{.TimeIn}}, {{.TimeOut}}, "{{.SeasonId}}"]);*/}}
+{{/*        {{end}}*/}}
 
         var names = {};
 
