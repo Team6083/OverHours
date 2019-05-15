@@ -4,8 +4,8 @@ references:
   container_config: &container_config
     docker:
       - image: circleci/golang:1.11.0
-          environment:
-            GO111MODULE: "on"
+        environment:
+          GO111MODULE: "on"
       - image: circleci/mongo:4.0.5
     working_directory: /go/src/github.com/Team6083/OverHours
     environment: # environment variables for the build itself
