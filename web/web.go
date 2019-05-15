@@ -191,7 +191,19 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if lastMeet != nil && lastMeet.CheckIfMeetingCanCheckInNow(user) {
-			data.IncomingMeet = lastMeet
+			lastMeetLog, err := web.database.GetLastLogByUserWithSpecificSeason(user.GetIdentify(), lastMeet.GetMeetingLogId())
+			if err != nil && err != mgo.ErrNotFound {
+				handleWebErr(w, err)
+				return
+			}
+
+			fmt.Println(lastMeetLog)
+
+			if lastMeetLog != nil && lastMeetLog.TimeIn != 0 {
+				data.IncomingMeet = nil
+			} else {
+				data.IncomingMeet = lastMeet
+			}
 		}
 	}
 
