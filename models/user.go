@@ -25,6 +25,10 @@ const (
 	PermissionSuper  = 3
 )
 
+func (user *User) GetIdentify() string {
+	return user.Username
+}
+
 func (database *Database) CheckUserExist(studentName string) (bool, error) {
 	_, err := database.GetUserByUserName(studentName)
 	if err == mgo.ErrNotFound {

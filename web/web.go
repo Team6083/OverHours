@@ -103,6 +103,18 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/timeLog/checkinPost", web.TimeLogCheckinPOST).Methods("POST")
 	router.HandleFunc("/timeLog/checkout", web.TimeLogCheckoutGET).Methods("GET")
 	router.HandleFunc("/timeLog/delete/{id}", web.TimeLogDelete).Methods("GET")
+	// Meetings
+	router.HandleFunc("/meeting", web.MeetingGET).Methods("GET")
+	router.HandleFunc("/meeting/detail/{meetId}", web.MeetingDetailGET).Methods("GET")
+	router.HandleFunc("/meeting/checkin/{meetId}", web.MeetingCheckinGET).Methods("GET")
+	router.HandleFunc("/meeting/checkin/{meetId}/{userId}", web.MeetingCheckinGET).Methods("GET")
+	router.HandleFunc("/meeting/form", web.MeetingFormGET).Methods("GET")
+	router.HandleFunc("/meeting/form/submit", web.MeetingFormPOST).Methods("POST")
+	router.HandleFunc("/meeting/delete/{id}", web.MeetingDeleteGET).Methods("GET")
+	router.HandleFunc("/meeting/modify/{meetId}/openCheckin", web.MeetingModifyOpenCheckinGET).Methods("GET")
+	router.HandleFunc("/meeting/modify/{meetId}/removeAllLog", web.MeetingModifyRmAllLogGET).Methods("GET")
+	router.HandleFunc("/meeting/modify/{meetId}/finish", web.MeetingModifyFinishGET).Methods("GET")
+
 	// Users
 	router.HandleFunc("/users", web.UsersGET).Methods("GET")
 	router.HandleFunc("/users/form", web.UsersFormGET).Methods("GET")
@@ -151,7 +163,8 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		CurrentSeason string
 		CanCheckIn    bool
 		CanCheckOut   bool
-	}{"unknown", "readonly", true, "", timeLogs, names, web.settings.SeasonId, false, false}
+		IncomingMeet  *models.Meeting
+	}{"unknown", "readonly", true, "", timeLogs, names, web.settings.SeasonId, false, false, nil}
 
 	if user != nil {
 		data.UserName = user.Name
@@ -173,6 +186,28 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 		if web.settings.CheckIfCanCheckOut(user) {
 			data.CanCheckOut = true
+		}
+
+		lastMeet, err := web.database.GetLastMeetingsByUserId(user.GetIdentify())
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+
+		if lastMeet != nil && lastMeet.CheckIfMeetingCanCheckInNow(user) {
+			lastMeetLog, err := web.database.GetLastLogByUserWithSpecificSeason(user.GetIdentify(), lastMeet.GetMeetingLogId())
+			if err != nil && err != mgo.ErrNotFound {
+				handleWebErr(w, err)
+				return
+			}
+
+			fmt.Println(lastMeetLog)
+
+			if lastMeetLog != nil && lastMeetLog.TimeIn != 0 {
+				data.IncomingMeet = nil
+			} else {
+				data.IncomingMeet = lastMeet
+			}
 		}
 	}
 

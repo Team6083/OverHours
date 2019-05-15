@@ -284,7 +284,7 @@ func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
 		if web.settings.CheckIfCanCheckIn(user) {
 			fmt.Printf("%s checkin at %s\n", stuId, time.Now().String())
 			err = web.StudentCheckin(stuId, web.settings.SeasonId)
-			if err != nil && err != AlreadyCheckInError {
+			if err != nil && err != models.AlreadyCheckInError {
 				handleWebErr(w, err)
 				return
 			}
@@ -341,8 +341,6 @@ func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
 
 // Checkin and Checkout
 
-var AlreadyCheckInError = errors.New("already checkin")
-var AlreadyCheckOutError = errors.New("already checkout")
 var StudentNotExistError = errors.New("student doesn't exist")
 
 func (web *Web) StudentCheckOut(studentId string) error {
@@ -364,7 +362,7 @@ func (web *Web) StudentCheckOut(studentId string) error {
 		}
 		return nil
 	} else {
-		return AlreadyCheckOutError
+		return models.AlreadyCheckOutError
 	}
 }
 
@@ -394,7 +392,7 @@ func (web *Web) StudentCheckin(studentId string, seasonId string) error {
 			return err
 		}
 	} else {
-		return AlreadyCheckInError
+		return models.AlreadyCheckInError
 	}
 
 	return nil
