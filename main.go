@@ -12,11 +12,6 @@ import (
 	"time"
 )
 
-type Person struct {
-	Name  string
-	Phone string
-}
-
 func main() {
 	log.Print("OverHours Starting at", time.Now())
 
