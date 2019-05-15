@@ -55,3 +55,4 @@
 
 [metadata.heroku]
   root-package = "main"
+  install = "./..."
