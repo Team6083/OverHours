@@ -19,10 +19,10 @@
                         <a class="btn btn-sm btn-secondary  "
                            href="/meeting/form?edit={{.Meeting.MeetId}}">Edit</a>
 
-                        <a class="btn btn-sm btn-success"
+                        <a class="btn btn-sm btn-success {{if .MeetingCheckinStarted}}disabled{{end}}"
                            href="/meeting/modify/{{.Meeting.MeetId}}/openCheckin">Open Checkin Now</a>
 
-                        <a class="btn btn-sm btn-warning"
+                        <a class="btn btn-sm btn-warning {{if .MeetingFinished}}disabled{{end}}"
                            href="/meeting/modify/{{.Meeting.MeetId}}/finish">Finish Meeting</a>
 
                         <a class="btn btn-sm btn-danger"

@@ -113,6 +113,7 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/meeting/delete/{id}", web.MeetingDeleteGET).Methods("GET")
 	router.HandleFunc("/meeting/modify/{meetId}/openCheckin", web.MeetingModifyOpenCheckinGET).Methods("GET")
 	router.HandleFunc("/meeting/modify/{meetId}/removeAllLog", web.MeetingModifyRmAllLogGET).Methods("GET")
+	router.HandleFunc("/meeting/modify/{meetId}/finish", web.MeetingModifyFinishGET).Methods("GET")
 
 	// Users
 	router.HandleFunc("/users", web.UsersGET).Methods("GET")

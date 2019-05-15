@@ -268,8 +268,6 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(r.Form)
-
 	meeting := new(models.Meeting)
 
 	meeting.Id = bson.ObjectIdHex(r.Form["id"][0])
@@ -405,6 +403,39 @@ func (web *Web) MeetingModifyRmAllLogGET(w http.ResponseWriter, r *http.Request)
 	}
 
 	err = web.database.DeleteAllMeetingLog(meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
+}
+
+func (web *Web) MeetingModifyFinishGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	vars := mux.Vars(r)
+	meetId := vars["meetId"]
+
+	meeting, err := web.database.GetMeetingByMeetId(meetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if !meeting.MeetingFinished() {
+		meeting.FinishTime = time.Now().Unix()
+	}
+
+	_, err = web.database.SaveMeeting(meeting)
 	if err != nil {
 		handleWebErr(w, err)
 		return

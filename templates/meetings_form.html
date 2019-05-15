@@ -43,7 +43,11 @@
                             <button type="button" id="startCheckinTimeNowBtn" class="btn btn-info btn-sm">Now
                             </button>
                         </label>
-                        <input type="text" class="form-control" id="editStartCheckinTime" name="startCheckinTime" required>
+                        <input type="text" class="form-control" id="editStartCheckinTime" name="startCheckinTime"
+                               required>
+                        <div class="invalid-feedback">
+                            <strong>StartTime should not later than StartCheckinTime.</strong>
+                        </div>
                     </div>
                     <div class="form-group col-md-4">
                         <label for="editFinishTime">FinishTime
@@ -53,6 +57,9 @@
                             </button>
                         </label>
                         <input type="text" class="form-control" id="editFinishTime" name="finishTime" required>
+                        <div class="invalid-feedback">
+                            <strong>FinishTime should not earlier than StartTime.</strong>
+                        </div>
                     </div>
                 </div>
                 <div class="form-row">
@@ -70,7 +77,8 @@
                     </div>
                     <div class="col-md-4">
                         <label for="editDescription">Description</label>
-                        <textarea type="text" class="form-control" id="editDescription" name="description">{{.EditMeeting.Description}}</textarea>
+                        <textarea type="text" class="form-control" id="editDescription"
+                                  name="description">{{.EditMeeting.Description}}</textarea>
                     </div>
                 </div>
                 <div class="form-row mt-2">
@@ -117,6 +125,23 @@
                 // Loop over them and prevent submission
                 let validation = Array.prototype.filter.call(forms, function (form) {
                     form.addEventListener('submit', function (event) {
+                        if($("#editStartCheckinTime").val() > $("#editStartTime").val()){
+
+                            $("#editStartCheckinTime").addClass("is-invalid");
+                            $("#editStartTime").addClass("is-invalid");
+
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+
+                        if($("#editFinishTime").val() !== "" && $("#editFinishTime").val() < $("#editStartTime").val()){
+                            $("#editFinishTime").addClass("is-invalid");
+                            $("#editStartTime").addClass("is-invalid");
+
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+
                         if (form.checkValidity() === false) {
                             event.preventDefault();
                             event.stopPropagation();
@@ -210,7 +235,7 @@
         }
 
         {{range $i, $v := .EditMeeting.Participants}}
-            select.multiSelect('select', {{$v}});
+        select.multiSelect('select', {{$v}});
         {{end}}
 
     </script>
