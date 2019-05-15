@@ -48,6 +48,13 @@ func main() {
 		}
 	}
 
+	meeting := models.Meeting{"meet1", time.Now().Unix(), "seasonTest", "title", "desc", 0, time.Now().Unix(), 0, {"1", "3"}, bson.NewObjectId()}
+
+	_, err = database.SaveMeeting(&meeting)
+	if err != nil {
+		panic(err)
+	}
+
 	webServer := web.NewWeb(database)
 	webServer.ServeWebInterface(webPort)
 }
