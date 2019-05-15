@@ -11,6 +11,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func (web *Web) MeetingGET(w http.ResponseWriter, r *http.Request) {
@@ -306,7 +307,7 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/meeting", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meeting.MeetId), http.StatusSeeOther)
 }
 
 func (web *Web) MeetingDeleteGET(w http.ResponseWriter, r *http.Request) {
@@ -321,9 +322,9 @@ func (web *Web) MeetingDeleteGET(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	meetId := vars["id"]
+	id := vars["id"]
 
-	meeting, err := web.database.GetMeetingById(meetId)
+	meeting, err := web.database.GetMeetingById(id)
 	if err != nil {
 		handleWebErr(w, err)
 		return
@@ -336,4 +337,66 @@ func (web *Web) MeetingDeleteGET(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/meeting", http.StatusSeeOther)
+}
+
+// modify
+
+func (web *Web) MeetingModifyOpenCheckinGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	vars := mux.Vars(r)
+	meetId := vars["meetId"]
+
+	meeting, err := web.database.GetMeetingByMeetId(meetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	meeting.StartCheckinTime = time.Now().Unix()
+
+	_, err = web.database.SaveMeeting(meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
+}
+
+func (web *Web) MeetingModifyRmAllLogGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	vars := mux.Vars(r)
+	meetId := vars["meetId"]
+
+	meeting, err := web.database.GetMeetingByMeetId(meetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	err = web.database.DeleteAllMeetingLog(meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
 }

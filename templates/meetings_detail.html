@@ -34,7 +34,7 @@
                 </div>
             </div>
             <div class="row mt-3">
-                <div class="col col-lg-6">
+                <div class="col-12 col-lg-6">
                     <h4>Participants</h4>
                     <table class="table table-striped table-sm">
                         <thead>
@@ -49,7 +49,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="col col-lg-6">
+                <div class="col-12 col-lg-6">
 
                 </div>
             </div>
@@ -93,7 +93,7 @@
             let td2 = document.createElement("td");
             td2.innerText = names[name];
             let td3 = document.createElement("td");
-            td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if .CanCheckin}}<a class=\"btn btn-sm btn-warning\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
+            td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsLeader}}<a class=\"btn btn-sm btn-warning\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
 
             let td4 = document.createElement("td");
             td4.innerHTML = "";
