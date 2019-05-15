@@ -9,6 +9,9 @@
             <div class="row">
                 <div class="col-md-6 col">
                     <a class="btn btn-primary btn-sm" href="/timeLog/form">New TimeLog</a>
+                    <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#optionsCollapse">
+                        Options <i class="fas fa-angle-double-down"></i>
+                    </button>
                 </div>
                 <div class="col-md-6 col text-md-right">
                     <select id="seasonSelector" style="border-radius: .2rem">
@@ -18,9 +21,11 @@
             </div>
             <div class="row mt-3">
                 <div class="col-12">
+                    <div class="collapse" id="optionsCollapse">
                     <div class="custom-control custom-checkbox">
                         <input class="custom-control-input" type="checkbox" id="showMeeting">
                         <label for="showMeeting" class="custom-control-label">Show meeting</label>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -166,4 +171,5 @@
 
 {{define "head"}}
     <link href="/res/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
 {{end}}
