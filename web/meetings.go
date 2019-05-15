@@ -168,7 +168,8 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 		MeetingStarted        bool
 		MeetingCheckinStarted bool
 		IsLeader              bool
-	}{meeting, names, nil, meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionLeader)}
+		MeetingFinished       bool
+	}{meeting, names, nil, meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionLeader), meeting.MeetingFinished()}
 
 	logs := make([]ParticipantsData, len(meeting.Participants))
 
@@ -288,6 +289,17 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	meeting.StartCheckinTime = startCheckinTime
+
+	if r.Form["finishTime"][0] != "" {
+		FinishTime, err := strconv.ParseInt(r.Form["finishTime"][0], 10, 64)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+		meeting.FinishTime = FinishTime
+	} else {
+		meeting.FinishTime = 0
+	}
 
 	meeting.Title = r.Form["title"][0]
 	meeting.Description = r.Form["description"][0]

@@ -16,6 +16,7 @@ type Meeting struct {
 	Description      string
 	CheckinLevel     int
 	StartCheckinTime int64
+	FinishTime       int64
 	Participants     []string
 	Id               bson.ObjectId `bson:"_id,omitempty"`
 }
@@ -38,7 +39,7 @@ func (meeting *Meeting) CheckUserParticipate(userId string) int {
 }
 
 func (meeting *Meeting) CheckIfMeetingCanCheckInNow(user *User) bool {
-	if meeting.CheckinStarted() {
+	if meeting.CheckinStarted() && !meeting.MeetingFinished() {
 		if meeting.CheckinLevel == 0 || user.CheckPermissionLevel(PermissionLeader) {
 			return true
 		}
@@ -50,6 +51,10 @@ func (meeting *Meeting) CheckIfMeetingCanCheckInNow(user *User) bool {
 func (meeting *Meeting) MeetingStarted() bool {
 	StartTime := time.Unix(meeting.StartTime, 0)
 	return time.Now().After(StartTime)
+}
+
+func (meeting *Meeting) MeetingFinished() bool {
+	return meeting.FinishTime != 0
 }
 
 func (meeting *Meeting) CheckinStarted() bool {

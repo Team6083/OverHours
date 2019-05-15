@@ -9,7 +9,10 @@
             <div class="row">
                 <div class="col-lg12 col">
                     <h3>Meeting: <span class="badge badge-dark">{{.Meeting.Title}}</span></h3>
-                    <h5>Time: <span class="badge badge-dark" id="startTime"></span></h5>
+                    <h5>Time: <span class="badge badge-secondary badge-pill" id="startTime"></span></h5>
+                    {{if ne .Meeting.FinishTime 0}}
+                        <h6>Finished at <span class="badge badge-success badge-pill" id="finishTime"></span></h6>
+                    {{end}}
                     <p>{{.Meeting.Description}}</p>
 
                     {{if .IsLeader}}
@@ -19,6 +22,9 @@
                         <a class="btn btn-sm btn-success"
                            href="/meeting/modify/{{.Meeting.MeetId}}/openCheckin">Open Checkin Now</a>
 
+                        <a class="btn btn-sm btn-warning"
+                           href="/meeting/modify/{{.Meeting.MeetId}}/finish">Finish Meeting</a>
+
                         <a class="btn btn-sm btn-danger"
                            href="/meeting/modify/{{.Meeting.MeetId}}/removeAllLog">Remove All Log</a>
                     {{end}}
@@ -26,7 +32,7 @@
 
                     <div class="text-center mt-3">
                         <a class="btn btn-block btn-primary  {{if not .CanCheckin}}disabled{{end}}"
-                           href="/meeting/checkin/{{.Meeting.MeetId}}">Checkin</a>
+                           href="/meeting/checkin/{{.Meeting.MeetId}}">{{if .MeetingFinished}}Meeting finished{{else}}Checkin{{end}} </a>
 
                         <strong class="{{if .MeetingCheckinStarted}}d-none{{end}}">Checkin of this meeting will start at
                             <span id="startCheckinTime" class="badge badge-pill badge-info"></span></strong>
@@ -70,6 +76,7 @@
 
         writeTime({{.Meeting.StartTime}}, "startTime");
         writeTime({{.Meeting.StartCheckinTime}}, "startCheckinTime");
+        writeTime({{.Meeting.FinishTime}}, "finishTime");
 
         var names = {};
 

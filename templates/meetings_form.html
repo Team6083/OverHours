@@ -46,20 +46,29 @@
                         <input type="text" class="form-control" id="editStartCheckinTime" name="startCheckinTime" required>
                     </div>
                     <div class="form-group col-md-4">
+                        <label for="editFinishTime">FinishTime
+                            <button type="button" id="finishTimeNowBtn" class="btn btn-info btn-sm">Now
+                            </button>
+                            <button type="button" id="finishTimeClearBtn" class="btn btn-warning btn-sm">Clear
+                            </button>
+                        </label>
+                        <input type="text" class="form-control" id="editFinishTime" name="finishTime" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
                         <label for="editCheckinLevel">Checkin Level</label>
                         <select class="form-control" name="checkinLevel" id="editCheckinLevel">
                             <option value="0" selected>Everyone</option>
                             <option value="1">Leaders</option>
                         </select>
                     </div>
-                </div>
-                <div class="form-row">
                     <div class="col-md-4">
                         <label for="editTitle">Title</label>
                         <input type="text" class="form-control" id="editTitle" name="title"
                                value="{{.EditMeeting.Title}}">
                     </div>
-                    <div class="col-md-8">
+                    <div class="col-md-4">
                         <label for="editDescription">Description</label>
                         <textarea type="text" class="form-control" id="editDescription" name="description">{{.EditMeeting.Description}}</textarea>
                     </div>
@@ -131,6 +140,7 @@
 
         tI = flatpickr("#editStartTime", config);
         sctI = flatpickr("#editStartCheckinTime", config);
+        endtI = flatpickr("#editFinishTime", config);
 
         {{if eq .EditMeeting.StartTime 0}}
         tI.setDate(new Date());
@@ -146,6 +156,10 @@
         sctI.setDate(new Date(({{.EditMeeting.StartCheckinTime}}) * 1000));
         {{end}}
 
+        {{if eq .EditMeeting.FinishTime 0}}
+        {{else}}
+        endtI.setDate(new Date(({{.EditMeeting.FinishTime}}) * 1000));
+        {{end}}
 
 
         $("#startTimeNowBtn").on('click', function () {
@@ -154,6 +168,14 @@
 
         $("#startCheckinTimeNowBtn").on('click', function () {
             sctI.setDate(new Date());
+        });
+
+        $("#finishTimeNowBtn").on('click', function () {
+            endtI.setDate(new Date());
+        });
+
+        $("#finishTimeClearBtn").on('click', function () {
+            endtI.clear();
         });
 
         $("#meetDelBtn").on('click', function () {
