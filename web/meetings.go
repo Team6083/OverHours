@@ -103,7 +103,7 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = web.database.ParticipantCheckin(meeting, user)
+	err = web.database.MeetingCheckin(meeting, user)
 	if err != nil {
 		handleWebErr(w, err)
 		return
@@ -301,6 +301,35 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 	meeting.Participants = r.Form["userSelect"]
 
 	_, err = web.database.SaveMeeting(meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/meeting", http.StatusSeeOther)
+}
+
+func (web *Web) MeetingDeleteGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	vars := mux.Vars(r)
+	meetId := vars["id"]
+
+	meeting, err := web.database.GetMeetingById(meetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	err = web.database.DeleteMeeting(meeting)
 	if err != nil {
 		handleWebErr(w, err)
 		return

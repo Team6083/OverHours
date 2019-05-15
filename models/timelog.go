@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"sort"
@@ -19,6 +20,9 @@ type TimeLogSummary struct {
 	UserID    string
 	TotalTime time.Duration
 }
+
+var AlreadyCheckInError = errors.New("already checkin")
+var AlreadyCheckOutError = errors.New("already checkout")
 
 func NewTimeLogAtNow(studentId string, seasonId string) TimeLog {
 	return TimeLog{studentId, time.Now().Unix(), 0, seasonId, bson.NewObjectId()}
@@ -103,6 +107,15 @@ func (database *Database) GetTimeLogsByUserWithSpecificSeason(userId string, sea
 func (database *Database) GetLastLogByUser(userId string) (*TimeLog, error) {
 	var timeLog TimeLog
 	err := database.DB.C("timeLogs").Find(bson.M{"userid": userId}).Sort("-timein").One(&timeLog)
+	if err != nil {
+		return nil, err
+	}
+	return &timeLog, nil
+}
+
+func (database *Database) GetLastLogByUserWithSpecificSeason(userId string, seasonId string) (*TimeLog, error) {
+	var timeLog TimeLog
+	err := database.DB.C("timeLogs").Find(bson.M{"userid": userId, "seasonid": seasonId}).Sort("-timein").One(&timeLog)
 	if err != nil {
 		return nil, err
 	}

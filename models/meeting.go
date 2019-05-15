@@ -37,7 +37,43 @@ func (meeting *Meeting) CheckUserParticipate(userId string) int {
 	return -1
 }
 
-func (database *Database) ParticipantCheckin(meeting *Meeting, user *User) error {
+func (meeting *Meeting) CheckIfMeetingCanCheckInNow(user *User) bool {
+	if meeting.CheckinStarted() {
+		if meeting.CheckinLevel == 0 || user.CheckPermissionLevel(PermissionLeader) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (meeting *Meeting) MeetingStarted() bool {
+	StartTime := time.Unix(meeting.StartTime, 0)
+	return time.Now().After(StartTime)
+}
+
+func (meeting *Meeting) CheckinStarted() bool {
+	StartCheckinTime := time.Unix(meeting.StartCheckinTime, 0)
+	return time.Now().After(StartCheckinTime)
+}
+
+func (database *Database) DeleteAllMeetingLog(meeting *Meeting) error {
+	timeLogs, err := database.GetTimeLogsBySeason(meeting.GetMeetingLogId())
+	if err != nil {
+		return err
+	}
+
+	for _, timeLog := range timeLogs {
+		err = database.DeleteTimeLog(&timeLog)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (database *Database) MeetingCheckin(meeting *Meeting, user *User) error {
 	userIndex := meeting.CheckUserParticipate(user.GetIdentify())
 
 	if userIndex == -1 {
@@ -48,11 +84,24 @@ func (database *Database) ParticipantCheckin(meeting *Meeting, user *User) error
 		return CantCheckinError
 	}
 
-	timeLog := NewTimeLogAtNow(user.GetIdentify(), meeting.GetMeetingLogId())
-
-	_, err := database.SaveTimeLog(&timeLog)
-	if err != nil {
+	lastLog, err := database.GetLastLogByUserWithSpecificSeason(user.GetIdentify(), meeting.GetMeetingLogId())
+	if err != nil && err != mgo.ErrNotFound {
 		return err
+	}
+
+	if lastLog == nil || lastLog.IsOut() {
+		if lastLog == nil {
+			fmt.Printf("creating a new log for %s\n", user.GetIdentify())
+		}
+
+		timeLog := NewTimeLogAtNow(user.GetIdentify(), meeting.GetMeetingLogId())
+
+		_, err = database.SaveTimeLog(&timeLog)
+		if err != nil {
+			return err
+		}
+	} else {
+		return AlreadyCheckInError
 	}
 
 	return nil
@@ -65,6 +114,15 @@ func (database *Database) GetAllMeeting() ([]Meeting, error) {
 		return nil, err
 	}
 	return meet, nil
+}
+
+func (database *Database) GetMeetingById(id string) (*Meeting, error) {
+	var meet Meeting
+	err := database.DB.C("meetings").FindId(bson.ObjectIdHex(id)).One(&meet)
+	if err != nil {
+		return nil, err
+	}
+	return &meet, nil
 }
 
 func (database *Database) GetMeetingByMeetId(meetId string) (*Meeting, error) {
@@ -124,26 +182,6 @@ func (database *Database) GetLastMeetingsByUserId(userId string) (*Meeting, erro
 	return &meetings[0], nil
 }
 
-func (meeting *Meeting) CheckIfMeetingCanCheckInNow(user *User) bool {
-	if meeting.CheckinStarted() {
-		if meeting.CheckinLevel == 0 || user.CheckPermissionLevel(PermissionLeader) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (meeting *Meeting) MeetingStarted() bool {
-	StartTime := time.Unix(meeting.StartTime, 0)
-	return time.Now().After(StartTime)
-}
-
-func (meeting *Meeting) CheckinStarted() bool {
-	StartCheckinTime := time.Unix(meeting.StartCheckinTime, 0)
-	return time.Now().After(StartCheckinTime)
-}
-
 func (database *Database) SaveMeeting(meeting *Meeting) (*mgo.ChangeInfo, error) {
 	change, err := database.DB.C("meetings").UpsertId(meeting.Id, meeting)
 	if err != nil {
@@ -153,7 +191,12 @@ func (database *Database) SaveMeeting(meeting *Meeting) (*mgo.ChangeInfo, error)
 }
 
 func (database *Database) DeleteMeeting(meeting *Meeting) error {
-	err := database.DB.C("meetings").RemoveId(meeting.Id)
+	err := database.DeleteAllMeetingLog(meeting)
+	if err != nil {
+		return err
+	}
+
+	err = database.DB.C("meetings").RemoveId(meeting.Id)
 	if err != nil {
 		return err
 	}
