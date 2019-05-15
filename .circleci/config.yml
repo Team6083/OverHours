@@ -3,7 +3,9 @@ version: 2
 references:
   container_config: &container_config
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.12
+        environment:
+          GO111MODULE: "on"
       - image: circleci/mongo:4.0.5
     working_directory: /go/src/github.com/Team6083/OverHours
     environment: # environment variables for the build itself
@@ -15,13 +17,11 @@ jobs:
       - checkout
       - run: mkdir -p $TEST_RESULTS
       - run:
-          name: Go Get Dep
-          command: go get -u github.com/golang/dep
+          name: Add missing and remove unused modules
+          command: go mod tidy
       - run:
-          name: run build
-          command: |
-            dep ensure
-            go build -v
+          name: Verify dependencies have expected content
+          command: go mod verify
       - run:
           name: run tests
           command: |
