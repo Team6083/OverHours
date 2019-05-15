@@ -22,6 +22,7 @@
             </form>
         </div>
     </div>
+
     {{if or (eq .CanCheckIn false) (eq .CanCheckOut false)}}
         <div class="row mb-2">
             <div class="col-lg-2"></div>
@@ -33,6 +34,21 @@
                         Due to your permission level, you can only {{if eq .CanCheckIn true}} Checkin {{ else if eq .CanCheckOut true}} Checkout {{end}}.
                     {{end}}
                 </strong>
+            </div>
+        </div>
+        </div>
+    {{end}}
+
+    {{if .IncomingMeet}}
+        <div class="row mb-2">
+            <div class="col-lg-2"></div>
+            <div class="col-lg-8 col">
+                <div class="card border-info text-center">
+                    <div class="card-body">
+                        <h6 class="card-title">Incoming meeting can start checkin now</h6>
+                        <a class="btn btn-outline-primary" href="/meeting/detail/{{.IncomingMeet.MeetId}}">{{.IncomingMeet.Title}}</a>
+                    </div>
+                </div>
             </div>
         </div>
         </div>

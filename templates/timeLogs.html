@@ -9,11 +9,24 @@
             <div class="row">
                 <div class="col-md-6 col">
                     <a class="btn btn-primary btn-sm" href="/timeLog/form">New TimeLog</a>
+                    <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#optionsCollapse">
+                        Options <i class="fas fa-angle-double-down"></i>
+                    </button>
                 </div>
                 <div class="col-md-6 col text-md-right">
                     <select id="seasonSelector" style="border-radius: .2rem">
                         <option selected>All</option>
                     </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="collapse" id="optionsCollapse">
+                    <div class="custom-control custom-checkbox">
+                        <input class="custom-control-input" type="checkbox" id="showMeeting">
+                        <label for="showMeeting" class="custom-control-label">Show meeting</label>
+                    </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -57,11 +70,11 @@
             "info": true,
             "columns": [
                 {},
-                { data: 'Id' },
-                { data: 'UserID' },
-                { data: 'TimeIn' },
-                { data: 'TimeOut' },
-                { data: 'SeasonId' }
+                {data: 'Id'},
+                {data: 'UserID'},
+                {data: 'TimeIn'},
+                {data: 'TimeOut'},
+                {data: 'SeasonId'}
             ],
             "columnDefs": [
                 {
@@ -93,28 +106,25 @@
             ]
         });
 
-        var timeLogs = [];
-
-{{/*        {{range .TimeLogs}}*/}}
-{{/*        timeLogs.push(["",{{.Id}}, "{{.UserID}}", {{.TimeIn}}, {{.TimeOut}}, "{{.SeasonId}}"]);*/}}
-{{/*        {{end}}*/}}
-
         var names = {};
-
         {{range $key, $value := .UserNames}}
         names["{{ $key}}"] = {{ $value}};
         {{end}}
 
         var seasonIds = [];
-        timeLogs.forEach(function (data) {
-            if ($.inArray(data[5], seasonIds) === -1) {
-                seasonIds.push(data[5]);
+        TimeLogsTable.on('draw', () => {
+            for (let i = 0; i < TimeLogsTable.rows().data().length; i++) {
+                let data = TimeLogsTable.rows().data()[i];
+                console.log(data)
+                if ($.inArray(data["SeasonId"], seasonIds) === -1) {
+                    if (!data["SeasonId"].includes("m:")) {
+                        seasonIds.push(data["SeasonId"]);
+                    }
+                }
             }
-            TimeLogsTable.row.add(data).draw();
-        });
-
-        seasonIds.forEach(function (data) {
-            $("#seasonSelector").append("<option>" + data + "</option>");
+            seasonIds.forEach(function (data) {
+                $("#seasonSelector").append("<option>" + data + "</option>");
+            });
         });
     </script>
 
@@ -135,13 +145,21 @@
             function (settings, data) {
                 const selectSeason = $("#seasonSelector").val();
                 const season = data[5];
+                const showMeeting = $("#showMeeting").prop("checked");
 
                 if ((season === selectSeason) || (selectSeason === "All")) {
+                    if(!showMeeting && season.includes("m:")){
+                        return false;
+                    }
                     return true;
                 }
                 return false;
             }
         );
+
+        $("#showMeeting").on('change ', function () {
+            TimeLogsTable.draw();
+        });
 
         $("#seasonSelector").on('change ', function () {
             TimeLogsTable.draw();
@@ -153,4 +171,5 @@
 
 {{define "head"}}
     <link href="/res/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
 {{end}}
