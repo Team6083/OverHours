@@ -8,3 +8,8 @@ body{
         overflow-y:auto;
     }
 }
+
+.btn-bar .btn {
+    margin-top: .25rem;
+    margin-bottom: .25rem;
+}
