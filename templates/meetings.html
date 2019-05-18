@@ -29,7 +29,6 @@
                     <th>title</th>
                     <th>description</th>
                     <th>time</th>
-                    <th>checkin</th>
                     <th>participants</th>
                     <th>season</th>
                 </tr>
@@ -76,19 +75,6 @@
                         return data.length;
                     },
                     "width": "5%",
-                    "targets": 6
-                },
-                {
-                    "render": function (data) {
-                        if(data === 0){
-                            return "Everyone";
-                        } else if(data === 1){
-                            return "Leader";
-                        } else{
-                            return "Error";
-                        }
-                    },
-                    "width": "5%",
                     "targets": 5
                 }
             ]
@@ -97,13 +83,13 @@
         var meetings = [];
 
         {{range .Meetings}}
-        meetings.push([{{.Id}}, "{{.MeetId}}", "{{.Title}}", "{{.Description}}", {{.StartTime}}, {{.CheckinLevel}}, {{.Participants}}, {{.SeasonId}}]);
+        meetings.push([{{.Id}}, "{{.MeetId}}", "{{.Title}}", "{{.Description}}", {{.StartTime}}, {{.Participants}}, {{.SeasonId}}]);
         {{end}}
 
         var seasonIds = [];
         meetings.forEach(function (data) {
-            if ($.inArray(data[7], seasonIds) === -1) {
-                seasonIds.push(data[7]);
+            if ($.inArray(data[6], seasonIds) === -1) {
+                seasonIds.push(data[6]);
             }
             MeetingsTable.row.add(data).draw();
         });
