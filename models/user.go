@@ -81,7 +81,7 @@ func (database *Database) GetUserByUserName(name string) (*User, error) {
 	return &user, nil
 }
 
-func (database *Database) GetUserByUID(uid string) (*User, error) {
+func (database *Database) GetUserByUUID(uid string) (*User, error) {
 	user := User{}
 	err := database.DB.C("users").Find(bson.M{"uuid": uid}).One(&user)
 	if err != nil {

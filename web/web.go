@@ -119,6 +119,8 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/users", web.UsersGET).Methods("GET")
 	router.HandleFunc("/users/form", web.UsersFormGET).Methods("GET")
 	router.HandleFunc("/users/form/submit", web.UsersFormPOST).Methods("POST")
+	router.HandleFunc("/users/delete/{id}", web.UsersDeleteGET).Methods("GET")
+
 	// Boards
 	router.HandleFunc("/board/ranking", web.leaderboardGET).Methods("GET")
 
