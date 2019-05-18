@@ -7,13 +7,27 @@
         <div class="col-lg-2"></div>
         <div class="col-lg-8 col">
             <div class="row">
-                <div class="col-md-6 col">
+                <div class="col-md-6 col btn-bar">
                     <a class="btn btn-primary btn-sm" href="/meeting/form">New Meeting</a>
+                    <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse"
+                            data-target="#optionsCollapse">
+                        Options <i class="fas fa-angle-double-down"></i>
+                    </button>
                 </div>
                 <div class="col-md-6 col text-md-right">
                     <select id="seasonSelector" style="border-radius: .2rem">
                         <option selected>All</option>
                     </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="collapse" id="optionsCollapse">
+                        <div class="custom-control custom-checkbox">
+                            <input class="custom-control-input" type="checkbox" id="showFinished">
+                            <label for="showFinished" class="custom-control-label">Show finished</label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -29,6 +43,7 @@
                     <th>title</th>
                     <th>description</th>
                     <th>time</th>
+                    <th>finishTime</th>
                     <th>participants</th>
                     <th>season</th>
                 </tr>
@@ -71,11 +86,18 @@
                     "targets": 4
                 },
                 {
+                    "render": function (data, type) {
+                        return renderTimeLogsTimeStamp(data, type, "");
+                    },
+                    "visible": false,
+                    "targets": 5
+                },
+                {
                     "render": function (data) {
                         return data.length;
                     },
                     "width": "5%",
-                    "targets": 5
+                    "targets": 6
                 }
             ]
         });
@@ -83,13 +105,13 @@
         var meetings = [];
 
         {{range .Meetings}}
-        meetings.push([{{.Id}}, "{{.MeetId}}", "{{.Title}}", "{{.Description}}", {{.StartTime}}, {{.Participants}}, {{.SeasonId}}]);
+        meetings.push([{{.Id}}, "{{.MeetId}}", "{{.Title}}", "{{.Description}}", {{.StartTime}}, {{.FinishTime}}, {{.Participants}}, {{.SeasonId}}]);
         {{end}}
 
         var seasonIds = [];
         meetings.forEach(function (data) {
-            if ($.inArray(data[6], seasonIds) === -1) {
-                seasonIds.push(data[6]);
+            if ($.inArray(data[7], seasonIds) === -1) {
+                seasonIds.push(data[7]);
             }
             MeetingsTable.row.add(data).draw();
         });
@@ -105,8 +127,13 @@
                 const selectSeason = $("#seasonSelector").val();
                 const season = data[7];
 
+                const finishTimeStamp = data[5];
+                const showFinished = $("#showFinished").prop("checked");
+
                 if ((season === selectSeason) || (selectSeason === "All")) {
-                    return true;
+                    if (showFinished || finishTimeStamp === "0") {
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -116,9 +143,19 @@
             MeetingsTable.draw();
         });
 
+        $("#showFinished").on('click', function () {
+            MeetingsTable.draw();
+        });
+
+    </script>
+
+    <script>
+        MeetingsTable.draw();
     </script>
 {{end}}
 
 {{define "head"}}
     <link href="/res/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+          integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
 {{end}}
