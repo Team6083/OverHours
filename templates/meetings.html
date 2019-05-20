@@ -131,8 +131,8 @@
 
         var seasonIds = [];
         meetings.forEach(function (data) {
-            if ($.inArray(data[7], seasonIds) === -1) {
-                seasonIds.push(data[7]);
+            if ($.inArray(data[8], seasonIds) === -1) {
+                seasonIds.push(data[8]);
             }
             MeetingsTable.row.add(data).draw();
         });
@@ -146,7 +146,7 @@
         $.fn.dataTable.ext.search.push(
             function (settings, data) {
                 const selectSeason = $("#seasonSelector").val();
-                const season = data[7];
+                const season = data[8];
 
                 const finishTimeStamp = data[5];
                 const showFinished = $("#showFinished").prop("checked");
