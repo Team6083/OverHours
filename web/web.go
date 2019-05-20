@@ -190,7 +190,7 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 			data.CanCheckOut = true
 		}
 
-		lastMeet, err := web.database.GetLastMeetingsByUserId(user.GetIdentify())
+		lastMeet, err := web.database.GetLastOngoingMeetingsByUserId(user.GetIdentify())
 		if err != nil {
 			handleWebErr(w, err)
 			return
@@ -202,8 +202,6 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 				handleWebErr(w, err)
 				return
 			}
-
-			fmt.Println(lastMeetLog)
 
 			if lastMeetLog != nil && lastMeetLog.TimeIn != 0 {
 				data.IncomingMeet = nil

@@ -163,28 +163,58 @@ func (database *Database) GetMeetingsByUserId(userId string) ([]Meeting, error) 
 
 	for index, meet := range meetings {
 		if meet.CheckUserParticipate(userId) == -1 {
-			meetings = append(meetings[:index], meetings[index+1:]...)
-		}
-	}
-	return meetings, nil
-}
-
-func (database *Database) GetLastMeetingsByUserId(userId string) (*Meeting, error) {
-	meetings, err := database.GetAllMeeting()
-	if err != nil {
-		return nil, err
-	}
-
-	for index, meet := range meetings {
-		if meet.CheckUserParticipate(userId) == -1 {
 			if index+1 < len(meetings) {
 				copy(meetings[index:], meetings[index+1:])
 				meetings = meetings[:len(meetings)-1]
 			} else {
 				meetings = meetings[:len(meetings)-1]
 			}
-
 		}
+	}
+	return meetings, nil
+}
+
+func (database *Database) GetOngoingMeetingsByUserId(userId string) ([]Meeting, error) {
+	meetings, err := database.GetMeetingsByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	for index, meet := range meetings {
+		if !meet.CheckinStarted() || meet.MeetingFinished() {
+			if index+1 < len(meetings) {
+				copy(meetings[index:], meetings[index+1:])
+				meetings = meetings[:len(meetings)-1]
+			} else {
+				meetings = meetings[:len(meetings)-1]
+			}
+		}
+	}
+
+	if len(meetings) == 0 {
+		return nil, nil
+	}
+
+	return meetings, nil
+}
+
+func (database *Database) GetLastOngoingMeetingsByUserId(userId string) (*Meeting, error) {
+	meetings, err := database.GetOngoingMeetingsByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(meetings) == 0 {
+		return nil, nil
+	}
+
+	return &meetings[0], nil
+}
+
+func (database *Database) GetLastMeetingsByUserId(userId string) (*Meeting, error) {
+	meetings, err := database.GetMeetingsByUserId(userId)
+	if err != nil {
+		return nil, err
 	}
 
 	if len(meetings) == 0 {
