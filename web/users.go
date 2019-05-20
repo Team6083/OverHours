@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"github.com/Team6083/OverHours/models"
+	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -287,4 +288,33 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, redirectURI, http.StatusSeeOther)
+}
+
+func (web *Web) UsersDeleteGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLeader, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	vars := mux.Vars(r)
+	targetId := vars["id"]
+
+	user, err := web.database.GetUserByUUID(targetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	err = web.database.DeleteUser(*user)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/users", http.StatusSeeOther)
 }

@@ -119,6 +119,8 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/users", web.UsersGET).Methods("GET")
 	router.HandleFunc("/users/form", web.UsersFormGET).Methods("GET")
 	router.HandleFunc("/users/form/submit", web.UsersFormPOST).Methods("POST")
+	router.HandleFunc("/users/delete/{id}", web.UsersDeleteGET).Methods("GET")
+
 	// Boards
 	router.HandleFunc("/board/ranking", web.leaderboardGET).Methods("GET")
 
@@ -188,7 +190,7 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 			data.CanCheckOut = true
 		}
 
-		lastMeet, err := web.database.GetLastMeetingsByUserId(user.GetIdentify())
+		lastMeet, err := web.database.GetLastOngoingMeetingsByUserId(user.GetIdentify())
 		if err != nil {
 			handleWebErr(w, err)
 			return
@@ -200,8 +202,6 @@ func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 				handleWebErr(w, err)
 				return
 			}
-
-			fmt.Println(lastMeetLog)
 
 			if lastMeetLog != nil && lastMeetLog.TimeIn != 0 {
 				data.IncomingMeet = nil

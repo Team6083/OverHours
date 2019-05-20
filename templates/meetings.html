@@ -7,13 +7,27 @@
         <div class="col-lg-2"></div>
         <div class="col-lg-8 col">
             <div class="row">
-                <div class="col-md-6 col">
+                <div class="col-md-6 col btn-bar">
                     <a class="btn btn-primary btn-sm" href="/meeting/form">New Meeting</a>
+                    <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse"
+                            data-target="#optionsCollapse">
+                        Options <i class="fas fa-angle-double-down"></i>
+                    </button>
                 </div>
                 <div class="col-md-6 col text-md-right">
                     <select id="seasonSelector" style="border-radius: .2rem">
                         <option selected>All</option>
                     </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="collapse" id="optionsCollapse">
+                        <div class="custom-control custom-checkbox">
+                            <input class="custom-control-input" type="checkbox" id="showFinished">
+                            <label for="showFinished" class="custom-control-label">Show finished</label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -29,9 +43,11 @@
                     <th>title</th>
                     <th>description</th>
                     <th>time</th>
-                    <th>checkin</th>
+                    <th>finishTime</th>
+                    <th>status</th>
                     <th>participants</th>
                     <th>season</th>
+                    <th>startCheckinTime</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -50,16 +66,21 @@
     </script>
     <script src="/res/js/datatables.min.js"></script>
     <script>
+        const nowTimestamp = Math.round(new Date().getTime() / 1000);
+
         var MeetingsTable = $("#meetingsTable").DataTable({
             "order": [4, 'desc'],
             "info": true,
             "columnDefs": [
                 {
                     "visible": false,
-                    "targets": [0, 1]
+                    "targets": [0, 1, 9]
                 },
                 {
                     "render": function (data, type, row) {
+                        if (data === "") {
+                            return "<a href=\"/meeting/detail/" + row[1] + "\" class=\"text-body\">" + row[1] + "</a>";
+                        }
                         return "<a href=\"/meeting/detail/" + row[1] + "\" class=\"text-body\">" + data + "</a>";
                     },
                     "targets": 2
@@ -72,24 +93,32 @@
                     "targets": 4
                 },
                 {
+                    "render": function (data, type) {
+                        return renderTimeLogsTimeStamp(data, type, "");
+                    },
+                    "visible": false,
+                    "targets": 5
+                },
+                {
                     "render": function (data) {
                         return data.length;
                     },
                     "width": "5%",
-                    "targets": 6
+                    "targets": 7
                 },
                 {
-                    "render": function (data) {
-                        if(data === 0){
-                            return "Everyone";
-                        } else if(data === 1){
-                            return "Leader";
-                        } else{
-                            return "Error";
+                    "render": function (data, type, row) {
+                        if (row[5] < nowTimestamp && row[5] !== 0) {
+                            return "<span class=\"text-primary\">Finished</span>";
+                        } else if (row[4] < nowTimestamp) {
+                            return "<span class=\"text-warning\"><strong>Started</strong></span>";
+                        } else if (row[9] < nowTimestamp) {
+                            return "<span class=\"text-success\"><strong>Checking open</strong></span>";
+                        } else {
+                            return "Waiting to start";
                         }
                     },
-                    "width": "5%",
-                    "targets": 5
+                    "targets": 6
                 }
             ]
         });
@@ -97,13 +126,13 @@
         var meetings = [];
 
         {{range .Meetings}}
-        meetings.push([{{.Id}}, "{{.MeetId}}", "{{.Title}}", "{{.Description}}", {{.StartTime}}, {{.CheckinLevel}}, {{.Participants}}, {{.SeasonId}}]);
+        meetings.push([{{.Id}}, "{{.MeetId}}", "{{.Title}}", "{{.Description}}", {{.StartTime}}, {{.FinishTime}}, "", {{.Participants}}, {{.SeasonId}}, {{.StartCheckinTime}}]);
         {{end}}
 
         var seasonIds = [];
         meetings.forEach(function (data) {
-            if ($.inArray(data[7], seasonIds) === -1) {
-                seasonIds.push(data[7]);
+            if ($.inArray(data[8], seasonIds) === -1) {
+                seasonIds.push(data[8]);
             }
             MeetingsTable.row.add(data).draw();
         });
@@ -117,10 +146,16 @@
         $.fn.dataTable.ext.search.push(
             function (settings, data) {
                 const selectSeason = $("#seasonSelector").val();
-                const season = data[7];
+                const season = data[8];
+
+                const finishTimeStamp = data[5];
+                const showFinished = $("#showFinished").prop("checked");
 
                 if ((season === selectSeason) || (selectSeason === "All")) {
-                    return true;
+                    if (showFinished || finishTimeStamp === "0" || (nowTimestamp - parseInt(finishTimeStamp)) < 60 * 30) {
+                        // show finished checked or not yet finished or finished just in 30 min
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -130,9 +165,19 @@
             MeetingsTable.draw();
         });
 
+        $("#showFinished").on('click', function () {
+            MeetingsTable.draw();
+        });
+
+    </script>
+
+    <script>
+        MeetingsTable.draw();
     </script>
 {{end}}
 
 {{define "head"}}
     <link href="/res/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+          integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
 {{end}}

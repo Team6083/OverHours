@@ -16,17 +16,19 @@
                     <p>{{.Meeting.Description}}</p>
 
                     {{if .IsLeader}}
-                        <a class="btn btn-sm btn-secondary  "
-                           href="/meeting/form?edit={{.Meeting.MeetId}}">Edit</a>
+                        <div class="btn-bar">
+                            <a class="btn btn-sm btn-secondary  "
+                               href="/meeting/form?edit={{.Meeting.MeetId}}">Edit</a>
 
-                        <a class="btn btn-sm btn-success {{if .MeetingCheckinStarted}}disabled{{end}}"
-                           href="/meeting/modify/{{.Meeting.MeetId}}/openCheckin">Open Checkin Now</a>
+                            <a class="btn btn-sm btn-success {{if .MeetingCheckinStarted}}disabled{{end}}"
+                               href="/meeting/modify/{{.Meeting.MeetId}}/openCheckin">Open Checkin Now</a>
 
-                        <a class="btn btn-sm btn-warning {{if .MeetingFinished}}disabled{{end}}"
-                           href="/meeting/modify/{{.Meeting.MeetId}}/finish">Finish Meeting</a>
+                            <a class="btn btn-sm btn-warning {{if .MeetingFinished}}disabled{{end}}"
+                               href="/meeting/modify/{{.Meeting.MeetId}}/finish">Finish Meeting</a>
 
-                        <a class="btn btn-sm btn-danger"
-                           href="/meeting/modify/{{.Meeting.MeetId}}/removeAllLog">Remove All Log</a>
+                            <a class="btn btn-sm btn-danger"
+                               href="/meeting/modify/{{.Meeting.MeetId}}/removeAllLog">Remove All TimeLog</a>
+                        </div>
                     {{end}}
 
 

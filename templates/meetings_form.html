@@ -1,4 +1,4 @@
-{{define "title"}}Users Form{{end}}
+{{define "title"}}Meetings Form{{end}}
 
 {{define "body"}}
     <div class="mt-5">
@@ -56,7 +56,7 @@
                             <button type="button" id="finishTimeClearBtn" class="btn btn-warning btn-sm">Clear
                             </button>
                         </label>
-                        <input type="text" class="form-control" id="editFinishTime" name="finishTime" required>
+                        <input type="text" class="form-control" id="editFinishTime" name="finishTime">
                         <div class="invalid-feedback">
                             <strong>FinishTime should not earlier than StartTime.</strong>
                         </div>
@@ -95,7 +95,7 @@
 
                     </div>
                 </div>
-                <div class="form-row mt-md-5">
+                <div class="form-row mt-md-5 btn-bar">
                     <div class="col-md-8">
                         <button type="submit" class="btn btn-block btn-primary">Save</button>
                     </div>

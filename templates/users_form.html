@@ -47,7 +47,8 @@
                         <label for="inputPassword">Password</label>
                         <input type="password" class="form-control" id="inputPassword" name="password"
                                placeholder="Password"
-                               autocomplete="new-password" required value="{{.EditUser.Password}}" {{if .New}}{{else}}disabled{{end}}>
+                               autocomplete="new-password" required value="{{.EditUser.Password}}"
+                               {{if .New}}{{else}}disabled{{end}}>
                         <div class="invalid-feedback">
                             Please choose a password.
                         </div>
@@ -56,7 +57,8 @@
                         <label for="inputConfirmPassword">Confirm Password</label>
                         <input type="password" class="form-control" id="inputConfirmPassword" name="confirmPassword"
                                placeholder="Confirm Password"
-                               autocomplete="new-password" value="{{.EditUser.Password}}" {{if .New}}{{else}}disabled{{end}}>
+                               autocomplete="new-password" value="{{.EditUser.Password}}"
+                               {{if .New}}{{else}}disabled{{end}}>
                         <div class="invalid-feedback">
                             Password dose not match.
                         </div>
@@ -106,6 +108,7 @@
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-danger" id="deleteUser">Delete</button>
             </form>
         </div>
         <div class="col-lg-2">
@@ -132,7 +135,7 @@
                             event.preventDefault();
                             event.stopPropagation();
                         }
-                        if(psw !== pswConfirm){
+                        if (psw !== pswConfirm) {
                             event.preventDefault();
                             event.stopPropagation();
                             $("#inputConfirmPassword")[0].setCustomValidity("Passwords Don't Match");
@@ -159,7 +162,14 @@
         $("#pswEditBtn").on('click', function () {
             $("#inputPassword").removeAttr("disabled");
             $("#inputConfirmPassword").removeAttr("disabled");
-        })
+        });
+
+        $("#deleteUser").on('click', function () {
+            const r = confirm("Are you sure you want to delete user: '" + $("#editUUID").val() + "' ?");
+            if (r === true) {
+                window.location.href = document.location.origin + "/users/delete/" +{{.EditUser.UUID}};
+            }
+        });
 
     </script>
 {{end}}
