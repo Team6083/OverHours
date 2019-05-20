@@ -48,6 +48,13 @@ func (meeting *Meeting) CheckIfMeetingCanCheckInNow(user *User) bool {
 	return false
 }
 
+func (meeting *Meeting) CheckIfVisibleToUser(user *User) bool {
+	if user.CheckPermissionLevel(PermissionLeader) || meeting.CheckUserParticipate(user.GetIdentify()) != -1 {
+		return true
+	}
+	return false
+}
+
 func (meeting *Meeting) MeetingStarted() bool {
 	StartTime := time.Unix(meeting.StartTime, 0)
 	return time.Now().After(StartTime)

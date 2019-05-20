@@ -44,8 +44,10 @@
                     <th>description</th>
                     <th>time</th>
                     <th>finishTime</th>
+                    <th>status</th>
                     <th>participants</th>
                     <th>season</th>
+                    <th>startCheckinTime</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -64,16 +66,21 @@
     </script>
     <script src="/res/js/datatables.min.js"></script>
     <script>
+        const nowTimestamp = Math.round(new Date().getTime() / 1000);
+
         var MeetingsTable = $("#meetingsTable").DataTable({
             "order": [4, 'desc'],
             "info": true,
             "columnDefs": [
                 {
                     "visible": false,
-                    "targets": [0, 1]
+                    "targets": [0, 1, 9]
                 },
                 {
                     "render": function (data, type, row) {
+                        if (data === "") {
+                            return "<a href=\"/meeting/detail/" + row[1] + "\" class=\"text-body\">" + row[1] + "</a>";
+                        }
                         return "<a href=\"/meeting/detail/" + row[1] + "\" class=\"text-body\">" + data + "</a>";
                     },
                     "targets": 2
@@ -97,6 +104,20 @@
                         return data.length;
                     },
                     "width": "5%",
+                    "targets": 7
+                },
+                {
+                    "render": function (data, type, row) {
+                        if (row[5] < nowTimestamp && row[5] !== 0) {
+                            return "<span class=\"text-primary\">Finished</span>";
+                        } else if (row[4] < nowTimestamp) {
+                            return "<span class=\"text-warning\"><strong>Started</strong></span>";
+                        } else if (row[9] < nowTimestamp) {
+                            return "<span class=\"text-success\"><strong>Checking open</strong></span>";
+                        } else {
+                            return "Waiting to start";
+                        }
+                    },
                     "targets": 6
                 }
             ]
@@ -105,7 +126,7 @@
         var meetings = [];
 
         {{range .Meetings}}
-        meetings.push([{{.Id}}, "{{.MeetId}}", "{{.Title}}", "{{.Description}}", {{.StartTime}}, {{.FinishTime}}, {{.Participants}}, {{.SeasonId}}]);
+        meetings.push([{{.Id}}, "{{.MeetId}}", "{{.Title}}", "{{.Description}}", {{.StartTime}}, {{.FinishTime}}, "", {{.Participants}}, {{.SeasonId}}, {{.StartCheckinTime}}]);
         {{end}}
 
         var seasonIds = [];
@@ -131,7 +152,8 @@
                 const showFinished = $("#showFinished").prop("checked");
 
                 if ((season === selectSeason) || (selectSeason === "All")) {
-                    if (showFinished || finishTimeStamp === "0") {
+                    if (showFinished || finishTimeStamp === "0" || (nowTimestamp - parseInt(finishTimeStamp)) < 60 * 30) {
+                        // show finished checked or not yet finished or finished just in 30 min
                         return true;
                     }
                 }

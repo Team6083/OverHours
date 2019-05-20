@@ -147,6 +147,11 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !meeting.CheckIfVisibleToUser(user) {
+		web.handle403(w, r)
+		return
+	}
+
 	names, err := web.database.GetUserNameMap()
 	if err != nil {
 		handleWebErr(w, err)
