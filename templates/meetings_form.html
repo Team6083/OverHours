@@ -103,6 +103,13 @@
                         <button type="button" id="meetDelBtn" class="btn btn-block btn-danger">Delete</button>
                     </div>
                 </div>
+
+                {{range .EditMeeting.Participants}}
+                    <input type="hidden" name="participantsData[][UserId]" value="{{.UserId}}">
+                    <input type="hidden" name="participantsData[][Leave]" value="{{.Leave}}">
+                    <input type="hidden" name="participantsData[][IsAdmin]" value="{{.IsAdmin}}">
+                {{end}}
+
             </form>
         </div>
         <div class="col-lg-2">
@@ -235,7 +242,7 @@
         }
 
         {{range $i, $v := .EditMeeting.Participants}}
-        select.multiSelect('select', {{$v}});
+        select.multiSelect('select', {{$i}});
         {{end}}
 
     </script>

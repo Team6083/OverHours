@@ -68,6 +68,10 @@ func handleBadRequest(w http.ResponseWriter, err error) {
 	http.Error(w, "Bad request error: "+err.Error(), http.StatusBadRequest)
 }
 
+func handleForbidden(w http.ResponseWriter, err error) {
+	http.Error(w, "Forbidden error: "+err.Error(), http.StatusBadRequest)
+}
+
 func (web *Web) ServeWebInterface(webPort int) {
 	//go web.ServeSocketInterface(8000)
 

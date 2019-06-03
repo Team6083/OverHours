@@ -80,7 +80,7 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := web.database.GetUserByUserName(session.Username)
+	sessionUser, err := web.database.GetUserByUserName(session.Username)
 	if err != nil {
 		handleWebErr(w, err)
 		return
@@ -95,6 +95,9 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var user *models.User
+	user = sessionUser
+
 	if vars["userId"] != "" {
 		userId := vars["userId"]
 		user, err = web.database.GetUserByUserName(userId)
@@ -104,13 +107,18 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if sessionUser != user {
+		if !(sessionUser.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
+			handleForbidden(w, errors.New("you need to be a Admin user or a meeting admin"))
+			return
+		}
+	}
+
 	err = web.database.MeetingCheckin(meeting, user)
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
-
-	fmt.Println(meeting)
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
@@ -158,7 +166,7 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type ParticipantsData struct {
+	type ParticipantsTimeLogDetail struct {
 		UserId      string
 		DisplayName string
 		InTime      int64
@@ -168,35 +176,33 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Meeting               *models.Meeting
 		UserNames             map[string]string
-		TimeLogs              []ParticipantsData
+		TimeLogs              map[string]ParticipantsTimeLogDetail
 		CanCheckin            bool
 		MeetingStarted        bool
 		MeetingCheckinStarted bool
 		IsLeader              bool
 		MeetingFinished       bool
-	}{meeting, names, nil, meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionLeader), meeting.MeetingFinished()}
+	}{meeting, names, make(map[string]ParticipantsTimeLogDetail), meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionLeader), meeting.MeetingFinished()}
 
-	logs := make([]ParticipantsData, len(meeting.Participants))
-
-	for index, userId := range meeting.Participants {
-		lastLog, err := web.database.GetLastLogByUser(userId)
+	for index, participant := range meeting.Participants {
+		lastLog, err := web.database.GetLastLogByUser(participant.UserId)
 		if err != nil && err != mgo.ErrNotFound {
 			handleWebErr(w, err)
 			return
 		}
 
-		logs[index].DisplayName = names[userId]
-		logs[index].UserId = userId
+		logs := ParticipantsTimeLogDetail{DisplayName: names[participant.UserId], UserId: participant.UserId}
 
 		if lastLog != nil && lastLog.SeasonId == meeting.GetMeetingLogId() {
-			logs[index].InTime = lastLog.TimeIn
-			logs[index].OutTime = lastLog.TimeOut
+			logs.InTime = lastLog.TimeIn
+			logs.OutTime = lastLog.TimeOut
 		} else {
-			logs[index].InTime = 0
-			logs[index].OutTime = 0
+			logs.InTime = 0
+			logs.OutTime = 0
 		}
+
+		data.TimeLogs[index] = logs
 	}
-	data.TimeLogs = logs
 
 	err = webTemplate.ExecuteTemplate(w, "base", data)
 	if err != nil {
@@ -273,7 +279,7 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	meeting := new(models.Meeting)
+	meeting := models.GetNewMeeting()
 
 	meeting.Id = bson.ObjectIdHex(r.Form["id"][0])
 	meeting.MeetId = r.Form["meetId"][0]
@@ -314,7 +320,15 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 	}
 	meeting.CheckinLevel = checkinLevel
 
-	meeting.Participants = r.Form["userSelect"]
+	for _, data := range r.Form["participantsData"] {
+		fmt.Println(data)
+	}
+
+	for _, participantId := range r.Form["userSelect"] {
+		participantData := models.ParticipantData{UserId: participantId, Leave: false, IsAdmin: false}
+
+		meeting.Participants[participantId] = participantData
+	}
 
 	_, err = web.database.SaveMeeting(meeting)
 	if err != nil {
