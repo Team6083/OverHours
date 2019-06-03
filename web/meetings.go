@@ -320,14 +320,21 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 	}
 	meeting.CheckinLevel = checkinLevel
 
-	for _, data := range r.Form["participantsData"] {
-		fmt.Println(data)
-	}
-
 	for _, participantId := range r.Form["userSelect"] {
 		participantData := models.ParticipantData{UserId: participantId, Leave: false, IsAdmin: false}
 
 		meeting.Participants[participantId] = participantData
+	}
+
+	for index, data := range r.Form["participantsData[][UserId]"] {
+		if meeting.CheckUserParticipate(data) {
+			participantData := meeting.Participants[data]
+
+			participantData.IsAdmin = r.Form["participantsData[][IsAdmin]"][index] == "true"
+			participantData.Leave = r.Form["participantsData[][Leave]"][index] == "true"
+
+			meeting.Participants[data] = participantData
+		}
 	}
 
 	_, err = web.database.SaveMeeting(meeting)
