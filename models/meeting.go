@@ -43,6 +43,18 @@ func (meeting *Meeting) GetMeetingLogId() string {
 	return fmt.Sprintf("m:%s", meeting.MeetId)
 }
 
+func (meeting *Meeting) ParticipantAdmin(userId string, admin bool) {
+	data := meeting.Participants[userId]
+	data.Leave = admin
+	meeting.Participants[userId] = data
+}
+
+func (meeting *Meeting) ParticipantLeave(userId string, leave bool) {
+	data := meeting.Participants[userId]
+	data.Leave = leave
+	meeting.Participants[userId] = data
+}
+
 func (meeting *Meeting) CheckUserParticipate(userId string) bool {
 	if _, ok := meeting.Participants[userId]; ok {
 		return true

@@ -171,6 +171,7 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 		DisplayName string
 		InTime      int64
 		OutTime     int64
+		IsLeave     bool
 	}
 
 	data := struct {
@@ -191,7 +192,7 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		logs := ParticipantsTimeLogDetail{DisplayName: names[participant.UserId], UserId: participant.UserId}
+		logs := ParticipantsTimeLogDetail{DisplayName: names[participant.UserId], UserId: participant.UserId, IsLeave: participant.Leave}
 
 		if lastLog != nil && lastLog.SeasonId == meeting.GetMeetingLogId() {
 			logs.InTime = lastLog.TimeIn
@@ -373,6 +374,50 @@ func (web *Web) MeetingDeleteGET(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/meeting", http.StatusSeeOther)
+}
+
+func (web *Web) MeetingParticipantLeaveGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	sessionUser, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	meetId := vars["meetId"]
+
+	meeting, err := web.database.GetMeetingByMeetId(meetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	userId := vars["userId"]
+	if !meeting.CheckUserParticipate(userId) {
+		handleWebErr(w, models.UserNotInMeeting)
+		return
+	}
+
+	if sessionUser.GetIdentify() == userId {
+		if !(sessionUser.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
+			handleForbidden(w, errors.New("you need to be a Admin user or a meeting admin"))
+			return
+		}
+	}
+
+	meeting.ParticipantLeave(userId, true)
+
+	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
 }
 
 // modify

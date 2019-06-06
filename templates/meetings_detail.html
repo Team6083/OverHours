@@ -47,6 +47,9 @@
                     <table class="table table-striped table-sm">
                         <thead>
                         <tr>
+                            <th scope="col">
+                                <input type="checkbox" id="participantCheckAll">
+                            </th>
                             <th scope="col">#</th>
                             <th scope="col">Name</th>
                             <th scope="col">CheckinTime</th>
@@ -89,23 +92,42 @@
         var participantCount = 0;
 
         {{range .TimeLogs}}
-        addParticipant({{.UserId}}, {{.InTime}});
+        addParticipant({{.UserId}}, {{.InTime}}, {{.IsLeave}});
         {{end}}
 
-        function addParticipant(name, checkinTime) {
-            console.log(name, checkinTime);
-
+        function addParticipant(name, checkinTime, isLeave) {
             let tr = document.createElement("tr");
+
+            let tdCheck = document.createElement("td");
+            tdCheck.innerHTML = "<input type=\"checkbox\" class=\"participantCheck\" value=\"" + name + "\">";
+            tr.append(tdCheck);
+
             let td1 = document.createElement("td");
             td1.scope = "row";
             td1.innerText = participantCount + 1;
             let td2 = document.createElement("td");
             td2.innerText = names[name];
             let td3 = document.createElement("td");
-            td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsLeader}}<a class=\"btn btn-sm btn-warning\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
+            if (isLeave) {
+                td3.innerHTML = "<span class=\"badge badge-pill badge-dark\">Leave</span>";
+            } else {
+                td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsLeader}}<a class=\"btn btn-sm btn-warning\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
+            }
+
 
             let td4 = document.createElement("td");
             td4.innerHTML = "";
+
+            const deleteBtn = "<a class=\"btn btn-sm btn-danger\" href=\"/meeting/participant/delete/{{.Meeting.MeetId}}/" + name + "\">Delete</a>";
+
+            {{if .IsLeader}}
+            if (isLeave) {
+                td4.innerHTML += "<a class=\"btn btn-sm btn-info disabled\" href=\"/meeting/participant/leave/{{.Meeting.MeetId}}/" + name + "\">Leave</a>" + " ";
+            } else {
+                td4.innerHTML += "<a class=\"btn btn-sm btn-info\" href=\"/meeting/participant/leave/{{.Meeting.MeetId}}/" + name + "\">Leave</a>" + " ";
+            }
+            td4.innerHTML += deleteBtn;
+            {{end}}
 
             tr.append(td1);
             tr.append(td2);
