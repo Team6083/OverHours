@@ -183,7 +183,7 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 		MeetingCheckinStarted bool
 		IsLeader              bool
 		MeetingFinished       bool
-	}{meeting, names, make(map[string]ParticipantsTimeLogDetail), meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionLeader), meeting.MeetingFinished()}
+	}{meeting, names, make(map[string]ParticipantsTimeLogDetail), meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(user.GetIdentify()), meeting.MeetingFinished()}
 
 	for index, participant := range meeting.Participants {
 		lastLog, err := web.database.GetLastLogByUser(participant.UserId)
@@ -408,7 +408,7 @@ func (web *Web) MeetingParticipantLeaveGET(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if sessionUser.GetIdentify() == userId {
+	if sessionUser.GetIdentify() != userId {
 		if !(sessionUser.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
 			handleForbidden(w, errors.New("you need to be a Admin user or a meeting admin"))
 			return
@@ -416,6 +416,119 @@ func (web *Web) MeetingParticipantLeaveGET(w http.ResponseWriter, r *http.Reques
 	}
 
 	meeting.ParticipantLeave(userId, true)
+	_, err = web.database.SaveMeeting(meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
+}
+
+func (web *Web) MeetingParticipantDeleteLogGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	sessionUser, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	meetId := vars["meetId"]
+
+	meeting, err := web.database.GetMeetingByMeetId(meetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	userId := vars["userId"]
+	if !meeting.CheckUserParticipate(userId) {
+		handleWebErr(w, models.UserNotInMeeting)
+		return
+	}
+
+	if !(sessionUser.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
+		handleForbidden(w, errors.New("you need to be a Admin user or a meeting admin"))
+		return
+	}
+
+	timeLogs, err := web.database.GetTimeLogsByUserWithSpecificSeason(userId, meeting.GetMeetingLogId())
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	for _, timeLog := range timeLogs {
+		err = web.database.DeleteTimeLog(&timeLog)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+	}
+
+	meeting.ParticipantLeave(userId, false)
+	_, err = web.database.SaveMeeting(meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
+}
+
+func (web *Web) MeetingParticipantDeleteGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		return
+	}
+
+	sessionUser, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	meetId := vars["meetId"]
+
+	meeting, err := web.database.GetMeetingByMeetId(meetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	userId := vars["userId"]
+	if !meeting.CheckUserParticipate(userId) {
+		handleWebErr(w, models.UserNotInMeeting)
+		return
+	}
+
+	if !(sessionUser.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
+		handleForbidden(w, errors.New("you need to be a Admin user or a meeting admin"))
+		return
+	}
+
+	meeting.DeleteParticipant(userId)
+	_, err = web.database.SaveMeeting(meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
 
 	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
 }

@@ -100,6 +100,10 @@ func (meeting *Meeting) CheckinStarted() bool {
 	return time.Now().After(StartCheckinTime)
 }
 
+func (meeting *Meeting) DeleteParticipant(userId string) {
+	delete(meeting.Participants, userId)
+}
+
 func (database *Database) DeleteAllMeetingLog(meeting *Meeting) error {
 	timeLogs, err := database.GetTimeLogsBySeason(meeting.GetMeetingLogId())
 	if err != nil {
