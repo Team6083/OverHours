@@ -12,7 +12,8 @@ import (
 func TestDatabase_GetMeetingsBySeason(t *testing.T) {
 	Database := SetupTestDb(t)
 
-	participant := []string{"1", "2", "3", "4"}
+	participant := make(map[string]ParticipantData)
+	participant["test"] = ParticipantData{UserId: "test", Leave: false, IsAdmin: false}
 
 	for i := 0; i < 10; i++ {
 		meeting := Meeting{fmt.Sprintf("meet%d", i), time.Now().Unix(), "seasonTest", "title", "desc", 0, time.Now().Unix(), 0, participant, bson.NewObjectId()}
@@ -36,7 +37,8 @@ func TestDatabase_GetMeetingsBySeason(t *testing.T) {
 func TestDatabase_DeleteMeeting(t *testing.T) {
 	database := SetupTestDb(t)
 
-	participant := []string{"1", "2", "3", "4"}
+	participant := make(map[string]ParticipantData)
+	participant["test"] = ParticipantData{UserId: "test", Leave: false, IsAdmin: false}
 
 	meeting := Meeting{"m1", time.Now().Unix(), "seasonTest", "title", "desc", 0, time.Now().Unix(), 0, participant, bson.NewObjectId()}
 

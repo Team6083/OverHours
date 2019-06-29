@@ -101,7 +101,16 @@
                 },
                 {
                     "render": function (data) {
-                        return data.length;
+                        if (data == null) {
+                            return 0;
+                        }
+
+                        let i = 0;
+                        for(let item in data){
+                            console.log(item);
+                        }
+
+                        return 0;
                     },
                     "width": "5%",
                     "targets": 7
