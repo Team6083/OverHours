@@ -43,8 +43,8 @@ func main() {
 		}
 	}
 
-	webServer := web.NewWeb(database, getEnv("sentryDsn", ""))
-	webServer.ServeWebInterface(webPort)
+	webServer := web.NewWeb(database)
+	webServer.ServeWebInterface(webPort, getEnv("sentryDsn", ""))
 }
 
 func getEnv(key, fallback string) string {

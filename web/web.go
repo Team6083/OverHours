@@ -36,7 +36,7 @@ func getSecFromDuration(duration time.Duration) int64 {
 	return int64(duration.Seconds())
 }
 
-func NewWeb(database *models.Database, dsn string) *Web {
+func NewWeb(database *models.Database) *Web {
 	web := &Web{database: database}
 	web.templateHelpers = template.FuncMap{
 		"avail":              avail,
