@@ -99,50 +99,65 @@ func (web *Web) ServeWebInterface(webPort int, dsn string) {
 	http.ListenAndServe(fmt.Sprintf(":%d", webPort), nil)
 }
 
+type PageInfo struct {
+	path    string
+	handler func(http.ResponseWriter, *http.Request)
+	methods string
+}
+
+func (web *Web) GetPageInfos() []PageInfo {
+	pages := make([]PageInfo, 1)
+	pages[0] = PageInfo{"/", web.IndexHandler, "GET"}
+
+	pages = append(pages, PageInfo{"/login", web.LoginHandler, "GET"})
+	pages = append(pages, PageInfo{"/loginPost", web.LoginPOST, "POST"})
+	pages = append(pages, PageInfo{"/logout", web.LogoutHandler, "GET"})
+
+	// Setting
+	pages = append(pages, PageInfo{"/settings", web.SettingsGET, "GET"})
+	pages = append(pages, PageInfo{"/settings/submit", web.SettingsPOST, "POST"})
+	pages = append(pages, PageInfo{"/settings/renew", web.RenewSettingsGET, "GET"})
+	//Time Logs
+	pages = append(pages, PageInfo{"/timeLog", web.TimeLogGET, "GET"})
+	pages = append(pages, PageInfo{"/timeLog/datatable", web.TimeLogDatatable, "GET"})
+	pages = append(pages, PageInfo{"/timeLog/form", web.TimeLogFormGET, "GET"})
+	pages = append(pages, PageInfo{"/timeLog/form/submit", web.TimeLogFormPOST, "POST"})
+	pages = append(pages, PageInfo{"/timeLog/checkinPost", web.TimeLogCheckinPOST, "POST"})
+	pages = append(pages, PageInfo{"/timeLog/checkout", web.TimeLogCheckoutGET, "GET"})
+	pages = append(pages, PageInfo{"/timeLog/delete/{id}", web.TimeLogDelete, "GET"})
+	//Meetings
+	pages = append(pages, PageInfo{"/meeting", web.MeetingGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/detail/{meetId}", web.MeetingDetailGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/checkin/{meetId}", web.MeetingCheckinGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/checkin/{meetId}/{userId}", web.MeetingCheckinGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/participant/leave/{meetId}/{userId}", web.MeetingParticipantLeaveGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/participant/deleteLog/{meetId}/{userId}", web.MeetingParticipantDeleteLogGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/participant/delete/{meetId}/{userId}", web.MeetingParticipantDeleteGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/form", web.MeetingFormGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/form/submit", web.MeetingFormPOST, "POST"})
+	pages = append(pages, PageInfo{"/meeting/delete/{id}", web.MeetingDeleteGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/modify/{meetId}/openCheckin", web.MeetingModifyOpenCheckinGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/modify/{meetId}/removeAllLog", web.MeetingModifyRmAllLogGET, "GET"})
+	pages = append(pages, PageInfo{"/meeting/modify/{meetId}/finish", web.MeetingModifyFinishGET, "GET"})
+	// Users
+	pages = append(pages, PageInfo{"/users", web.UsersGET, "GET"})
+	pages = append(pages, PageInfo{"/users/form", web.UsersFormGET, "GET"})
+	pages = append(pages, PageInfo{"/users/form/submit", web.UsersFormPOST, "POST"})
+	pages = append(pages, PageInfo{"/users/delete/{id}", web.UsersDeleteGET, "GET"})
+	// Boards
+	pages = append(pages, PageInfo{"/board/ranking", web.leaderboardGET, "GET"})
+
+	return pages
+}
+
 func (web *Web) newHandler() http.Handler {
 	router := mux.NewRouter()
 
-	// Pages
-	router.HandleFunc("/", web.IndexHandler).Methods("GET")
-	// Auth
-	router.HandleFunc("/login", web.LoginHandler).Methods("GET")
-	router.HandleFunc("/loginPost", web.LoginPOST).Methods("POST")
-	router.HandleFunc("/logout", web.LogoutHandler).Methods("GET")
-	// Setting
-	router.HandleFunc("/settings", web.SettingsGET).Methods("GET")
-	router.HandleFunc("/settings/submit", web.SettingsPOST).Methods("POST")
-	router.HandleFunc("/settings/renew", web.RenewSettingsGET).Methods("GET")
-	// Time Logs
-	router.HandleFunc("/timeLog", web.TimeLogGET).Methods("GET")
-	router.HandleFunc("/timeLog/datatable", web.TimeLogDatatable).Methods("GET")
-	router.HandleFunc("/timeLog/form", web.TimeLogFormGET).Methods("GET")
-	router.HandleFunc("/timeLog/form/submit", web.TimeLogFormPOST).Methods("POST")
-	router.HandleFunc("/timeLog/checkinPost", web.TimeLogCheckinPOST).Methods("POST")
-	router.HandleFunc("/timeLog/checkout", web.TimeLogCheckoutGET).Methods("GET")
-	router.HandleFunc("/timeLog/delete/{id}", web.TimeLogDelete).Methods("GET")
-	// Meetings
-	router.HandleFunc("/meeting", web.MeetingGET).Methods("GET")
-	router.HandleFunc("/meeting/detail/{meetId}", web.MeetingDetailGET).Methods("GET")
-	router.HandleFunc("/meeting/checkin/{meetId}", web.MeetingCheckinGET).Methods("GET")
-	router.HandleFunc("/meeting/checkin/{meetId}/{userId}", web.MeetingCheckinGET).Methods("GET")
-	router.HandleFunc("/meeting/participant/leave/{meetId}/{userId}", web.MeetingParticipantLeaveGET).Methods("GET")
-	router.HandleFunc("/meeting/participant/deleteLog/{meetId}/{userId}", web.MeetingParticipantDeleteLogGET).Methods("GET")
-	router.HandleFunc("/meeting/participant/delete/{meetId}/{userId}", web.MeetingParticipantDeleteGET).Methods("GET")
-	router.HandleFunc("/meeting/form", web.MeetingFormGET).Methods("GET")
-	router.HandleFunc("/meeting/form/submit", web.MeetingFormPOST).Methods("POST")
-	router.HandleFunc("/meeting/delete/{id}", web.MeetingDeleteGET).Methods("GET")
-	router.HandleFunc("/meeting/modify/{meetId}/openCheckin", web.MeetingModifyOpenCheckinGET).Methods("GET")
-	router.HandleFunc("/meeting/modify/{meetId}/removeAllLog", web.MeetingModifyRmAllLogGET).Methods("GET")
-	router.HandleFunc("/meeting/modify/{meetId}/finish", web.MeetingModifyFinishGET).Methods("GET")
+	pages := web.GetPageInfos()
 
-	// Users
-	router.HandleFunc("/users", web.UsersGET).Methods("GET")
-	router.HandleFunc("/users/form", web.UsersFormGET).Methods("GET")
-	router.HandleFunc("/users/form/submit", web.UsersFormPOST).Methods("POST")
-	router.HandleFunc("/users/delete/{id}", web.UsersDeleteGET).Methods("GET")
-
-	// Boards
-	router.HandleFunc("/board/ranking", web.leaderboardGET).Methods("GET")
+	for _, pageInfo := range pages {
+		router.HandleFunc(pageInfo.path, pageInfo.handler).Methods(pageInfo.methods)
+	}
 
 	return router
 }
