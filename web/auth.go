@@ -313,7 +313,7 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) renewSession(w http.ResponseWriter, session *LoginSession) error {
-	session.renew()
+	session.renew(true)
 	resetSessionCookie(w)
 	_, err := web.storeSession(session)
 	setSessionCookie(w, *session)
@@ -361,8 +361,10 @@ func newLoginSession(username string) *LoginSession {
 	return session
 }
 
-func (session *LoginSession) renew() {
-	session.SessionToken = newSessionToken()
+func (session *LoginSession) renew(onlyTime bool) {
+	if !onlyTime {
+		session.SessionToken = newSessionToken()
+	}
 	session.Validate = time.Now().Add(sessionTimeout).Unix()
 }
 
