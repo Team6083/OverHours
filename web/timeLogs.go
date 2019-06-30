@@ -325,7 +325,7 @@ func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
 		if web.settings.CheckIfCanCheckOut(user) {
 			fmt.Printf("%s checkout at %s\n", studentId, time.Now().String())
 			err = web.StudentCheckOut(studentId)
-			if err != nil {
+			if err != nil && err != models.AlreadyCheckOutError {
 				handleWebErr(w, err)
 				return
 			}
