@@ -3,6 +3,8 @@ package web
 import (
 	"fmt"
 	"github.com/Team6083/OverHours/models"
+	"github.com/getsentry/sentry-go"
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
 	"html/template"
@@ -34,7 +36,7 @@ func getSecFromDuration(duration time.Duration) int64 {
 	return int64(duration.Seconds())
 }
 
-func NewWeb(database *models.Database) *Web {
+func NewWeb(database *models.Database, dsn string) *Web {
 	web := &Web{database: database}
 	web.templateHelpers = template.FuncMap{
 		"avail":              avail,
@@ -61,6 +63,7 @@ func (web *Web) readSettings() error {
 
 func handleWebErr(w http.ResponseWriter, err error) {
 	fmt.Printf("Server internal error: %s\n", err)
+	sentry.CaptureException(err)
 	http.Error(w, "Internal server error: "+err.Error(), 500)
 }
 
@@ -72,13 +75,23 @@ func handleForbidden(w http.ResponseWriter, err error) {
 	http.Error(w, "Forbidden error: "+err.Error(), http.StatusBadRequest)
 }
 
-func (web *Web) ServeWebInterface(webPort int) {
+func (web *Web) ServeWebInterface(webPort int, dsn string) {
 	//go web.ServeSocketInterface(8000)
 
 	web.database.DB.C("session").DropCollection()
 
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn: dsn,
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	sentryHandler := sentryhttp.New(sentryhttp.Options{})
+
 	http.Handle("/res/", http.StripPrefix("/res/", http.FileServer(http.Dir("res/"))))
-	http.Handle("/", web.newHandler())
+	http.Handle("/", sentryHandler.Handle(web.newHandler()))
 
 	// Start Server
 	log.Printf("Serving HTTP requests on port %d", webPort)
