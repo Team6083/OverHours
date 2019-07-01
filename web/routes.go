@@ -4,10 +4,6 @@ func (web *Web) GetPageInfos() []PageInfo {
 	pages := make([]PageInfo, 1)
 	pages[0] = PageInfo{"/", web.IndexHandler, "GET", PageLogin, true}
 
-	// Auth
-	//pages = append(pages, PageInfo{"/login", web.LoginHandler, "GET", PageOpen, false})
-	//pages = append(pages, PageInfo{"/loginPost", web.LoginPOST, "POST", PageOpen, false})
-	//pages = append(pages, PageInfo{"/logout", web.LogoutHandler, "GET", PageOpen, false})
 	// Setting
 	pages = append(pages, PageInfo{"/settings", web.SettingsGET, "GET", PageLeader, true})
 	pages = append(pages, PageInfo{"/settings/submit", web.SettingsPOST, "POST", PageLeader, true})

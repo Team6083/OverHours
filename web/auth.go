@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const sessionTimeout time.Duration = 20 * time.Minute
+const sessionTimeout = 20 * time.Minute
 
 type LoginSession struct {
 	Username     string
@@ -19,7 +19,7 @@ type LoginSession struct {
 	Validate     int64
 }
 
-// Check auth status
+// Define error
 var (
 	AuthSessionNotProvided = errors.New("no session provided")
 	AuthWrongSession       = errors.New("wrong session")
@@ -27,8 +27,41 @@ var (
 	AuthTimeExpired        = errors.New("valid time expired")
 )
 
-func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession, error) {
+// DB
 
+func (web *Web) getSession(sessionToken string) (*LoginSession, error) {
+	result := LoginSession{}
+	err := web.database.DB.C("session").Find(bson.M{"sessiontoken": sessionToken}).One(&result)
+
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (web *Web) storeSession(session *LoginSession) (*mgo.ChangeInfo, error) {
+	diff, err := web.database.DB.C("session").Upsert(bson.M{"username": session.Username}, session)
+	if err != nil {
+		return nil, err
+	}
+
+	return diff, nil
+}
+
+func (web *Web) DeleteSession(session *LoginSession) error {
+	err := web.database.DB.C("session").Remove(bson.M{"username": session.Username})
+	return err
+}
+
+// Handle pages
+
+const (
+	PageOpen   = 0
+	PageLogin  = 1
+	PageLeader = 2
+)
+
+func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession, error) {
 	sessionToken, err := getSessionToken(r)
 	if err != nil {
 		return nil, err
@@ -64,40 +97,6 @@ func getSessionToken(r *http.Request) (*string, error) {
 	sessionToken := c.Value
 	return &sessionToken, nil
 }
-
-// DB
-
-func (web *Web) getSession(sessionToken string) (*LoginSession, error) {
-	result := LoginSession{}
-	err := web.database.DB.C("session").Find(bson.M{"sessiontoken": sessionToken}).One(&result)
-
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-func (web *Web) storeSession(session *LoginSession) (*mgo.ChangeInfo, error) {
-	diff, err := web.database.DB.C("session").Upsert(bson.M{"username": session.Username}, session)
-	if err != nil {
-		return nil, err
-	}
-
-	return diff, nil
-}
-
-func (web *Web) DeleteSession(session *LoginSession) error {
-	err := web.database.DB.C("session").Remove(bson.M{"username": session.Username})
-	return err
-}
-
-// Handle pages
-
-const (
-	PageOpen   = 0
-	PageLogin  = 1
-	PageLeader = 2
-)
 
 // Manage page access with different level
 func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level int, autoRedirect bool) (*LoginSession, error) {
@@ -141,6 +140,7 @@ func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level i
 	if !user.CheckPermissionLevel(targetLevel) {
 		if autoRedirect {
 			web.handle401(w, r)
+			return session, nil
 		}
 		return session, AuthNoPermission
 	}
