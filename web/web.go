@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"github.com/Team6083/OverHours/models"
+	"github.com/gbrlsnchs/jwt/v3"
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/gorilla/mux"
@@ -19,6 +20,7 @@ type Web struct {
 	database        *models.Database
 	templateHelpers template.FuncMap
 	settings        *models.Setting
+	hmac            *jwt.HMAC
 }
 
 func avail(name string, data interface{}) bool {
@@ -47,6 +49,8 @@ func NewWeb(database *models.Database) *Web {
 	if err != nil {
 		panic(err)
 	}
+
+	web.hmac = jwt.NewHMAC(jwt.SHA256, []byte(RandomString(10)))
 
 	return web
 }
@@ -99,52 +103,41 @@ func (web *Web) ServeWebInterface(webPort int, dsn string) {
 	http.ListenAndServe(fmt.Sprintf(":%d", webPort), nil)
 }
 
+type PageInfo struct {
+	path         string
+	handler      func(http.ResponseWriter, *http.Request)
+	methods      string
+	pageLevel    int
+	autoRedirect bool
+}
+
 func (web *Web) newHandler() http.Handler {
 	router := mux.NewRouter()
 
-	// Pages
-	router.HandleFunc("/", web.IndexHandler).Methods("GET")
-	// Auth
 	router.HandleFunc("/login", web.LoginHandler).Methods("GET")
 	router.HandleFunc("/loginPost", web.LoginPOST).Methods("POST")
 	router.HandleFunc("/logout", web.LogoutHandler).Methods("GET")
-	// Setting
-	router.HandleFunc("/settings", web.SettingsGET).Methods("GET")
-	router.HandleFunc("/settings/submit", web.SettingsPOST).Methods("POST")
-	router.HandleFunc("/settings/renew", web.RenewSettingsGET).Methods("GET")
-	// Time Logs
-	router.HandleFunc("/timeLog", web.TimeLogGET).Methods("GET")
-	router.HandleFunc("/timeLog/datatable", web.TimeLogDatatable).Methods("GET")
-	router.HandleFunc("/timeLog/form", web.TimeLogFormGET).Methods("GET")
-	router.HandleFunc("/timeLog/form/submit", web.TimeLogFormPOST).Methods("POST")
-	router.HandleFunc("/timeLog/checkinPost", web.TimeLogCheckinPOST).Methods("POST")
-	router.HandleFunc("/timeLog/checkout", web.TimeLogCheckoutGET).Methods("GET")
-	router.HandleFunc("/timeLog/delete/{id}", web.TimeLogDelete).Methods("GET")
-	// Meetings
-	router.HandleFunc("/meeting", web.MeetingGET).Methods("GET")
-	router.HandleFunc("/meeting/detail/{meetId}", web.MeetingDetailGET).Methods("GET")
-	router.HandleFunc("/meeting/checkin/{meetId}", web.MeetingCheckinGET).Methods("GET")
-	router.HandleFunc("/meeting/checkin/{meetId}/{userId}", web.MeetingCheckinGET).Methods("GET")
-	router.HandleFunc("/meeting/participant/leave/{meetId}/{userId}", web.MeetingParticipantLeaveGET).Methods("GET")
-	router.HandleFunc("/meeting/participant/deleteLog/{meetId}/{userId}", web.MeetingParticipantDeleteLogGET).Methods("GET")
-	router.HandleFunc("/meeting/participant/delete/{meetId}/{userId}", web.MeetingParticipantDeleteGET).Methods("GET")
-	router.HandleFunc("/meeting/form", web.MeetingFormGET).Methods("GET")
-	router.HandleFunc("/meeting/form/submit", web.MeetingFormPOST).Methods("POST")
-	router.HandleFunc("/meeting/delete/{id}", web.MeetingDeleteGET).Methods("GET")
-	router.HandleFunc("/meeting/modify/{meetId}/openCheckin", web.MeetingModifyOpenCheckinGET).Methods("GET")
-	router.HandleFunc("/meeting/modify/{meetId}/removeAllLog", web.MeetingModifyRmAllLogGET).Methods("GET")
-	router.HandleFunc("/meeting/modify/{meetId}/finish", web.MeetingModifyFinishGET).Methods("GET")
 
-	// Users
-	router.HandleFunc("/users", web.UsersGET).Methods("GET")
-	router.HandleFunc("/users/form", web.UsersFormGET).Methods("GET")
-	router.HandleFunc("/users/form/submit", web.UsersFormPOST).Methods("POST")
-	router.HandleFunc("/users/delete/{id}", web.UsersDeleteGET).Methods("GET")
+	pages := web.GetPageInfos()
 
-	// Boards
-	router.HandleFunc("/board/ranking", web.leaderboardGET).Methods("GET")
+	for _, pageInfo := range pages {
+		router.HandleFunc(pageInfo.path, pageInfo.handler).Methods(pageInfo.methods)
+	}
+
+	router.Use(web.databaseStatusMiddleWare)
+	router.Use(web.AuthMiddleware)
 
 	return router
+}
+
+func (web *Web) databaseStatusMiddleWare(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := web.database.Session.Ping()
+		if err != nil {
+			handleWebErr(w, err)
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {

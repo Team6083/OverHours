@@ -12,12 +12,13 @@ type Database struct {
 }
 
 func OpenDataBase(hostName string, user string, password string, dbName string) (*Database, error) {
+	var database *Database
+	var err error
 	if user == "" && password == "" {
-		database, err := OpenDataBaseDirectly(hostName, dbName)
+		database, err = OpenDataBaseDirectly(hostName, dbName)
 		if err != nil {
 			return nil, err
 		}
-		return database, nil
 	} else {
 		dialInfo := &mgo.DialInfo{
 			Addrs:     []string{hostName},
@@ -28,13 +29,15 @@ func OpenDataBase(hostName string, user string, password string, dbName string) 
 			Password:  password,
 			PoolLimit: 4096, // Session.SetPoolLimit
 		}
-		database, err := OpenDataBaseWithDialInfo(dialInfo)
+		database, err = OpenDataBaseWithDialInfo(dialInfo)
 		if err != nil {
 			return nil, err
 		}
-
-		return database, nil
 	}
+
+	database.Session.SetSocketTimeout(1 * time.Hour)
+
+	return database, nil
 }
 
 func OpenDataBaseWithDialInfo(dialInfo *mgo.DialInfo) (*Database, error) {
