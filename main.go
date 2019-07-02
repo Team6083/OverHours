@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"github.com/Team6083/OverHours/web"
+	"github.com/getsentry/sentry-go"
 	_ "github.com/mattn/go-sqlite3"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -20,6 +22,30 @@ func main() {
 		panic(err)
 	}
 
+	debug := false
+
+	if len(os.Getenv("debug")) != 0 {
+		debug = true
+	}
+
+	sentryClientOption := sentry.ClientOptions{
+		Dsn: getEnv("sentryDsn", ""),
+	}
+
+	if !debug {
+		releaseName := "over-hours@1.2.3"
+		sentryClientOption.Release = releaseName
+	}
+
+	if debug {
+		sentryClientOption.Debug = true
+	}
+
+	err = sentry.Init(sentryClientOption)
+	if err != nil {
+		panic(err)
+	}
+
 	var host = getEnv("host", "127.0.0.1")
 	var dbName = getEnv("db", "OverHours")
 	var user = getEnv("hoursUser", "")
@@ -28,7 +54,7 @@ func main() {
 	log.Printf("Connecting to db at %s/%s with username:  %s", host, dbName, user)
 	database, err := models.OpenDataBase(host, user, pass, dbName)
 	if err != nil {
-		panic(err)
+		handleErr(err)
 	}
 
 	_, err = database.GetSetting()
@@ -36,15 +62,21 @@ func main() {
 		if err == mgo.ErrNotFound {
 			_, err = database.SaveSetting(&models.Setting{Id: bson.NewObjectId()})
 			if err != nil {
-				panic(err)
+				handleErr(err)
 			}
 		} else {
-			panic(err)
+			handleErr(err)
 		}
 	}
 
 	webServer := web.NewWeb(database)
-	webServer.ServeWebInterface(webPort, getEnv("sentryDsn", ""))
+	webServer.ServeWebInterface(webPort)
+}
+
+func handleErr(err error) {
+	fmt.Println(err)
+	sentry.CaptureException(err)
+	os.Exit(1)
 }
 
 func getEnv(key, fallback string) string {

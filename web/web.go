@@ -68,7 +68,7 @@ func (web *Web) readSettings() error {
 func handleWebErr(w http.ResponseWriter, err error) {
 	fmt.Printf("Server internal error: %s\n", err)
 	sentry.CaptureException(err)
-	http.Error(w, "Internal server error: "+err.Error(), 500)
+	http.Error(w, "Internal server error: "+err.Error(), http.StatusInternalServerError)
 }
 
 func handleBadRequest(w http.ResponseWriter, err error) {
@@ -79,15 +79,10 @@ func handleForbidden(w http.ResponseWriter, err error) {
 	http.Error(w, "Forbidden error: "+err.Error(), http.StatusBadRequest)
 }
 
-func (web *Web) ServeWebInterface(webPort int, dsn string) {
+func (web *Web) ServeWebInterface(webPort int) {
 	//go web.ServeSocketInterface(8000)
 
-	web.database.DB.C("session").DropCollection()
-
-	err := sentry.Init(sentry.ClientOptions{
-		Dsn: dsn,
-	})
-
+	err := web.database.DB.C("session").DropCollection()
 	if err != nil {
 		panic(err)
 	}
