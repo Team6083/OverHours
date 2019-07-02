@@ -49,7 +49,7 @@ jobs:
             echo $VERSION
             sentry-cli releases new -p overhours $VERSION
             sentry-cli releases set-commits --auto $VERSION
-            sentry-cli releases deploys VERSION new -e ENVIRONMENT
+            sentry-cli releases deploys $VERSION new -e "overhours-test"
 
 
 workflows:
