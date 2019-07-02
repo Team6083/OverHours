@@ -82,10 +82,7 @@ func handleForbidden(w http.ResponseWriter, err error) {
 func (web *Web) ServeWebInterface(webPort int) {
 	//go web.ServeSocketInterface(8000)
 
-	err := web.database.DB.C("session").DropCollection()
-	if err != nil {
-		panic(err)
-	}
+	web.database.DB.C("session").DropCollection()
 
 	sentryHandler := sentryhttp.New(sentryhttp.Options{})
 
