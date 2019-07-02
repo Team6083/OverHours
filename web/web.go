@@ -124,9 +124,20 @@ func (web *Web) newHandler() http.Handler {
 		router.HandleFunc(pageInfo.path, pageInfo.handler).Methods(pageInfo.methods)
 	}
 
+	router.Use(web.databaseStatusMiddleWare)
 	router.Use(web.AuthMiddleware)
 
 	return router
+}
+
+func (web *Web) databaseStatusMiddleWare(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := web.database.Session.Ping()
+		if err != nil {
+			handleWebErr(w, err)
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
