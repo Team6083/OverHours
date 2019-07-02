@@ -92,6 +92,7 @@ func (web *Web) ServeWebInterface(webPort int) {
 	// Start Server
 	log.Printf("Serving HTTP requests on port %d", webPort)
 	log.Print(fmt.Sprintf(":%d", webPort))
+	sentry.CaptureMessage("Server started")
 	http.ListenAndServe(fmt.Sprintf(":%d", webPort), nil)
 }
 
