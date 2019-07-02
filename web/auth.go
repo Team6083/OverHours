@@ -34,6 +34,9 @@ func (web *Web) getSession(sessionToken string) (*LoginSession, error) {
 	err := web.database.DB.C("session").Find(bson.M{"sessiontoken": sessionToken}).One(&result)
 
 	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &result, nil
