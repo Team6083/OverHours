@@ -45,10 +45,11 @@ jobs:
       - run:
           name: Sentry release
           command: |
-            VERSION=$(sentry-cli releases propose-version)
+            VERSION="over-hours@1.2.3"
             echo $VERSION
             sentry-cli releases new -p overhours $VERSION
             sentry-cli releases set-commits --auto $VERSION
+            sentry-cli releases deploys VERSION new -e ENVIRONMENT
 
 
 workflows:
