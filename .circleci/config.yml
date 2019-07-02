@@ -47,6 +47,7 @@ jobs:
           command: |
             VERSION=$(sentry-cli releases propose-version)
             echo $VERSION
+            sentry-cli releases new -p overhours $VERSION
             sentry-cli releases set-commits --auto $VERSION
 
 
