@@ -232,6 +232,10 @@ func (web *Web) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		handleWebErr(w, err)
 		return
 	}
+	if sessionToken == nil {
+		handleBadRequest(w, AuthSessionNotProvided)
+		return
+	}
 
 	session, err := web.getSession(*sessionToken)
 	if err != nil {
