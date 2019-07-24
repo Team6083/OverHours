@@ -124,9 +124,10 @@ func (web *Web) newHandler() http.Handler {
 
 func (web *Web) databaseStatusMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := web.database.Session.Ping()
-		if err != nil {
+		if err := web.database.Session.Ping(); err != nil {
+			web.database.Session.Refresh()
 			handleWebErr(w, err)
+			return
 		}
 		next.ServeHTTP(w, r)
 	})
