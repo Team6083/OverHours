@@ -82,7 +82,7 @@
     <script src="/res/js/bootstrap.min.js"></script>
     <script src="/res/js/util.js"></script>
     <script>
-        if (readCookie("session_token") !== null) {
+        if (readCookie("userName") !== null) {
             $("#navUser").html(readCookie("userName"));
             $("#userNameA").attr("href", "/users/form?edit=" + readCookie("userName"));
         } else {
