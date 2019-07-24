@@ -112,7 +112,7 @@
         {{end}}
 
         var seasonIds = [];
-        TimeLogsTable.on('draw', () => {
+        TimeLogsTable.on('init', () => {
             for (let i = 0; i < TimeLogsTable.rows().data().length; i++) {
                 let data = TimeLogsTable.rows().data()[i];
                 if ($.inArray(data["SeasonId"], seasonIds) === -1) {
