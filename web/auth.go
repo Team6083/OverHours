@@ -34,9 +34,6 @@ func (web *Web) getSession(sessionToken string) (*LoginSession, error) {
 	err := web.database.DB.C("session").Find(bson.M{"sessiontoken": sessionToken}).One(&result)
 
 	if err != nil {
-		if err == mgo.ErrNotFound {
-			return nil, nil
-		}
 		return nil, err
 	}
 	return &result, nil
@@ -56,6 +53,53 @@ func (web *Web) DeleteSession(session *LoginSession) error {
 	return err
 }
 
+// Cookie
+func getSessionTokenCookie(r *http.Request) (*string, error) {
+	c, err := r.Cookie("session_jwt")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			return nil, nil
+		}
+		return nil, err
+	}
+	sessionToken := c.Value
+	return &sessionToken, nil
+}
+
+func setSessionTokenCookie(w http.ResponseWriter, session LoginSession) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_jwt",
+		Value:    session.SessionToken,
+		Path:     "/",
+		Expires:  time.Unix(session.Validate, 0),
+		HttpOnly: true,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "userName",
+		Value:   session.Username,
+		Path:    "/",
+		Expires: time.Unix(session.Validate, 0),
+	})
+}
+
+func resetSessionCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Now(),
+		HttpOnly: true,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "userName",
+		Value:   "",
+		Path:    "/",
+		Expires: time.Now(),
+	})
+}
+
 // Handle pages
 
 const (
@@ -65,7 +109,7 @@ const (
 )
 
 func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession, error) {
-	sessionToken, err := getSessionToken(r)
+	sessionToken, err := getSessionTokenCookie(r)
 	if err != nil {
 		return nil, err
 	}
@@ -86,19 +130,6 @@ func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession
 	}
 
 	return result, nil
-}
-
-// Get Session Token from Cookie
-func getSessionToken(r *http.Request) (*string, error) {
-	c, err := r.Cookie("session_token")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			return nil, nil
-		}
-		return nil, err
-	}
-	sessionToken := c.Value
-	return &sessionToken, nil
 }
 
 // Manage page access with different level
@@ -196,22 +227,30 @@ func (web *Web) handle403(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	sessionToken, err := getSessionToken(r)
+	sessionToken, err := getSessionTokenCookie(r)
 	if err != nil {
 		handleWebErr(w, err)
+		return
+	}
+	if sessionToken == nil {
+		handleBadRequest(w, AuthSessionNotProvided)
 		return
 	}
 
 	session, err := web.getSession(*sessionToken)
 	if err != nil {
-		handleWebErr(w, err)
-		return
+		if err != mgo.ErrNotFound {
+			handleWebErr(w, err)
+			return
+		}
 	}
 
-	err = web.DeleteSession(session)
-	if err != nil {
-		handleWebErr(w, err)
-		return
+	if session != nil {
+		err = web.DeleteSession(session)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
 	}
 
 	resetSessionCookie(w)
@@ -297,7 +336,7 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 	loginSession := newLoginSession(cred.Username)
 
 	// Finally, we set the client cookie for "session_token" as the session token we just generated
-	setSessionCookie(w, *loginSession)
+	setSessionTokenCookie(w, *loginSession)
 
 	_, err = web.storeSession(loginSession)
 	if err != nil {
@@ -319,40 +358,8 @@ func (web *Web) renewSession(w http.ResponseWriter, session *LoginSession) error
 	session.renew(true)
 	resetSessionCookie(w)
 	_, err := web.storeSession(session)
-	setSessionCookie(w, *session)
+	setSessionTokenCookie(w, *session)
 	return err
-}
-
-func setSessionCookie(w http.ResponseWriter, session LoginSession) {
-	http.SetCookie(w, &http.Cookie{
-		Name:    "session_token",
-		Value:   session.SessionToken,
-		Path:    "/",
-		Expires: time.Unix(session.Validate, 0),
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:    "userName",
-		Value:   session.Username,
-		Path:    "/",
-		Expires: time.Unix(session.Validate, 0),
-	})
-}
-
-func resetSessionCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:    "session_token",
-		Value:   "",
-		Path:    "/",
-		Expires: time.Now(),
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:    "userName",
-		Value:   "",
-		Path:    "/",
-		Expires: time.Now(),
-	})
 }
 
 func newLoginSession(username string) *LoginSession {

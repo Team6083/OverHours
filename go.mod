@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/gbrlsnchs/jwt/v3 v3.0.0-beta.0
-	github.com/getsentry/sentry-go v0.1.0
+	github.com/getsentry/sentry-go v0.1.3
 	github.com/gorilla/mux v1.7.1
 	github.com/gorilla/websocket v1.4.0
 	github.com/mattn/go-sqlite3 v1.10.0

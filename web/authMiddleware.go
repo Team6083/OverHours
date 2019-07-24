@@ -2,6 +2,8 @@ package web
 
 import (
 	"fmt"
+	"github.com/Team6083/OverHours/models"
+	"github.com/getsentry/sentry-go"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -35,17 +37,55 @@ func (web *Web) AuthMiddleware(next http.Handler) http.Handler {
 		pages := web.GetPageInfos()
 		url := strings.Split(r.RequestURI, "?")[0]
 
+		session, err := web.checkAuth(w, r)
+		if err != nil && !(err == AuthWrongSession || err == AuthSessionNotProvided) {
+			handleWebErr(w, err)
+			return
+		}
+
 		for _, pageInfo := range pages {
 			if pageInfo.path == url {
 				fmt.Println(pageInfo)
-				session, err := web.pageAccessManage(w, r, pageInfo.pageLevel, pageInfo.autoRedirect)
+
+				if pageInfo.pageLevel == PageOpen {
+					next.ServeHTTP(w, r)
+					return
+				}
+
+				if err == AuthWrongSession || err == AuthSessionNotProvided || session == nil {
+					if pageInfo.autoRedirect {
+						web.redirectToLoginPage(w, r)
+						return
+					}
+				}
+
+				err = web.renewSession(w, session)
+				if err != nil {
+					handleWebErr(w, err)
+				}
+
+				user, err := web.database.GetUserByUserName(session.Username)
 				if err != nil {
 					handleWebErr(w, err)
 					return
 				}
 
-				if session == nil && pageInfo.pageLevel != PageOpen {
-					http.Error(w, "Forbidden", http.StatusForbidden)
+				sentry.ConfigureScope(func(scope *sentry.Scope) {
+					scope.SetUser(sentry.User{Email: user.Email, Username: user.Username, ID: user.UUID})
+				})
+
+				var targetLevel int
+				if pageInfo.pageLevel == PageLeader {
+					sentry.CaptureMessage(fmt.Sprintf("User access leader level page"))
+					targetLevel = models.PermissionLeader
+				}
+
+				if !user.CheckPermissionLevel(targetLevel) {
+					if pageInfo.autoRedirect {
+						web.handle401(w, r)
+						return
+					}
+					handleWebErr(w, AuthNoPermission)
 					return
 				}
 
