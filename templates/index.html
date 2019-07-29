@@ -11,12 +11,21 @@
                         class="badge badge-primary badge-pill">{{.CurrentSeason}}</span></h4>
             <form method="post" action="/timeLog/checkinPost">
                 <div class="input-group mb-3 mt-3">
-                    <input type="text" class="form-control" name="studentId" placeholder="Students's Id"
+                    <input type="text" class="form-control" id="usernameInput" name="studentId" placeholder="Students's Id"
                            value="{{.UserAccName}}" {{.Readonly}}>
                     <div class="input-group-append">
                         <button class="btn btn-outline-secondary" type="submit"
                                 id="stu-submit" {{if eq .CanCheckIn false}}  disabled {{end}}>Checkin
                         </button>
+                        {{if eq .Disable false}}
+                        <button class="btn btn-outline-dark dropdown-toggle dropdown-toggle-split" type="button"
+                                data-toggle="dropdown">
+                            <span class="sr-only">Select...</span>
+                        </button>
+                        <div class="dropdown-menu" id="usernameDropdown">
+
+                        </div>
+                        {{end}}
                     </div>
                 </div>
             </form>
@@ -46,7 +55,8 @@
                 <div class="card border-info text-center">
                     <div class="card-body">
                         <h6 class="card-title">Incoming meeting can start checkin now</h6>
-                        <a class="btn btn-outline-primary" href="/meeting/detail/{{.IncomingMeet.MeetId}}">{{.IncomingMeet.Title}}</a>
+                        <a class="btn btn-outline-primary"
+                           href="/meeting/detail/{{.IncomingMeet.MeetId}}">{{.IncomingMeet.Title}}</a>
                     </div>
                 </div>
             </div>
@@ -147,6 +157,17 @@
             }
         });
 
+    </script>
+
+    <script>
+        for (let key in names) {
+            $("#usernameDropdown").append("<a class=\"dropdown-item usernameSelect\" value=\"" + key + "\">" + names[key] + "</a>")
+        }
+
+        $(".usernameSelect").on('click', function () {
+            let username = $(this).attr('value');
+            $("#usernameInput").val(username);
+        });
     </script>
 
 
