@@ -40,7 +40,11 @@
                            placeholder="Password">
                 </div>
                 {{if ne .Redirect ""}}<input type="hidden" name="redirect" value="{{.Redirect}}">{{end}}
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" name="rememberMe" id="rememberMe">
+                    <label for="rememberMe" class="custom-control-label">Remember me</label>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Submit</button>
             </form>
         </div>
     </div>
