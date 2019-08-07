@@ -2,6 +2,7 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
@@ -67,25 +68,39 @@ func getSessionTokenCookie(r *http.Request) (*string, error) {
 }
 
 func setSessionTokenCookie(w http.ResponseWriter, session LoginSession) {
-	http.SetCookie(w, &http.Cookie{
+
+	expTime := time.Unix(session.Validate, 0)
+
+	sessionCookie := http.Cookie{
 		Name:     "session_jwt",
 		Value:    session.SessionToken,
 		Path:     "/",
-		Expires:  time.Unix(session.Validate, 0),
 		HttpOnly: true,
-	})
+	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:    "userName",
-		Value:   session.Username,
-		Path:    "/",
-		Expires: time.Unix(session.Validate, 0),
-	})
+	usernameCookie := http.Cookie{
+		Name:  "userName",
+		Value: session.Username,
+		Path:  "/",
+	}
+
+	fmt.Println(session.Validate)
+
+	if session.Validate == 0 {
+		expTime = time.Now().Add(168 * time.Hour)
+	}
+
+	sessionCookie.Expires = expTime
+	usernameCookie.Expires = expTime
+
+	http.SetCookie(w, &sessionCookie)
+
+	http.SetCookie(w, &usernameCookie)
 }
 
 func resetSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session_token",
+		Name:     "session_jwt",
 		Value:    "",
 		Path:     "/",
 		Expires:  time.Now(),
@@ -125,7 +140,7 @@ func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession
 		return nil, err
 	}
 
-	if result.Validate < time.Now().Unix() {
+	if result.Validate < time.Now().Unix() && result.Validate != 0 {
 		return nil, AuthTimeExpired
 	}
 
@@ -311,6 +326,12 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	rememberMe := false
+
+	if r.Form["rememberMe"] != nil && r.Form["rememberMe"][0] == "on" {
+		rememberMe = true
+	}
+
 	cred.Username = r.Form["loginUsername"][0]
 	cred.Password = r.Form["loginPassword"][0]
 
@@ -335,7 +356,10 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 
 	loginSession := newLoginSession(cred.Username)
 
-	// Finally, we set the client cookie for "session_token" as the session token we just generated
+	if rememberMe {
+		loginSession.Validate = 0
+	}
+
 	setSessionTokenCookie(w, *loginSession)
 
 	_, err = web.storeSession(loginSession)
@@ -368,6 +392,7 @@ func newLoginSession(username string) *LoginSession {
 	session.Username = username
 	session.SessionToken = newSessionToken()
 	session.Validate = time.Now().Add(sessionTimeout).Unix()
+
 	return session
 }
 
@@ -375,7 +400,10 @@ func (session *LoginSession) renew(onlyTime bool) {
 	if !onlyTime {
 		session.SessionToken = newSessionToken()
 	}
-	session.Validate = time.Now().Add(sessionTimeout).Unix()
+
+	if session.Validate != 0 {
+		session.Validate = time.Now().Add(sessionTimeout).Unix()
+	}
 }
 
 func newSessionToken() string {
