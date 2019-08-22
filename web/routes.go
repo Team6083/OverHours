@@ -32,8 +32,8 @@ func (web *Web) GetPageInfos() []PageInfo {
 	pages = append(pages, PageInfo{"/meeting/modify/{meetId}/finish", web.MeetingModifyFinishGET, "GET", PageLogin, true})
 	// Users
 	pages = append(pages, PageInfo{"/users", web.UsersGET, "GET", PageLogin, true})
-	pages = append(pages, PageInfo{"/users/form", web.UsersFormGET, "GET", PageLeader, true})
-	pages = append(pages, PageInfo{"/users/form/submit", web.UsersFormPOST, "POST", PageLeader, true})
+	pages = append(pages, PageInfo{"/users/form", web.UsersFormGET, "GET", PageLogin, true})
+	pages = append(pages, PageInfo{"/users/form/submit", web.UsersFormPOST, "POST", PageLogin, true})
 	pages = append(pages, PageInfo{"/users/delete/{id}", web.UsersDeleteGET, "GET", PageLeader, true})
 	// Boards
 	pages = append(pages, PageInfo{"/board/ranking", web.leaderboardGET, "GET", PageLogin, true})

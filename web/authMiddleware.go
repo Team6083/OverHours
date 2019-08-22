@@ -74,6 +74,11 @@ func (web *Web) AuthMiddleware(next http.Handler) http.Handler {
 					scope.SetUser(sentry.User{Email: user.Email, Username: user.Username, ID: user.UUID})
 				})
 
+				if user.PasswordNeedChange && !strings.Contains(r.URL.Path, "/users/form") {
+					http.Redirect(w, r, fmt.Sprintf("/users/form?edit=%s", user.GetIdentify()), http.StatusFound)
+					return
+				}
+
 				var targetLevel int
 				if pageInfo.pageLevel == PageLeader {
 					sentry.CaptureMessage(fmt.Sprintf("User access leader level page"))

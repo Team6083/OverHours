@@ -96,33 +96,35 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	editDate := struct {
-		Id       string
-		UUID     string
-		UserName string
-		Name     string
-		Password string
-		Email    string
-		FirstY   int
-		GradY    int
-		PLevel   int
-	}{"", "", "", "", "", "", 0, 0, 0}
+	editData := struct {
+		Id                 string
+		UUID               string
+		UserName           string
+		Name               string
+		Password           string
+		Email              string
+		FirstY             int
+		GradY              int
+		PLevel             int
+		PasswordNeedChange bool
+	}{"", "", "", "", "", "", 0, 0, 0, false}
 
 	data := struct {
 		EditUser struct {
-			Id       string
-			UUID     string
-			UserName string
-			Name     string
-			Password string
-			Email    string
-			FirstY   int
-			GradY    int
-			PLevel   int
+			Id                 string
+			UUID               string
+			UserName           string
+			Name               string
+			Password           string
+			Email              string
+			FirstY             int
+			GradY              int
+			PLevel             int
+			PasswordNeedChange bool
 		}
 		New         bool
 		CurrentUser models.User
-	}{editDate, true, *user}
+	}{editData, true, *user}
 
 	editTargetUserName, ok := r.URL.Query()["edit"]
 	if ok {
@@ -142,6 +144,7 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 				data.EditUser.FirstY = editUser.FirstYear
 				data.EditUser.GradY = editUser.GraduationYear
 				data.EditUser.PLevel = editUser.PermissionLevel
+				data.EditUser.PasswordNeedChange = editUser.PasswordNeedChange
 				data.New = false
 			}
 		}
@@ -178,14 +181,15 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	datas := struct {
-		Name      string
-		UserName  string
-		pLevel    string
-		email     string
-		firstYStr string
-		gradYStr  string
-		UUID      string
-	}{"", "", "", "", "", "", ""}
+		Name               string
+		UserName           string
+		pLevel             string
+		email              string
+		firstYStr          string
+		gradYStr           string
+		UUID               string
+		PasswordNeedChange bool
+	}{"", "", "", "", "", "", "", false}
 
 	if r.Form["userName"] == nil || r.Form["name"] == nil || r.Form["pLevel"] == nil {
 		handleBadRequest(w, errors.New("some fields are missing"+r.Form.Encode()))
@@ -238,8 +242,12 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 	if r.Form["graduationYear"] != nil {
 		datas.gradYStr = r.Form["graduationYear"][0]
 	}
+
+	passwordChanged := false
+
 	if r.Form["password"] != nil {
 		user.Password = r.Form["password"][0]
+		passwordChanged = true
 	} else {
 		if oldUser != nil {
 			user.Password = oldUser.Password
@@ -250,6 +258,17 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 	} else {
 		uuid := uuid.NewV4()
 		datas.UUID = uuid.String()
+	}
+
+	if len(r.Form["passwordNeedChange"]) > 0 {
+		datas.PasswordNeedChange = r.Form["passwordNeedChange"][0] == "on"
+	} else {
+		datas.PasswordNeedChange = false
+	}
+	if passwordChanged {
+		user.PasswordNeedChange = false
+	} else {
+		user.PasswordNeedChange = datas.PasswordNeedChange
 	}
 
 	user.UUID = datas.UUID
