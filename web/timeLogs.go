@@ -8,6 +8,8 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -344,6 +346,7 @@ func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
 var StudentNotExistError = errors.New("student doesn't exist")
 
 func (web *Web) StudentCheckOut(studentId string) error {
+	//TODO: add season select support
 	timeLog, err := web.database.GetLastLogByUser(studentId)
 	if err != nil {
 		return err
@@ -396,4 +399,240 @@ func (web *Web) StudentCheckin(studentId string, seasonId string) error {
 	}
 
 	return nil
+}
+
+// API handlers
+
+// GET /timeLogs
+func (web *Web) APIGetTimeLogs(w http.ResponseWriter, r *http.Request) {
+	timeLogs, err := web.database.GetAllTimeLogs()
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	var sendBytes []byte
+
+	_, ok := r.URL.Query()["datatable"]
+	if ok {
+		datatableData := struct {
+			Data   []models.TimeLog `json:"data"`
+			Length int              `json:"length"`
+		}{timeLogs, len(timeLogs)}
+
+		b, err := json.Marshal(datatableData)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+		sendBytes = b
+	} else {
+		b, err := json.Marshal(timeLogs)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+		sendBytes = b
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(sendBytes)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// POST /timeLogs
+func (web *Web) APIPostTimeLog(w http.ResponseWriter, r *http.Request) {
+	var timeLog models.TimeLog
+	timeLog.Id = bson.NewObjectId()
+
+	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if err := json.Unmarshal(body, &timeLog); err != nil {
+		w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
+		w.WriteHeader(422) // unprocessable entity
+		if err := json.NewEncoder(w).Encode(err); err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	change, err := web.database.SaveTimeLog(&timeLog)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(change); err != nil {
+		panic(err)
+	}
+}
+
+// GET /timeLogs/{id}
+func (web *Web) APIGetTimeLog(w http.ResponseWriter, r *http.Request) {
+	targetId := mux.Vars(r)["id"]
+
+	timeLog, err := web.database.GetTimeLogById(targetId)
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(timeLog); err != nil {
+		panic(err)
+	}
+}
+
+// PUT /timeLogs/{id}
+func (web *Web) APIPutTimeLog(w http.ResponseWriter, r *http.Request) {
+	targetId := mux.Vars(r)["id"]
+	if !bson.IsObjectIdHex(targetId) {
+		handleBadRequest(w, errors.New("id is not a valid objectid"))
+		return
+	}
+
+	var timeLog models.TimeLog
+	timeLog.Id = bson.ObjectIdHex(targetId)
+
+	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if err := json.Unmarshal(body, &timeLog); err != nil {
+		w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(err); err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	change, err := web.database.SaveTimeLog(&timeLog)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(change); err != nil {
+		panic(err)
+	}
+}
+
+// PATCH /timeLogs/{id}
+func (web *Web) APIPatchTimeLog(w http.ResponseWriter, r *http.Request) {
+	targetId := mux.Vars(r)["id"]
+	if !bson.IsObjectIdHex(targetId) {
+		handleBadRequest(w, errors.New("id is not a valid objectid"))
+		return
+	}
+
+	timeLog, err := web.database.GetTimeLogById(targetId)
+	if err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	if timeLog == nil {
+		timeLog = new(models.TimeLog)
+		timeLog.Id = bson.ObjectIdHex(targetId)
+	}
+
+	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if err := json.Unmarshal(body, &timeLog); err != nil {
+		w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(err); err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	change, err := web.database.SaveTimeLog(timeLog)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(change); err != nil {
+		panic(err)
+	}
+}
+
+// GET /timeLog/checkin
+func (web *Web) APICheckin(w http.ResponseWriter, r *http.Request) {
+
+	keys, ok := r.URL.Query()["user"]
+	if !ok || len(keys[0]) < 1 {
+		handleBadRequest(w, errors.New("parameter \"user\" needed"))
+		return
+	}
+
+	userId := keys[0]
+
+	keys, ok = r.URL.Query()["season"]
+	seasonId := web.settings.SeasonId
+	if ok && len(keys[0]) > 0 {
+		seasonId = keys[0]
+	}
+
+	err := web.StudentCheckin(userId, seasonId)
+	if err == StudentNotExistError || err == models.AlreadyCheckInError {
+		handleBadRequest(w, err)
+		return
+	} else if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// GET /timeLog/checkout
+func (web *Web) APICheckout(w http.ResponseWriter, r *http.Request) {
+
+	keys, ok := r.URL.Query()["user"]
+	if !ok || len(keys[0]) < 1 {
+		handleBadRequest(w, errors.New("parameter \"user\" needed"))
+		return
+	}
+
+	userId := keys[0]
+
+	keys, ok = r.URL.Query()["season"]
+	//seasonId := web.settings.SeasonId
+	//if ok && len(keys[0]) > 0 {
+	//	seasonId = keys[0]
+	//}
+
+	err := web.StudentCheckOut(userId)
+	if err == models.AlreadyCheckOutError {
+		handleUnprocessableEntity(w, err)
+		return
+	} else if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

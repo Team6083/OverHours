@@ -75,6 +75,10 @@ func handleBadRequest(w http.ResponseWriter, err error) {
 	http.Error(w, "Bad request error: "+err.Error(), http.StatusBadRequest)
 }
 
+func handleUnprocessableEntity(w http.ResponseWriter, err error) {
+	http.Error(w, "Unprocessable Entity error: "+err.Error(), http.StatusUnprocessableEntity)
+}
+
 func handleForbidden(w http.ResponseWriter, err error) {
 	http.Error(w, "Forbidden error: "+err.Error(), http.StatusBadRequest)
 }
@@ -86,6 +90,7 @@ func (web *Web) ServeWebInterface(webPort int) {
 
 	sentryHandler := sentryhttp.New(sentryhttp.Options{})
 
+	http.Handle("/api/", sentryHandler.Handle(web.apiHandler()))
 	http.Handle("/res/", http.StripPrefix("/res/", http.FileServer(http.Dir("res/"))))
 	http.Handle("/", sentryHandler.Handle(web.newHandler()))
 

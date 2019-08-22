@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/Team6083/OverHours/models"
 	"github.com/gorilla/mux"
@@ -323,7 +324,7 @@ func (web *Web) UsersDeleteGET(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	targetId := vars["id"]
 
-	user, err := web.database.GetUserByUUID(targetId)
+	user, err := web.database.GetUserByID(targetId)
 	if err != nil {
 		handleWebErr(w, err)
 		return
@@ -336,4 +337,38 @@ func (web *Web) UsersDeleteGET(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/users", http.StatusSeeOther)
+}
+
+// API handlers
+
+// /users
+func (web *Web) APIGetUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := web.database.GetAllUsers()
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		panic(err)
+	}
+}
+
+// /users/{id}
+func (web *Web) APIGetUser(w http.ResponseWriter, r *http.Request) {
+	targetId := mux.Vars(r)["id"]
+
+	user, err := web.database.GetUserByID(targetId)
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		panic(err)
+	}
 }
