@@ -120,6 +120,8 @@ paths:
           description: Successfully delete a User
         '400':
           description: Invalid userId
+        '404':
+          description: not found
 
   # TimLogs
   /timeLogs:
@@ -229,6 +231,8 @@ paths:
           description: Successfully delete a TimeLog
         '400':
           description: Invalid timeLogId
+        '404':
+          description: not found
 
   /timeLog/checkin:
     put:
