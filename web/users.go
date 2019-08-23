@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/Team6083/OverHours/models"
 	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
@@ -139,7 +138,6 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 				data.EditUser.Id = editUser.Id.String()
 				data.EditUser.UserName = editUser.Username
 				data.EditUser.Name = editUser.Name
-				data.EditUser.UUID = editUser.UUID
 				data.EditUser.Password = editUser.Password
 				data.EditUser.Email = editUser.Email
 				data.EditUser.FirstY = editUser.FirstYear
@@ -188,9 +186,8 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		email              string
 		firstYStr          string
 		gradYStr           string
-		UUID               string
 		PasswordNeedChange bool
-	}{"", "", "", "", "", "", "", false}
+	}{"", "", "", "", "", "", false}
 
 	if r.Form["userName"] == nil || r.Form["name"] == nil || r.Form["pLevel"] == nil {
 		handleBadRequest(w, errors.New("some fields are missing"+r.Form.Encode()))
@@ -254,12 +251,6 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 			user.Password = oldUser.Password
 		}
 	}
-	if r.Form["UUID"] != nil {
-		datas.UUID = r.Form["UUID"][0]
-	} else {
-		uuid := uuid.NewV4()
-		datas.UUID = uuid.String()
-	}
 
 	if len(r.Form["passwordNeedChange"]) > 0 {
 		datas.PasswordNeedChange = r.Form["passwordNeedChange"][0] == "on"
@@ -272,7 +263,6 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		user.PasswordNeedChange = datas.PasswordNeedChange
 	}
 
-	user.UUID = datas.UUID
 	if datas.firstYStr != "" {
 		user.FirstYear, err = strconv.Atoi(datas.firstYStr)
 		if err != nil {

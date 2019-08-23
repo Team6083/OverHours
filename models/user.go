@@ -10,7 +10,6 @@ type User struct {
 	Username           string
 	Password           string
 	Email              string
-	UUID               string
 	PermissionLevel    int
 	FirstYear          int
 	GraduationYear     int

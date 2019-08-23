@@ -71,7 +71,7 @@ func (web *Web) AuthMiddleware(next http.Handler) http.Handler {
 				}
 
 				sentry.ConfigureScope(func(scope *sentry.Scope) {
-					scope.SetUser(sentry.User{Email: user.Email, Username: user.Username, ID: user.UUID})
+					scope.SetUser(sentry.User{Email: user.Email, Username: user.Username, ID: user.Id.String()})
 				})
 
 				if user.PasswordNeedChange && !strings.Contains(r.URL.Path, "/users/form") {
