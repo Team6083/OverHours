@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OverHours API</title>
+    <link href="https://unpkg.com/swagger-ui-dist@3.23.5/swagger-ui.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="target"></div>
+
+<script src="http://unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
+
+<script>
+    SwaggerUIBundle({
+        dom_id: '#target',
+        url: "https://petstore.swagger.io/v2/swagger.json",
+        presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIBundle.SwaggerUIStandalonePreset
+        ]
+    })
+</script>
+</body>
+</html>
