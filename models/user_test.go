@@ -16,7 +16,7 @@ func TestUser(t *testing.T) {
 		panic(err)
 	}
 
-	user1, err := database.GetUserByID(user.UUID)
+	user1, err := database.GetUserByID(user.Id.String())
 	if err != nil {
 		panic(err)
 	}
