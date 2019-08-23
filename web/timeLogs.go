@@ -598,14 +598,14 @@ func (web *Web) APICheckin(w http.ResponseWriter, r *http.Request) {
 
 	err := web.StudentCheckin(userId, seasonId)
 	if err == StudentNotExistError || err == models.AlreadyCheckInError {
-		handleBadRequest(w, err)
+		handleUnprocessableEntity(w, err)
 		return
 	} else if err != nil {
 		handleWebErr(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // GET /timeLog/checkout
@@ -634,5 +634,5 @@ func (web *Web) APICheckout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
