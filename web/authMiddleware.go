@@ -35,7 +35,7 @@ func (web *Web) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		pages := web.GetPageInfos()
-		url := strings.Split(r.RequestURI, "?")[0]
+		url := r.URL.Path
 
 		session, err := web.checkAuth(w, r)
 		if err != nil && !(err == AuthWrongSession || err == AuthSessionNotProvided) {
@@ -45,7 +45,6 @@ func (web *Web) AuthMiddleware(next http.Handler) http.Handler {
 
 		for _, pageInfo := range pages {
 			if pageInfo.path == url {
-				fmt.Println(pageInfo)
 
 				if pageInfo.pageLevel == PageOpen {
 					next.ServeHTTP(w, r)

@@ -2,7 +2,6 @@ package web
 
 import (
 	"errors"
-	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
@@ -83,8 +82,6 @@ func setSessionTokenCookie(w http.ResponseWriter, session LoginSession) {
 		Value: session.Username,
 		Path:  "/",
 	}
-
-	fmt.Println(session.Validate)
 
 	if session.Validate == 0 {
 		expTime = time.Now().Add(168 * time.Hour)
