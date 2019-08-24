@@ -180,7 +180,7 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	datas := struct {
+	data := struct {
 		Name               string
 		UserName           string
 		pLevel             string
@@ -196,37 +196,52 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := new(models.User)
+	targetUserName := r.Form["userName"][0]
 
-	user.Username = r.Form["userName"][0]
-	user.Name = r.Form["name"][0]
-	pLevel := r.Form["pLevel"][0]
-
-	oldUser, err := web.database.GetUserByUserName(user.Username)
+	user, err := web.database.GetUserByUserName(targetUserName)
 	if err != nil && err != mgo.ErrNotFound {
 		handleWebErr(w, err)
 		return
 	}
 
-	switch pLevel {
-	case "Member":
-		user.PermissionLevel = models.PermissionMember
-	case "Leader":
-		user.PermissionLevel = models.PermissionLeader
-	case "Admin":
-		user.PermissionLevel = models.PermissionAdmin
-	case "Super":
-		user.PermissionLevel = models.PermissionSuper
-	default:
-		user.PermissionLevel = models.PermissionMember
-	}
-
-	if oldUser != nil {
-		if currUser.PermissionLevel <= oldUser.PermissionLevel && currUser.Username != user.Username {
+	if user != nil {
+		if currUser.PermissionLevel <= user.PermissionLevel && currUser.Username != user.Username {
 			handleBadRequest(w, errors.New("you didn't have the permission to edit this user"))
 			return
 		}
+
+		if len(r.Form["passwordNeedChange"]) > 0 {
+			data.PasswordNeedChange = r.Form["passwordNeedChange"][0] == "on"
+		} else {
+			data.PasswordNeedChange = false
+		}
+	} else {
+		user = new(models.User)
+		user.Username = targetUserName
+		user.Id = bson.NewObjectId()
+		data.PasswordNeedChange = true
+		user.Password = uuid.NewV4().String()
 	}
+
+	user.PasswordNeedChange = data.PasswordNeedChange
+	user.Name = r.Form["name"][0]
+
+	pLevel := r.Form["pLevel"][0]
+	var targetPLevel int
+	switch pLevel {
+	case "Member":
+		targetPLevel = models.PermissionMember
+	case "Leader":
+		targetPLevel = models.PermissionLeader
+	case "Admin":
+		targetPLevel = models.PermissionAdmin
+	case "Super":
+		targetPLevel = models.PermissionSuper
+	default:
+		targetPLevel = models.PermissionMember
+	}
+
+	user.PermissionLevel = targetPLevel
 
 	if !currUser.CheckPermissionLevel(user.PermissionLevel) {
 		handleBadRequest(w, errors.New("you didn't have the permission to change to permission level to "+pLevel))
@@ -237,60 +252,33 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		user.Email = r.Form["email"][0]
 	}
 	if r.Form["firstYear"] != nil {
-		datas.firstYStr = r.Form["firstYear"][0]
+		data.firstYStr = r.Form["firstYear"][0]
 	}
 	if r.Form["graduationYear"] != nil {
-		datas.gradYStr = r.Form["graduationYear"][0]
+		data.gradYStr = r.Form["graduationYear"][0]
 	}
 
-	passwordChanged := false
-
-	if r.Form["password"] != nil {
-		user.Password = r.Form["password"][0]
-		passwordChanged = true
-	} else {
-		if oldUser != nil {
-			user.Password = oldUser.Password
-		}
-	}
 	if r.Form["UUID"] != nil {
-		datas.UUID = r.Form["UUID"][0]
+		data.UUID = r.Form["UUID"][0]
 	} else {
 		uuid := uuid.NewV4()
-		datas.UUID = uuid.String()
+		data.UUID = uuid.String()
 	}
 
-	if len(r.Form["passwordNeedChange"]) > 0 {
-		datas.PasswordNeedChange = r.Form["passwordNeedChange"][0] == "on"
-	} else {
-		datas.PasswordNeedChange = false
-	}
-	if passwordChanged {
-		user.PasswordNeedChange = false
-	} else {
-		user.PasswordNeedChange = datas.PasswordNeedChange
-	}
-
-	user.UUID = datas.UUID
-	if datas.firstYStr != "" {
-		user.FirstYear, err = strconv.Atoi(datas.firstYStr)
+	user.UUID = data.UUID
+	if data.firstYStr != "" {
+		user.FirstYear, err = strconv.Atoi(data.firstYStr)
 		if err != nil {
 			handleWebErr(w, err)
 			return
 		}
 	}
-	if datas.gradYStr != "" {
-		user.GraduationYear, err = strconv.Atoi(datas.gradYStr)
+	if data.gradYStr != "" {
+		user.GraduationYear, err = strconv.Atoi(data.gradYStr)
 		if err != nil {
 			handleWebErr(w, err)
 			return
 		}
-	}
-
-	if oldUser != nil {
-		user.Id = oldUser.Id
-	} else {
-		user.Id = bson.NewObjectId()
 	}
 
 	_, err = web.database.SaveUser(*user)
@@ -330,6 +318,131 @@ func (web *Web) UsersDeleteGET(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = web.database.DeleteUser(*user)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/users", http.StatusSeeOther)
+}
+
+func (web *Web) UserChangePasswordGET(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		web.handle401(w, r)
+		return
+	}
+
+	user, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	template, err := web.parseFiles("templates/users_change_password.html", "templates/base.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	data := struct {
+		Name        string
+		Identify    string
+		ForceChange bool
+	}{}
+
+	editTargetUserName, ok := r.URL.Query()["edit"]
+	if ok {
+		editUser, err := web.database.GetUserByUserName(editTargetUserName[0])
+		if err != nil && err != mgo.ErrNotFound {
+			handleWebErr(w, err)
+			return
+		}
+
+		if editUser == nil {
+			handleBadRequest(w, errors.New("user not found"))
+			return
+		}
+
+		if editUser.GetIdentify() != user.GetIdentify() && !user.CheckPermissionLevel(models.PermissionAdmin) {
+			web.handle403(w, r)
+			return
+		}
+
+		data.Identify = editUser.GetIdentify()
+		data.Name = editUser.Name
+	}
+
+	force, ok := r.URL.Query()["force"]
+	data.ForceChange = ok && force[0] == "true"
+
+	err = template.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+	}
+}
+
+func (web *Web) UserChangePasswordPOST(w http.ResponseWriter, r *http.Request) {
+	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if session == nil {
+		web.handle401(w, r)
+		return
+	}
+
+	user, err := web.database.GetUserByUserName(session.Username)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	err = r.ParseForm()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	editTargetQuery, ok := r.Form["target"]
+	if !ok {
+		handleBadRequest(w, errors.New("parameter target not found"))
+		return
+	}
+
+	editUser, err := web.database.GetUserByUserName(editTargetQuery[0])
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	if editUser == nil {
+		handleBadRequest(w, errors.New("target not found"))
+		return
+	}
+
+	if editUser.GetIdentify() != user.GetIdentify() && user.PermissionLevel <= editUser.PermissionLevel && user.PermissionLevel != models.PermissionSuper {
+		handleForbidden(w, errors.New("no permission"))
+		return
+	}
+
+	pswQuery, ok := r.Form["password"]
+	if !ok || len(pswQuery[0]) < 1 {
+		handleBadRequest(w, errors.New("password not provided or is empty"))
+		return
+	}
+
+	editUser.Password = pswQuery[0]
+	editUser.PasswordNeedChange = false
+
+	_, err = web.database.SaveUser(*editUser)
 	if err != nil {
 		handleWebErr(w, err)
 		return

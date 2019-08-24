@@ -42,36 +42,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group col-md-3">
-                        <label for="inputPassword">Password</label>
-                        <input type="password" class="form-control" id="inputPassword" name="password"
-                               placeholder="Password"
-                               autocomplete="new-password" required value="{{.EditUser.Password}}"
-                               {{if .New}}{{else}}disabled{{end}}>
-                        <div class="invalid-feedback">
-                            Please choose a password.
-                        </div>
-                    </div>
-                    <div class="form-group col-md-3">
-                        <label for="inputConfirmPassword">Confirm Password</label>
-                        <input type="password" class="form-control" id="inputConfirmPassword" name="confirmPassword"
-                               placeholder="Confirm Password"
-                               autocomplete="new-password" value="{{.EditUser.Password}}"
-                               {{if .New}}{{else}}disabled{{end}}>
-                        <div class="invalid-feedback">
-                            Password dose not match.
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-md-0 mb-2">
-                        <label id="genePswLabel" class="invisible">Generated: <span class="badge badge-info"
-                                                                                    id="genePsw"></span> </label><br>
-                        <button type="button" id="pswGeneBtn" class="btn btn-success">Generate password
-                        </button>
-                        <button type="button" id="pswEditBtn" class="btn btn-warning">Edit password
-                        </button>
-                    </div>
-                </div>
                 <div class="form-group">
                     <label for="inputEmail">Email address</label>
                     <input type="email" class="form-control" id="inputEmail" placeholder="Email" name="email"
@@ -118,6 +88,7 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Save</button>
                 <button type="button" class="btn btn-danger" id="deleteUser">Delete</button>
+                <a class="btn btn-info" href="/users/form/password?edit={{.EditUser.UserName}}">Change password</a>
             </form>
         </div>
         <div class="col-lg-2">
@@ -138,16 +109,9 @@
                 // Loop over them and prevent submission
                 var validation = Array.prototype.filter.call(forms, function (form) {
                     form.addEventListener('submit', function (event) {
-                        const psw = $("#inputPassword").val();
-                        const pswConfirm = $("#inputConfirmPassword").val();
                         if (form.checkValidity() === false) {
                             event.preventDefault();
                             event.stopPropagation();
-                        }
-                        if (psw !== pswConfirm) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            $("#inputConfirmPassword")[0].setCustomValidity("Passwords Don't Match");
                         }
                         form.classList.add('was-validated');
                     }, false);
@@ -157,21 +121,6 @@
     </script>
 
     <script>
-
-        $("#pswGeneBtn").on('click', function () {
-            let psw = generatePassword();
-
-            $("#inputPassword").val(psw);
-            $("#inputConfirmPassword").val(psw);
-            $("#genePsw").html(psw);
-            $("#genePswLabel").removeClass("invisible");
-            $("#inputPassword").removeAttr("disabled");
-        });
-
-        $("#pswEditBtn").on('click', function () {
-            $("#inputPassword").removeAttr("disabled");
-            $("#inputConfirmPassword").removeAttr("disabled");
-        });
 
         $("#deleteUser").on('click', function () {
             const r = confirm("Are you sure you want to delete user: '" + $("#editUUID").val() + "' ?");
