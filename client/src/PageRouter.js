@@ -8,7 +8,7 @@ class PageRouter extends Component {
     render() {
         const { routes, perfix } = this.props;
 
-        let role = roles.UnAuth;
+        let role = roles.Student;
         // if (this.props.auth.uid !== undefined) {
         //     role = roles.Student;
         // }
