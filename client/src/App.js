@@ -8,7 +8,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="App">
-        <div className="mb-3">
+        <div className="mb-5">
           <NavBar links={routes} />
         </div>
         <PageRouter routes={routes} />
