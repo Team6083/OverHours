@@ -336,6 +336,14 @@ components:
                 type: integer
               SeasonId:
                 type: string
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_jwt
+
+security:
+  - cookieAuth: []
 
 servers:
   - url: 'https://virtserver.swaggerhub.com/kennhung/OverHours/1.0.0-SNAPSHOT'
