@@ -101,13 +101,12 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 		UUID               string
 		UserName           string
 		Name               string
-		Password           string
 		Email              string
 		FirstY             int
 		GradY              int
 		PLevel             int
 		PasswordNeedChange bool
-	}{"", "", "", "", "", "", 0, 0, 0, false}
+	}{"", "", "", "", "", 0, 0, 0, false}
 
 	data := struct {
 		EditUser struct {
@@ -115,7 +114,6 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 			UUID               string
 			UserName           string
 			Name               string
-			Password           string
 			Email              string
 			FirstY             int
 			GradY              int
@@ -139,7 +137,6 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 				data.EditUser.UserName = editUser.Username
 				data.EditUser.Name = editUser.Name
 				data.EditUser.UUID = editUser.UUID
-				data.EditUser.Password = editUser.Password
 				data.EditUser.Email = editUser.Email
 				data.EditUser.FirstY = editUser.FirstYear
 				data.EditUser.GradY = editUser.GraduationYear
