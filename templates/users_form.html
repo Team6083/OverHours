@@ -42,10 +42,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="inputEmail">Email address</label>
-                    <input type="email" class="form-control" id="inputEmail" placeholder="Email" name="email"
-                           value="{{.EditUser.Email}}">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Password</label>
+                        <a class="badge badge-pill badge-info d-block" href="/users/form/password?edit={{.EditUser.UserName}}">Click here to change password</a>
+                    </div>
+                    <div class="form-group col-md-8">
+                        <label for="inputEmail">Email address</label>
+                        <input type="email" class="form-control" id="inputEmail" placeholder="Email" name="email"
+                               value="{{.EditUser.Email}}">
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-2">
@@ -88,7 +94,6 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Save</button>
                 <button type="button" class="btn btn-danger" id="deleteUser">Delete</button>
-                <a class="btn btn-info" href="/users/form/password?edit={{.EditUser.UserName}}">Change password</a>
             </form>
         </div>
         <div class="col-lg-2">

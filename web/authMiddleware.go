@@ -74,7 +74,7 @@ func (web *Web) AuthMiddleware(next http.Handler) http.Handler {
 				})
 
 				if user.PasswordNeedChange && !strings.Contains(r.URL.Path, "/users/form") {
-					http.Redirect(w, r, fmt.Sprintf("/users/form?edit=%s", user.GetIdentify()), http.StatusFound)
+					http.Redirect(w, r, fmt.Sprintf("/users/form/password?edit=%s&force=true", user.GetIdentify()), http.StatusFound)
 					return
 				}
 
