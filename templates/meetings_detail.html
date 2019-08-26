@@ -51,7 +51,7 @@
                         </div>
                         {{end}}
                     </div>
-                    <table class="table table-striped table-sm">
+                    <table class="table table-hover table-sm">
                         <thead>
                         <tr>
                             <th scope="col">
@@ -138,9 +138,9 @@
             td2.innerText = names[name];
             let td3 = document.createElement("td");
             if (isLeave) {
-                td3.innerHTML = "<span class=\"badge badge-pill badge-dark\">Leave</span>";
+                td3.innerHTML = "<span class=\"badge badge-pill badge-warning\">Leave</span>";
             } else {
-                td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsAdmin}}<a class=\"btn btn-sm btn-warning\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
+                td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsAdmin}}<a class=\"btn btn-sm btn-primary\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
             }
 
 
@@ -151,13 +151,13 @@
             td4div.classList = "btn-bar";
 
 
-            const actionBtn = "<a class=\"btn btn-sm btn-outline-warning\" href=\"/meeting/participant/deleteLog/{{.Meeting.MeetId}}/" + name + "\">Rm log</a> <a class=\"btn btn-sm btn-outline-danger\" href=\"/meeting/participant/delete/{{.Meeting.MeetId}}/" + name + "\">Delete</a>";
+            const actionBtn = "<a class=\"btn btn-sm btn-warning\" href=\"/meeting/participant/deleteLog/{{.Meeting.MeetId}}/" + name + "\">Rm log</a> <a class=\"btn btn-sm btn-danger\" href=\"/meeting/participant/delete/{{.Meeting.MeetId}}/" + name + "\">Delete</a>";
 
             {{if and .IsAdmin (not .MeetingFinished)}}
             if (isLeave || checkinTime !== 0) {
-                td4div.innerHTML += "<a class=\"btn btn-sm btn-outline-info disabled\" href=\"/meeting/participant/leave/{{.Meeting.MeetId}}/" + name + "\">Leave</a>" + " ";
+                td4div.innerHTML += "<a class=\"btn btn-sm btn-info disabled\" href=\"/meeting/participant/leave/{{.Meeting.MeetId}}/" + name + "\">Leave</a>" + " ";
             } else {
-                td4div.innerHTML += "<a class=\"btn btn-sm btn-outline-info\" href=\"/meeting/participant/leave/{{.Meeting.MeetId}}/" + name + "\">Leave</a>" + " ";
+                td4div.innerHTML += "<a class=\"btn btn-sm btn-info\" href=\"/meeting/participant/leave/{{.Meeting.MeetId}}/" + name + "\">Leave</a>" + " ";
             }
             td4div.innerHTML += actionBtn;
             {{end}}

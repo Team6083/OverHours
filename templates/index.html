@@ -10,22 +10,25 @@
             <h4>Current login: <span class="badge badge-dark">{{.UserName}}</span> / Season: <span
                         class="badge badge-primary badge-pill">{{.CurrentSeason}}</span></h4>
             <form method="post" action="/timeLog/checkinPost">
-                <div class="input-group mb-3 mt-3">
-                    <input type="text" class="form-control" id="usernameInput" name="studentId" placeholder="Students's Id"
-                           value="{{.UserAccName}}" {{.Readonly}}>
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="submit"
-                                id="stu-submit" {{if eq .CanCheckIn false}}  disabled {{end}}>Checkin
-                        </button>
-                        {{if eq .Disable false}}
-                        <button class="btn btn-outline-dark dropdown-toggle dropdown-toggle-split" type="button"
-                                data-toggle="dropdown">
-                            <span class="sr-only">Select...</span>
-                        </button>
-                        <div class="dropdown-menu" id="usernameDropdown">
+                <div id="checkinFormHider" class="{{if .IncomingMeet}}d-none{{end}}">
+                    <div class="input-group mb-3 mt-3">
+                        <input type="text" class="form-control" id="usernameInput" name="studentId"
+                               placeholder="Students's Id"
+                               value="{{.UserAccName}}" {{.Readonly}}>
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="submit"
+                                    id="stu-submit" {{if eq .CanCheckIn false}}  disabled {{end}}>Checkin
+                            </button>
+                            {{if eq .Disable false}}
+                                <button class="btn btn-outline-dark dropdown-toggle dropdown-toggle-split" type="button"
+                                        data-toggle="dropdown">
+                                    <span class="sr-only">Select...</span>
+                                </button>
+                                <div class="dropdown-menu" id="usernameDropdown">
 
+                                </div>
+                            {{end}}
                         </div>
-                        {{end}}
                     </div>
                 </div>
             </form>
@@ -45,22 +48,21 @@
                 </strong>
             </div>
         </div>
-        </div>
     {{end}}
 
     {{if .IncomingMeet}}
         <div class="row mb-2">
-            <div class="col-lg-2"></div>
-            <div class="col-lg-8 col">
-                <div class="card border-info text-center">
+            <div class="col-lg-4"></div>
+            <div class="col-lg-4 col">
+                <div class="card border-dark text-center">
                     <div class="card-body">
-                        <h6 class="card-title">Incoming meeting can start checkin now</h6>
-                        <a class="btn btn-outline-primary"
-                           href="/meeting/detail/{{.IncomingMeet.MeetId}}">{{.IncomingMeet.Title}}</a>
+                        <h4><span class="badge badge-info">{{.IncomingMeet.Title}}</span></h4>
+                        <h6 class="card-title">Can start checkin now</h6>
+                        <a class="btn btn-outline-success"
+                           href="/meeting/detail/{{.IncomingMeet.MeetId}}">Checkin meeting</a>
                     </div>
                 </div>
             </div>
-        </div>
         </div>
     {{end}}
 
