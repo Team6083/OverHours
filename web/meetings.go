@@ -324,7 +324,7 @@ func (web *Web) MeetingParticipantLeaveGET(w http.ResponseWriter, r *http.Reques
 
 	userId := vars["userId"]
 	if !meeting.CheckUserParticipate(userId) {
-		handleWebErr(w, models.UserNotInMeeting)
+		handleBadRequest(w, models.UserNotInMeeting)
 		return
 	}
 
@@ -359,7 +359,7 @@ func (web *Web) MeetingParticipantDeleteLogGET(w http.ResponseWriter, r *http.Re
 
 	userId := vars["userId"]
 	if !meeting.CheckUserParticipate(userId) {
-		handleWebErr(w, models.UserNotInMeeting)
+		handleBadRequest(w, models.UserNotInMeeting)
 		return
 	}
 
@@ -406,7 +406,7 @@ func (web *Web) MeetingParticipantDeleteGET(w http.ResponseWriter, r *http.Reque
 
 	userId := vars["userId"]
 	if !meeting.CheckUserParticipate(userId) {
-		handleWebErr(w, models.UserNotInMeeting)
+		handleBadRequest(w, models.UserNotInMeeting)
 		return
 	}
 
