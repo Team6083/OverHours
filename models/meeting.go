@@ -32,6 +32,7 @@ type ParticipantData struct {
 // Check auth status
 var UserNotInMeeting = errors.New("this user is not a participant of the meeting")
 var CantCheckinError = errors.New("can't checkin right now")
+var UserLeaveError = errors.New("user already marked leave")
 
 func GetNewMeeting() *Meeting {
 	meeting := new(Meeting)
@@ -127,6 +128,10 @@ func (database *Database) MeetingCheckin(meeting *Meeting, user *User) error {
 
 	if !meeting.CheckIfMeetingCanCheckInNow(user) {
 		return CantCheckinError
+	}
+
+	if meeting.Participants[user.GetIdentify()].Leave {
+		return UserLeaveError
 	}
 
 	lastLog, err := database.GetLastLogByUserWithSpecificSeason(user.GetIdentify(), meeting.GetMeetingLogId())

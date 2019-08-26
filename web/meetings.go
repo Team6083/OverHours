@@ -89,7 +89,7 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 
 	err = web.database.MeetingCheckin(meeting, user)
 	if err != nil {
-		if err == models.CantCheckinError || err == models.UserNotInMeeting || err == models.AlreadyCheckInError {
+		if err == models.CantCheckinError || err == models.UserNotInMeeting || err == models.AlreadyCheckInError || err == models.UserLeaveError {
 			handleBadRequest(w, err)
 		} else {
 			handleWebErr(w, err)
