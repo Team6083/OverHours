@@ -72,6 +72,16 @@ func (database *Database) GetAllUsers() ([]User, error) {
 	return users, nil
 }
 
+func (database *Database) GetUsersByPermission(permissionLevel int) ([]User, error) {
+	var users []User
+	err := database.DB.C("users").Find(bson.M{"permissionlevel": permissionLevel}).All(&users)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (database *Database) GetUserByUserName(name string) (*User, error) {
 	user := User{}
 	err := database.DB.C("users").Find(bson.M{"username": name}).One(&user)

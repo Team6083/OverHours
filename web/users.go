@@ -2,6 +2,7 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
@@ -193,6 +194,25 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		targetPLevel = models.PermissionMember
 	}
 
+	if user.PermissionLevel == models.PermissionSuper && targetPLevel < models.PermissionSuper {
+		superUsers, err := web.database.GetUsersByPermission(models.PermissionSuper)
+		if err != nil {
+			// should not have NotFound error
+			handleWebErr(w, err)
+			return
+		}
+
+		if len(superUsers) <= 1 {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			_, err = fmt.Fprint(w, "UnprocessableEntity: can not downgrade last superUser account")
+			if err != nil {
+				handleWebErr(w, err)
+				return
+			}
+			return
+		}
+	}
+
 	user.PermissionLevel = targetPLevel
 
 	if !currUser.CheckPermissionLevel(user.PermissionLevel) {
@@ -250,7 +270,7 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) UsersDeleteGET(w http.ResponseWriter, r *http.Request) {
-	//currentUser := r.Context().Value("user").(*models.User)
+	currentUser := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	targetId := vars["id"]
@@ -259,6 +279,29 @@ func (web *Web) UsersDeleteGET(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		handleWebErr(w, err)
 		return
+	}
+
+	if !currentUser.CheckPermissionLevel(user.PermissionLevel) {
+		handleForbidden(w, errors.New("no permission"))
+		return
+	}
+
+	if user.PermissionLevel == models.PermissionSuper {
+		superUsers, err := web.database.GetUsersByPermission(models.PermissionSuper)
+		if err != nil {
+			// should not have NotFound error
+			handleWebErr(w, err)
+			return
+		}
+
+		if len(superUsers) <= 1 {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			_, err = fmt.Fprint(w, "UnprocessableEntity: can not delete last superUser account")
+			if err != nil {
+				panic(err)
+			}
+			return
+		}
 	}
 
 	err = web.database.DeleteUser(*user)
