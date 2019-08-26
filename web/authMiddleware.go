@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"github.com/getsentry/sentry-go"
+	"github.com/gorilla/mux"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -36,7 +37,12 @@ func (web *Web) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		pages := web.GetPageInfos()
-		url := r.URL.Path
+		currentRoute := mux.CurrentRoute(r)
+		url, err := currentRoute.GetPathTemplate()
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
 
 		session, err := web.checkAuth(w, r)
 		if err != nil && !(err == AuthWrongSession || err == AuthSessionNotProvided) {
