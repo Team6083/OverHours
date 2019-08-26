@@ -97,21 +97,7 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	user := r.Context().Value("user").(*models.User)
 
 	webTemplate, err := web.parseFiles("templates/meetings_detail.html", "templates/base.html")
 	if err != nil {
@@ -156,7 +142,8 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 		MeetingCheckinStarted bool
 		IsLeader              bool
 		MeetingFinished       bool
-	}{meeting, names, make(map[string]ParticipantsTimeLogDetail), meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(user.GetIdentify()), meeting.MeetingFinished()}
+		//TODO: admin user of a meeting
+	}{meeting, names, make(map[string]ParticipantsTimeLogDetail), meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionLeader) || meeting.CheckUserAdmin(user.GetIdentify()), meeting.MeetingFinished()}
 
 	for index, participant := range meeting.Participants {
 		lastLog, err := web.database.GetLastLogByUser(participant.UserId)
