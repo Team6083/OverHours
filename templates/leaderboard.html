@@ -20,19 +20,21 @@
     </div>
     <div class="row">
         <div class="col-lg-2"></div>
-        <div class="col-lg-8 col" style="overflow-x: scroll">
-            <table id="leaderboardTable" class="table table-hover">
-                <thead>
-                <tr>
-                    <th>ranking</th>
-                    <th>user</th>
-                    <th>total time</th>
-                </tr>
-                </thead>
-                <tbody>
+        <div class="col-lg-8 col">
+            <div style="overflow-x: scroll">
+                <table id="leaderboardTable" class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>ranking</th>
+                        <th>user</th>
+                        <th>total time</th>
+                    </tr>
+                    </thead>
+                    <tbody>
 
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div class="col-lg-2">
         </div>
@@ -59,7 +61,7 @@
                 },
                 {
                     "render": function (data) {
-                        return names[data] ? names[data] : "<span class=\"text-muted\">{data}</span>".replace("{data}",data);
+                        return names[data] ? names[data] : "<span class=\"text-muted\">{data}</span>".replace("{data}", data);
                     },
                     "targets": 1
                 },
