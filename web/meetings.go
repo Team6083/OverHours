@@ -15,25 +15,12 @@ import (
 )
 
 func (web *Web) MeetingGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
+	user := r.Context().Value("user").(*models.User)
 
 	webTemplate, err := web.parseFiles("templates/meetings.html", "templates/base.html")
 	if err != nil {
 		handleWebErr(w, err)
 		return
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
 	}
 
 	var meetings []models.Meeting
@@ -70,21 +57,7 @@ func (web *Web) MeetingGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
-
-	sessionUser, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	sessionUser := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]
@@ -213,16 +186,7 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) MeetingFormGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		web.handle401(w, r)
-		return
-	}
+	//user := r.Context().Value("user").(*models.User)
 
 	template, err := web.parseFiles("templates/meetings_form.html", "templates/base.html")
 	if err != nil {
@@ -258,18 +222,9 @@ func (web *Web) MeetingFormGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	//user := r.Context().Value("user").(*models.User)
 
-	if session == nil {
-		web.handle401(w, r)
-		return
-	}
-
-	err = r.ParseForm()
+	err := r.ParseForm()
 	if err != nil {
 		handleWebErr(w, err)
 		return
@@ -348,15 +303,7 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) MeetingDeleteGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
+	//user := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -377,21 +324,7 @@ func (web *Web) MeetingDeleteGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) MeetingParticipantLeaveGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
-
-	sessionUser, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	sessionUser := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]
@@ -426,21 +359,7 @@ func (web *Web) MeetingParticipantLeaveGET(w http.ResponseWriter, r *http.Reques
 }
 
 func (web *Web) MeetingParticipantDeleteLogGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
-
-	sessionUser, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	sessionUser := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]
@@ -487,21 +406,7 @@ func (web *Web) MeetingParticipantDeleteLogGET(w http.ResponseWriter, r *http.Re
 }
 
 func (web *Web) MeetingParticipantDeleteGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
-
-	sessionUser, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	sessionUser := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]
@@ -536,15 +441,7 @@ func (web *Web) MeetingParticipantDeleteGET(w http.ResponseWriter, r *http.Reque
 // modify
 
 func (web *Web) MeetingModifyOpenCheckinGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
+	//user := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]
@@ -567,15 +464,7 @@ func (web *Web) MeetingModifyOpenCheckinGET(w http.ResponseWriter, r *http.Reque
 }
 
 func (web *Web) MeetingModifyRmAllLogGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
+	//user := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]
@@ -596,15 +485,7 @@ func (web *Web) MeetingModifyRmAllLogGET(w http.ResponseWriter, r *http.Request)
 }
 
 func (web *Web) MeetingModifyFinishGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
+	//user := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]

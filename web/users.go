@@ -12,27 +12,12 @@ import (
 )
 
 func (web *Web) UsersGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		if err != AuthNoPermission {
-			handleWebErr(w, err)
-		}
-		return
-	}
-
-	if session == nil {
-		return
-	}
+	user := r.Context().Value("user").(*models.User)
 
 	webTemplate, err := web.parseFiles("templates/users.html", "templates/base.html")
 	if err != nil {
 		handleWebErr(w, err)
 		return
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
 	}
 
 	var users []models.User
@@ -73,22 +58,7 @@ func (web *Web) UsersGET(w http.ResponseWriter, r *http.Request) {
 // UsersForm
 
 func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		web.handle401(w, r)
-		return
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	user := r.Context().Value("user").(*models.User)
 
 	template, err := web.parseFiles("templates/users_form.html", "templates/base.html")
 	if err != nil {
@@ -154,24 +124,9 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	currUser := r.Context().Value("user").(*models.User)
 
-	if session == nil {
-		web.handle401(w, r)
-		return
-	}
-
-	currUser, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	err = r.ParseForm()
+	err := r.ParseForm()
 	if err != nil {
 		handleWebErr(w, err)
 		return
@@ -295,15 +250,7 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) UsersDeleteGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
+	//currentUser := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	targetId := vars["id"]
@@ -324,22 +271,7 @@ func (web *Web) UsersDeleteGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) UserChangePasswordGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		web.handle401(w, r)
-		return
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	user := r.Context().Value("user").(*models.User)
 
 	template, err := web.parseFiles("templates/users_change_password.html", "templates/base.html")
 	if err != nil {
@@ -385,24 +317,9 @@ func (web *Web) UserChangePasswordGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) UserChangePasswordPOST(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	user := r.Context().Value("user").(*models.User)
 
-	if session == nil {
-		web.handle401(w, r)
-		return
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	err = r.ParseForm()
+	err := r.ParseForm()
 	if err != nil {
 		handleWebErr(w, err)
 		return

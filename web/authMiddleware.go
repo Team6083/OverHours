@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"github.com/getsentry/sentry-go"
@@ -73,14 +74,16 @@ func (web *Web) AuthMiddleware(next http.Handler) http.Handler {
 					scope.SetUser(sentry.User{Email: user.Email, Username: user.Username, ID: user.UUID})
 				})
 
+				ctx := context.WithValue(r.Context(), "user", user)
+				r = r.WithContext(ctx)
+
 				if user.PasswordNeedChange && !strings.Contains(r.URL.Path, "/users/form") {
-					http.Redirect(w, r, fmt.Sprintf("/users/form/password?edit=%s&force=true", user.GetIdentify()), http.StatusFound)
+					http.Redirect(w, r, fmt.Sprintf("/users/form/password?edit=%s&force=true", user.GetIdentify()), http.StatusSeeOther)
 					return
 				}
 
 				var targetLevel int
 				if pageInfo.pageLevel == PageLeader {
-					sentry.CaptureMessage(fmt.Sprintf("User access leader level page"))
 					targetLevel = models.PermissionLeader
 				}
 

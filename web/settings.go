@@ -7,20 +7,7 @@ import (
 )
 
 func (web *Web) SettingsGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-	if session == nil {
-		return
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	user := r.Context().Value("user").(*models.User)
 
 	if !user.CheckPermissionLevel(models.PermissionAdmin) {
 		web.handle401(w, r)
@@ -51,29 +38,14 @@ func (web *Web) SettingsGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) SettingsPOST(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	user := r.Context().Value("user").(*models.User)
 
-	if session == nil {
+	if !user.CheckPermissionLevel(models.PermissionAdmin) {
 		web.handle401(w, r)
 		return
 	}
 
-	currUser, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if !currUser.CheckPermissionLevel(models.PermissionAdmin) {
-		web.handle401(w, r)
-		return
-	}
-
-	err = r.ParseForm()
+	err := r.ParseForm()
 	if err != nil {
 		handleWebErr(w, err)
 		return

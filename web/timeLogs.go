@@ -16,25 +16,12 @@ import (
 // Handlers
 
 func (web *Web) TimeLogGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
+	user := r.Context().Value("user").(*models.User)
 
 	webTemplate, err := web.parseFiles("templates/timeLogs.html", "templates/base.html")
 	if err != nil {
 		handleWebErr(w, err)
 		return
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
 	}
 
 	names, err := web.database.GetUserNameMap()
@@ -78,21 +65,8 @@ func (web *Web) TimeLogGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) TimeLogDatatable(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-	}
-
+	user := r.Context().Value("user").(*models.User)
+	var err error
 	var timeLogs []models.TimeLog
 
 	if user != nil {
@@ -130,16 +104,7 @@ func (web *Web) TimeLogDatatable(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) TimeLogFormGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		web.handle401(w, r)
-		return
-	}
+	//user := r.Context().Value("user").(*models.User)
 
 	template, err := web.parseFiles("templates/timeLogs_form.html", "templates/base.html")
 	if err != nil {
@@ -168,18 +133,9 @@ func (web *Web) TimeLogFormGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) TimeLogFormPOST(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
+	//user := r.Context().Value("user").(*models.User)
 
-	if session == nil {
-		web.handle401(w, r)
-		return
-	}
-
-	err = r.ParseForm()
+	err := r.ParseForm()
 	if err != nil {
 		handleWebErr(w, err)
 		return
@@ -222,15 +178,7 @@ func (web *Web) TimeLogFormPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) TimeLogDelete(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLeader, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if session == nil {
-		return
-	}
+	//user := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
 	targetId := vars["id"]
@@ -251,47 +199,33 @@ func (web *Web) TimeLogDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	user := r.Context().Value("user").(*models.User)
+
+	err := r.ParseForm()
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
 
-	if session != nil {
-		err := r.ParseForm()
-		if err != nil {
-			handleWebErr(w, err)
-			return
-		}
-
-		if r.Form["studentId"] == nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		stuId := r.Form["studentId"][0]
-
-		user, err := web.database.GetUserByUserName(session.Username)
-		if err != nil {
-			handleWebErr(w, err)
-			return
-		}
-		if user.Username != stuId && !user.CheckPermissionLevel(models.PermissionLeader) {
-			handleWebErr(w, AuthNoPermission)
-			return
-		}
-
-		if web.settings.CheckIfCanCheckIn(user) {
-			fmt.Printf("%s checkin at %s\n", stuId, time.Now().String())
-			err = web.StudentCheckin(stuId, web.settings.SeasonId)
-			if err != nil && err != models.AlreadyCheckInError {
-				handleWebErr(w, err)
-				return
-			}
-		}
-
-	} else {
+	if r.Form["studentId"] == nil {
+		w.WriteHeader(http.StatusBadRequest)
 		return
+	}
+
+	stuId := r.Form["studentId"][0]
+
+	if user.Username != stuId && !user.CheckPermissionLevel(models.PermissionLeader) {
+		handleWebErr(w, AuthNoPermission)
+		return
+	}
+
+	if web.settings.CheckIfCanCheckIn(user) {
+		fmt.Printf("%s checkin at %s\n", stuId, time.Now().String())
+		err = web.StudentCheckin(stuId, web.settings.SeasonId)
+		if err != nil && err != models.AlreadyCheckInError {
+			handleWebErr(w, err)
+			return
+		}
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -299,40 +233,31 @@ func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
+	user := r.Context().Value("user").(*models.User)
+
+	var studentId string
+	status, ok := r.URL.Query()["studentId"]
+	if ok && len(status[0]) >= 1 {
+		studentId = status[0]
+	}
+
+	user, err := web.database.GetUserByUserName(session.Username)
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
+	if user.Username != studentId && !user.CheckPermissionLevel(models.PermissionLeader) {
+		handleWebErr(w, AuthNoPermission)
+		return
+	}
 
-	if session != nil {
-		var studentId string
-		status, ok := r.URL.Query()["studentId"]
-		if ok && len(status[0]) >= 1 {
-			studentId = status[0]
-		}
-
-		user, err := web.database.GetUserByUserName(session.Username)
-		if err != nil {
+	if web.settings.CheckIfCanCheckOut(user) {
+		fmt.Printf("%s checkout at %s\n", studentId, time.Now().String())
+		err = web.StudentCheckOut(studentId)
+		if err != nil && err != models.AlreadyCheckOutError {
 			handleWebErr(w, err)
 			return
 		}
-		if user.Username != studentId && !user.CheckPermissionLevel(models.PermissionLeader) {
-			handleWebErr(w, AuthNoPermission)
-			return
-		}
-
-		if web.settings.CheckIfCanCheckOut(user) {
-			fmt.Printf("%s checkout at %s\n", studentId, time.Now().String())
-			err = web.StudentCheckOut(studentId)
-			if err != nil && err != models.AlreadyCheckOutError {
-				handleWebErr(w, err)
-				return
-			}
-		}
-
-	} else {
-		return
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)

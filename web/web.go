@@ -134,24 +134,12 @@ func (web *Web) databaseStatusMiddleWare(next http.Handler) http.Handler {
 }
 
 func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
-	session, err := web.pageAccessManage(w, r, PageLogin, true)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-	if session == nil {
-		return
-	}
+	user := r.Context().Value("user").(*models.User)
 
 	template, err := web.parseFiles("templates/index.html", "templates/base.html")
 	if err != nil {
 		handleWebErr(w, err)
 		return
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
 	}
 
 	names, err := web.database.GetUserNameMap()
