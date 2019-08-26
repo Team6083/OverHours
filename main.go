@@ -6,6 +6,7 @@ import (
 	"github.com/Team6083/OverHours/web"
 	"github.com/getsentry/sentry-go"
 	_ "github.com/mattn/go-sqlite3"
+	uuid "github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"
@@ -64,6 +65,9 @@ func main() {
 			if err != nil {
 				handleErr(err)
 			}
+
+			// add default user
+			_, err = database.SaveUser(models.User{Name: "Root", Username: "root", Password: "root", UUID: uuid.NewV4().String(), PermissionLevel: models.PermissionSuper, PasswordNeedChange: true, Id: bson.NewObjectId()})
 		} else {
 			handleErr(err)
 		}
