@@ -15,7 +15,7 @@
                     {{end}}
                     <p>{{.Meeting.Description}}</p>
 
-                    {{if .IsLeader}}
+                    {{if .IsAdmin}}
                         <div class="btn-bar">
                             <a class="btn btn-sm btn-secondary  "
                                href="/meeting/form?edit={{.Meeting.MeetId}}">Edit</a>
@@ -45,7 +45,7 @@
                 <div class="col-12 col-lg-8">
                     <h4>Participants</h4>
                     <div class="row mb-3">
-                        {{if and .IsLeader (not .MeetingFinished)}}
+                        {{if and .IsAdmin (not .MeetingFinished)}}
                         <div class="btn-bar ml-3">
                             <button class="btn btn-sm btn-outline-info">Mark leave</button>
                         </div>
@@ -140,7 +140,7 @@
             if (isLeave) {
                 td3.innerHTML = "<span class=\"badge badge-pill badge-dark\">Leave</span>";
             } else {
-                td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsLeader}}<a class=\"btn btn-sm btn-warning\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
+                td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsAdmin}}<a class=\"btn btn-sm btn-warning\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
             }
 
 
@@ -153,7 +153,7 @@
 
             const actionBtn = "<a class=\"btn btn-sm btn-outline-warning\" href=\"/meeting/participant/deleteLog/{{.Meeting.MeetId}}/" + name + "\">Rm log</a> <a class=\"btn btn-sm btn-outline-danger\" href=\"/meeting/participant/delete/{{.Meeting.MeetId}}/" + name + "\">Delete</a>";
 
-            {{if and .IsLeader (not .MeetingFinished)}}
+            {{if and .IsAdmin (not .MeetingFinished)}}
             if (isLeave || checkinTime !== 0) {
                 td4div.innerHTML += "<a class=\"btn btn-sm btn-outline-info disabled\" href=\"/meeting/participant/leave/{{.Meeting.MeetId}}/" + name + "\">Leave</a>" + " ";
             } else {

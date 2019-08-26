@@ -140,10 +140,10 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 		CanCheckin            bool
 		MeetingStarted        bool
 		MeetingCheckinStarted bool
-		IsLeader              bool
+		IsAdmin               bool
 		MeetingFinished       bool
 		//TODO: admin user of a meeting
-	}{meeting, names, make(map[string]ParticipantsTimeLogDetail), meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionLeader) || meeting.CheckUserAdmin(user.GetIdentify()), meeting.MeetingFinished()}
+	}{meeting, names, make(map[string]ParticipantsTimeLogDetail), meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(user.GetIdentify()), meeting.MeetingFinished()}
 
 	for index, participant := range meeting.Participants {
 		lastLog, err := web.database.GetLastLogByUser(participant.UserId)
