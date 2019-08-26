@@ -241,11 +241,6 @@ func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
 		studentId = status[0]
 	}
 
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
 	if user.Username != studentId && !user.CheckPermissionLevel(models.PermissionLeader) {
 		handleWebErr(w, AuthNoPermission)
 		return
@@ -253,7 +248,7 @@ func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
 
 	if web.settings.CheckIfCanCheckOut(user) {
 		fmt.Printf("%s checkout at %s\n", studentId, time.Now().String())
-		err = web.StudentCheckOut(studentId)
+		err := web.StudentCheckOut(studentId)
 		if err != nil && err != models.AlreadyCheckOutError {
 			handleWebErr(w, err)
 			return
