@@ -16,24 +16,29 @@
                     <p>{{.Meeting.Description}}</p>
 
                     {{if .IsAdmin}}
-                        <div class="btn-bar">
-                            <a class="btn btn-sm btn-secondary  "
-                               href="/meeting/form?edit={{.Meeting.MeetId}}">Edit</a>
+                        <div class="card border-warning mb-3">
+                            <h5 class="card-header text-warning">Admin Actions</h5>
+                            <div class="card-body p-2">
+                                <div class="text-center">
+                                    <a class="btn btn-sm btn-secondary  "
+                                       href="/meeting/form?edit={{.Meeting.MeetId}}">Edit</a>
 
-                            <a class="btn btn-sm btn-success {{if .MeetingCheckinStarted}}disabled{{end}}"
-                               href="/meeting/modify/{{.Meeting.MeetId}}/openCheckin">Open Checkin Now</a>
+                                    <a class="btn btn-sm btn-success {{if .MeetingCheckinStarted}}disabled{{end}}"
+                                       href="/meeting/modify/{{.Meeting.MeetId}}/openCheckin">Open Checkin Now</a>
 
-                            <a class="btn btn-sm btn-warning {{if .MeetingFinished}}disabled{{end}}"
-                               href="/meeting/modify/{{.Meeting.MeetId}}/finish">Finish Meeting</a>
+                                    <a class="btn btn-sm btn-warning {{if .MeetingFinished}}disabled{{end}}"
+                                       href="/meeting/modify/{{.Meeting.MeetId}}/finish">Finish Meeting</a>
 
-                            <a class="btn btn-sm btn-danger"
-                               href="/meeting/modify/{{.Meeting.MeetId}}/removeAllLog">Remove All TimeLog</a>
+                                    <a class="btn btn-sm btn-danger"
+                                       href="/meeting/modify/{{.Meeting.MeetId}}/removeAllLog">Remove All TimeLog</a>
+                                </div>
+                            </div>
                         </div>
                     {{end}}
 
 
                     <div class="text-center mt-3">
-                        <a class="btn btn-block btn-primary  {{if not .CanCheckin}}disabled{{end}}"
+                        <a class="btn btn-block btn-primary {{if not .CanCheckin}}disabled{{end}}"
                            href="/meeting/checkin/{{.Meeting.MeetId}}">{{if .MeetingFinished}}Meeting finished{{else}}Checkin{{end}} </a>
 
                         <strong class="{{if .MeetingCheckinStarted}}d-none{{end}}">Checkin of this meeting will start at
@@ -46,9 +51,9 @@
                     <h4>Participants</h4>
                     <div class="row mb-3">
                         {{if and .IsAdmin (not .MeetingFinished)}}
-                        <div class="btn-bar ml-3">
-                            <button class="btn btn-sm btn-outline-info">Mark leave</button>
-                        </div>
+                            <div class="btn-bar ml-3">
+                                <button class="btn btn-sm btn-outline-info">Mark leave</button>
+                            </div>
                         {{end}}
                     </div>
                     <table class="table table-hover table-sm">
@@ -138,9 +143,9 @@
             td2.innerText = names[name];
             let td3 = document.createElement("td");
             if (isLeave) {
-                td3.innerHTML = "<span class=\"badge badge-pill badge-warning\">Leave</span>";
+                td3.innerHTML = "<h5><span class=\"badge badge-dark\">Leave</span></h5>";
             } else {
-                td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsAdmin}}<a class=\"btn btn-sm btn-primary\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
+                td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsAdmin}}<a class=\"btn btn-sm btn-success\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
             }
 
 
@@ -151,7 +156,7 @@
             td4div.classList = "btn-bar";
 
 
-            const actionBtn = "<a class=\"btn btn-sm btn-warning\" href=\"/meeting/participant/deleteLog/{{.Meeting.MeetId}}/" + name + "\">Rm log</a> <a class=\"btn btn-sm btn-danger\" href=\"/meeting/participant/delete/{{.Meeting.MeetId}}/" + name + "\">Delete</a>";
+            const actionBtn = "<a class=\"btn btn-sm btn-warning\" href=\"/meeting/participant/deleteLog/{{.Meeting.MeetId}}/" + name + "\">Remove log</a> <a class=\"btn btn-sm btn-outline-danger\" href=\"/meeting/participant/delete/{{.Meeting.MeetId}}/" + name + "\">Delete</a>";
 
             {{if and .IsAdmin (not .MeetingFinished)}}
             if (isLeave || checkinTime !== 0) {
