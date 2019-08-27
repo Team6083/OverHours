@@ -119,6 +119,7 @@ func (web *Web) newHandler() http.Handler {
 	router.Use(web.databaseStatusMiddleWare)
 	router.Use(web.AuthMiddleware)
 
+	router.NotFoundHandler = http.HandlerFunc(web.NotFoundHandler)
 	return router
 }
 
