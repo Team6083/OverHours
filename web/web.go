@@ -133,6 +133,26 @@ func (web *Web) databaseStatusMiddleWare(next http.Handler) http.Handler {
 	})
 }
 
+func (web *Web) NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	webTemplate, err := web.parseFiles("templates/errorBase.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	data := struct {
+		Title   string
+		ErrCode string
+		ErrMsg  string
+	}{"NotFound", "404", "Can't find this resource."}
+
+	err = webTemplate.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+}
+
 func (web *Web) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*models.User)
 

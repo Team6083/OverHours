@@ -1,28 +1,37 @@
 {{define "base"}}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{.Title}}</title>
-    <link href="/res/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/res/css/main.css" rel="stylesheet">
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>{{.Title}}</title>
+        <link href="/res/css/bootstrap.min.css" rel="stylesheet">
+        <link href="/res/css/main.css" rel="stylesheet">
 
-    <style>
-        body {
-            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABZ0RVh0Q3JlYXRpb24gVGltZQAxMC8yOS8xMiKqq3kAAAAcdEVYdFNvZnR3YXJlAEFkb2JlIEZpcmV3b3JrcyBDUzVxteM2AAABHklEQVRIib2Vyw6EIAxFW5idr///Qx9sfG3pLEyJ3tAwi5EmBqRo7vHawiEEERHS6x7MTMxMVv6+z3tPMUYSkfTM/R0fEaG2bbMv+Gc4nZzn+dN4HAcREa3r+hi3bcuu68jLskhVIlW073tWaYlQ9+F9IpqmSfq+fwskhdO/AwmUTJXrOuaRQNeRkOd5lq7rXmS5InmERKoER/QMvUAPlZDHcZRhGN4CSeGY+aHMqgcks5RrHv/eeh455x5KrMq2yHQdibDO6ncG/KZWL7M8xDyS1/MIO0NJqdULLS81X6/X6aR0nqBSJcPeZnlZrzN477NKURn2Nus8sjzmEII0TfMiyxUuxphVWjpJkbx0btUnshRihVv70Bv8ItXq6Asoi/ZiCbU6YgAAAABJRU5ErkJggg==);
-        }
-        #main {
-            height: 100vh;
-        }
-    </style>
-</head>
-<body>
-<div class="d-flex justify-content-center align-items-center" id="main">
-    <h1 class="mr-3 pr-3 align-top border-right inline-block align-content-center">{{.ErrCode}}</h1>
-    <div class="inline-block align-middle">
-        <h2 class="font-weight-normal lead" id="desc">{{.ErrMsg}}</h2>
+        <style>
+            #main {
+                height: 100vh;
+            }
+        </style>
+    </head>
+    <body>
+    <div class="container">
+        <div class="row text-center justify-content-center align-content-center align-items-sm-center" id="main">
+            <div class="col col-sm-auto">
+                <h1><span class="badge badge-pill badge-danger">{{.ErrCode}}</span></h1>
+            </div>
+            <div class="w-100 d-sm-none"></div>
+            <div class="col col-sm-auto">
+                <h2 class="font-weight-normal lead">{{.Title}}:</h2>
+            </div>
+            <div class="w-100 d-sm-none"></div>
+            <div class="col col-sm-auto">
+                <div class="inline-block align-middle">
+                    <h2 class="font-weight-normal lead">{{.ErrMsg}}</h2>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
-</body>
-</html>
+    </body>
+    </html>
 {{end}}

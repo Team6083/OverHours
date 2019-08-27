@@ -209,7 +209,7 @@ func (web *Web) handle401(w http.ResponseWriter, r *http.Request) {
 		Title   string
 		ErrCode string
 		ErrMsg  string
-	}{"401 Unauthorized", "401", "Unauthorized: Access to this resource is denied."}
+	}{"Unauthorized", "401", "Access to this resource is denied."}
 
 	err = webTemplate.ExecuteTemplate(w, "base", data)
 	if err != nil {
@@ -229,7 +229,7 @@ func (web *Web) handle403(w http.ResponseWriter, r *http.Request) {
 		Title   string
 		ErrCode string
 		ErrMsg  string
-	}{"403 Forbidden", "403", "Forbidden: You doesn't have the access to this resource."}
+	}{"Forbidden", "403", "You doesn't have the access to this resource."}
 
 	err = webTemplate.ExecuteTemplate(w, "base", data)
 	if err != nil {

@@ -16,12 +16,11 @@
                     <p>{{.Meeting.Description}}</p>
 
                     {{if .IsAdmin}}
-                        <div class="card border-warning mb-3">
-                            <h5 class="card-header text-warning">Admin Actions</h5>
+                        <div class="card border-info mb-3">
+                            <h5 class="card-header">Admin Actions</h5>
                             <div class="card-body p-2">
-                                <div class="text-center">
-                                    <a class="btn btn-sm btn-secondary  "
-                                       href="/meeting/form?edit={{.Meeting.MeetId}}">Edit</a>
+                                <div class="btn-bar text-center">
+                                    <a class="btn btn-sm btn-secondary" href="/meeting/form?edit={{.Meeting.MeetId}}">Edit</a>
 
                                     <a class="btn btn-sm btn-success {{if .MeetingCheckinStarted}}disabled{{end}}"
                                        href="/meeting/modify/{{.Meeting.MeetId}}/openCheckin">Open Checkin Now</a>
@@ -140,7 +139,7 @@
             td1.scope = "row";
             td1.innerText = participantCount + 1;
             let td2 = document.createElement("td");
-            td2.innerText = names[name] ? names[name] : "<span class=\"text-muted\">{data}</span>".replace("{data}", name);
+            td2.innerHTML = names[name] ? names[name] : "<span class=\"text-muted\">{data}</span>".replace("{data}", name);
             let td3 = document.createElement("td");
             if (isLeave) {
                 td3.innerHTML = "<h5><span class=\"badge badge-dark\">Leave</span></h5>";
