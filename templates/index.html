@@ -108,7 +108,7 @@
             "columnDefs": [
                 {
                     "render": function (data) {
-                        return names[data];
+                        return names[data] ? names[data] : "<span class=\"text-muted\">{data}</span>".replace("{data}",data);
                     },
                     "targets": 0
                 },

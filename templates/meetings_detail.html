@@ -140,7 +140,7 @@
             td1.scope = "row";
             td1.innerText = participantCount + 1;
             let td2 = document.createElement("td");
-            td2.innerText = names[name];
+            td2.innerText = names[name] ? names[name] : "<span class=\"text-muted\">{data}</span>".replace("{data}", name);
             let td3 = document.createElement("td");
             if (isLeave) {
                 td3.innerHTML = "<h5><span class=\"badge badge-dark\">Leave</span></h5>";
