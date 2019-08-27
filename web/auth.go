@@ -2,7 +2,6 @@ package web
 
 import (
 	"errors"
-	"github.com/Team6083/OverHours/models"
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -142,56 +141,6 @@ func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession
 	}
 
 	return result, nil
-}
-
-// Manage page access with different level
-func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level int, autoRedirect bool) (*LoginSession, error) {
-	if level == PageOpen {
-		w.WriteHeader(http.StatusOK)
-		return nil, nil
-	}
-
-	session, err := web.checkAuth(w, r)
-	if err != nil {
-		if err == AuthWrongSession || err == AuthSessionNotProvided {
-			if autoRedirect {
-				web.redirectToLoginPage(w, r)
-				return nil, nil
-			}
-			return nil, err
-		} else {
-			return nil, err
-		}
-	}
-
-	err = web.renewSession(w, session)
-	if err != nil {
-		handleWebErr(w, err)
-	}
-
-	if level <= PageLogin {
-		return session, nil
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		return nil, err
-	}
-
-	var targetLevel int
-	if level == PageLeader {
-		targetLevel = models.PermissionLeader
-	}
-
-	if !user.CheckPermissionLevel(targetLevel) {
-		if autoRedirect {
-			web.handle401(w, r)
-			return session, nil
-		}
-		return session, AuthNoPermission
-	}
-
-	return session, nil
 }
 
 func (web *Web) redirectToLoginPage(w http.ResponseWriter, r *http.Request) {

@@ -95,7 +95,7 @@ func (web *Web) AuthMiddleware(next http.Handler) http.Handler {
 
 				if !user.CheckPermissionLevel(targetLevel) {
 					if pageInfo.autoRedirect {
-						web.handle401(w, r)
+						web.handle403(w, r)
 						return
 					}
 					handleWebErr(w, AuthNoPermission)

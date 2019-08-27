@@ -10,7 +10,7 @@ func (web *Web) SettingsGET(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*models.User)
 
 	if !user.CheckPermissionLevel(models.PermissionAdmin) {
-		web.handle401(w, r)
+		web.handle403(w, r)
 		return
 	}
 
@@ -41,7 +41,7 @@ func (web *Web) SettingsPOST(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*models.User)
 
 	if !user.CheckPermissionLevel(models.PermissionAdmin) {
-		web.handle401(w, r)
+		web.handle403(w, r)
 		return
 	}
 
