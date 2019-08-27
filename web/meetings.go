@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Team6083/OverHours/models"
@@ -348,6 +349,51 @@ func (web *Web) MeetingParticipantLeaveGET(w http.ResponseWriter, r *http.Reques
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
+}
+
+func (web *Web) MeetingParticipantLeaveBatchPOST(w http.ResponseWriter, r *http.Request) {
+	sessionUser := r.Context().Value("user").(*models.User)
+
+	if !sessionUser.CheckPermissionLevel(models.PermissionAdmin) {
+		web.handle403(w, r)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var data []string
+	err := decoder.Decode(&data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	meetId := vars["meetId"]
+
+	meeting, err := web.database.GetMeetingByMeetId(meetId)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	participants := meeting.Participants
+
+	for _, v := range data {
+		if _, ok := participants[v]; ok {
+			participant := participants[v]
+			participant.Leave = true
+			participants[v] = participant
+		}
+	}
+
+	meeting.Participants = participants
+	_, err = web.database.SaveMeeting(meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (web *Web) MeetingParticipantDeleteLogGET(w http.ResponseWriter, r *http.Request) {

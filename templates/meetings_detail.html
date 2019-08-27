@@ -51,7 +51,7 @@
                     <div class="row mb-3">
                         {{if and .IsAdmin (not .MeetingFinished)}}
                             <div class="btn-bar ml-3">
-                                <button class="btn btn-sm btn-outline-info">Mark leave</button>
+                                <button class="btn btn-sm btn-outline-info" id="markLeaveBtn">Mark leave</button>
                             </div>
                         {{end}}
                     </div>
@@ -190,6 +190,28 @@
                 $("input[name='participant[]']").each(function () {
                     $(this).prop("checked", false);
                 });
+            }
+        });
+
+        $("#markLeaveBtn").on('click', function () {
+            let checked = [];
+            $("input[name='participant[]']").each(function () {
+                if ($(this).prop("checked")) {
+                    checked.push($(this).val());
+                }
+            });
+
+            let req = new XMLHttpRequest();
+            req.open("POST", "/meeting/participant/leave/batch/{{.Meeting.MeetId}}");
+            req.setRequestHeader("Content-Type", "application/json");
+            req.send(JSON.stringify(checked));
+
+            req.onload = function () {
+                if(req.status === 204){
+                    window.location.reload();
+                } else {
+                    console.log(req.response);
+                }
             }
         });
     </script>
