@@ -99,7 +99,13 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	goHome, ok := r.URL.Query()["goHome"]
+	if ok && goHome[0] == "false" {
+		http.Redirect(w, r, "/meeting/detail/"+meetId, http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	}
+
 }
 
 func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {

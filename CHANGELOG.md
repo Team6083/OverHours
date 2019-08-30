@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show first year in Users list
 - Sort participants with leave
+- Change redirect of meeting checkin in the participants part to the meeting detail page
 
 ### Security
 

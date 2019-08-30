@@ -236,7 +236,7 @@
             if (isLeave) {
                 td3.innerHTML = "<h5><span class=\"badge badge-dark\">Leave</span></h5>";
             } else {
-                td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsAdmin}}<a class=\"btn btn-sm btn-success\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "\">Checkin</a>{{end}}");
+                td3.innerHTML = renderTimeLogsTimeStamp(checkinTime, "display", "{{if and .CanCheckin .IsAdmin}}<a class=\"btn btn-sm btn-success\" href=\"/meeting/checkin/{{.Meeting.MeetId}}/" + name + "?goHome=false\">Checkin</a>{{end}}");
             }
 
 
