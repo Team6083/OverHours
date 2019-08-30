@@ -6,9 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Add
+
+- Add participants stat at meeting detail
+
 ### Changed
 
 - Show first year in Users list
+- Sort participants with leave
 
 ### Security
 
