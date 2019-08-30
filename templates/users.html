@@ -18,7 +18,6 @@
                     <th>Id</th>
                     <th>userName</th>
                     <th>name</th>
-                    <th>password</th>
                     <th>email</th>
                     <th>uuid</th>
                     <th>pLevel</th>
@@ -49,28 +48,28 @@
             "pageLength": 50,
             "columnDefs": [
                 {
-                    "targets": [0,3,5,7,8],
+                    "targets": [0, 4, 7],
                     "visible": false
-                },{
+                }, {
                     "render": function (data) {
-                       switch (data) {
-                           case 0:
-                               return "Member";
-                           case 1:
-                               return "Leader";
-                           case 2:
-                               return "Admin";
-                           case 3:
-                               return "Super";
-                           default:
-                               return "Unknown";
-                       }
+                        switch (data) {
+                            case 0:
+                                return "Member";
+                            case 1:
+                                return "Leader";
+                            case 2:
+                                return "Admin";
+                            case 3:
+                                return "Super";
+                            default:
+                                return "Unknown";
+                        }
                     },
-                    "targets": 6
+                    "targets": 5
                 },
                 {
                     "render": function (data) {
-                        return "<a href=\"/users/form?edit="+data+"\" class=\"text-body\">"+data+"</a>";
+                        return "<a href=\"/users/form?edit=" + data + "\" class=\"text-body\">" + data + "</a>";
                     },
                     "targets": 1
                 }
@@ -80,7 +79,7 @@
         var users = [];
 
         {{range .Users}}
-        users.push([{{.Id}}, "{{.Username}}", "{{.Name}}", "{{.Password}}", "{{.Email}}", "{{.UUID}}", {{.PermissionLevel}}, {{.FirstYear}}, {{.GraduationYear}}]);
+        users.push([{{.Id}}, "{{.Username}}", "{{.Name}}", "{{.Email}}", "{{.UUID}}", {{.PermissionLevel}}, {{.FirstYear}}, {{.GraduationYear}}]);
         {{end}}
 
         users.forEach(function (data) {

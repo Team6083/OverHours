@@ -27,24 +27,16 @@ func (web *Web) UsersGET(w http.ResponseWriter, r *http.Request) {
 	}{users}
 
 	if user != nil {
-		if user.CheckPermissionLevel(models.PermissionAdmin) {
-			users, err = web.database.GetAllUsers()
-			if err != nil && err != mgo.ErrNotFound {
-				handleWebErr(w, err)
-				return
-			}
-		} else {
-			tempUsers, err := web.database.GetAllUsers()
-			if err != nil && err != mgo.ErrNotFound {
-				handleWebErr(w, err)
-				return
-			}
+		tempUsers, err := web.database.GetAllUsers()
+		if err != nil {
+			// Should not produce ErrNotFound
+			handleWebErr(w, err)
+			return
+		}
 
-			for _, userData := range tempUsers {
-				if userData.PermissionLevel < user.PermissionLevel || userData.Username == user.Username {
-					users = append(users, userData)
-				}
-			}
+		for _, userData := range tempUsers {
+			userData.Password = ""
+			users = append(users, userData)
 		}
 	}
 	data.Users = users
