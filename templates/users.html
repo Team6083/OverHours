@@ -23,6 +23,7 @@
                     <th>pLevel</th>
                     <th>firstYear</th>
                     <th>GraduationYear</th>
+                    <th>Category</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -79,7 +80,7 @@
         var users = [];
 
         {{range .Users}}
-        users.push([{{.Id}}, "{{.Username}}", "{{.Name}}", "{{.Email}}", "{{.UUID}}", {{.PermissionLevel}}, {{.FirstYear}}, {{.GraduationYear}}]);
+        users.push([{{.Id}}, "{{.Username}}", "{{.Name}}", "{{.Email}}", "{{.UUID}}", {{.PermissionLevel}}, {{.FirstYear}}, {{.GraduationYear}}, {{.Category}}]);
         {{end}}
 
         users.forEach(function (data) {

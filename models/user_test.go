@@ -9,7 +9,7 @@ import (
 func TestUser(t *testing.T) {
 	database := SetupTestDb(t)
 
-	user := User{"TestUser", "testuser", "password", "user@user.team6083", "testUID", 0, 2019, 2019, false, bson.NewObjectId()}
+	user := User{Name: "TestUser", Username: "testuser", Password: "password", Email: "user@user.team6083", UUID: "testUID", FirstYear: 2019, GraduationYear: 2019, Id: bson.NewObjectId()}
 
 	_, err := database.SaveUser(user)
 	if err != nil {

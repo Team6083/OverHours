@@ -43,14 +43,19 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group col-md-4">
+                    <div class="form-group col-md-3">
                         <label>Password</label>
                         <a class="badge badge-pill badge-info d-block" href="/users/form/password?edit={{.EditUser.UserName}}">Click here to change password</a>
                     </div>
-                    <div class="form-group col-md-8">
+                    <div class="form-group col-md-6">
                         <label for="inputEmail">Email address</label>
                         <input type="email" class="form-control" id="inputEmail" placeholder="Email" name="email"
                                value="{{.EditUser.Email}}">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="inputCategory">Category</label>
+                        <input type="text" class="form-control" id="inputCategory" placeholder="Category" name="category"
+                               value="{{.EditUser.Category}}">
                     </div>
                 </div>
                 <div class="form-row">

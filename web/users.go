@@ -69,7 +69,8 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 		GradY              int
 		PLevel             int
 		PasswordNeedChange bool
-	}{"", "", "", "", "", 0, 0, 0, false}
+		Category           string
+	}{}
 
 	data := struct {
 		EditUser struct {
@@ -82,6 +83,7 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 			GradY              int
 			PLevel             int
 			PasswordNeedChange bool
+			Category           string
 		}
 		New         bool
 		CurrentUser models.User
@@ -105,6 +107,7 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 				data.EditUser.GradY = editUser.GraduationYear
 				data.EditUser.PLevel = editUser.PermissionLevel
 				data.EditUser.PasswordNeedChange = editUser.PasswordNeedChange
+				data.EditUser.Category = editUser.Category
 				data.New = false
 			}
 		}
@@ -134,7 +137,7 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		gradYStr           string
 		UUID               string
 		PasswordNeedChange bool
-	}{"", "", "", "", "", "", "", false}
+	}{}
 
 	if r.Form["userName"] == nil || r.Form["name"] == nil || r.Form["pLevel"] == nil {
 		handleBadRequest(w, errors.New("some fields are missing"+r.Form.Encode()))
@@ -227,6 +230,10 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 	} else {
 		uuid := uuid.NewV4()
 		data.UUID = uuid.String()
+	}
+
+	if r.Form["category"] != nil {
+		user.Category = r.Form["category"][0]
 	}
 
 	user.UUID = data.UUID

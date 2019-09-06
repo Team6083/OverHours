@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Add
 
 - Add search box for meeting participants selector
+- Add category for user
+
 
 ### Fixed
 

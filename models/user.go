@@ -15,6 +15,7 @@ type User struct {
 	FirstYear          int
 	GraduationYear     int
 	PasswordNeedChange bool
+	Category           string
 	Id                 bson.ObjectId `bson:"_id,omitempty"`
 }
 
