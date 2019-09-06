@@ -93,7 +93,7 @@ func (meeting *Meeting) MeetingStarted() bool {
 }
 
 func (meeting *Meeting) MeetingFinished() bool {
-	return meeting.FinishTime != 0
+	return meeting.FinishTime != 0 && time.Now().After(time.Unix(meeting.FinishTime, 0))
 }
 
 func (meeting *Meeting) CheckinStarted() bool {

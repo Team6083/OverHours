@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add search box for meeting participants selector
 
+### Fixed
+
+- Wrong meeting finish checker
+
 ## [1.3.1] - 2019-08-30
 
 ### Add
