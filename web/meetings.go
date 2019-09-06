@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Team6083/OverHours/models"
+	. "github.com/Team6083/OverHours/models"
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
@@ -16,7 +16,7 @@ import (
 )
 
 func (web *Web) MeetingGET(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value("user").(*models.User)
+	user := r.Context().Value("user").(*User)
 
 	webTemplate, err := web.parseFiles("templates/meetings.html", "templates/base.html")
 	if err != nil {
@@ -24,17 +24,17 @@ func (web *Web) MeetingGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var meetings []models.Meeting
+	var meetings []Meeting
 	data := struct {
 		UserName    string
 		UserAccName string
-		Meetings    []models.Meeting
+		Meetings    []Meeting
 	}{"unknown", "", meetings}
 
 	if user != nil {
 		data.UserName = user.Name
 		data.UserAccName = user.Username
-		if user.CheckPermissionLevel(models.PermissionLeader) {
+		if user.CheckPermissionLevel(PermissionLeader) {
 			meetings, err = web.database.GetAllMeeting()
 			if err != nil && err != mgo.ErrNotFound {
 				handleWebErr(w, err)
@@ -58,7 +58,7 @@ func (web *Web) MeetingGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
-	sessionUser := r.Context().Value("user").(*models.User)
+	sessionUser := r.Context().Value("user").(*User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]
@@ -69,7 +69,7 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user *models.User
+	var user *User
 	user = sessionUser
 
 	if vars["userId"] != "" {
@@ -82,7 +82,7 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if sessionUser != user {
-		if !(sessionUser.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
+		if !(sessionUser.CheckPermissionLevel(PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
 			handleForbidden(w, errors.New("you need to be a Admin user or a meeting admin"))
 			return
 		}
@@ -90,7 +90,7 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 
 	err = web.database.MeetingCheckin(meeting, user)
 	if err != nil {
-		if err == models.CantCheckinError || err == models.UserNotInMeeting || err == models.AlreadyCheckInError || err == models.UserLeaveError {
+		if err == CantCheckinError || err == UserNotInMeeting || err == AlreadyCheckInError || err == UserLeaveError {
 			handleBadRequest(w, err)
 		} else {
 			handleWebErr(w, err)
@@ -109,7 +109,7 @@ func (web *Web) MeetingCheckinGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value("user").(*models.User)
+	user := r.Context().Value("user").(*User)
 
 	webTemplate, err := web.parseFiles("templates/meetings_detail.html", "templates/base.html")
 	if err != nil {
@@ -146,7 +146,7 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Meeting               *models.Meeting
+		Meeting               *Meeting
 		UserNames             map[string]string
 		TimeLogs              map[string]ParticipantsTimeLogDetail
 		CanCheckin            bool
@@ -155,7 +155,7 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 		IsAdmin               bool
 		MeetingFinished       bool
 		//TODO: admin user of a meeting
-	}{meeting, names, make(map[string]ParticipantsTimeLogDetail), meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(user.GetIdentify()), meeting.MeetingFinished()}
+	}{meeting, names, make(map[string]ParticipantsTimeLogDetail), meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(PermissionAdmin) || meeting.CheckUserAdmin(user.GetIdentify()), meeting.MeetingFinished()}
 
 	for index, participant := range meeting.Participants {
 		lastLog, err := web.database.GetLastLogByUser(participant.UserId)
@@ -193,16 +193,16 @@ func (web *Web) MeetingFormGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	names, err := web.database.GetUserNameMap()
+	usersMap, err := web.database.GetAllUserMap()
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
 
 	data := struct {
-		EditMeeting models.Meeting
-		UserNames   map[string]string
-	}{models.Meeting{Id: bson.NewObjectId(), MeetId: base64.URLEncoding.EncodeToString(uuid.NewV4().Bytes())}, names}
+		EditMeeting Meeting
+		UsersMap    map[string]User
+	}{EditMeeting: Meeting{Id: bson.NewObjectId(), MeetId: base64.URLEncoding.EncodeToString(uuid.NewV4().Bytes())}, UsersMap: usersMap}
 
 	editTargetMeetId, ok := r.URL.Query()["edit"]
 	if ok {
@@ -234,7 +234,7 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	meeting := models.GetNewMeeting()
+	meeting := GetNewMeeting()
 
 	meeting.Id = bson.ObjectIdHex(r.Form["id"][0])
 	meeting.MeetId = r.Form["meetId"][0]
@@ -276,7 +276,7 @@ func (web *Web) MeetingFormPOST(w http.ResponseWriter, r *http.Request) {
 	meeting.CheckinLevel = checkinLevel
 
 	for _, participantId := range r.Form["userSelect"] {
-		participantData := models.ParticipantData{UserId: participantId, Leave: false, IsAdmin: false}
+		participantData := ParticipantData{UserId: participantId, Leave: false, IsAdmin: false}
 
 		meeting.Participants[participantId] = participantData
 	}
@@ -323,7 +323,7 @@ func (web *Web) MeetingDeleteGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) MeetingParticipantLeaveGET(w http.ResponseWriter, r *http.Request) {
-	sessionUser := r.Context().Value("user").(*models.User)
+	sessionUser := r.Context().Value("user").(*User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]
@@ -336,12 +336,12 @@ func (web *Web) MeetingParticipantLeaveGET(w http.ResponseWriter, r *http.Reques
 
 	userId := vars["userId"]
 	if !meeting.CheckUserParticipate(userId) {
-		handleBadRequest(w, models.UserNotInMeeting)
+		handleBadRequest(w, UserNotInMeeting)
 		return
 	}
 
 	if sessionUser.GetIdentify() != userId {
-		if !(sessionUser.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
+		if !(sessionUser.CheckPermissionLevel(PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
 			handleForbidden(w, errors.New("you need to be a Admin user or a meeting admin"))
 			return
 		}
@@ -358,9 +358,9 @@ func (web *Web) MeetingParticipantLeaveGET(w http.ResponseWriter, r *http.Reques
 }
 
 func (web *Web) MeetingParticipantLeaveBatchPOST(w http.ResponseWriter, r *http.Request) {
-	sessionUser := r.Context().Value("user").(*models.User)
+	sessionUser := r.Context().Value("user").(*User)
 
-	if !sessionUser.CheckPermissionLevel(models.PermissionAdmin) {
+	if !sessionUser.CheckPermissionLevel(PermissionAdmin) {
 		web.handle403(w, r)
 		return
 	}
@@ -403,7 +403,7 @@ func (web *Web) MeetingParticipantLeaveBatchPOST(w http.ResponseWriter, r *http.
 }
 
 func (web *Web) MeetingParticipantDeleteLogGET(w http.ResponseWriter, r *http.Request) {
-	sessionUser := r.Context().Value("user").(*models.User)
+	sessionUser := r.Context().Value("user").(*User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]
@@ -416,11 +416,11 @@ func (web *Web) MeetingParticipantDeleteLogGET(w http.ResponseWriter, r *http.Re
 
 	userId := vars["userId"]
 	if !meeting.CheckUserParticipate(userId) {
-		handleBadRequest(w, models.UserNotInMeeting)
+		handleBadRequest(w, UserNotInMeeting)
 		return
 	}
 
-	if !(sessionUser.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
+	if !(sessionUser.CheckPermissionLevel(PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
 		handleForbidden(w, errors.New("you need to be a Admin user or a meeting admin"))
 		return
 	}
@@ -450,7 +450,7 @@ func (web *Web) MeetingParticipantDeleteLogGET(w http.ResponseWriter, r *http.Re
 }
 
 func (web *Web) MeetingParticipantDeleteGET(w http.ResponseWriter, r *http.Request) {
-	sessionUser := r.Context().Value("user").(*models.User)
+	sessionUser := r.Context().Value("user").(*User)
 
 	vars := mux.Vars(r)
 	meetId := vars["meetId"]
@@ -463,11 +463,11 @@ func (web *Web) MeetingParticipantDeleteGET(w http.ResponseWriter, r *http.Reque
 
 	userId := vars["userId"]
 	if !meeting.CheckUserParticipate(userId) {
-		handleBadRequest(w, models.UserNotInMeeting)
+		handleBadRequest(w, UserNotInMeeting)
 		return
 	}
 
-	if !(sessionUser.CheckPermissionLevel(models.PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
+	if !(sessionUser.CheckPermissionLevel(PermissionAdmin) || meeting.CheckUserAdmin(sessionUser.GetIdentify())) {
 		handleForbidden(w, errors.New("you need to be a Admin user or a meeting admin"))
 		return
 	}

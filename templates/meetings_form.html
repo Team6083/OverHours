@@ -221,6 +221,7 @@
         let select = $('#userSelect');
 
         select.multiSelect({
+            selectableOptgroup: true,
             cssClass: "transparent-select",
             selectableHeader: "<input type='text' class='form-control form-control-sm search-input my-1' autocomplete='off' placeholder='Search...'>",
             selectionHeader: "<input type='text' class='form-control form-control-sm search-input my-1' autocomplete='off' placeholder='Search...'>",
@@ -263,18 +264,34 @@
             $('#userSelect').multiSelect("deselect_all");
         });
 
-        var names = {};
+        var usersMap = [];
 
-        {{range $key, $value := .UserNames}}
-        names["{{ $key}}"] = {{ $value}};
+        {{range $key, $value := .UsersMap}}
+        usersMap.push({{$value}});
         {{end}}
 
+        var usersMapWithCategories = {};
+
+        for (let k in usersMap) {
+            let v = usersMap[k];
+            let category = usersMapWithCategories[v.Category ? v.Category : "None"] ? usersMapWithCategories[v.Category ? v.Category : "None"] : [];
+            usersMapWithCategories[v.Category ? v.Category : "None"] = [...category, v];
+        }
+
+        console.log(usersMapWithCategories);
+
         select.empty();
-        for (let k in names) {
-            let o = document.createElement("option");
-            o.value = k;
-            o.innerText = names[k];
-            select.append(o).multiSelect('refresh');
+        for (let k in usersMapWithCategories) {
+            let optG = document.createElement("optgroup");
+            optG.label = k;
+            for (let id in usersMapWithCategories[k]) {
+                let o = document.createElement("option");
+                let user = usersMapWithCategories[k][id];
+                o.value = user.Username;
+                o.innerText = user.Name;
+                optG.append(o);
+            }
+            select.append(optG).multiSelect('refresh');
         }
 
         {{range $i, $v := .EditMeeting.Participants}}

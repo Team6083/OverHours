@@ -56,6 +56,21 @@ func (database *Database) GetUserNameMap() (map[string]string, error) {
 	return names, nil
 }
 
+func (database *Database) GetAllUserMap() (map[string]User, error) {
+	categories := make(map[string]User)
+
+	users, err := database.GetAllUsers()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range users {
+		categories[user.Username] = user
+	}
+
+	return categories, nil
+}
+
 func (user *User) CheckPermissionLevel(level int) bool {
 	if user.PermissionLevel >= level {
 		return true

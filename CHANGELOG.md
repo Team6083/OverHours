@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add search box for meeting participants selector
 - Add category for user
-
+- Add support of user category in meeting participants selector
 
 ### Fixed
 
