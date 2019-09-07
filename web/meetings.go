@@ -199,6 +199,11 @@ func (web *Web) MeetingFormGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for k, u := range usersMap {
+		u.Password = ""
+		usersMap[k] = u
+	}
+
 	data := struct {
 		EditMeeting Meeting
 		UsersMap    map[string]User

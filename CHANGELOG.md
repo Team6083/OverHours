@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Improve password safety
+
 ## [1.3.2] - 2019-09-06
 
 ### Add
