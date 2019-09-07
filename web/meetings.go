@@ -207,7 +207,7 @@ func (web *Web) MeetingFormGET(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		EditMeeting Meeting
 		UsersMap    map[string]User
-	}{EditMeeting: Meeting{Id: bson.NewObjectId(), MeetId: base64.URLEncoding.EncodeToString(uuid.NewV4().Bytes())}, UsersMap: usersMap}
+	}{EditMeeting: Meeting{Id: bson.NewObjectId(), MeetId: base64.URLEncoding.EncodeToString(uuid.NewV4().Bytes()), SeasonId: web.settings.SeasonId}, UsersMap: usersMap}
 
 	editTargetMeetId, ok := r.URL.Query()["edit"]
 	if ok {

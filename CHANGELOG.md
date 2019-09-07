@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Add
+
+- Autofill seasonId when adding a new meeting
+
 ### Security
 
 - Improve password safety
