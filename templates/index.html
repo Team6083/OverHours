@@ -7,8 +7,18 @@
         <div class="col-lg-2"></div>
         <div class="col-lg-8 col">
             <h2>Team 6083 - OverHours</h2>
-            <h4>Current login: <span class="badge badge-dark">{{.UserName}}</span> / Season: <span
-                        class="badge badge-primary badge-pill">{{.CurrentSeason}}</span></h4>
+            <h4>
+                <div class="row">
+                    <div class="col-auto mb-1">
+                        Current login: <span class="badge badge-dark">{{.UserName}}</span>
+                    </div>
+                    /
+                    <div class="col-auto mb-1">
+                        Season: <span
+                                class="badge badge-primary badge-pill">{{.CurrentSeason}}</span>
+                    </div>
+                </div>
+            </h4>
             <form method="post" action="/timeLog/checkinPost">
                 <div id="checkinFormHider" class="{{if .IncomingMeet}}d-none{{end}}">
                     <div class="input-group mb-3 mt-3">
@@ -32,6 +42,11 @@
                     </div>
                 </div>
             </form>
+            <div class="d-none alert alert-secondary" id="checkoutSection">
+                <h5 class="text-center text-dark">Current checkin: <span class="badge badge-success"
+                                                                         id="checkoutSection_seasonId">n/a</span></h5>
+                <button class="btn btn-block btn-primary checkOutBtn">Checkout</button>
+            </div>
         </div>
     </div>
 
@@ -51,7 +66,7 @@
     {{end}}
 
     {{if .IncomingMeet}}
-        <div class="row mb-2">
+        <div class="row">
             <div class="col-lg-4"></div>
             <div class="col-lg-4 col">
                 <div class="card border-dark text-center">
@@ -66,7 +81,7 @@
         </div>
     {{end}}
 
-    <div class="row">
+    <div class="row mt-4">
         <div class="col-lg-2">
 
         </div>
@@ -98,6 +113,24 @@
     </script>
     <script src="/res/js/datatables.min.js"></script>
     <script>
+
+        function getMeetingTitle(meetId) {
+            return new Promise((resolve, reject)=>{
+                let request = new XMLHttpRequest();
+                request.open("GET", "/meeting/util/getMeeting/" + meetId);
+                request.send();
+                request.onload = function (e) {
+                    const response = e.target;
+                    if (response.status !== 200) {
+                        reject(response);
+                    } else {
+                        const data = JSON.parse(response.response);
+                        resolve(data.Title);
+                    }
+                }
+            });
+        }
+
         var TimeLogsTable = $("#timeLogsTable").DataTable({
             "paging": false,
             "order": [1, 'desc'],
@@ -108,7 +141,7 @@
             "columnDefs": [
                 {
                     "render": function (data) {
-                        return names[data] ? names[data] : "<span class=\"text-muted\">{data}</span>".replace("{data}",data);
+                        return names[data] ? names[data] : "<span class=\"text-muted\">{data}</span>".replace("{data}", data);
                     },
                     "targets": 0
                 },
@@ -117,6 +150,19 @@
                         let userAcc = {{.UserAccName}};
                         let disabled = {{.Disable}};
                         if (userAcc === row[0] || !disabled) {
+                            if (userAcc === row[0]) {
+                                $("#checkoutSection").removeClass("d-none");
+                                if (row[3].substring(0, 2) === "m:") {
+                                    getMeetingTitle(row[3].substring(2))
+                                        .then((title) => $("#checkoutSection_seasonId").html(title))
+                                        .catch((response) => {
+                                            console.error("getMeetingTitle - error response");
+                                            console.log(response);
+                                        });
+                                } else {
+                                    $("#checkoutSection_seasonId").html(row[3])
+                                }
+                            }
                             return renderTimeLogsTimeStamp(data, type, "<button  class=\"btn btn-primary checkOutBtn\" target=\"" + row[0] + "\" {{if eq .CanCheckOut false}}  disabled {{end}}>CheckOut</button>");
                         } else {
                             return renderTimeLogsTimeStamp(data, type, "");
@@ -148,7 +194,9 @@
 
         $(".checkOutBtn").on('click', function () {
             let target = $(this).attr("target");
-            if (target !== {{.UserAccName}}) {
+            if (target === undefined) {
+                document.location.href = "/timeLog/checkout?studentId=" + "{{.UserAccName}}";
+            } else if (target !== {{.UserAccName}}) {
                 let r = confirm("WARNING!!!! You are going to checkout other people, please confirm. Target: " + target);
                 if (r) {
                     document.location.href = "/timeLog/checkout?studentId=" + target;

@@ -557,3 +557,30 @@ func (web *Web) MeetingModifyFinishGET(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
 }
+
+func (web *Web) MeetingUtilGetMeetingGET(w http.ResponseWriter, r *http.Request) {
+	sessionUser := r.Context().Value("user").(*User)
+	vars := mux.Vars(r)
+	meetId := vars["meetId"]
+
+	meeting, err := web.database.GetMeetingByMeetId(meetId)
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	} else if err == mgo.ErrNotFound {
+		handleBadRequest(w, err)
+		return
+	}
+
+	if !meeting.CheckIfVisibleToUser(sessionUser) {
+		handleForbidden(w, errors.New("meeting not visible to this user"))
+		return
+	}
+
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+}
