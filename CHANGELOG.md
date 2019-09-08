@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add currentCheckin display
 - Add MeetingUtilGetMeetingGET
 
+### Fixed
+
+- Fix meeting details participants CheckinTime display error 
+
 ### Security
 
 - Improve password safety

@@ -158,7 +158,7 @@ func (web *Web) MeetingDetailGET(w http.ResponseWriter, r *http.Request) {
 	}{meeting, names, make(map[string]ParticipantsTimeLogDetail), meeting.CheckIfMeetingCanCheckInNow(user), meeting.MeetingStarted(), meeting.CheckinStarted(), user.CheckPermissionLevel(PermissionAdmin) || meeting.CheckUserAdmin(user.GetIdentify()), meeting.MeetingFinished()}
 
 	for index, participant := range meeting.Participants {
-		lastLog, err := web.database.GetLastLogByUser(participant.UserId)
+		lastLog, err := web.database.GetLastLogByUserWithSpecificSeason(participant.UserId, meeting.GetMeetingLogId())
 		if err != nil && err != mgo.ErrNotFound {
 			handleWebErr(w, err)
 			return
