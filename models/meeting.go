@@ -200,6 +200,7 @@ func (database *Database) GetMeetingsByUserId(userId string) ([]Meeting, error) 
 	}
 
 	for index, meet := range meetings {
+		//TODO fix remove element of array will make index wrong
 		if !meet.CheckUserParticipate(userId) {
 			if index+1 < len(meetings) {
 				copy(meetings[index:], meetings[index+1:])
