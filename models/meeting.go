@@ -199,18 +199,14 @@ func (database *Database) GetMeetingsByUserId(userId string) ([]Meeting, error) 
 		return nil, err
 	}
 
-	for index, meet := range meetings {
-		//TODO fix remove element of array will make index wrong
-		if !meet.CheckUserParticipate(userId) {
-			if index+1 < len(meetings) {
-				copy(meetings[index:], meetings[index+1:])
-				meetings = meetings[:len(meetings)-1]
-			} else {
-				meetings = meetings[:len(meetings)-1]
-			}
+	var out []Meeting
+
+	for _, meet := range meetings {
+		if meet.CheckUserParticipate(userId) {
+			out = append(out, meet)
 		}
 	}
-	return meetings, nil
+	return out, nil
 }
 
 func (database *Database) GetOngoingMeetingsByUserId(userId string) ([]Meeting, error) {
@@ -219,22 +215,19 @@ func (database *Database) GetOngoingMeetingsByUserId(userId string) ([]Meeting, 
 		return nil, err
 	}
 
-	for index, meet := range meetings {
-		if !meet.CheckinStarted() || meet.MeetingFinished() {
-			if index+1 < len(meetings) {
-				copy(meetings[index:], meetings[index+1:])
-				meetings = meetings[:len(meetings)-1]
-			} else {
-				meetings = meetings[:len(meetings)-1]
-			}
+	var out []Meeting
+
+	for _, meet := range meetings {
+		if meet.CheckinStarted() && !meet.MeetingFinished() {
+			out = append(out, meet)
 		}
 	}
 
-	if len(meetings) == 0 {
+	if len(out) == 0 {
 		return nil, nil
 	}
 
-	return meetings, nil
+	return out, nil
 }
 
 func (database *Database) GetLastOngoingMeetingsByUserId(userId string) (*Meeting, error) {
