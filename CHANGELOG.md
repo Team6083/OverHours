@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.4] - 2019-09-29
+
+# Fixed
+
+- Fix slice element removal bug of `GetMeetingsByUserId` and `GetOngoingMeetingsByUserId`
+
 ## [1.3.3] - 2019-09-08
 
 ### Add

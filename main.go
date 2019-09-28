@@ -34,7 +34,7 @@ func main() {
 	}
 
 	if !debug {
-		releaseName := "over-hours@1.3.3"
+		releaseName := "over-hours@1.3.4"
 		sentryClientOption.Release = releaseName
 	}
 
