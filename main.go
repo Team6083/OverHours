@@ -18,17 +18,17 @@ import (
 func main() {
 	log.Print("OverHours Starting at", time.Now())
 
+	// getting environment variable
 	var webPort, err = strconv.Atoi(getEnv("PORT", "80"))
 	if err != nil {
 		panic(err)
 	}
-
 	debug := false
-
 	if len(os.Getenv("debug")) != 0 {
 		debug = true
 	}
 
+	// Init Sentry
 	sentryClientOption := sentry.ClientOptions{
 		Dsn: getEnv("sentryDsn", ""),
 	}
@@ -36,9 +36,7 @@ func main() {
 	if !debug {
 		releaseName := "over-hours@1.3.4"
 		sentryClientOption.Release = releaseName
-	}
-
-	if debug {
+	} else {
 		sentryClientOption.Debug = true
 	}
 
@@ -47,6 +45,7 @@ func main() {
 		panic(err)
 	}
 
+	// connect to database
 	var host = getEnv("host", "127.0.0.1")
 	var dbName = getEnv("db", "OverHours")
 	var user = getEnv("hoursUser", "")
@@ -58,6 +57,7 @@ func main() {
 		handleErr(err)
 	}
 
+	// check if setting exist
 	_, err = database.GetSetting()
 	if err != nil {
 		if err == mgo.ErrNotFound {
@@ -73,6 +73,7 @@ func main() {
 		}
 	}
 
+	// start web server
 	webServer := web.NewWeb(database)
 	webServer.ServeWebInterface(webPort)
 }
