@@ -277,6 +277,104 @@ paths:
           description: Invaild user parameters
         '422':
           description: Operation is not allowed
+  # meeting
+  /meetings:
+    get:
+      tags:
+        - meetings
+      summary: Get all meetings
+      responses:
+        '200':
+          description: Successfully returned a list of meeting
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Meeting'
+    post:
+      tags:
+        - meetings
+      summary: Add a new meeting
+      responses:
+        '201':
+          description: Successfully create a meeting
+  '/meetings/{meetingId}':
+    get:
+      tags:
+        - meetings
+      summary: Get meeting with ID
+      parameters:
+        - name: meetingId
+          in: path
+          description: ID of meeting to return
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Meeting'
+        '404':
+          description: not found
+    put:
+      tags:
+        - meetings
+      summary: Update a meeting with ID
+      parameters:
+        - name: meetingId
+          in: path
+          description: ID of meeting to update
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Successfully update a Meeting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeInfo'
+        '400':
+          description: Invalid input
+      requestBody:
+        description: A JSON object of TimeLog
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                StartTime:
+                  type: integer
+                SeasonId:
+                  type: string
+                Title:
+                  type: string
+                Description:
+                  type: string
+                CheckinLevel:
+                  type: integer
+    delete:
+      tags:
+        - meetings
+      summary: Delete a meeting with ID
+      parameters:
+        - name: meetingId
+          in: path
+          description: ID of meeting to delete
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successfully delete a meeting
+        '400':
+          description: Invalid meetingId
+        '404':
+          description: not found
 components:
   schemas:
     User:
@@ -309,6 +407,38 @@ components:
           type: string
         Id:
           type: string
+    Meeting:
+      type: object
+      properties:
+        MeetId:
+          type: string
+        StartTime:
+          type: integer
+        SeasonId:
+          type: string
+        Title:
+          type: string
+        Description:
+          type: string
+        CheckinLevel:
+          type: integer
+        StartCheckinTime:
+          type: integer
+        FinishTime:
+          type: integer
+        Participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipantData'
+    ParticipantData:
+      type: object
+      properties:
+        UserId:
+          type: string
+        Leave:
+          type: boolean
+        IsAdmin:
+          type: boolean
     ChangeInfo:
       type: object
       properties:

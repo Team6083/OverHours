@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Team6083/OverHours/models"
@@ -9,6 +10,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -626,4 +629,62 @@ func (web *Web) MeetingModifyFinishGET(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
+}
+
+// GET /meetings
+func (web *Web) APIGetMeetings(w http.ResponseWriter, r *http.Request) {
+	meetings, err := web.database.GetAllMeeting()
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	var sendBytes []byte
+
+	b, err := json.Marshal(meetings)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	sendBytes = b
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(sendBytes)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// POST /meetings
+func (web *Web) APIPostMeetings(w http.ResponseWriter, r *http.Request) {
+	var meeting models.Meeting
+	meeting.Id = bson.NewObjectId()
+
+	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	if err := json.Unmarshal(body, &meeting); err != nil {
+		w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(err); err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	change, err := web.database.SaveMeeting(&meeting)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(change); err != nil {
+		panic(err)
+	}
 }
