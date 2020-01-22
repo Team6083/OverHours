@@ -1,8 +1,10 @@
 package web
 
 import (
+	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"net/http"
 )
 
@@ -326,6 +328,8 @@ import (
 
 func (web *Web) HandleUserRoutes(userGroup *gin.RouterGroup) {
 	userGroup.GET("s", web.APIGetUsers)
+
+	userGroup.GET("/:id", web.APIGetUser)
 }
 
 // API handlers
@@ -341,7 +345,7 @@ func (web *Web) APIGetUsers(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, users)
 }
 
-// /users/{id}
+// /users/:id
 func (web *Web) APIGetUser(ctx *gin.Context) {
 	targetId := ctx.Param("id")
 
@@ -352,4 +356,17 @@ func (web *Web) APIGetUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, user)
+}
+
+// DELETE /users/:id
+func (web *Web) APIDeleteUser(ctx *gin.Context) {
+	targetId := ctx.Param("id")
+
+	err := web.database.DeleteUser(models.User{Id: bson.ObjectIdHex(targetId)})
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.Writer.WriteHeader(http.StatusNoContent)
 }
