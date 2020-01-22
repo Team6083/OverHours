@@ -682,3 +682,8 @@ func (web *Web) APIPostMeetings(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 }
+
+// PUT /meetings
+func APIPutMeetings(w http.ResponseWriter, r *http.Request) {
+
+}

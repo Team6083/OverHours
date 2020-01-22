@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2"
@@ -330,6 +331,10 @@ func (web *Web) HandleUserRoutes(userGroup *gin.RouterGroup) {
 	userGroup.GET("s", web.APIGetUsers)
 
 	userGroup.GET("/:id", web.APIGetUser)
+
+	userGroup.POST("s", web.APIPostUser)
+
+	userGroup.PUT("/:UserId", web.APIPutUser)
 }
 
 // API handlers
@@ -356,6 +361,48 @@ func (web *Web) APIGetUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, user)
+}
+
+// POST /user/:id
+func (web *Web) APIPostUser(ctx *gin.Context) {
+	user := models.User{Id: bson.NewObjectId()}
+
+	if err := ctx.ShouldBind(&user); err != nil {
+		handleBadRequest(ctx, err)
+	}
+
+	change, err := web.database.SaveUser(user)
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, change)
+}
+
+// PUT /user/:id
+func (web *Web) APIPutUser(ctx *gin.Context) {
+	userId := ctx.Param("UserId")
+
+	if !bson.IsObjectIdHex(userId) {
+		handleBadRequest(ctx, errors.New("Id is not a valid ObjectId"))
+		return
+	}
+
+	var user models.User
+	user.Id = bson.ObjectIdHex(userId)
+
+	if err := ctx.ShouldBind(&user); err != nil {
+		handleBadRequest(ctx, err)
+	}
+
+	change, err := web.database.SaveUser(user)
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, change)
 }
 
 // DELETE /users/:id
