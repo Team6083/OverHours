@@ -2,13 +2,10 @@ package web
 
 import (
 	"errors"
-	"fmt"
-	"github.com/Team6083/OverHours/models"
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -29,7 +26,6 @@ var (
 )
 
 // DB
-
 func (web *Web) getSession(sessionToken string) (*LoginSession, error) {
 	result := LoginSession{}
 	err := web.database.DB.C("session").Find(bson.M{"sessiontoken": sessionToken}).One(&result)
@@ -54,80 +50,8 @@ func (web *Web) DeleteSession(session *LoginSession) error {
 	return err
 }
 
-// Cookie
-func getSessionTokenCookie(r *http.Request) (*string, error) {
-	c, err := r.Cookie("session_jwt")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			return nil, nil
-		}
-		return nil, err
-	}
-	sessionToken := c.Value
-	return &sessionToken, nil
-}
-
-func setSessionTokenCookie(w http.ResponseWriter, session LoginSession) {
-
-	expTime := time.Unix(session.Validate, 0)
-
-	sessionCookie := http.Cookie{
-		Name:     "session_jwt",
-		Value:    session.SessionToken,
-		Path:     "/",
-		HttpOnly: true,
-	}
-
-	usernameCookie := http.Cookie{
-		Name:  "userName",
-		Value: session.Username,
-		Path:  "/",
-	}
-
-	fmt.Println(session.Validate)
-
-	if session.Validate == 0 {
-		expTime = time.Now().Add(168 * time.Hour)
-	}
-
-	sessionCookie.Expires = expTime
-	usernameCookie.Expires = expTime
-
-	http.SetCookie(w, &sessionCookie)
-
-	http.SetCookie(w, &usernameCookie)
-}
-
-func resetSessionCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_jwt",
-		Value:    "",
-		Path:     "/",
-		Expires:  time.Now(),
-		HttpOnly: true,
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:    "userName",
-		Value:   "",
-		Path:    "/",
-		Expires: time.Now(),
-	})
-}
-
-// Handle pages
-
-const (
-	PageOpen   = 0
-	PageLogin  = 1
-	PageLeader = 2
-)
-
 func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession, error) {
-	sessionToken, err := getSessionTokenCookie(r)
-	if err != nil {
-		return nil, err
-	}
+	sessionToken := new(string)
 	if sessionToken == nil {
 		return nil, AuthSessionNotProvided
 	}
@@ -145,167 +69,6 @@ func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession
 	}
 
 	return result, nil
-}
-
-// Manage page access with different level
-func (web *Web) pageAccessManage(w http.ResponseWriter, r *http.Request, level int, autoRedirect bool) (*LoginSession, error) {
-	if level == PageOpen {
-		w.WriteHeader(http.StatusOK)
-		return nil, nil
-	}
-
-	session, err := web.checkAuth(w, r)
-	if err != nil {
-		if err == AuthWrongSession || err == AuthSessionNotProvided {
-			if autoRedirect {
-				web.redirectToLoginPage(w, r)
-				return nil, nil
-			}
-			return nil, err
-		} else {
-			return nil, err
-		}
-	}
-
-	err = web.renewSession(w, session)
-	if err != nil {
-		handleWebErr(w, err)
-	}
-
-	if level <= PageLogin {
-		return session, nil
-	}
-
-	user, err := web.database.GetUserByUserName(session.Username)
-	if err != nil {
-		return nil, err
-	}
-
-	var targetLevel int
-	if level == PageLeader {
-		targetLevel = models.PermissionLeader
-	}
-
-	if !user.CheckPermissionLevel(targetLevel) {
-		if autoRedirect {
-			web.handle401(w, r)
-			return session, nil
-		}
-		return session, AuthNoPermission
-	}
-
-	return session, nil
-}
-
-func (web *Web) redirectToLoginPage(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/login?status=1&redirect="+r.RequestURI, http.StatusSeeOther)
-}
-
-func (web *Web) handle401(w http.ResponseWriter, r *http.Request) {
-	webTemplate, err := web.parseFiles("templates/errorBase.html")
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	data := struct {
-		Title   string
-		ErrCode string
-		ErrMsg  string
-	}{"401 Unauthorized", "401", "Unauthorized: Access to this resource is denied."}
-
-	err = webTemplate.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-}
-
-func (web *Web) handle403(w http.ResponseWriter, r *http.Request) {
-	webTemplate, err := web.parseFiles("templates/errorBase.html")
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	data := struct {
-		Title   string
-		ErrCode string
-		ErrMsg  string
-	}{"403 Forbidden", "403", "Forbidden: You doesn't have the access to this resource."}
-
-	err = webTemplate.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-}
-
-func (web *Web) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	sessionToken, err := getSessionTokenCookie(r)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-	if sessionToken == nil {
-		handleBadRequest(w, AuthSessionNotProvided)
-		return
-	}
-
-	session, err := web.getSession(*sessionToken)
-	if err != nil {
-		if err != mgo.ErrNotFound {
-			handleWebErr(w, err)
-			return
-		}
-	}
-
-	if session != nil {
-		err = web.DeleteSession(session)
-		if err != nil {
-			handleWebErr(w, err)
-			return
-		}
-	}
-
-	resetSessionCookie(w)
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
-// Handle login page
-func (web *Web) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	names, err := web.database.GetUserNameMap()
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	data := struct {
-		Status    int
-		Redirect  string
-		UserNames map[string]string
-	}{0, "", names}
-	status, ok := r.URL.Query()["status"]
-	if ok && len(status[0]) >= 1 {
-		data.Status, _ = strconv.Atoi(status[0])
-	}
-
-	redirect, ok := r.URL.Query()["redirect"]
-	if ok && len(redirect[0]) >= 1 {
-		data.Redirect = redirect[0]
-	}
-
-	template, err := web.parseFiles("templates/login.html", "templates/base.html")
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	err = template.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
 }
 
 // Handle login POST request
@@ -360,7 +123,7 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 		loginSession.Validate = 0
 	}
 
-	setSessionTokenCookie(w, *loginSession)
+	//setSessionTokenCookie(w, *loginSession)
 
 	_, err = web.storeSession(loginSession)
 	if err != nil {
@@ -376,14 +139,6 @@ func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Redirect(w, r, "/", 303)
 	}
-}
-
-func (web *Web) renewSession(w http.ResponseWriter, session *LoginSession) error {
-	session.renew(true)
-	resetSessionCookie(w)
-	_, err := web.storeSession(session)
-	setSessionTokenCookie(w, *session)
-	return err
 }
 
 func newLoginSession(username string) *LoginSession {

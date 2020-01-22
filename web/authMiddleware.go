@@ -1,12 +1,8 @@
 package web
 
 import (
-	"fmt"
-	"github.com/Team6083/OverHours/models"
-	"github.com/getsentry/sentry-go"
+	"github.com/gin-gonic/gin"
 	"math/rand"
-	"net/http"
-	"strings"
 	"time"
 )
 
@@ -31,74 +27,10 @@ func RandomString(length int) string {
 }
 
 // AuthMiddleware function, which will be called for each request
-func (web *Web) AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (web *Web) AuthMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		//TODO: add auth middleware
 
-		pages := web.GetPageInfos()
-		url := strings.Split(r.RequestURI, "?")[0]
-
-		session, err := web.checkAuth(w, r)
-		if err != nil && !(err == AuthWrongSession || err == AuthSessionNotProvided) {
-			handleWebErr(w, err)
-			return
-		}
-
-		for _, pageInfo := range pages {
-			if pageInfo.path == url {
-				fmt.Println(pageInfo)
-
-				if pageInfo.pageLevel == PageOpen {
-					next.ServeHTTP(w, r)
-					return
-				}
-
-				if err == AuthWrongSession || err == AuthSessionNotProvided || session == nil {
-					if pageInfo.autoRedirect {
-						web.redirectToLoginPage(w, r)
-						return
-					}
-				}
-
-				err = web.renewSession(w, session)
-				if err != nil {
-					handleWebErr(w, err)
-				}
-
-				user, err := web.database.GetUserByUserName(session.Username)
-				if err != nil {
-					handleWebErr(w, err)
-					return
-				}
-
-				sentry.ConfigureScope(func(scope *sentry.Scope) {
-					scope.SetUser(sentry.User{Email: user.Email, Username: user.Username, ID: user.Id.String()})
-				})
-
-				if user.PasswordNeedChange && !strings.Contains(r.URL.Path, "/users/form") {
-					http.Redirect(w, r, fmt.Sprintf("/users/form?edit=%s", user.GetIdentify()), http.StatusFound)
-					return
-				}
-
-				var targetLevel int
-				if pageInfo.pageLevel == PageLeader {
-					sentry.CaptureMessage(fmt.Sprintf("User access leader level page"))
-					targetLevel = models.PermissionLeader
-				}
-
-				if !user.CheckPermissionLevel(targetLevel) {
-					if pageInfo.autoRedirect {
-						web.handle401(w, r)
-						return
-					}
-					handleWebErr(w, AuthNoPermission)
-					return
-				}
-
-				next.ServeHTTP(w, r)
-				return
-			}
-		}
-
-		next.ServeHTTP(w, r)
-	})
+		ctx.Next()
+	}
 }
