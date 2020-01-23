@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/Team6083/OverHours/models"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -683,7 +684,17 @@ func (web *Web) APIPostMeetings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/*
 // PUT /meetings
-func APIPutMeetings(w http.ResponseWriter, r *http.Request) {
 
+func (web *Web)APIPutMeetings(w http.ResponseWriter, r *http.Request) {
+	var meeting models.Meeting
+	meeting.Id = bson.NewObjectId()
 }
+
+// Delete /meetings
+func (web *Web)APIDeleteMeetings(w http.ResponseWriter, r *http.Request) {
+	var meeting models.Meeting
+	meeting.Id = bson.NewObjectId()
+}
+*/

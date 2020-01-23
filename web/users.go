@@ -335,6 +335,8 @@ func (web *Web) HandleUserRoutes(userGroup *gin.RouterGroup) {
 	userGroup.POST("s", web.APIPostUser)
 
 	userGroup.PUT("/:UserId", web.APIPutUser)
+
+	userGroup.DELETE("/:id", web.APIDeleteUser)
 }
 
 // API handlers
@@ -363,7 +365,7 @@ func (web *Web) APIGetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// POST /user/:id
+// POST /users
 func (web *Web) APIPostUser(ctx *gin.Context) {
 	user := models.User{Id: bson.NewObjectId()}
 
@@ -380,12 +382,12 @@ func (web *Web) APIPostUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, change)
 }
 
-// PUT /user/:id
+// PUT /user/:UserId
 func (web *Web) APIPutUser(ctx *gin.Context) {
 	userId := ctx.Param("UserId")
 
 	if !bson.IsObjectIdHex(userId) {
-		handleBadRequest(ctx, errors.New("Id is not a valid ObjectId"))
+		handleBadRequest(ctx, errors.New("id is not a valid ObjectId"))
 		return
 	}
 
