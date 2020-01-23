@@ -7,8 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -650,35 +648,6 @@ func (web *Web) APIGetMeetings(ctx *gin.Context) {
 
 // POST /meetings
 func (web *Web) APIPostMeetings(ctx *gin.Context) {
-	/*var meeting models.Meeting
-	meeting.Id = bson.NewObjectId()
-
-	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if err := json.Unmarshal(body, &meeting); err != nil {
-		w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			panic(err)
-		}
-		return
-	}
-
-	change, err := web.database.SaveMeeting(&meeting)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
-	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(change); err != nil {
-		panic(err)
-	}*/
 	meeting := models.Meeting{Id: bson.NewObjectId()}
 
 	if err := ctx.ShouldBind(&meeting); err != nil {
@@ -728,7 +697,7 @@ func (web *Web) APIDeleteMeetings(ctx *gin.Context) {
 		return
 	}
 
-	err := web.database.DeleteMeeting(models.Meeting{Id: bson.ObjectIdHex(meetingId)})
+	err := web.database.DeleteMeeting(&models.Meeting{Id: bson.ObjectIdHex(meetingId)})
 	if err != nil {
 		handleWebErr(ctx, err)
 		return
