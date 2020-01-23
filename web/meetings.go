@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/Team6083/OverHours/models"
+	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"io"
@@ -627,10 +628,10 @@ import (
 //}
 
 // GET /meetings
-func (web *Web) APIGetMeetings(w http.ResponseWriter, r *http.Request) {
+func (web *Web) APIGetMeetings(ctx *gin.Context) {
 	meetings, err := web.database.GetAllMeeting()
 	if err != nil && err != mgo.ErrNotFound {
-		handleWebErr(w, err)
+		handleWebErr(ctx, err)
 		return
 	}
 
@@ -638,22 +639,18 @@ func (web *Web) APIGetMeetings(w http.ResponseWriter, r *http.Request) {
 
 	b, err := json.Marshal(meetings)
 	if err != nil {
-		handleWebErr(w, err)
+		handleWebErr(ctx, err)
 		return
 	}
 	sendBytes = b
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(sendBytes)
-	if err != nil {
-		panic(err)
-	}
+	//ctx.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	ctx.JSON(http.StatusOK, sendBytes)
 }
 
 // POST /meetings
-func (web *Web) APIPostMeetings(w http.ResponseWriter, r *http.Request) {
-	var meeting models.Meeting
+func (web *Web) APIPostMeetings(ctx *gin.Context) {
+	/*var meeting models.Meeting
 	meeting.Id = bson.NewObjectId()
 
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
@@ -681,20 +678,61 @@ func (web *Web) APIPostMeetings(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(change); err != nil {
 		panic(err)
+	}*/
+	meeting := models.Meeting{Id: bson.NewObjectId()}
+
+	if err := ctx.ShouldBind(&meeting); err != nil {
+		handleBadRequest(ctx, err)
 	}
+
+	change, err := web.database.SaveMeeting(&meeting)
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, change)
 }
 
-/*
 // PUT /meetings
 
-func (web *Web)APIPutMeetings(w http.ResponseWriter, r *http.Request) {
+func (web *Web) APIPutMeetings(ctx *gin.Context) {
+	meetingId := ctx.Param("MeetingId")
+
+	if !bson.IsObjectIdHex(meetingId) {
+		handleBadRequest(ctx, errors.New("id not valid"))
+		return
+	}
+
 	var meeting models.Meeting
-	meeting.Id = bson.NewObjectId()
+	meeting.Id = bson.ObjectIdHex(meetingId)
+
+	if err := ctx.ShouldBind(&meeting); err != nil {
+		handleBadRequest(ctx, err)
+	}
+
+	change, err := web.database.SaveMeeting(&meeting)
+	if err != nil {
+		handleWebErr(ctx, err)
+	}
+
+	ctx.JSON(http.StatusAccepted, change)
 }
 
 // Delete /meetings
-func (web *Web)APIDeleteMeetings(w http.ResponseWriter, r *http.Request) {
-	var meeting models.Meeting
-	meeting.Id = bson.NewObjectId()
+func (web *Web) APIDeleteMeetings(ctx *gin.Context) {
+	meetingId := ctx.Param("MeetingId")
+
+	if !bson.IsObjectIdHex(meetingId) {
+		handleBadRequest(ctx, errors.New("id not valid"))
+		return
+	}
+
+	err := web.database.DeleteMeeting(models.Meeting{Id: bson.ObjectIdHex(meetingId)})
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.Writer.WriteHeader(http.StatusNoContent)
 }
-*/
