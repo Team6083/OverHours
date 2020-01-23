@@ -9,7 +9,6 @@ import (
 )
 
 type Meeting struct {
-	MeetId           string
 	StartTime        int64
 	SeasonId         string
 	Title            string
@@ -40,7 +39,7 @@ func GetNewMeeting() *Meeting {
 }
 
 func (meeting *Meeting) GetMeetingLogId() string {
-	return fmt.Sprintf("m:%s", meeting.MeetId)
+	return fmt.Sprintf("m:%s", meeting.Id.Hex())
 }
 
 func (meeting *Meeting) ParticipantAdmin(userId string, admin bool) {
@@ -164,15 +163,6 @@ func (database *Database) GetAllMeeting() ([]Meeting, error) {
 func (database *Database) GetMeetingById(id string) (*Meeting, error) {
 	var meet Meeting
 	err := database.DB.C("meetings").FindId(bson.ObjectIdHex(id)).One(&meet)
-	if err != nil {
-		return nil, err
-	}
-	return &meet, nil
-}
-
-func (database *Database) GetMeetingByMeetId(meetId string) (*Meeting, error) {
-	var meet Meeting
-	err := database.DB.C("meetings").Find(bson.M{"meetid": meetId}).One(&meet)
 	if err != nil {
 		return nil, err
 	}

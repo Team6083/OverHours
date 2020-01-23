@@ -351,6 +351,7 @@ paths:
                   type: integer
                 SeasonId:
                   type: string
+
     delete:
       tags:
         - meetings
@@ -369,6 +370,27 @@ paths:
           description: Invalid meetingId
         '404':
           description: not found
+  '/meeting/logs/{meetingId}':
+    get:
+      tags:
+        - meetings
+      summary: Get all timeLogs for the meeting
+      parameters:
+        - name: meetingId
+          in: path
+          description: ID of the meeting
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully returned a list of timeLogs of the meeting
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeLog'
 components:
   schemas:
     User:
