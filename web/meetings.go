@@ -625,6 +625,20 @@ import (
 //	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
 //}
 
+func (web *Web) HandleMeetingRoutes(meetingRouter *gin.RouterGroup) {
+	meetingRouter.GET("s", web.APIGetMeetings)
+
+	meetingRouter.GET("/:id", web.APIGetMeetings)
+
+	meetingRouter.POST("s", web.APIPostMeetings)
+
+	meetingRouter.PUT("/:meetingId", web.APIPutMeetings)
+
+	meetingRouter.DELETE("/:meetingId", web.APIDeleteMeetings)
+}
+
+//APIHandler
+
 // GET /meetings
 func (web *Web) APIGetMeetings(ctx *gin.Context) {
 	meetings, err := web.database.GetAllMeeting()
@@ -646,6 +660,19 @@ func (web *Web) APIGetMeetings(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, sendBytes)
 }
 
+// GET /meeting /:meetingId
+func (web *Web) APIGetMeeting(ctx *gin.Context) {
+	meetingId := ctx.Param("MeetingId")
+
+	meeting, err := web.database.GetMeetingById(meetingId)
+	if err != nil {
+		handleBadRequest(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, meeting)
+}
+
 // POST /meetings
 func (web *Web) APIPostMeetings(ctx *gin.Context) {
 	meeting := models.Meeting{Id: bson.NewObjectId()}
@@ -663,8 +690,7 @@ func (web *Web) APIPostMeetings(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, change)
 }
 
-// PUT /meetings
-
+// PUT /meeting /:meetingId
 func (web *Web) APIPutMeetings(ctx *gin.Context) {
 	meetingId := ctx.Param("MeetingId")
 
@@ -688,7 +714,7 @@ func (web *Web) APIPutMeetings(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, change)
 }
 
-// Delete /meetings
+// Delete /meeting /:meetingId
 func (web *Web) APIDeleteMeetings(ctx *gin.Context) {
 	meetingId := ctx.Param("MeetingId")
 
