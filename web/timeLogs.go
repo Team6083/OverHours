@@ -15,6 +15,9 @@ func (web *Web) HandleTimeLogRoutes(router *gin.Engine) {
 	timeLogsGroup := router.Group("/timeLogs")
 	timeLogsGroup.GET("/", web.APIGetTimeLogs)
 	timeLogsGroup.POST("/", web.APIPostTimeLog)
+	timeLogsGroup.GET("/:timeLogId", web.APIGetTimeLog)
+	timeLogsGroup.PUT("/:timeLogId", web.APIPutTimeLog)
+	timeLogsGroup.DELETE("/:timeLogId", web.APIDeleteTimeLog)
 
 	timeLogGroup := router.Group("/timeLog")
 
@@ -22,9 +25,6 @@ func (web *Web) HandleTimeLogRoutes(router *gin.Engine) {
 	timeLogGroup.GET("/checkin", web.APICheckin)
 	timeLogGroup.GET("/checkout", web.APICheckout)
 
-	timeLogGroup.GET("/data/:timeLogId", web.APIGetTimeLog)
-	timeLogGroup.PUT("/data/:timeLogId", web.APIPutTimeLog)
-	timeLogGroup.DELETE("/data/:timeLogId", web.APIDeleteTimeLog)
 }
 
 // API handlers

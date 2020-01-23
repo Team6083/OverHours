@@ -628,11 +628,11 @@ func (web *Web) HandleMeetingRoutes(router *gin.Engine) {
 	meetingsGroup := router.Group("/meetings")
 	meetingsGroup.GET("/", web.APIGetMeetings)
 	meetingsGroup.POST("/", web.APIPostMeetings)
+	meetingsGroup.GET("/:meetingId", web.APIGetMeeting)
+	meetingsGroup.PUT("/:meetingId", web.APIPutMeetings)
+	meetingsGroup.DELETE("/:meetingId", web.APIDeleteMeetings)
 
-	meetingGroup := router.Group("/meeting")
-	meetingGroup.GET("/data/:meetingId", web.APIGetMeeting)
-	meetingGroup.PUT("/data/:meetingId", web.APIPutMeetings)
-	meetingGroup.DELETE("/data/:meetingId", web.APIDeleteMeetings)
+	//meetingGroup := router.Group("/meeting")
 }
 
 //APIHandler

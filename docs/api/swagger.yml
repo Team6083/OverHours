@@ -42,7 +42,7 @@ paths:
         description: User object that needs to be created
         required: true
 
-  '/user/{userId}':
+  '/users/{userId}':
     get:
       tags:
         - user
@@ -351,12 +351,6 @@ paths:
                   type: integer
                 SeasonId:
                   type: string
-                Title:
-                  type: string
-                Description:
-                  type: string
-                CheckinLevel:
-                  type: integer
     delete:
       tags:
         - meetings

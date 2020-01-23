@@ -331,11 +331,11 @@ func (web *Web) HandleUserRoutes(router *gin.Engine) {
 	usersGroup := router.Group("/users")
 	usersGroup.GET("/", web.APIGetUsers)
 	usersGroup.POST("/", web.APIPostUser)
+	usersGroup.GET("/:id", web.APIGetUser)
+	usersGroup.PUT("/:id", web.APIPutUser)
+	usersGroup.DELETE("/:id", web.APIDeleteUser)
 
-	userGroup := router.Group("/user")
-	userGroup.GET("/data/:id", web.APIGetUser)
-	userGroup.PUT("/data/:id", web.APIPutUser)
-	userGroup.DELETE("/data/:id", web.APIDeleteUser)
+	//userGroup := router.Group("/user")
 }
 
 // API handlers
