@@ -72,74 +72,74 @@ func (web *Web) checkAuth(w http.ResponseWriter, r *http.Request) (*LoginSession
 }
 
 // Handle login POST request
-func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
-
-	cred := struct {
-		Password string
-		Username string
-	}{}
-
-	err := r.ParseForm()
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-	if r.Form["loginUsername"] == nil || r.Form["loginPassword"] == nil {
-		http.Redirect(w, r, "/login?status=2", http.StatusSeeOther)
-		return
-	}
-
-	rememberMe := false
-
-	if r.Form["rememberMe"] != nil && r.Form["rememberMe"][0] == "on" {
-		rememberMe = true
-	}
-
-	cred.Username = r.Form["loginUsername"][0]
-	cred.Password = r.Form["loginPassword"][0]
-
-	user, err := web.database.GetUserByUserName(cred.Username)
-
-	var expectedPassword string
-	ok := false
-	if err != nil && err != mgo.ErrNotFound {
-		handleWebErr(w, err)
-		return
-	}
-
-	if err == nil {
-		expectedPassword = user.Password
-		ok = true
-	}
-
-	if !ok || expectedPassword != cred.Password {
-		http.Redirect(w, r, "/login?status=2", 303)
-		return
-	}
-
-	loginSession := newLoginSession(cred.Username)
-
-	if rememberMe {
-		loginSession.Validate = 0
-	}
-
-	//setSessionTokenCookie(w, *loginSession)
-
-	_, err = web.storeSession(loginSession)
-	if err != nil {
-		handleWebErr(w, err)
-		return
-	}
-
-	if user.PasswordNeedChange && false {
-		//TODO add change psw
-		http.Redirect(w, r, "/", 303)
-	} else if r.Form["redirect"] != nil {
-		http.Redirect(w, r, r.Form["redirect"][0], 303)
-	} else {
-		http.Redirect(w, r, "/", 303)
-	}
-}
+//func (web *Web) LoginPOST(w http.ResponseWriter, r *http.Request) {
+//
+//	cred := struct {
+//		Password string
+//		Username string
+//	}{}
+//
+//	err := r.ParseForm()
+//	if err != nil {
+//		handleWebErr(w, err)
+//		return
+//	}
+//	if r.Form["loginUsername"] == nil || r.Form["loginPassword"] == nil {
+//		http.Redirect(w, r, "/login?status=2", http.StatusSeeOther)
+//		return
+//	}
+//
+//	rememberMe := false
+//
+//	if r.Form["rememberMe"] != nil && r.Form["rememberMe"][0] == "on" {
+//		rememberMe = true
+//	}
+//
+//	cred.Username = r.Form["loginUsername"][0]
+//	cred.Password = r.Form["loginPassword"][0]
+//
+//	user, err := web.database.GetUserByUserName(cred.Username)
+//
+//	var expectedPassword string
+//	ok := false
+//	if err != nil && err != mgo.ErrNotFound {
+//		handleWebErr(w, err)
+//		return
+//	}
+//
+//	if err == nil {
+//		expectedPassword = user.Password
+//		ok = true
+//	}
+//
+//	if !ok || expectedPassword != cred.Password {
+//		http.Redirect(w, r, "/login?status=2", 303)
+//		return
+//	}
+//
+//	loginSession := newLoginSession(cred.Username)
+//
+//	if rememberMe {
+//		loginSession.Validate = 0
+//	}
+//
+//	//setSessionTokenCookie(w, *loginSession)
+//
+//	_, err = web.storeSession(loginSession)
+//	if err != nil {
+//		handleWebErr(w, err)
+//		return
+//	}
+//
+//	if user.PasswordNeedChange && false {
+//		//TODO add change psw
+//		http.Redirect(w, r, "/", 303)
+//	} else if r.Form["redirect"] != nil {
+//		http.Redirect(w, r, r.Form["redirect"][0], 303)
+//	} else {
+//		http.Redirect(w, r, "/", 303)
+//	}
+//}
 
 func newLoginSession(username string) *LoginSession {
 	session := new(LoginSession)

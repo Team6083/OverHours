@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/gbrlsnchs/jwt/v3 v3.0.0-beta.0
 	github.com/getsentry/sentry-go v0.1.3
-	github.com/gin-gonic/gin v1.5.0 // indirect
+	github.com/gin-gonic/gin v1.5.0
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/gorilla/mux v1.7.1

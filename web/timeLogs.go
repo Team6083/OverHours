@@ -11,17 +11,20 @@ import (
 	"time"
 )
 
-func (web *Web) HandleTimeLogRoutes(timeLogRouter gin.RouterGroup) {
-	timeLogRouter.GET("s", web.APIGetTimeLogs)
-	timeLogRouter.POST("s", web.APIPostTimeLog)
+func (web *Web) HandleTimeLogRoutes(router *gin.Engine) {
+	timeLogsGroup := router.Group("/timeLogs")
+	timeLogsGroup.GET("/", web.APIGetTimeLogs)
+	timeLogsGroup.POST("/", web.APIPostTimeLog)
 
-	timeLogRouter.GET("/:timeLogId", web.APIGetTimeLog)
-	timeLogRouter.PUT("/:timeLogId", web.APIPutTimeLog)
-	timeLogRouter.DELETE("/:timeLogId", web.APIDeleteTimeLog)
+	timeLogGroup := router.Group("/timeLog")
 
 	// checkin & checkout
-	timeLogRouter.GET("/checkin", web.APICheckin)
-	timeLogRouter.GET("/checkout", web.APICheckout)
+	timeLogGroup.GET("/checkin", web.APICheckin)
+	timeLogGroup.GET("/checkout", web.APICheckout)
+
+	timeLogGroup.GET("/data/:timeLogId", web.APIGetTimeLog)
+	timeLogGroup.PUT("/data/:timeLogId", web.APIPutTimeLog)
+	timeLogGroup.DELETE("/data/:timeLogId", web.APIDeleteTimeLog)
 }
 
 // API handlers
@@ -54,7 +57,7 @@ func (web *Web) APIPostTimeLog(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, change)
 }
 
-// GET /timeLogs/{id}
+// GET /timeLogs/data/:timeLogId
 func (web *Web) APIGetTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
 
@@ -67,7 +70,7 @@ func (web *Web) APIGetTimeLog(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, timeLog)
 }
 
-// PUT /timeLogs/{id}
+// PUT /timeLogs/data/:timeLogId
 func (web *Web) APIPutTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
 	if !bson.IsObjectIdHex(targetId) {
@@ -91,7 +94,7 @@ func (web *Web) APIPutTimeLog(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, change)
 }
 
-// DELETE /timeLog/{id}
+// DELETE /timeLog/data/:timeLogId
 
 func (web *Web) APIDeleteTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")

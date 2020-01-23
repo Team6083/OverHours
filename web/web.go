@@ -40,22 +40,26 @@ func (web *Web) readSettings() error {
 	return nil
 }
 
+type APIException struct {
+	Msg string `json:"error"`
+}
+
 func handleWebErr(c *gin.Context, err error) {
 	fmt.Printf("Server internal error: %s\n", err)
 	sentry.CaptureException(err)
-	c.JSON(http.StatusInternalServerError, err)
+	c.AbortWithStatusJSON(http.StatusInternalServerError, APIException{err.Error()})
 }
 
 func handleBadRequest(c *gin.Context, err error) {
-	c.JSON(http.StatusBadRequest, err)
+	c.AbortWithStatusJSON(http.StatusBadRequest, APIException{err.Error()})
 }
 
 func handleUnprocessableEntity(c *gin.Context, err error) {
-	c.JSON(http.StatusUnprocessableEntity, err)
+	c.AbortWithStatusJSON(http.StatusUnprocessableEntity, APIException{err.Error()})
 }
 
 func handleForbidden(c *gin.Context, err error) {
-	c.JSON(http.StatusForbidden, err)
+	c.AbortWithStatusJSON(http.StatusForbidden, APIException{err.Error()})
 }
 
 func (web *Web) ServeWebInterface(webPort int) {
@@ -81,10 +85,14 @@ func (web *Web) newHandler() http.Handler {
 
 	router.Use(web.databaseStatusMiddleWare())
 	router.Use(web.AuthMiddleware())
-	router.Use(web.responseHeaderMiddleWare())
+	router.Use(web.responseMiddleWare())
 
-	userGroup := router.Group("/user")
-	web.HandleUserRoutes(userGroup)
+	// APIs
+	web.HandleUserRoutes(router)
+
+	web.HandleTimeLogRoutes(router)
+
+	web.HandleMeetingRoutes(router)
 
 	return router
 }
@@ -101,7 +109,7 @@ func (web *Web) databaseStatusMiddleWare() gin.HandlerFunc {
 	}
 }
 
-func (web *Web) responseHeaderMiddleWare() gin.HandlerFunc {
+func (web *Web) responseMiddleWare() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.Next()
 		if err := ctx.ShouldBindHeader(&BasicHeader{ContentType: "application/json; charset=UTF-8"}); err != nil {

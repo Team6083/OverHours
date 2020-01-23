@@ -327,21 +327,20 @@ import (
 //	http.Redirect(w, r, "/users", http.StatusSeeOther)
 //}
 
-func (web *Web) HandleUserRoutes(userGroup *gin.RouterGroup) {
-	userGroup.GET("s", web.APIGetUsers)
+func (web *Web) HandleUserRoutes(router *gin.Engine) {
+	usersGroup := router.Group("/users")
+	usersGroup.GET("/", web.APIGetUsers)
+	usersGroup.POST("/", web.APIPostUser)
 
-	userGroup.GET("/:id", web.APIGetUser)
-
-	userGroup.POST("s", web.APIPostUser)
-
-	userGroup.PUT("/:UserId", web.APIPutUser)
-
-	userGroup.DELETE("/:id", web.APIDeleteUser)
+	userGroup := router.Group("/user")
+	userGroup.GET("/data/:id", web.APIGetUser)
+	userGroup.PUT("/data/:id", web.APIPutUser)
+	userGroup.DELETE("/data/:id", web.APIDeleteUser)
 }
 
 // API handlers
 
-// /users
+// GET /users
 func (web *Web) APIGetUsers(ctx *gin.Context) {
 	users, err := web.database.GetAllUsers()
 	if err != nil && err != mgo.ErrNotFound {
@@ -350,19 +349,6 @@ func (web *Web) APIGetUsers(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, users)
-}
-
-// /users/:id
-func (web *Web) APIGetUser(ctx *gin.Context) {
-	targetId := ctx.Param("id")
-
-	user, err := web.database.GetUserByID(targetId)
-	if err != nil && err != mgo.ErrNotFound {
-		handleWebErr(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, user)
 }
 
 // POST /users
@@ -382,9 +368,22 @@ func (web *Web) APIPostUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, change)
 }
 
-// PUT /user/:UserId
+// GET /user/data/:id
+func (web *Web) APIGetUser(ctx *gin.Context) {
+	targetId := ctx.Param("id")
+
+	user, err := web.database.GetUserByID(targetId)
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
+}
+
+// PUT /user/data/:id
 func (web *Web) APIPutUser(ctx *gin.Context) {
-	userId := ctx.Param("UserId")
+	userId := ctx.Param("id")
 
 	if !bson.IsObjectIdHex(userId) {
 		handleBadRequest(ctx, errors.New("id is not a valid ObjectId"))
@@ -407,7 +406,7 @@ func (web *Web) APIPutUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, change)
 }
 
-// DELETE /users/:id
+// DELETE /user/data/:id
 func (web *Web) APIDeleteUser(ctx *gin.Context) {
 	targetId := ctx.Param("id")
 

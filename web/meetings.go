@@ -1,7 +1,6 @@
 package web
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
@@ -625,16 +624,15 @@ import (
 //	http.Redirect(w, r, fmt.Sprintf("/meeting/detail/%s", meetId), http.StatusSeeOther)
 //}
 
-func (web *Web) HandleMeetingRoutes(meetingRouter *gin.RouterGroup) {
-	meetingRouter.GET("s", web.APIGetMeetings)
+func (web *Web) HandleMeetingRoutes(router *gin.Engine) {
+	meetingsGroup := router.Group("/meetings")
+	meetingsGroup.GET("/", web.APIGetMeetings)
+	meetingsGroup.POST("/", web.APIPostMeetings)
 
-	meetingRouter.GET("/:id", web.APIGetMeetings)
-
-	meetingRouter.POST("s", web.APIPostMeetings)
-
-	meetingRouter.PUT("/:meetingId", web.APIPutMeetings)
-
-	meetingRouter.DELETE("/:meetingId", web.APIDeleteMeetings)
+	meetingGroup := router.Group("/meeting")
+	meetingGroup.GET("/data/:meetingId", web.APIGetMeeting)
+	meetingGroup.PUT("/data/:meetingId", web.APIPutMeetings)
+	meetingGroup.DELETE("/data/:meetingId", web.APIDeleteMeetings)
 }
 
 //APIHandler
@@ -647,30 +645,7 @@ func (web *Web) APIGetMeetings(ctx *gin.Context) {
 		return
 	}
 
-	var sendBytes []byte
-
-	b, err := json.Marshal(meetings)
-	if err != nil {
-		handleWebErr(ctx, err)
-		return
-	}
-	sendBytes = b
-
-	//ctx.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	ctx.JSON(http.StatusOK, sendBytes)
-}
-
-// GET /meeting /:meetingId
-func (web *Web) APIGetMeeting(ctx *gin.Context) {
-	meetingId := ctx.Param("MeetingId")
-
-	meeting, err := web.database.GetMeetingById(meetingId)
-	if err != nil {
-		handleBadRequest(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, meeting)
+	ctx.JSON(http.StatusOK, meetings)
 }
 
 // POST /meetings
@@ -690,9 +665,32 @@ func (web *Web) APIPostMeetings(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, change)
 }
 
-// PUT /meeting /:meetingId
+// GET /meeting/data/:meetingId
+func (web *Web) APIGetMeeting(ctx *gin.Context) {
+	meetingId := ctx.Param("meetingId")
+
+	var usedFunc func(id string) (*models.Meeting, error)
+
+	if bson.IsObjectIdHex(meetingId) {
+		usedFunc = web.database.GetMeetingById
+	} else {
+		usedFunc = web.database.GetMeetingByMeetId
+	}
+
+	var meeting *models.Meeting
+
+	meeting, err := usedFunc(meetingId)
+	if err != nil {
+		handleBadRequest(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusBadRequest, meeting)
+}
+
+// PUT /meeting/data/:meetingId
 func (web *Web) APIPutMeetings(ctx *gin.Context) {
-	meetingId := ctx.Param("MeetingId")
+	meetingId := ctx.Param("meetingId")
 
 	if !bson.IsObjectIdHex(meetingId) {
 		handleBadRequest(ctx, errors.New("id not valid"))
@@ -714,9 +712,9 @@ func (web *Web) APIPutMeetings(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, change)
 }
 
-// Delete /meeting /:meetingId
+// Delete /meeting/data/:meetingId
 func (web *Web) APIDeleteMeetings(ctx *gin.Context) {
-	meetingId := ctx.Param("MeetingId")
+	meetingId := ctx.Param("meetingId")
 
 	if !bson.IsObjectIdHex(meetingId) {
 		handleBadRequest(ctx, errors.New("id not valid"))
