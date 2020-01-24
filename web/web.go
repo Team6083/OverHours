@@ -89,10 +89,9 @@ func (web *Web) newHandler() http.Handler {
 
 	// APIs
 	web.HandleUserRoutes(router)
-
 	web.HandleTimeLogRoutes(router)
-
 	web.HandleMeetingRoutes(router)
+	web.HandleBoardRoutes(router)
 
 	return router
 }
