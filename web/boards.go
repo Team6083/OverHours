@@ -1,5 +1,11 @@
 package web
 
+import (
+	"github.com/gin-gonic/gin"
+	"gopkg.in/mgo.v2"
+	"net/http"
+)
+
 //
 //import (
 //	"errors"
@@ -74,3 +80,22 @@ package web
 //		return
 //	}
 //}
+
+func (web *Web) HandleBoardRoutes(router *gin.RouterGroup) {
+	router.GET("s", web.APIGetBoards)
+}
+
+// API Handlers
+
+// GET /boards/leaderboard
+func (web *Web) APIGetBoards(ctx *gin.Context) {
+	seasonId := ctx.Param("SeasonId")
+
+	season, err := web.database.GetRankingBySeason(seasonId)
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, season)
+}
