@@ -1,5 +1,13 @@
 package web
 
+import (
+	"errors"
+	"github.com/Team6083/OverHours/models"
+	"github.com/gin-gonic/gin"
+	"gopkg.in/mgo.v2/bson"
+	"net/http"
+)
+
 //func (web *Web) SettingsGET(w http.ResponseWriter, r *http.Request) {
 //	session, err := web.pageAccessManage(w, r, PageLeader, true)
 //	if err != nil {
@@ -135,3 +143,40 @@ package web
 //
 //	http.Redirect(w, r, "/settings", http.StatusSeeOther)
 //}
+
+func (web *Web) HandleSettingRoutes(router *gin.RouterGroup) {
+	router.GET("s", web.APIGetSettings)
+}
+
+// APIHandler
+
+// GET /settings
+func (web *Web) APIGetSettings(ctx *gin.Context) {
+	setting, err := web.database.GetSetting()
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, setting)
+}
+
+// PUT /setting/:id
+func (web *Web) APIPutSetting(ctx *gin.Context) {
+	settingId := ctx.Param("SettingId")
+
+	if !bson.IsObjectIdHex(settingId) {
+		handleBadRequest(ctx, errors.New("id not valid"))
+	}
+
+	var setting models.Setting
+	setting.Id = bson.ObjectIdHex(settingId)
+
+	change, err := web.database.SaveSetting(&setting)
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, change)
+}
