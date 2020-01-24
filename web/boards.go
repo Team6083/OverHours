@@ -8,14 +8,14 @@ import (
 
 func (web *Web) HandleBoardRoutes(router *gin.Engine) {
 	boardsRouter := router.Group("/boards")
-	boardsRouter.GET("/season/:SeasonId", web.APIGetSeasonBoards)
+	boardsRouter.GET("/season/:seasonId", web.APIGetSeasonBoards)
 }
 
 // API Handlers
 
 // GET /boards/season/:SeasonId
 func (web *Web) APIGetSeasonBoards(ctx *gin.Context) {
-	seasonId := ctx.Param("SeasonId")
+	seasonId := ctx.Param("seasonId")
 
 	season, err := web.database.GetRankingBySeason(seasonId)
 	if err != nil && err != mgo.ErrNotFound {

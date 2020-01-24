@@ -391,6 +391,32 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TimeLog'
+  '/boards/season/{seasonId}':
+    get:
+      tags:
+        - boards
+      summary: Get leaderboard by season
+      parameters:
+        - name: seasonId
+          in: path
+          description: ID of the season
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    UserID:
+                      type: string
+                    TotalTime:
+                      type: integer
 components:
   schemas:
     User:
