@@ -144,9 +144,10 @@ import (
 //	http.Redirect(w, r, "/settings", http.StatusSeeOther)
 //}
 
-func (web *Web) HandleSettingRoutes(router *gin.RouterGroup) {
-	router.GET("s", web.APIGetSettings)
-	router.PUT("/:settingId", web.APIPutSetting)
+func (web *Web) HandleSettingRoutes(router *gin.Engine) {
+	settingRouter := router.Group("/setting")
+	settingRouter.GET("s", web.APIGetSettings)
+	settingRouter.PUT("/:settingId", web.APIPutSetting)
 }
 
 // APIHandler
