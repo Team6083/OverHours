@@ -146,6 +146,7 @@ import (
 
 func (web *Web) HandleSettingRoutes(router *gin.RouterGroup) {
 	router.GET("s", web.APIGetSettings)
+	router.PUT("/:settingId", web.APIPutSetting)
 }
 
 // APIHandler
@@ -161,7 +162,7 @@ func (web *Web) APIGetSettings(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, setting)
 }
 
-// PUT /setting/:id
+// PUT /setting/:settingId
 func (web *Web) APIPutSetting(ctx *gin.Context) {
 	settingId := ctx.Param("SettingId")
 
