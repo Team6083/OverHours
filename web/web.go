@@ -76,7 +76,7 @@ func handleBadRequest(w http.ResponseWriter, err error) {
 }
 
 func handleForbidden(w http.ResponseWriter, err error) {
-	http.Error(w, "Forbidden error: "+err.Error(), http.StatusBadRequest)
+	http.Error(w, "Forbidden error: "+err.Error(), http.StatusForbidden)
 }
 
 func (web *Web) ServeWebInterface(webPort int) {

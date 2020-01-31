@@ -243,13 +243,13 @@ func (web *Web) TimeLogRFIDPOST(w http.ResponseWriter, r *http.Request) {
 
 	var data InputData
 
-	err := json.Unmarshal(body, data)
+	err := json.Unmarshal(body, &data)
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
 	if data.Token != web.settings.Token {
-		handleForbidden(w, err)
+		handleForbidden(w, errors.New("token miss match"))
 		return
 	}
 
@@ -263,9 +263,25 @@ func (web *Web) TimeLogRFIDPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type RFIDResponse struct {
+		Status   int
+		UserName string
+	}
+
 	err = web.StudentCheckin(user.Username, web.settings.SeasonId)
 	if err == nil {
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusOK)
+		responseByte, err := json.Marshal(RFIDResponse{0, user.Username})
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+
+		_, err = w.Write(responseByte)
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
 		return
 	}
 
