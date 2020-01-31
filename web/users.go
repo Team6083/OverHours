@@ -225,11 +225,8 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		data.gradYStr = r.Form["graduationYear"][0]
 	}
 
-	if r.Form["UUID"] != nil {
-		data.UUID = r.Form["UUID"][0]
-	} else {
-		uuid := uuid.NewV4()
-		data.UUID = uuid.String()
+	if r.Form["uuid"] != nil {
+		data.UUID = r.Form["uuid"][0]
 	}
 
 	if r.Form["category"] != nil {

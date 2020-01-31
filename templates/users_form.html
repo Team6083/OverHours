@@ -16,8 +16,8 @@
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label for="editUUID">UUID</label>
-                        <input type="text" class="form-control" id="editUUID" name="uuid" placeholder="new UUID"
-                               disabled value="{{if ne .EditUser.UUID ""}}{{.EditUser.UUID}}{{end}}">
+                        <input type="text" class="form-control" id="editUUID" name="uuid" placeholder="UUID"
+                               value="{{.EditUser.UUID}}">
                     </div>
                     <div class="form-group col-md-3">
                         <label for="inputUserName">UserName</label>
