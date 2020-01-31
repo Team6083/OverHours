@@ -6,9 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2020-01-31
+
+### Add
+
+- Add endpoint /timeLogs/rfid for RFID scanner to POST checkin/out information
+
+### Changed
+
+- Enable edit for UUID field in User
+
 ## [1.3.4] - 2019-09-29
 
-# Fixed
+### Fixed
 
 - Fix slice element removal bug of `GetMeetingsByUserId` and `GetOngoingMeetingsByUserId`
 
