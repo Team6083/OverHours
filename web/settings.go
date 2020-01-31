@@ -61,6 +61,10 @@ func (web *Web) SettingsPOST(w http.ResponseWriter, r *http.Request) {
 		settings.SeasonId = r.Form["seasonId"][0]
 	}
 
+	if r.Form["token"] != nil {
+		settings.Token = r.Form["token"][0]
+	}
+
 	if r.Form["lastOut"] != nil {
 		lastOut, err := strconv.Atoi(r.Form["lastOut"][0])
 		if err != nil {

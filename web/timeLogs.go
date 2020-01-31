@@ -237,7 +237,8 @@ func (web *Web) TimeLogRFIDPOST(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 
 	type InputData struct {
-		UID string `json:"uid"`
+		UID   string `json:"uid"`
+		Token string `json:"token"`
 	}
 
 	var data InputData
@@ -245,6 +246,10 @@ func (web *Web) TimeLogRFIDPOST(w http.ResponseWriter, r *http.Request) {
 	err := json.Unmarshal(body, data)
 	if err != nil {
 		handleWebErr(w, err)
+		return
+	}
+	if data.Token != web.settings.Token {
+		handleForbidden(w, err)
 		return
 	}
 

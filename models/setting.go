@@ -9,6 +9,7 @@ import (
 
 type Setting struct {
 	SeasonId      string
+	Token         string
 	LastOut       int
 	TimeZone      string
 	CheckinLimit  int
