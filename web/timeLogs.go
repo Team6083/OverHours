@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -230,6 +231,51 @@ func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return
+}
+
+func (web *Web) TimeLogRFIDPOST(w http.ResponseWriter, r *http.Request) {
+	body, _ := ioutil.ReadAll(r.Body)
+
+	type InputData struct {
+		UID string `json:"uid"`
+	}
+
+	var data InputData
+
+	err := json.Unmarshal(body, data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	user, err := web.database.GetUserByUUID(data.UID)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			handleBadRequest(w, err)
+		} else {
+			handleWebErr(w, err)
+		}
+		return
+	}
+
+	err = web.StudentCheckin(user.Username, web.settings.SeasonId)
+	if err == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if err != models.AlreadyCheckInError {
+		handleWebErr(w, err)
+		return
+	}
+
+	err = web.StudentCheckOut(user.Username)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
