@@ -6,6 +6,7 @@ import (
 	"github.com/gbrlsnchs/jwt/v3"
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -82,6 +83,7 @@ func (web *Web) newHandler() http.Handler {
 
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+	router.Use(cors.Default())
 
 	router.Use(web.databaseStatusMiddleWare())
 	router.Use(web.AuthMiddleware())
