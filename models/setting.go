@@ -8,11 +8,11 @@ import (
 )
 
 type Setting struct {
-	SeasonId      string
-	LastOut       int
-	TimeZone      string
-	CheckinLimit  int
-	CheckoutLimit int
+	SeasonId      string        `json:"seasonId"`
+	LastOut       int           `json:"lastOut"`
+	TimeZone      string        `json:"timezone"`
+	CheckinLimit  int           `json:"checkinLimit"`
+	CheckoutLimit int           `json:"checkoutLimit"`
 	Id            bson.ObjectId `bson:"_id,omitempty"`
 }
 

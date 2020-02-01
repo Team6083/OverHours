@@ -9,13 +9,13 @@ import (
 )
 
 type Meeting struct {
-	StartTime        int64
-	SeasonId         string
-	Title            string
-	Description      string
-	CheckinLevel     int
-	StartCheckinTime int64
-	FinishTime       int64
+	StartTime        int64  `json:"startTime"`
+	SeasonId         string `json:"seasonId"`
+	Title            string `json:"title"`
+	Description      string `json:"description"`
+	CheckinLevel     int    `json:"checkinLevel"`
+	StartCheckinTime int64  `json:"startCheckinTime"`
+	FinishTime       int64  `json:"finishTime"`
 	Participants     map[string]ParticipantData
 	Id               bson.ObjectId `bson:"_id,omitempty"`
 }
