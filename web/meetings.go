@@ -19,6 +19,7 @@ func (web *Web) HandleMeetingRoutes(router *gin.Engine) {
 
 	meetingGroup := router.Group("/meeting")
 	meetingGroup.GET("/logs/:meetingId", web.APIGetMeetingLogs)
+	meetingGroup.PUT("/logs/:meetingId/:userId")
 }
 
 //APIHandler
@@ -85,11 +86,13 @@ func (web *Web) APIPutMeetings(ctx *gin.Context) {
 
 	if err := ctx.ShouldBind(&meeting); err != nil {
 		handleBadRequest(ctx, err)
+		return
 	}
 
 	change, err := web.database.SaveMeeting(&meeting)
 	if err != nil {
 		handleWebErr(ctx, err)
+		return
 	}
 
 	ctx.JSON(http.StatusAccepted, change)
@@ -139,4 +142,58 @@ func (web *Web) APIGetMeetingLogs(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, timeLogs)
+}
+
+// PUT /meeting/logs/:meetingId/:userId
+func (web *Web) APIPutMeetingLog(ctx *gin.Context) {
+	meetingId := ctx.Param("meetingId")
+	userId := ctx.Param("userId")
+
+	if !bson.IsObjectIdHex(meetingId) {
+		handleBadRequest(ctx, errors.New("meetingId not valid"))
+		return
+	}
+
+	if userId == "" {
+		handleBadRequest(ctx, errors.New("userId is empty"))
+		return
+	}
+
+	_, err := web.database.GetUserByUserName(userId)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			handleBadRequest(ctx, errors.New("cant find user for userId"))
+		} else {
+			handleWebErr(ctx, err)
+		}
+		return
+	}
+
+	meeting, err := web.database.GetMeetingById(meetingId)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			handleBadRequest(ctx, err)
+		} else {
+			handleWebErr(ctx, err)
+		}
+		return
+	}
+
+	participantData := new(models.ParticipantData)
+
+	err = ctx.ShouldBindJSON(&participantData)
+	if err != nil {
+		handleBadRequest(ctx, err)
+		return
+	}
+
+	meeting.Participants[userId] = *participantData
+
+	change, err := web.database.SaveMeeting(meeting)
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, change)
 }
