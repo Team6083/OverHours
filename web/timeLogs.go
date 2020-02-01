@@ -24,7 +24,7 @@ func (web *Web) HandleTimeLogRoutes(router *gin.Engine) {
 	// checkin & checkout
 	timeLogGroup.GET("/checkin", web.APICheckin)
 	timeLogGroup.GET("/checkout", web.APICheckout)
-
+	timeLogGroup.GET("/unfinished", web.APIGetUnfinishedTimeLogs)
 }
 
 // API handlers
@@ -35,6 +35,21 @@ func (web *Web) APIGetTimeLogs(ctx *gin.Context) {
 	if err != nil && err != mgo.ErrNotFound {
 		handleWebErr(ctx, err)
 		return
+	}
+
+	ctx.JSON(http.StatusOK, timeLogs)
+}
+
+// GET /timeLog/active
+func (web *Web) APIGetUnfinishedTimeLogs(ctx *gin.Context) {
+	timeLogs, err := web.database.GetAllUnfinishedTimeLogs()
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	if timeLogs == nil {
+		timeLogs = []models.TimeLog{}
 	}
 
 	ctx.JSON(http.StatusOK, timeLogs)
