@@ -277,6 +277,20 @@ paths:
           description: Invaild user parameters
         '422':
           description: Operation is not allowed
+  /timeLog/unfinished:
+    get:
+      tags:
+        - timeLogs
+      summary: Get unfinished timeLogs
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeLog'
   # meeting
   /meetings:
     get:

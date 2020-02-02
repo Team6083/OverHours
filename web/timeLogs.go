@@ -40,7 +40,7 @@ func (web *Web) APIGetTimeLogs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, timeLogs)
 }
 
-// GET /timeLog/active
+// GET /timeLog/unfinished
 func (web *Web) APIGetUnfinishedTimeLogs(ctx *gin.Context) {
 	timeLogs, err := web.database.GetAllUnfinishedTimeLogs()
 	if err != nil && err != mgo.ErrNotFound {
