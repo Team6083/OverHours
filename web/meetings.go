@@ -19,7 +19,7 @@ func (web *Web) HandleMeetingRoutes(router *gin.Engine) {
 
 	meetingGroup := router.Group("/meeting")
 	meetingGroup.GET("/logs/:meetingId", web.APIGetMeetingLogs)
-	meetingGroup.PUT("/logs/:meetingId/:userId")
+	meetingGroup.PUT("/participants/:meetingId/:userId", web.APIPutMeetingParticipants)
 }
 
 //APIHandler
@@ -144,8 +144,8 @@ func (web *Web) APIGetMeetingLogs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, timeLogs)
 }
 
-// PUT /meeting/logs/:meetingId/:userId
-func (web *Web) APIPutMeetingLog(ctx *gin.Context) {
+// PUT /meeting/participants/:meetingId/:userId
+func (web *Web) APIPutMeetingParticipants(ctx *gin.Context) {
 	meetingId := ctx.Param("meetingId")
 	userId := ctx.Param("userId")
 
@@ -184,6 +184,11 @@ func (web *Web) APIPutMeetingLog(ctx *gin.Context) {
 	err = ctx.ShouldBindJSON(&participantData)
 	if err != nil {
 		handleBadRequest(ctx, err)
+		return
+	}
+
+	if participantData.UserId != userId {
+		handleBadRequest(ctx, errors.New("userId dose not match"))
 		return
 	}
 

@@ -405,6 +405,27 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TimeLog'
+  '/meeting/participants/{meetingId}/{userId}':
+    put:
+      tags:
+        - meetings
+      summary: Put participants data for certain user
+      parameters:
+        - name: meetingId
+          in: path
+          description: ID of the meeting
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successfully put a participant data
   '/boards/season/{seasonId}':
     get:
       tags:
