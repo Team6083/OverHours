@@ -14,6 +14,7 @@ type User struct {
 	FirstYear          int           `json:"firstYear"`
 	GraduationYear     int           `json:"graduationYear"`
 	PasswordNeedChange bool          `json:"passwordNeedChange"`
+	Category           string        `json:"category"`
 	Id                 bson.ObjectId `bson:"_id,omitempty" json:"Id"`
 }
 

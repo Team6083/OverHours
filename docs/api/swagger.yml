@@ -507,6 +507,8 @@ components:
           type: boolean
         Id:
           type: string
+        Category:
+          type: string
     TimeLog:
       type: object
       properties:
