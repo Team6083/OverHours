@@ -452,6 +452,42 @@ paths:
                       type: string
                     TotalTime:
                       type: integer
+  /settings:
+    get:
+      tags:
+        - settings
+      summary: Get all settings
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+  /settings/:settingName:
+    put:
+      tags:
+        - settings
+      summary: Set value for a certain setting
+      parameters:
+        - name: settingName
+          in: path
+          description: name of the setting
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: New value of the setting
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                value:
+                  type: string
+      responses:
+        '204':
+          description: Successful operation
 components:
   schemas:
     User:
@@ -527,6 +563,19 @@ components:
           type: integer
         UpsertedId:
           type: string
+    Settings:
+      type: object
+      properties:
+        seasonId:
+          type: string
+        lastOut:
+          type: integer
+        timezone:
+          type: string
+        checkinLimit:
+          type: integer
+        checkoutLimit:
+          type: integer
   requestBodies:
     TimeLogsBody:
       description: A JSON object of TimeLog
