@@ -264,14 +264,15 @@ func (web *Web) TimeLogRFIDPOST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type RFIDResponse struct {
-		Status   int
-		UserName string
+		Status    string
+		UserName  string
+		CheckTime time.Time
 	}
 
 	err = web.StudentCheckin(user.Username, web.settings.SeasonId)
 	if err == nil {
 		w.WriteHeader(http.StatusOK)
-		responseByte, err := json.Marshal(RFIDResponse{0, user.Username})
+		responseByte, err := json.Marshal(RFIDResponse{"checkin", user.Username, time.Now()})
 		if err != nil {
 			handleWebErr(w, err)
 			return
@@ -285,18 +286,31 @@ func (web *Web) TimeLogRFIDPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// if != already checkin error
 	if err != models.AlreadyCheckInError {
 		handleWebErr(w, err)
 		return
 	}
 
+	// Already checkin error -> checkout
 	err = web.StudentCheckOut(user.Username)
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusOK)
+	responseByte, err := json.Marshal(RFIDResponse{"checkout", user.Username, time.Now()})
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	_, err = w.Write(responseByte)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
 }
 
 func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
