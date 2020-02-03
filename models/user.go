@@ -6,15 +6,15 @@ import (
 )
 
 type User struct {
-	Name               string
-	Username           string
-	Password           string
-	Email              string
-	PermissionLevel    int
-	FirstYear          int
-	GraduationYear     int
-	PasswordNeedChange bool
-	Id                 bson.ObjectId `bson:"_id,omitempty"`
+	Name               string        `json:"name"`
+	Username           string        `json:"userName"`
+	Password           string        `json:"password"`
+	Email              string        `json:"email"`
+	PermissionLevel    int           `json:"permissionLevel"`
+	FirstYear          int           `json:"firstYear"`
+	GraduationYear     int           `json:"graduationYear"`
+	PasswordNeedChange bool          `json:"passwordNeedChange"`
+	Id                 bson.ObjectId `bson:"_id,omitempty" json:"Id"`
 }
 
 const (
