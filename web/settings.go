@@ -165,14 +165,14 @@ func (web *Web) APIGetSettings(ctx *gin.Context) {
 
 // PUT /settings/:settingName
 func (web *Web) APIPutSetting(ctx *gin.Context) {
-	settingId := ctx.Param("SettingId")
+	settingName := ctx.Param("settingName")
 
-	if !bson.IsObjectIdHex(settingId) {
+	if !bson.IsObjectIdHex(settingName) {
 		handleBadRequest(ctx, errors.New("id not valid"))
 	}
 
 	var setting models.Setting
-	setting.Id = bson.ObjectIdHex(settingId)
+	setting.Id = bson.ObjectIdHex(settingName)
 
 	change, err := web.database.SaveSetting(&setting)
 	if err != nil {
