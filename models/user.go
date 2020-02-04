@@ -90,12 +90,15 @@ func (database *Database) GetUserByID(id string) (*User, error) {
 }
 
 func (database *Database) GetUserByUUID(uuid string) (*User, error) {
-	var user User
-	err := database.DB.C("users").Find(bson.M{"uuid": uuid}).One(&user)
+	cred, err := database.GetCredentialByUUID(uuid)
 	if err != nil {
 		return nil, err
 	}
-	return &user, nil
+	user, err := database.GetUserByID(cred.userId.Hex())
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 func (database *Database) SaveUser(user User) (*mgo.ChangeInfo, error) {

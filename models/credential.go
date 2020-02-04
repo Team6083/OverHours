@@ -33,7 +33,7 @@ func (database *Database) GetCredentialByUserId(userId string) (*Credential, err
 
 func (database *Database) GetCredentialByUUID(uuid string) (*Credential, error) {
 	credential := Credential{}
-	err := database.DB.C("credentails").Find(bson.M{"uuid": uuid}).One(&credential)
+	err := database.DB.C("credentials").Find(bson.M{"uuid": uuid}).One(&credential)
 	if err != nil {
 		return nil, err
 	}
