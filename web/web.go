@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"github.com/gbrlsnchs/jwt/v3"
@@ -44,6 +45,8 @@ func (web *Web) readSettings() error {
 type APIException struct {
 	Msg string `json:"error"`
 }
+
+var IdIsNotValidObjectIdError = errors.New("id is not a valid objectId")
 
 func handleWebErr(c *gin.Context, err error) {
 	fmt.Printf("Server internal error: %s\n", err)
