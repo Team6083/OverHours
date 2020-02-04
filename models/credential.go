@@ -6,10 +6,10 @@ import (
 )
 
 type Credential struct {
-	uuid     string        `json:"uuid"`
-	password string        `json:"password"`
-	salt     string        `json:"salt"`
-	userId   bson.ObjectId `json:"userId"`
+	Uuid     string        `json:"uuid"`
+	Password string        `json:"password"`
+	Salt     string        `json:"salt"`
+	UserId   bson.ObjectId `json:"userId"`
 	Id       bson.ObjectId `bson:"_id,omitempty" json:"Id"`
 }
 

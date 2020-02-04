@@ -94,7 +94,7 @@ func (database *Database) GetUserByUUID(uuid string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	user, err := database.GetUserByID(cred.userId.Hex())
+	user, err := database.GetUserByID(cred.UserId.Hex())
 	if err != nil {
 		return nil, err
 	}
