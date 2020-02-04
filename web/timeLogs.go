@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Team6083/OverHours/models"
@@ -110,7 +111,6 @@ func (web *Web) APIPutTimeLog(ctx *gin.Context) {
 }
 
 // DELETE /timeLog/data/:timeLogId
-
 func (web *Web) APIDeleteTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
 	if !bson.IsObjectIdHex(targetId) {
@@ -125,6 +125,79 @@ func (web *Web) APIDeleteTimeLog(ctx *gin.Context) {
 	}
 
 	ctx.Writer.WriteHeader(http.StatusNoContent)
+}
+
+// POST /timeLog/rfid
+func (web *Web) TimeLogRFIDPost(ctx *gin.Context) {
+	type RFIDInput struct {
+		UID   string `json:"uid"`
+		Token string `json:"token"`
+	}
+
+	var data RFIDInput
+
+	err := ctx.ShouldBindJSON(data)
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	// check given token
+	if data.Token != web.settings.Token {
+		handleForbidden(ctx, err)
+		return
+	}
+
+	// get user
+	user, err := web.database.GetUserByUUID(data.UID)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			handleBadRequest(ctx, err)
+		} else {
+			handleWebErr(ctx, err)
+		}
+		return
+	}
+
+	type RFIDResponse struct {
+		Status    string    `json:"status"`
+		UserName  string    `json:"username"`
+		CheckTime time.Time `json:"checkTime"`
+	}
+
+	// checkin
+	err = web.StudentCheckin(user.Username, web.settings.SeasonId)
+	if err == nil {
+		// checkin response if no error
+		response, err := json.Marshal(RFIDResponse{"checkin", user.Username, time.Now()})
+		if err != nil {
+			handleWebErr(ctx, err)
+			return
+		}
+		ctx.JSON(http.StatusOK, response)
+	}
+
+	// other than AlreadyCheckInError
+	if err != models.AlreadyCheckInError {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	// checkout
+	err = web.StudentCheckOut(user.Username)
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	// checkout response
+	response, err := json.Marshal(RFIDResponse{"checkout", user.Username, time.Now()})
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response)
 }
 
 // GET /timeLog/checkin
@@ -147,7 +220,6 @@ func (web *Web) APICheckin(ctx *gin.Context) {
 
 // GET /timeLog/checkout
 func (web *Web) APICheckout(ctx *gin.Context) {
-
 	userId := ctx.Query("user")
 
 	err := web.StudentCheckOut(userId)

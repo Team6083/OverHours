@@ -16,6 +16,7 @@ type User struct {
 	PasswordNeedChange bool          `json:"passwordNeedChange"`
 	Category           string        `json:"category"`
 	Id                 bson.ObjectId `bson:"_id,omitempty" json:"Id"`
+	UUID               string        `json:"uuid"`
 }
 
 const (
@@ -84,6 +85,15 @@ func (database *Database) GetUserByUserName(name string) (*User, error) {
 func (database *Database) GetUserByID(id string) (*User, error) {
 	user := User{}
 	err := database.DB.C("users").FindId(bson.ObjectIdHex(id)).One(&user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (database *Database) GetUserByUUID(uuid string) (*User, error) {
+	var user User
+	err := database.DB.C("users").Find(bson.M{"uuid": uuid}).One(&user)
 	if err != nil {
 		return nil, err
 	}

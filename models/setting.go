@@ -9,6 +9,7 @@ import (
 
 type Setting struct {
 	SeasonId      string        `json:"seasonId"`
+	Token         string        `json:"token"`
 	LastOut       int           `json:"lastOut"`
 	TimeZone      string        `json:"timezone"`
 	CheckinLimit  int           `json:"checkinLimit"`
