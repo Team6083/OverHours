@@ -9,6 +9,7 @@ import (
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	stats "github.com/semihalev/gin-stats"
 	"log"
 	"net/http"
 )
@@ -87,6 +88,12 @@ func (web *Web) newHandler() http.Handler {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(cors.Default())
+
+	router.GET("/stats", func(c *gin.Context) {
+		c.JSON(http.StatusOK, stats.Report())
+	})
+
+	router.Use(stats.RequestStats())
 
 	router.Use(web.databaseStatusMiddleWare())
 	router.Use(web.AuthMiddleware())

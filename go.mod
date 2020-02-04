@@ -15,7 +15,9 @@ require (
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0
+	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563 // indirect
 	github.com/satori/go.uuid v1.2.0
+	github.com/semihalev/gin-stats v0.0.0-20180505163755-30fdcbbd3533
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad // indirect
