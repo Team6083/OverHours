@@ -9,7 +9,7 @@ import (
 func TestUser(t *testing.T) {
 	database := SetupTestDb(t)
 
-	user := User{"TestUser", "testuser", "password", "user@user.team6083", 0, 2019, 2019, false, "category" +
+	user := User{"TestUser", "testuser", "user@user.team6083", 0, 2019, 2019, false, "category" +
 		"", bson.NewObjectId()}
 
 	_, err := database.SaveUser(user)
@@ -24,7 +24,6 @@ func TestUser(t *testing.T) {
 
 	assert.NotNil(t, user1)
 	assert.Equal(t, user.Username, user1.Username)
-	assert.Equal(t, user.Password, user1.Password)
 	assert.Equal(t, user.Name, user1.Name)
 	assert.Equal(t, user.Email, user1.Email)
 	assert.Equal(t, user.FirstYear, user1.FirstYear)

@@ -1,11 +1,14 @@
 package web
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
 	"errors"
 	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"io"
 	"net/http"
 )
 
@@ -104,4 +107,23 @@ func (web *Web) APIDeleteUser(ctx *gin.Context) {
 	}
 
 	ctx.Writer.WriteHeader(http.StatusNoContent)
+}
+
+const (
+	PwSaltBytes = 32
+)
+
+func NewSalt() (salt string, err error) {
+	b := make([]byte, PwSaltBytes)
+	_, err = io.ReadFull(rand.Reader, b)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+func PasswordToHash(password string, salt string) (hash string) {
+	h := sha256.New()
+	h.Write([]byte(password + salt))
+	return string(h.Sum(nil))
 }

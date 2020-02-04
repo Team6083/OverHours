@@ -8,7 +8,6 @@ import (
 type User struct {
 	Name               string        `json:"name"`
 	Username           string        `json:"userName"`
-	Password           string        `json:"password"`
 	Email              string        `json:"email"`
 	PermissionLevel    int           `json:"permissionLevel"`
 	FirstYear          int           `json:"firstYear"`
@@ -16,7 +15,6 @@ type User struct {
 	PasswordNeedChange bool          `json:"passwordNeedChange"`
 	Category           string        `json:"category"`
 	Id                 bson.ObjectId `bson:"_id,omitempty" json:"Id"`
-	UUID               string        `json:"uuid"`
 }
 
 const (
