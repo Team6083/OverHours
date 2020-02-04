@@ -31,6 +31,15 @@ func (database *Database) GetCredentialByUserId(userId string) (*Credential, err
 	return &credential, nil
 }
 
+func (database *Database) GetCredentialByUUID(uuid string) (*Credential, error) {
+	credential := Credential{}
+	err := database.DB.C("credentails").Find(bson.M{"uuid": uuid}).One(&credential)
+	if err != nil {
+		return nil, err
+	}
+	return &credential, nil
+}
+
 func (database *Database) SaveCredential(cred Credential) (*mgo.ChangeInfo, error) {
 	change, err := database.DB.C("credentials").UpsertId(cred.Id, cred)
 	if err != nil {
