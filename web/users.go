@@ -3,7 +3,6 @@ package web
 import (
 	"crypto/rand"
 	"crypto/sha256"
-	"errors"
 	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2"
@@ -80,7 +79,7 @@ func (web *Web) APIPutUser(ctx *gin.Context) {
 	userId := ctx.Param("id")
 
 	if !bson.IsObjectIdHex(userId) {
-		handleBadRequest(ctx, errors.New("id is not a valid ObjectId"))
+		handleBadRequest(ctx, IdIsNotValidObjectIdError)
 		return
 	}
 
@@ -103,6 +102,11 @@ func (web *Web) APIPutUser(ctx *gin.Context) {
 // DELETE /user/data/:id
 func (web *Web) APIDeleteUser(ctx *gin.Context) {
 	targetId := ctx.Param("id")
+
+	if !bson.IsObjectIdHex(targetId) {
+		handleBadRequest(ctx, IdIsNotValidObjectIdError)
+		return
+	}
 
 	err := web.database.DeleteUser(models.User{Id: bson.ObjectIdHex(targetId)})
 	if err != nil {

@@ -81,6 +81,11 @@ func (web *Web) APIPostTimeLog(ctx *gin.Context) {
 func (web *Web) APIGetTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
 
+	if !bson.IsObjectIdHex(targetId) {
+		handleBadRequest(ctx, IdIsNotValidObjectIdError)
+		return
+	}
+
 	timeLog, err := web.database.GetTimeLogById(targetId)
 	if err != nil && err != mgo.ErrNotFound {
 		handleWebErr(ctx, err)
@@ -93,8 +98,9 @@ func (web *Web) APIGetTimeLog(ctx *gin.Context) {
 // PUT /timeLogs/data/:timeLogId
 func (web *Web) APIPutTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
+
 	if !bson.IsObjectIdHex(targetId) {
-		handleBadRequest(ctx, errors.New("id is not a valid objectId"))
+		handleBadRequest(ctx, IdIsNotValidObjectIdError)
 		return
 	}
 
@@ -117,8 +123,9 @@ func (web *Web) APIPutTimeLog(ctx *gin.Context) {
 // DELETE /timeLog/data/:timeLogId
 func (web *Web) APIDeleteTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
+
 	if !bson.IsObjectIdHex(targetId) {
-		handleBadRequest(ctx, errors.New("id is not a valid objectId"))
+		handleBadRequest(ctx, IdIsNotValidObjectIdError)
 		return
 	}
 
