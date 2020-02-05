@@ -71,6 +71,11 @@ func (web *Web) APIGetUser(ctx *gin.Context) {
 		return
 	}
 
+	if user == nil {
+		handleNotFound(ctx)
+		return
+	}
+
 	ctx.JSON(http.StatusOK, user)
 }
 

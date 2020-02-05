@@ -92,6 +92,11 @@ func (web *Web) APIGetTimeLog(ctx *gin.Context) {
 		return
 	}
 
+	if timeLog == nil {
+		handleNotFound(ctx)
+		return
+	}
+
 	ctx.JSON(http.StatusOK, timeLog)
 }
 

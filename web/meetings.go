@@ -73,6 +73,11 @@ func (web *Web) APIGetMeeting(ctx *gin.Context) {
 		return
 	}
 
+	if meeting == nil {
+		handleNotFound(ctx)
+		return
+	}
+
 	ctx.JSON(http.StatusBadRequest, meeting)
 }
 

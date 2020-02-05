@@ -67,6 +67,10 @@ func handleForbidden(c *gin.Context, err error) {
 	c.AbortWithStatusJSON(http.StatusForbidden, APIException{err.Error()})
 }
 
+func handleNotFound(c *gin.Context) {
+	c.AbortWithStatusJSON(http.StatusNotFound, APIException{errors.New("not found").Error()})
+}
+
 func (web *Web) ServeWebInterface(webPort int) {
 	//go web.ServeSocketInterface(8000)
 
