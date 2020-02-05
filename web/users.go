@@ -33,6 +33,10 @@ func (web *Web) APIGetUsers(ctx *gin.Context) {
 		return
 	}
 
+	if users == nil {
+		users = []models.User{}
+	}
+
 	ctx.JSON(http.StatusOK, users)
 }
 

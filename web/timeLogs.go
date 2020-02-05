@@ -38,6 +38,10 @@ func (web *Web) APIGetTimeLogs(ctx *gin.Context) {
 		return
 	}
 
+	if timeLogs == nil {
+		timeLogs = []models.TimeLog{}
+	}
+
 	ctx.JSON(http.StatusOK, timeLogs)
 }
 

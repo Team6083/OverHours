@@ -32,6 +32,10 @@ func (web *Web) APIGetMeetings(ctx *gin.Context) {
 		return
 	}
 
+	if meetings == nil {
+		meetings = []models.Meeting{}
+	}
+
 	ctx.JSON(http.StatusOK, meetings)
 }
 
