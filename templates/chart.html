@@ -4,6 +4,16 @@
     <div class="row justify-content-center mt-4">
         <div class="col-8">
             <h2>Daily Count Chart</h2>
+            <div class="row">
+                <div class="col">
+                    <form class="form-inline">
+                        <label class="m-3">Start Time: </label>
+                        <input type="date" class="form-control" id="startTimeInput">
+                        <label class="m-3">End Time: </label>
+                        <input type="date" class="form-control" id="endTimeInput">
+                    </form>
+                </div>
+            </div>
             <canvas id="myChart" width="600" height="300"></canvas>
         </div>
     </div>
@@ -14,27 +24,80 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
     <script>
 
-        var labels = [];
-        var numOfPpl = [];
-        var calcTime = [];
-        var avg = [];
+        function formatDate(date) {
+            let d = new Date(date),
+                month = '' + (d.getMonth() + 1),
+                day = '' + d.getDate(),
+                year = d.getFullYear();
 
-        let c = 0;
-        let ttt = 0;
-        let cou = 0;
+            if (month.length < 2)
+                month = '0' + month;
+            if (day.length < 2)
+                day = '0' + day;
 
-        {{range .Data}}
-        c = {{.YearDay}};
-        if (c <= 41) {
-            cou = {{.Count}};
-            labels.push({{.YearDay}});
-            numOfPpl.push(cou);
-            ttt = {{.TotalTime}};
-            calcTime.push(ttt / 3600);
-            avg.push(ttt / 3600 / cou);
+            return [year, month, day].join('-');
         }
-        {{end}}
 
+        const token = "" + {{.Token}};
+
+        const defaultStartTime = formatDate(new Date((new Date().getTime()) - 7 * 24 * 3600 * 1000));
+        const defaultEndTime = formatDate(new Date((new Date().getTime()) + 24 * 3600 * 1000));
+
+        const startTimeInput = $("#startTimeInput");
+        startTimeInput.val(defaultStartTime);
+
+        const endTimeInput = $("#endTimeInput");
+        endTimeInput.val(defaultEndTime);
+
+        startTimeInput.change(() => runChart(new Date(startTimeInput.val()), new Date(endTimeInput.val())));
+        endTimeInput.change(() => runChart(new Date(startTimeInput.val()), new Date(endTimeInput.val())));
+
+        runChart(new Date(defaultStartTime), new Date(defaultEndTime));
+
+        function runChart(startDate, endDate) {
+            fetch("/board/chart/data?token=" + token + "&startDate=" + startDate.toISOString() + "&endDate=" + endDate.toISOString()).then((r) => r.json()).then((res) => {
+                let data = [...res];
+
+                let daysData = {};
+
+                for (let i = 0; i < ((endDate - startDate) / 1000 / 3600 / 24); i++) {
+                    daysData[new Date(startDate.getTime() + (i * 1000 * 3600 * 24)).toDateString()] = {
+                        totalTime: 0,
+                        peoples: {}
+                    }
+                }
+
+                data.map((val) => {
+                    const inTime = new Date(val.TimeIn * 1000);
+                    const outTime = new Date(val.TimeOut * 1000);
+                    const duration = outTime - inTime;
+
+                    daysData[inTime.toDateString()].totalTime += duration;
+                    daysData[inTime.toDateString()].peoples[val.UserID] = true;
+                });
+
+
+                let totalTime = [];
+                let peopleCount = [];
+                let average = [];
+                let labels = [];
+                Object.keys(daysData).forEach((k) => {
+                    let v = daysData[k];
+                    let totTime = v.totalTime / 3600000;
+                    totalTime.push(totTime);
+
+                    let peopleC = Object.keys(v.peoples).length;
+                    peopleCount.push(peopleC);
+
+                    average.push(totTime / peopleC);
+                    labels.push(new Date(k).toLocaleDateString(undefined, {
+                        month: 'numeric', day: 'numeric'
+                    }))
+                });
+
+                addData(myChart, labels, [peopleCount, totalTime, average]);
+            });
+        }
 
     </script>
     <script>
@@ -42,10 +105,10 @@
         var myChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: [],
                 datasets: [{
                     label: '# of People',
-                    data: numOfPpl,
+                    data: [],
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.2)'
                     ],
@@ -55,7 +118,7 @@
                     borderWidth: 1
                 }, {
                     label: 'Total Time',
-                    data: calcTime,
+                    data: [],
                     backgroundColor: [
                         'transparent'
                     ],
@@ -66,7 +129,7 @@
                 },
                     {
                         label: 'Average Time',
-                        data: avg,
+                        data: [],
                         backgroundColor: [
                             'transparent'
                         ],
@@ -86,6 +149,14 @@
                 }
             }
         });
+
+        function addData(chart, label, datas) {
+            chart.data.labels = label;
+            chart.data.datasets[0].data = datas[0];
+            chart.data.datasets[1].data = datas[1];
+            chart.data.datasets[2].data = datas[2];
+            chart.update();
+        }
     </script>
 
 {{end}}

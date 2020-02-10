@@ -42,8 +42,8 @@ func (web *Web) GetPageInfos() []PageInfo {
 	pages = append(pages, PageInfo{"/users/delete/{id}", web.UsersDeleteGET, "GET", PageLeader, true})
 	// Boards
 	pages = append(pages, PageInfo{"/board/ranking", web.leaderboardGET, "GET", PageLogin, true})
-
-	pages = append(pages, PageInfo{"/board/chart", web.ChartGet, "GET", PageLogin, true})
+	pages = append(pages, PageInfo{"/board/chart", web.ChartGet, "GET", PageLeader, true})
+	pages = append(pages, PageInfo{"/board/chart/data", web.ChartDataGet, "GET", PageOpen, true})
 
 	return pages
 }
