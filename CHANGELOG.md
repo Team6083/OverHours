@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.2] - 2020-02-10
+
+### Add
+
+- Add Chart
+
+### Changed
+
+- modify uuid modify level
+
 ## [1.4.1] - 2020-02-10
 
 ### Changed
