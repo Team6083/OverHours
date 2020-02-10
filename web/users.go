@@ -233,7 +233,10 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		user.Category = r.Form["category"][0]
 	}
 
-	user.UUID = data.UUID
+	if currUser.CheckPermissionLevel(models.PermissionAdmin) {
+		user.UUID = data.UUID
+	}
+
 	if data.firstYStr != "" {
 		user.FirstYear, err = strconv.Atoi(data.firstYStr)
 		if err != nil {
