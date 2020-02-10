@@ -1,0 +1,64 @@
+{{define "title"}}Home{{end}}
+
+{{define "body"}}
+    <div class="row justify-content-center mt-4">
+        <div class="col-8">
+            <h2>Daily Count Chart</h2>
+            <canvas id="myChart" width="600" height="300"></canvas>
+        </div>
+    </div>
+{{end}}
+
+{{define "script"}}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+    <script>
+
+        var labels = [];
+        var data = [];
+        let c = 0;
+        {{range .Data}}
+        c = {{.YearDay}};
+        if (c <= 41) {
+            labels.push({{.YearDay}});
+            data.push({{.Count}});
+        }
+        {{end}}
+
+
+    </script>
+    <script>
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '# of People',
+                    data: data,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+    </script>
+
+{{end}}
+
+{{define "head"}}
+
+{{end}}

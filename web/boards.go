@@ -2,6 +2,7 @@ package web
 
 import (
 	"github.com/Team6083/OverHours/models"
+	"gopkg.in/mgo.v2"
 	"net/http"
 	"time"
 )
@@ -43,6 +44,51 @@ func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
 	for i, rData := range ranking {
 		if rData.UserID == currentUser.Username {
 			data.UserRank = i + 1
+		}
+	}
+
+	err = webTemplate.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+}
+
+func (web *Web) ChartGet(w http.ResponseWriter, r *http.Request) {
+	webTemplate, err := web.parseFiles("templates/chart.html", "templates/base.html")
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	type HoursCalc struct {
+		YearDay int
+		Count   int
+	}
+
+	timeLogs, err := web.database.GetTimeLogsBySeason(web.settings.SeasonId)
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	data := struct {
+		Data []HoursCalc
+	}{}
+
+	data.Data = make([]HoursCalc, 365)
+	dd := map[int]map[string]bool{}
+
+	for i := 0; i < 365; i++ {
+		data.Data[i].Count = 0
+		data.Data[i].YearDay = i + 1
+		dd[i] = make(map[string]bool)
+	}
+
+	for _, v := range timeLogs {
+		if !dd[v.GetInTime().YearDay()-1][v.UserID] {
+			dd[v.GetInTime().YearDay()-1][v.UserID] = true
+			data.Data[v.GetInTime().YearDay()-1].Count++
 		}
 	}
 
