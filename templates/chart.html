@@ -15,13 +15,23 @@
     <script>
 
         var labels = [];
-        var data = [];
+        var numOfPpl = [];
+        var calcTime = [];
+        var avg = [];
+
         let c = 0;
+        let ttt = 0;
+        let cou = 0;
+
         {{range .Data}}
         c = {{.YearDay}};
         if (c <= 41) {
+            cou = {{.Count}};
             labels.push({{.YearDay}});
-            data.push({{.Count}});
+            numOfPpl.push(cou);
+            ttt = {{.TotalTime}};
+            calcTime.push(ttt / 3600);
+            avg.push(ttt / 3600 / cou);
         }
         {{end}}
 
@@ -35,7 +45,7 @@
                 labels: labels,
                 datasets: [{
                     label: '# of People',
-                    data: data,
+                    data: numOfPpl,
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.2)'
                     ],
@@ -43,7 +53,28 @@
                         'rgba(255, 99, 132, 1)',
                     ],
                     borderWidth: 1
-                }]
+                }, {
+                    label: 'Total Time',
+                    data: calcTime,
+                    backgroundColor: [
+                        'transparent'
+                    ],
+                    borderColor: [
+                        '#ff9205',
+                    ],
+                    borderWidth: 1
+                },
+                    {
+                        label: 'Average Time',
+                        data: avg,
+                        backgroundColor: [
+                            'transparent'
+                        ],
+                        borderColor: [
+                            '#000000',
+                        ],
+                        borderWidth: 1
+                    }]
             },
             options: {
                 scales: {

@@ -62,8 +62,9 @@ func (web *Web) ChartGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type HoursCalc struct {
-		YearDay int
-		Count   int
+		YearDay   int
+		Count     int
+		TotalTime int
 	}
 
 	timeLogs, err := web.database.GetTimeLogsBySeason(web.settings.SeasonId)
@@ -82,6 +83,7 @@ func (web *Web) ChartGet(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < 365; i++ {
 		data.Data[i].Count = 0
 		data.Data[i].YearDay = i + 1
+		data.Data[i].TotalTime = 0
 		dd[i] = make(map[string]bool)
 	}
 
@@ -89,6 +91,10 @@ func (web *Web) ChartGet(w http.ResponseWriter, r *http.Request) {
 		if !dd[v.GetInTime().YearDay()-1][v.UserID] {
 			dd[v.GetInTime().YearDay()-1][v.UserID] = true
 			data.Data[v.GetInTime().YearDay()-1].Count++
+		}
+
+		if v.IsOut() {
+			data.Data[v.GetInTime().YearDay()-1].TotalTime += int(v.GetDuration().Seconds())
 		}
 	}
 
