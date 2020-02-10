@@ -43,5 +43,7 @@ func (web *Web) GetPageInfos() []PageInfo {
 	// Boards
 	pages = append(pages, PageInfo{"/board/ranking", web.leaderboardGET, "GET", PageLogin, true})
 
+	pages = append(pages, PageInfo{"/board/chart", web.ChartGet, "GET", PageLogin, true})
+
 	return pages
 }
