@@ -69,6 +69,7 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 		GradY              int
 		PLevel             int
 		PasswordNeedChange bool
+		Plane              bool
 		Category           string
 	}{}
 
@@ -83,6 +84,7 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 			GradY              int
 			PLevel             int
 			PasswordNeedChange bool
+			Plane              bool
 			Category           string
 		}
 		New         bool
@@ -107,6 +109,7 @@ func (web *Web) UsersFormGET(w http.ResponseWriter, r *http.Request) {
 				data.EditUser.GradY = editUser.GraduationYear
 				data.EditUser.PLevel = editUser.PermissionLevel
 				data.EditUser.PasswordNeedChange = editUser.PasswordNeedChange
+				data.EditUser.Plane = editUser.Plane
 				data.EditUser.Category = editUser.Category
 				data.New = false
 			}
@@ -137,6 +140,7 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		gradYStr           string
 		UUID               string
 		PasswordNeedChange bool
+		Plane              bool
 	}{}
 
 	if r.Form["userName"] == nil || r.Form["name"] == nil || r.Form["pLevel"] == nil {
@@ -168,10 +172,12 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		user.Username = targetUserName
 		user.Id = bson.NewObjectId()
 		data.PasswordNeedChange = true
+		data.Plane = false
 		user.Password = uuid.NewV4().String()
 	}
 
 	user.PasswordNeedChange = data.PasswordNeedChange
+	user.Plane = data.Plane
 	user.Name = r.Form["name"][0]
 
 	pLevel := r.Form["pLevel"][0]
@@ -231,6 +237,12 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 
 	if r.Form["category"] != nil {
 		user.Category = r.Form["category"][0]
+	}
+
+	if r.Form["plane"] != nil {
+		user.Plane = r.Form["plane"][0] == "on"
+	} else {
+		user.Plane = r.Form["plane"][0] == "off"
 	}
 
 	if currUser.CheckPermissionLevel(models.PermissionAdmin) {
