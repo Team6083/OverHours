@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.3] - 2020-02-11
+
+### Add
+
+- Add plane emoji to leader board
+
 ## [1.4.2] - 2020-02-10
 
 ### Add
