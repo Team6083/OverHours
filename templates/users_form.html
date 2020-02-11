@@ -94,6 +94,11 @@
                                    id="passwordNeedChange" {{if eq .EditUser.PasswordNeedChange true}}checked{{end}}>
                             <label for="passwordNeedChange" class="custom-control-label">Password Need Change</label>
                         </div>
+                         <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" name="plane"
+                                   id="plane" {{if eq .EditUser.Plane true}}checked{{end}}>
+                            <label for="plane" class="custom-control-label">Plane</label>
+                        </div>
                     </div>
                     {{end}}
                 </div>

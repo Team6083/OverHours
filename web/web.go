@@ -2,18 +2,19 @@ package web
 
 import (
 	"fmt"
-	"github.com/Team6083/OverHours/models"
-	"github.com/gbrlsnchs/jwt/v3"
-	"github.com/getsentry/sentry-go"
-	sentryhttp "github.com/getsentry/sentry-go/http"
-	"github.com/gorilla/mux"
-	"gopkg.in/mgo.v2"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
 	"reflect"
 	"time"
+
+	"github.com/Team6083/OverHours/models"
+	"github.com/gbrlsnchs/jwt/v3"
+	"github.com/getsentry/sentry-go"
+	sentryhttp "github.com/getsentry/sentry-go/http"
+	"github.com/gorilla/mux"
+	"gopkg.in/mgo.v2"
 )
 
 type Web struct {
@@ -92,7 +93,10 @@ func (web *Web) ServeWebInterface(webPort int) {
 	// Start Server
 	log.Printf("Serving HTTP requests on port %d", webPort)
 	log.Print(fmt.Sprintf(":%d", webPort))
-	http.ListenAndServe(fmt.Sprintf(":%d", webPort), nil)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", webPort), nil)
+	if err != nil {
+		panic(err)
+	}
 }
 
 type PageInfo struct {

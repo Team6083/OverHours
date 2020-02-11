@@ -3,13 +3,14 @@ package web
 import (
 	"errors"
 	"fmt"
-	"github.com/Team6083/OverHours/models"
-	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"strconv"
+
+	"github.com/Team6083/OverHours/models"
+	"github.com/gorilla/mux"
+	uuid "github.com/satori/go.uuid"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func (web *Web) UsersGET(w http.ResponseWriter, r *http.Request) {
@@ -242,7 +243,7 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 	if r.Form["plane"] != nil {
 		user.Plane = r.Form["plane"][0] == "on"
 	} else {
-		user.Plane = r.Form["plane"][0] == "off"
+		user.Plane = false
 	}
 
 	if currUser.CheckPermissionLevel(models.PermissionAdmin) {

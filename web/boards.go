@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Team6083/OverHours/models"
 	"net/http"
 	"time"
+
+	"gopkg.in/mgo.v2"
+
+	"github.com/Team6083/OverHours/models"
 )
 
 func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
@@ -36,12 +39,27 @@ func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var planeUsers []string
+
+	users, err := web.database.GetAllUsers()
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	for _, v := range users {
+		if v.Plane {
+			planeUsers = append(planeUsers, v.Username)
+		}
+	}
+
 	data := struct {
 		Ranking       []models.TimeLogSummary
 		UserTotalTime time.Duration
 		UserRank      int
 		UserNames     map[string]string
-	}{ranking, models.CalculateTotalTimes(userTimeLogs), 0, names}
+		PlaneUsers    []string
+	}{ranking, models.CalculateTotalTimes(userTimeLogs), 0, names, planeUsers}
 
 	for i, rData := range ranking {
 		if rData.UserID == currentUser.Username {
