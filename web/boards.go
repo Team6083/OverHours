@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"time"
 
@@ -12,8 +13,10 @@ import (
 	"github.com/Team6083/OverHours/models"
 )
 
-func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request, seasonId string) {
+func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
 	currentUser := r.Context().Value("user").(*models.User)
+
+	seasonId := mux.Vars(r)["seasonId"]
 
 	webTemplate, err := web.parseFiles("templates/leaderboard.html", "templates/base.html")
 	if err != nil {
