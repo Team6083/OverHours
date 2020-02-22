@@ -12,7 +12,7 @@ import (
 	"github.com/Team6083/OverHours/models"
 )
 
-func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
+func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request, seasonId string) {
 	currentUser := r.Context().Value("user").(*models.User)
 
 	webTemplate, err := web.parseFiles("templates/leaderboard.html", "templates/base.html")
@@ -21,13 +21,13 @@ func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ranking, err := web.database.GetRankingBySeason(web.settings.SeasonId)
+	ranking, err := web.database.GetRankingBySeason(seasonId)
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
 
-	userTimeLogs, err := web.database.GetTimeLogsByUserWithSpecificSeason(currentUser.Username, web.settings.SeasonId)
+	userTimeLogs, err := web.database.GetTimeLogsByUserWithSpecificSeason(currentUser.Username, seasonId)
 	if err != nil {
 		handleWebErr(w, err)
 		return
