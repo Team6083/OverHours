@@ -105,11 +105,12 @@
         });
 
         let urlParams = new URLSearchParams(window.location.search);
-        let defaultSeasonSelected = null;
+        let defaultSeasonSelected = "{{.SeasonName}}";
         if (urlParams.has("seasonId")) {
             defaultSeasonSelected = urlParams.get("seasonId");
-            $("#seasonSelector").append("<option selected>" + defaultSeasonSelected + "</option>");
         }
+
+        $("#seasonSelector").append("<option selected>" + defaultSeasonSelected + "</option>");
 
         fetch("/timeLog/seasons").then((r) => r.json())
             .then((ids) => {
