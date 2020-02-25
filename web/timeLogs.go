@@ -340,6 +340,27 @@ func (web *Web) TimeLogCheckoutGET(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (web *Web) TimeLogGetAllSeasonsGET(w http.ResponseWriter, r *http.Request) {
+
+	seasonIds, err := web.database.GetAllSeasons()
+	if err != nil && err != mgo.ErrNotFound {
+		handleWebErr(w, err)
+		return
+	}
+
+	data, err := json.Marshal(seasonIds)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	_, err = w.Write(data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+}
+
 // Checkin and Checkout
 
 var StudentNotExistError = errors.New("student doesn't exist")

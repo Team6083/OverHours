@@ -132,6 +132,17 @@ func (database *Database) GetAllUnfinishedTimeLogs() ([]TimeLog, error) {
 	return timeLogs, nil
 }
 
+func (database *Database) GetAllSeasons() ([]string, error) {
+	var res []string
+
+	err := database.DB.C("timeLogs").Find(nil).Distinct("seasonid", &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (database *Database) SaveTimeLog(log *TimeLog) (*mgo.ChangeInfo, error) {
 	change, err := database.DB.C("timeLogs").UpsertId(log.Id, log)
 	if err != nil {
