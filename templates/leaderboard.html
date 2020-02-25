@@ -13,12 +13,21 @@
 
                     {{end}}
                 {{end}}
-                <p>You spent <span class="badge badge-dark">{{.UserTotalTime}}</span> on this season.</p>
+                <p>You spent <span class="badge badge-dark">{{.UserTotalTime}}</span> on <span
+                            class="badge badge-primary">{{.SeasonName}}</span>.</p>
+            </div>
+            <div class="row">
+                <div class="col-md-6 col btn-bar">
+
+                </div>
+                <div class="col-md-6 col text-md-right">
+                    <select id="seasonSelector" style="border-radius: .2rem">
+                    </select>
+                </div>
             </div>
         </div>
     </div>
-    </div>
-    <div class="row">
+    <div class="row mt-3">
         <div class="col-lg-2"></div>
         <div class="col-lg-8 col">
             <div style="overflow-x: scroll">
@@ -61,7 +70,7 @@
                 },
                 {
                     "render": function (data) {
-                        return (names[data] ? names[data] : "<span class=\"text-muted\">{data}</span>".replace("{data}", data)) + (planeUsers[data]?" <i class=\"fas fa-plane-departure\" style=\"color: rgba(33, 37, 41, .5);\"></i>":"");
+                        return (names[data] ? names[data] : "<span class=\"text-muted\">{data}</span>".replace("{data}", data)) + (planeUsers[data] ? " <i class=\"fas fa-plane-departure\" style=\"color: rgba(33, 37, 41, .5);\"></i>" : "");
                     },
                     "targets": 1
                 },
@@ -82,7 +91,7 @@
 
         var planeUsers = {};
         {{range $element := .PlaneUsers}}
-        planeUsers[{{$element}}] =  true;
+        planeUsers[{{$element}}] = true;
         {{end}}
 
         var names = {};
@@ -93,7 +102,29 @@
 
         timeLogSummary.forEach(function (data) {
             LeaderboardTable.row.add(data).draw();
-        })
+        });
+
+        let urlParams = new URLSearchParams(window.location.search);
+        let defaultSeasonSelected = null;
+        if (urlParams.has("seasonId")) {
+            defaultSeasonSelected = urlParams.get("seasonId");
+            $("#seasonSelector").append("<option selected>" + defaultSeasonSelected + "</option>");
+        }
+
+        fetch("/timeLog/seasons").then((r) => r.json())
+            .then((ids) => {
+
+                ids.forEach(function (data) {
+                    if (data.search("m:") === -1 && data !== defaultSeasonSelected) {
+                        // remove meeting timeLogs
+                        $("#seasonSelector").append(("<option>") + data + "</option>");
+                    }
+                });
+            });
+
+        $("#seasonSelector").on('change ', function (e) {
+            window.location.href = "/board/ranking?seasonId=" + e.target.value;
+        });
     </script>
 {{end}}
 

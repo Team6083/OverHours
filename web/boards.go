@@ -66,7 +66,8 @@ func (web *Web) leaderboardGET(w http.ResponseWriter, r *http.Request) {
 		UserRank      int
 		UserNames     map[string]string
 		PlaneUsers    []string
-	}{ranking, models.CalculateTotalTimes(userTimeLogs), 0, names, planeUsers}
+		SeasonName    string
+	}{ranking, models.CalculateTotalTimes(userTimeLogs), 0, names, planeUsers, seasonId}
 
 	for i, rData := range ranking {
 		if rData.UserID == currentUser.Username {

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Add 
+
+- Add leaderboard season selector
+
 ## [1.4.3] - 2020-02-11
 
 ### Add
