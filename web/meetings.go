@@ -86,7 +86,7 @@ func (web *Web) IFTTTPostMeetings(ctx *gin.Context) {
 	participants := make(map[string]models.ParticipantData)
 	users, _ := web.database.GetAllUsers()
 	for _, user := range users {
-		participants[user.Name] = models.ParticipantData{user.Id.String(), false, false}
+		participants[user.Name] = models.ParticipantData{UserId: user.Id.String(), Leave: false, IsAdmin: false}
 	}
 
 	meeting := models.Meeting{
