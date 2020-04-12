@@ -22,8 +22,8 @@ func (web *Web) HandleMeetingRoutes(router *gin.Engine) {
 	meetingGroup.GET("/logs/:meetingId", web.APIGetMeetingLogs)
 	meetingGroup.PUT("/participants/:meetingId/:userId", web.APIPutMeetingParticipants)
 
-	iftttMeetingGroup := router.Group("/iftttMeetings")
-	iftttMeetingGroup.POST("/", web.IFTTTPostMeetings)
+	calendarMeetingGroup := router.Group("/calendarMeetings")
+	calendarMeetingGroup.POST("/", web.IFTTTPostMeetings)
 }
 
 //APIHandler
@@ -60,37 +60,45 @@ func (web *Web) APIPostMeetings(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, change)
 }
 
-// POST /iftttMeetings
+// POST /calendarMeetings
 func (web *Web) IFTTTPostMeetings(ctx *gin.Context) {
 	const dateLayout = "January 2, 2006 at 03:04PM"
 
 	type IFTTTInput struct {
 		Title          string `json:"title"`
 		Description    string `json:"description"`
-		EventStartTime string `json:"event_start_time"`
-		EventEndTime   string `json:"event_end_time"`
-		CreateTime     string `json:"create_time"`
+		EventStartTime string `json:"starts"`
+		EventEndTime   string `json:"ends"`
+		CreateTime     string `json:"createdAt"`
 	}
 
-	var newIFTTT IFTTTInput
-	if err := ctx.ShouldBind(&newIFTTT); err != nil {
+	var newCalendarEvent IFTTTInput
+	if err := ctx.ShouldBind(&newCalendarEvent); err != nil {
 		handleBadRequest(ctx, err)
 	}
 
-	startTime, _ := time.Parse(dateLayout, newIFTTT.CreateTime)
-	startCheckTime, _ := time.Parse(dateLayout, newIFTTT.EventStartTime)
-	finishTime, _ := time.Parse(dateLayout, newIFTTT.EventEndTime)
+	// setting schema data: startTime, startCheckinTime, finishTime
+	startTime, _ := time.Parse(dateLayout, newCalendarEvent.CreateTime)
+	startCheckTime, _ := time.Parse(dateLayout, newCalendarEvent.EventStartTime)
+	finishTime, _ := time.Parse(dateLayout, newCalendarEvent.EventEndTime)
+
+	// setting schema data: Participants
+	participants := make(map[string]models.ParticipantData)
+	users, _ := web.database.GetAllUsers()
+	for _, user := range users {
+		participants[user.Name] = models.ParticipantData{user.Id.String(), false, false}
+	}
 
 	meeting := models.Meeting{
 		Id:               bson.NewObjectId(),
 		StartTime:        startTime.Unix(),
 		SeasonId:         web.settings.SeasonId,
-		Title:            newIFTTT.Title,
-		Description:      newIFTTT.Description,
+		Title:            newCalendarEvent.Title,
+		Description:      newCalendarEvent.Description,
 		CheckinLevel:     models.PermissionMember,
 		StartCheckinTime: startCheckTime.Add(-30 * time.Minute).Unix(),
 		FinishTime:       finishTime.Unix(),
-		//Participants: ,
+		Participants:     participants,
 	}
 
 	change, err := web.database.SaveMeeting(&meeting)
