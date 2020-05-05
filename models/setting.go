@@ -8,13 +8,15 @@ import (
 )
 
 type Setting struct {
-	SeasonId      string
-	Token         string
-	LastOut       int
-	TimeZone      string
-	CheckinLimit  int
-	CheckoutLimit int
-	Id            bson.ObjectId `bson:"_id,omitempty"`
+	SeasonId            string
+	Token               string
+	CheckinWebHook      string
+	CheckinWebHookToken string
+	LastOut             int
+	TimeZone            string
+	CheckinLimit        int
+	CheckoutLimit       int
+	Id                  bson.ObjectId `bson:"_id,omitempty"`
 }
 
 func (database *Database) GetSetting() (*Setting, error) {

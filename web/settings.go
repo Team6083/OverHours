@@ -65,6 +65,14 @@ func (web *Web) SettingsPOST(w http.ResponseWriter, r *http.Request) {
 		settings.Token = r.Form["token"][0]
 	}
 
+	if r.Form["checkinWebHook"] != nil {
+		settings.CheckinWebHook = r.Form["checkinWebHook"][0]
+	}
+
+	if r.Form["checkinWebHookToken"] != nil {
+		settings.CheckinWebHookToken = r.Form["checkinWebHookToken"][0]
+	}
+
 	if r.Form["lastOut"] != nil {
 		lastOut, err := strconv.Atoi(r.Form["lastOut"][0])
 		if err != nil {

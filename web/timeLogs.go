@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -390,11 +391,11 @@ func (web *Web) StudentCheckOut(studentId string) error {
 
 func (web *Web) StudentCheckin(studentId string, seasonId string) error {
 
-	exist, err := web.database.CheckUserExist(studentId)
-	if err != nil {
+	user, err := web.database.GetUserByUserName(studentId)
+	if err != nil && err != mgo.ErrNotFound {
 		return err
 	}
-	if !exist {
+	if user == nil {
 		return StudentNotExistError
 	}
 
@@ -417,5 +418,33 @@ func (web *Web) StudentCheckin(studentId string, seasonId string) error {
 		return models.AlreadyCheckInError
 	}
 
+	go web.CheckinWebHook(*user)
+
 	return nil
+}
+
+func (web *Web) CheckinWebHook(user models.User) {
+	if web.settings.CheckinWebHook != "" {
+		req, err := http.NewRequest("POST", web.settings.CheckinWebHook, strings.NewReader(fmt.Sprintf("{\"studentId\": \"%s\", \"name\": \"%s\"}", user.Email, user.Name)))
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("token", web.settings.CheckinWebHookToken)
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+
+		if resp.StatusCode != http.StatusUnprocessableEntity && resp.StatusCode != http.StatusOK {
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				// handle error
+				fmt.Println(err)
+			}
+
+			fmt.Println(string(body))
+		}
+	}
 }

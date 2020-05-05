@@ -159,6 +159,18 @@
                     </div>
                 </div>
                 <div class="form-row">
+                    <div class="form-group col-md-8 col">
+                        <label for="editCheckinWebHook">CheckinWebHook</label>
+                        <input type="text" class="form-control" id="editCheckinWebHook" name="checkinWebHook"
+                               placeholder="checkinWebHook" value="{{.Settings.CheckinWebHook}}">
+                    </div>
+                    <div class="form-group col-md-4 col">
+                        <label for="editCheckinWebHookToken">CheckinWebHookToken</label>
+                        <input type="text" class="form-control" id="editCheckinWebHookToken" name="checkinWebHookToken"
+                               placeholder="checkinWebHookToken" value="{{.Settings.CheckinWebHookToken}}">
+                    </div>
+                </div>
+                <div class="form-row">
                     <button type="submit" class="btn btn-block btn-primary">Save</button>
                 </div>
             </form>
