@@ -29,30 +29,19 @@ func main() {
 	}
 
 	sentryClientOption := sentry.ClientOptions{
-		Dsn: getEnv("sentryDsn", ""),
+		Dsn: "https://64dc39d77b1f41d5823eaba5d5fac640@o275610.ingest.sentry.io/1493313",
 	}
 
-	if !debug {
-		releaseName := "over-hours@1.2.4"
-		sentryClientOption.Release = releaseName
-	}
-
-	if debug {
-		sentryClientOption.Debug = true
-	}
+	sentryClientOption.Debug = debug
 
 	err = sentry.Init(sentryClientOption)
 	if err != nil {
 		panic(err)
 	}
 
-	var host = getEnv("host", "127.0.0.1")
-	var dbName = getEnv("db", "OverHours")
-	var user = getEnv("hoursUser", "")
-	var pass = getEnv("hoursPassword", "")
+	databaseURL := getEnv("databaseURL", "mongodb://127.0.0.1/OverHours")
 
-	log.Printf("Connecting to db at %s/%s with username:  %s", host, dbName, user)
-	database, err := models.OpenDataBase(host, user, pass, dbName)
+	database, err := models.OpenDataBase(databaseURL)
 	if err != nil {
 		handleErr(err)
 	}
