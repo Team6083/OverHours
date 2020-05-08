@@ -30,7 +30,7 @@ func (web *Web) HandleTimeLogRoutes(router *gin.Engine) {
 
 // API handlers
 
-// GET /timeLogs
+// GET /timeLogs/
 func (web *Web) APIGetTimeLogs(ctx *gin.Context) {
 	timeLogs, err := web.database.GetAllTimeLogs()
 	if err != nil && err != mgo.ErrNotFound {
