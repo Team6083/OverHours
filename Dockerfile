@@ -21,7 +21,8 @@ COPY . .
 # Build the application
 RUN go build -o main .
 
-WORKDIR /
+WORKDIR /dist
+RUN cp /template .
 
 # Copy binary from build to main folder
 RUN cp /build/main .
