@@ -22,8 +22,7 @@ COPY . .
 RUN go build -o main .
 
 WORKDIR /dist
-RUN ls /build
-RUN cp /build/templates .
+RUN cp -r /build/templates ./templates
 
 # Copy binary from build to main folder
 RUN cp /build/main .
