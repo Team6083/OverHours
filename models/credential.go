@@ -13,9 +13,9 @@ type Credential struct {
 	Id       bson.ObjectId `bson:"_id,omitempty" json:"Id"`
 }
 
-func (database *Database) GetCredentialById(id string) (*Credential, error) {
+func (database *Database) GetCredentialById(id bson.ObjectId) (*Credential, error) {
 	credential := Credential{}
-	err := database.DB.C("credentials").FindId(bson.ObjectIdHex(id)).One(&credential)
+	err := database.DB.C("credentials").FindId(id).One(&credential)
 	if err != nil {
 		return nil, err
 	}

@@ -17,7 +17,7 @@ import (
 type Web struct {
 	database *models.Database
 	settings *models.Setting
-	hmac     *jwt.HMAC
+	hmac     *jwt.HMACSHA
 }
 
 func NewWeb(database *models.Database) *Web {
@@ -28,7 +28,7 @@ func NewWeb(database *models.Database) *Web {
 		panic(err)
 	}
 
-	web.hmac = jwt.NewHMAC(jwt.SHA256, []byte(RandomString(10)))
+	web.hmac = jwt.NewHS256([]byte(RandomString(10)))
 
 	return web
 }
@@ -72,7 +72,6 @@ func handleNotFound(c *gin.Context) {
 }
 
 func (web *Web) ServeWebInterface(webPort int) {
-	//go web.ServeSocketInterface(8000)
 
 	web.database.DB.C("session").DropCollection()
 
@@ -108,6 +107,7 @@ func (web *Web) newHandler() http.Handler {
 	web.HandleTimeLogRoutes(router)
 	web.HandleMeetingRoutes(router)
 	web.HandleBoardRoutes(router)
+	web.HandleAuthRoutes(router)
 
 	return router
 }
