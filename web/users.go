@@ -56,7 +56,7 @@ func (web *Web) APIPostUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, change)
 }
 
-// GET /user/data/:id
+// GET /users/:id
 func (web *Web) APIGetUser(ctx *gin.Context) {
 	targetId := ctx.Param("id")
 
@@ -79,7 +79,7 @@ func (web *Web) APIGetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// PUT /user/data/:id
+// PUT /users/:id
 func (web *Web) APIPutUser(ctx *gin.Context) {
 	userId := ctx.Param("id")
 
@@ -104,7 +104,7 @@ func (web *Web) APIPutUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, change)
 }
 
-// DELETE /user/data/:id
+// DELETE /users/:id
 func (web *Web) APIDeleteUser(ctx *gin.Context) {
 	targetId := ctx.Param("id")
 

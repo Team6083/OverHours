@@ -108,6 +108,7 @@ func (web *Web) newHandler() http.Handler {
 	web.HandleMeetingRoutes(router)
 	web.HandleBoardRoutes(router)
 	web.HandleAuthRoutes(router)
+	web.HandleStatRoutes(router)
 
 	return router
 }

@@ -26,6 +26,7 @@ func (web *Web) HandleTimeLogRoutes(router *gin.Engine) {
 	timeLogGroup.GET("/checkin", web.APICheckin)
 	timeLogGroup.GET("/checkout", web.APICheckout)
 	timeLogGroup.GET("/unfinished", web.APIGetUnfinishedTimeLogs)
+	timeLogGroup.GET("/seasonIds", web.APITimeLogSeasonIds)
 }
 
 // API handlers
@@ -248,6 +249,19 @@ func (web *Web) APICheckout(ctx *gin.Context) {
 	}
 
 	ctx.Writer.WriteHeader(http.StatusNoContent)
+}
+
+// GET /timeLog/seasonIds
+func (web *Web) APITimeLogSeasonIds(ctx *gin.Context) {
+	seasonIds, err := web.database.GetTimeLogSeasons()
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	fmt.Println(seasonIds)
+
+	ctx.JSON(http.StatusOK, seasonIds)
 }
 
 // Checkin and Checkout

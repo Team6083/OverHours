@@ -148,6 +148,17 @@ func (database *Database) DeleteTimeLog(log *TimeLog) error {
 	return nil
 }
 
+func (database *Database) GetTimeLogSeasons() ([]string, error) {
+	var result []string
+
+	err := database.DB.C("timeLogs").Find(bson.M{}).Distinct("seasonid", &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 //  Calculating time logs
 
 func (database *Database) GetRankingBySeason(seasonId string) ([]TimeLogSummary, error) {
