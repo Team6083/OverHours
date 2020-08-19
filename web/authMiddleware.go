@@ -1,8 +1,6 @@
 package web
 
 import (
-	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"math/rand"
 	"time"
@@ -31,24 +29,24 @@ func RandomString(length int) string {
 // AuthMiddleware function, which will be called for each request
 func (web *Web) AuthMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		tokenString := ctx.GetHeader("token")
-
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Don't forget to validate the alg is what you expect:
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-			}
-
-			return web.hmac, nil
-		})
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			// TODO: get login token
-			fmt.Print(claims["jti"])
-		} else {
-			handleWebErr(ctx, err)
-			return
-		}
+		//tokenString := ctx.GetHeader("token")
+		//
+		//token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		//	// Don't forget to validate the alg is what you expect:
+		//	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		//		return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		//	}
+		//
+		//	return web.hmac, nil
+		//})
+		//
+		//if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		//	// TODO: get login token
+		//	fmt.Print(claims["jti"])
+		//} else {
+		//	handleWebErr(ctx, err)
+		//	return
+		//}
 
 		ctx.Next()
 	}

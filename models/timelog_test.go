@@ -2,8 +2,8 @@ package models
 
 import (
 	"fmt"
+	"github.com/globalsign/mgo/bson"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/mgo.v2/bson"
 	"log"
 	"testing"
 	"time"

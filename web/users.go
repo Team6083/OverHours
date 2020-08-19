@@ -5,8 +5,8 @@ import (
 	"crypto/sha256"
 	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"io"
 	"net/http"
 )

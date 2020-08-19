@@ -1,7 +1,7 @@
 package models
 
 import (
-	"gopkg.in/mgo.v2"
+	"github.com/globalsign/mgo"
 	"time"
 )
 
