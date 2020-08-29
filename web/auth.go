@@ -8,6 +8,7 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/satori/go.uuid"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
 )
@@ -66,7 +67,8 @@ func (web *Web) APIPostAuthLogin(ctx *gin.Context) {
 			return
 		}
 
-		if userCred.Password == PasswordToHash(cred.Password, userCred.Salt) {
+		err = bcrypt.CompareHashAndPassword([]byte(userCred.Password), []byte(cred.Password))
+		if err == nil {
 			// login successful
 
 			loginToken := newLoginToken(user)

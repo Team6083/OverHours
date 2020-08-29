@@ -1,13 +1,10 @@
 package web
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
 	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"io"
 	"net/http"
 )
 
@@ -41,19 +38,40 @@ func (web *Web) APIGetUsers(ctx *gin.Context) {
 
 // POST /users
 func (web *Web) APIPostUser(ctx *gin.Context) {
-	user := models.User{Id: bson.NewObjectId()}
+	type APIPostUserBody struct {
+		User     models.User `json:"user"`
+		Password string      `json:"password"`
+	}
 
-	if err := ctx.ShouldBind(&user); err != nil {
+	body := APIPostUserBody{
+		User: models.User{Id: bson.NewObjectId()},
+	}
+
+	if err := ctx.ShouldBind(&body); err != nil {
 		handleBadRequest(ctx, err)
 	}
 
-	change, err := web.database.SaveUser(user)
+	saveUserChange, err := web.database.SaveUser(body.User)
 	if err != nil {
 		handleWebErr(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, change)
+	cred, err := models.CreateCredential(body.User.Id, body.Password)
+
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+	saveCredChange, err := web.database.SaveCredential(*cred)
+
+	ctx.JSON(http.StatusCreated, struct {
+		SaveUserChange *mgo.ChangeInfo
+		SaveCredChange *mgo.ChangeInfo
+	}{
+		SaveUserChange: saveUserChange,
+		SaveCredChange: saveCredChange,
+	})
 }
 
 // GET /users/:id
@@ -120,23 +138,4 @@ func (web *Web) APIDeleteUser(ctx *gin.Context) {
 	}
 
 	ctx.Writer.WriteHeader(http.StatusNoContent)
-}
-
-const (
-	PwSaltBytes = 32
-)
-
-func NewSalt() (salt string, err error) {
-	b := make([]byte, PwSaltBytes)
-	_, err = io.ReadFull(rand.Reader, b)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
-}
-
-func PasswordToHash(password string, salt string) (hash string) {
-	h := sha256.New()
-	h.Write([]byte(password + salt))
-	return string(h.Sum(nil))
 }

@@ -20,7 +20,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/semihalev/gin-stats v0.0.0-20180505163755-30fdcbbd3533
 	github.com/stretchr/testify v1.4.0
-	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad // indirect
+	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad
 	golang.org/x/sys v0.0.0-20200121082415-34d275377bf9 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
