@@ -8,7 +8,6 @@ import (
 
 	"github.com/Team6083/OverHours/models"
 	"github.com/gorilla/mux"
-	uuid "github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -174,7 +173,8 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		user.Id = bson.NewObjectId()
 		data.PasswordNeedChange = true
 		data.Plane = false
-		user.Password = uuid.NewV4().String()
+		//user.Password = uuid.NewV4().String()
+		user.Password = "12345"
 	}
 
 	user.PasswordNeedChange = data.PasswordNeedChange
