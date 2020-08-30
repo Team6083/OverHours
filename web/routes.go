@@ -17,6 +17,7 @@ func (web *Web) GetPageInfos() []PageInfo {
 	pages = append(pages, PageInfo{"/timeLog/checkout", web.TimeLogCheckoutGET, "GET", PageLogin, true})
 	pages = append(pages, PageInfo{"/timeLog/delete/{id}", web.TimeLogDelete, "GET", PageLeader, true})
 	pages = append(pages, PageInfo{"/timeLog/rfid", web.TimeLogRFIDPOST, "POST", PageOpen, true})
+	pages = append(pages, PageInfo{"/timeLog/seasons", web.TimeLogGetAllSeasonsGET, "GET", PageLogin, false})
 	//Meetings
 	pages = append(pages, PageInfo{"/meeting", web.MeetingGET, "GET", PageLogin, true})
 	pages = append(pages, PageInfo{"/meeting/detail/{meetId}", web.MeetingDetailGET, "GET", PageLogin, true})
@@ -41,7 +42,7 @@ func (web *Web) GetPageInfos() []PageInfo {
 	pages = append(pages, PageInfo{"/users/form/submit", web.UsersFormPOST, "POST", PageLogin, true})
 	pages = append(pages, PageInfo{"/users/delete/{id}", web.UsersDeleteGET, "GET", PageLeader, true})
 	// Boards
-	pages = append(pages, PageInfo{"/board/ranking/{seasonId}", web.leaderboardGET, "GET", PageLogin, true})
+	pages = append(pages, PageInfo{"/board/ranking", web.leaderboardGET, "GET", PageLogin, true})
 	pages = append(pages, PageInfo{"/board/chart", web.ChartGet, "GET", PageLeader, true})
 	pages = append(pages, PageInfo{"/board/chart/data", web.ChartDataGet, "GET", PageOpen, true})
 
