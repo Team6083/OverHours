@@ -4,8 +4,7 @@ go 1.12
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/gbrlsnchs/jwt/v3 v3.0.0-rc.2
-	github.com/getsentry/sentry-go v0.1.3
+	github.com/getsentry/sentry-go v0.7.0
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.5.0
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
@@ -24,6 +23,5 @@ require (
 	golang.org/x/sys v0.0.0-20200121082415-34d275377bf9 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
-	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 )
