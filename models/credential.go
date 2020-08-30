@@ -9,7 +9,7 @@ import (
 type Credential struct {
 	Uuid     string        `json:"uuid"`
 	Password string        `json:"password"`
-	UserId   bson.ObjectId `json:"userId"`
+	UserId   bson.ObjectId `bson:"userId" json:"userId"`
 	Id       bson.ObjectId `bson:"_id,omitempty" json:"Id"`
 }
 

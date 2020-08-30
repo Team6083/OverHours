@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Team6083/OverHours/models"
-	"github.com/gbrlsnchs/jwt/v3"
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/gin-contrib/cors"
@@ -15,12 +14,12 @@ import (
 )
 
 type Web struct {
-	database *models.Database
-	settings *models.Setting
-	hmac     *jwt.HMACSHA
+	database      *models.Database
+	settings      *models.Setting
+	signingSecret string
 }
 
-func NewWeb(database *models.Database) *Web {
+func NewWeb(database *models.Database, signingSecret string) *Web {
 	web := &Web{database: database}
 
 	err := web.readSettings()
@@ -28,7 +27,7 @@ func NewWeb(database *models.Database) *Web {
 		panic(err)
 	}
 
-	web.hmac = jwt.NewHS256([]byte(RandomString(10)))
+	web.signingSecret = signingSecret
 
 	return web
 }

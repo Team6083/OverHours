@@ -2,6 +2,7 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -31,8 +32,9 @@ var (
 )
 
 func (web *Web) HandleAuthRoutes(router *gin.Engine) {
-	boardsRouter := router.Group("/auth")
-	boardsRouter.POST("/login", web.APIPostAuthLogin)
+	authRouter := router.Group("/auth")
+	authRouter.POST("/login", web.APIPostAuthLogin)
+	authRouter.POST("/verify", web.APIPostAuthVerify)
 }
 
 // API Handlers
@@ -56,7 +58,7 @@ func (web *Web) APIPostAuthLogin(ctx *gin.Context) {
 	}
 
 	if user != nil {
-		userCred, err := web.database.GetCredentialById(user.Id)
+		userCred, err := web.database.GetCredentialByUserId(user.Id.Hex())
 		if err != nil && err != mgo.ErrNotFound {
 			handleWebErr(ctx, err)
 			return
@@ -70,7 +72,6 @@ func (web *Web) APIPostAuthLogin(ctx *gin.Context) {
 		err = bcrypt.CompareHashAndPassword([]byte(userCred.Password), []byte(cred.Password))
 		if err == nil {
 			// login successful
-
 			loginToken := newLoginToken(user)
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 				"name": loginToken.Name,
@@ -78,7 +79,7 @@ func (web *Web) APIPostAuthLogin(ctx *gin.Context) {
 				"jti":  loginToken.Id,
 			})
 
-			tokenString, err := token.SignedString(web.hmac)
+			tokenString, err := token.SignedString([]byte(web.signingSecret))
 			if err != nil {
 				handleWebErr(ctx, err)
 				return
@@ -89,12 +90,53 @@ func (web *Web) APIPostAuthLogin(ctx *gin.Context) {
 			}{
 				TokenString: tokenString,
 			})
+			return
 		}
 	}
 
 	ctx.AbortWithStatusJSON(http.StatusUnauthorized, APIException{
 		Msg: "incorrect username or password",
 	})
+}
+
+// POST /auth/verify
+func (web *Web) APIPostAuthVerify(ctx *gin.Context) {
+	body := struct {
+		Token string `json:"token"`
+	}{}
+
+	err := ctx.BindJSON(body)
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	token, err := getTokenFromString(body.Token, web.signingSecret)
+	if err != nil {
+		handleWebErr(ctx, err)
+		return
+	}
+
+	response := struct {
+		Ok bool `json:"ok"`
+	}{Ok: token.Valid}
+
+	ctx.JSON(http.StatusOK, response)
+}
+
+func getTokenFromString(tokenString string, secret string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
 
 func newLoginToken(user *models.User) LoginToken {

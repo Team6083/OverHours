@@ -58,7 +58,8 @@ func main() {
 		}
 	}
 
-	webServer := web.NewWeb(database)
+	signingSecret := getEnv("signingSecret", web.RandomString(10))
+	webServer := web.NewWeb(database, signingSecret)
 	webServer.ServeWebInterface(webPort)
 }
 
