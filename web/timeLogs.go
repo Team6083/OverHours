@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Team6083/OverHours/models"
-	"github.com/gorilla/mux"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Team6083/OverHours/models"
+	"github.com/gorilla/mux"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // Handlers
@@ -232,6 +233,49 @@ func (web *Web) TimeLogCheckinPOST(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return
+}
+
+func (web *Web) TimeLogRFIDREGPOST(w http.ResponseWriter, r *http.Request) {
+	body, _ := ioutil.ReadAll(r.Body)
+
+	type InputData struct {
+		UID      string `json:"uid"`
+		Token    string `json:"token"`
+		UserName string `json:"userName"`
+	}
+
+	var data InputData
+
+	err := json.Unmarshal(body, &data)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	if data.Token != web.settings.Token {
+		handleForbidden(w, errors.New("token miss match"))
+		return
+	}
+
+	user, err := web.database.GetUserByUserName(data.UserName)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			fmt.Printf("Can't find user for %s\n", data.UserName)
+			handleBadRequest(w, err)
+		} else {
+			handleWebErr(w, err)
+		}
+		return
+	}
+
+	user.UUID = data.UID
+
+	_, err = web.database.SaveUser(*user)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (web *Web) TimeLogRFIDPOST(w http.ResponseWriter, r *http.Request) {

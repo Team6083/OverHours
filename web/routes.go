@@ -17,6 +17,7 @@ func (web *Web) GetPageInfos() []PageInfo {
 	pages = append(pages, PageInfo{"/timeLog/checkout", web.TimeLogCheckoutGET, "GET", PageLogin, true})
 	pages = append(pages, PageInfo{"/timeLog/delete/{id}", web.TimeLogDelete, "GET", PageLeader, true})
 	pages = append(pages, PageInfo{"/timeLog/rfid", web.TimeLogRFIDPOST, "POST", PageOpen, true})
+	pages = append(pages, PageInfo{"/timeLog/rfidreg", web.TimeLogRFIDREGPOST, "POST", PageOpen, true})
 	pages = append(pages, PageInfo{"/timeLog/seasons", web.TimeLogGetAllSeasonsGET, "GET", PageLogin, false})
 	//Meetings
 	pages = append(pages, PageInfo{"/meeting", web.MeetingGET, "GET", PageLogin, true})
