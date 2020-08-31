@@ -257,6 +257,7 @@ func (web *Web) TimeLogRFIDPOST(w http.ResponseWriter, r *http.Request) {
 	user, err := web.database.GetUserByUUID(data.UID)
 	if err != nil {
 		if err == mgo.ErrNotFound {
+			fmt.Printf("Can't find user for %s\n", data.UID)
 			handleBadRequest(w, err)
 		} else {
 			handleWebErr(w, err)
