@@ -11,6 +11,9 @@ import (
 	stats "github.com/semihalev/gin-stats"
 	"log"
 	"net/http"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type Web struct {
@@ -108,6 +111,16 @@ func (web *Web) newHandler() http.Handler {
 	web.HandleBoardRoutes(router)
 	web.HandleAuthRoutes(router)
 	web.HandleStatRoutes(router)
+
+	// Swagger
+	url := ginSwagger.URL("/swagger/doc.json") // The url pointing to API definition
+	router.GET("/swagger/*any", func(context *gin.Context) {
+		if context.Params.ByName("any") == "/" {
+			context.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+		} else {
+			ginSwagger.WrapHandler(swaggerFiles.Handler, url)(context)
+		}
+	})
 
 	return router
 }

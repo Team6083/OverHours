@@ -15,3 +15,6 @@
 .idea/
 
 main
+
+# swag generated
+docs/

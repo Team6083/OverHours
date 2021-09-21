@@ -12,6 +12,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	_ "github.com/Team6083/OverHours/docs"
 )
 
 func main() {
