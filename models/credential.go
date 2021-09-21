@@ -10,7 +10,7 @@ type Credential struct {
 	Uuid     string        `json:"uuid"`
 	Password string        `json:"password"`
 	UserId   bson.ObjectId `bson:"userId" json:"userId"`
-	Id       bson.ObjectId `bson:"_id,omitempty" json:"Id"`
+	Id       bson.ObjectId `bson:"_id,omitempty" json:"id"`
 }
 
 func (database *Database) GetCredentialById(id bson.ObjectId) (*Credential, error) {

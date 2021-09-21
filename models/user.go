@@ -14,7 +14,7 @@ type User struct {
 	GraduationYear     int           `json:"graduationYear"`
 	PasswordNeedChange bool          `json:"passwordNeedChange"`
 	Category           string        `json:"category"`
-	Id                 bson.ObjectId `bson:"_id,omitempty" json:"Id"`
+	Id                 bson.ObjectId `bson:"_id,omitempty" json:"id"`
 }
 
 const (
