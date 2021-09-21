@@ -39,12 +39,26 @@ func (web *Web) HandleAuthRoutes(router *gin.Engine) {
 
 // API Handlers
 
-// POST /auth/login
+type APIPostAuthLoginBody struct {
+	Password string `json:"password"`
+	Username string `json:"username"`
+}
+
+type APIPostAuthLoginSuccessResponse struct {
+	TokenString string `json:"token_string"`
+}
+
+// APIPostAuthLogin
+// @Router /auth/login [post]
+// @Summary Login with username and password
+// @Tags auth
+// @Accept json
+// @Param body body APIPostAuthLoginBody true "body"
+// @Produce json
+// @Success 200 {object} APIPostAuthLoginSuccessResponse
+// @Failure 401 {object} APIException
 func (web *Web) APIPostAuthLogin(ctx *gin.Context) {
-	cred := struct {
-		Password string `json:"password"`
-		Username string `json:"username"`
-	}{}
+	cred := APIPostAuthLoginBody{}
 
 	if err := ctx.ShouldBind(&cred); err != nil {
 		handleBadRequest(ctx, err)
@@ -85,9 +99,7 @@ func (web *Web) APIPostAuthLogin(ctx *gin.Context) {
 				return
 			}
 
-			ctx.JSON(http.StatusOK, struct {
-				TokenString string `json:"token_string"`
-			}{
+			ctx.JSON(http.StatusOK, APIPostAuthLoginSuccessResponse{
 				TokenString: tokenString,
 			})
 			return
@@ -99,11 +111,24 @@ func (web *Web) APIPostAuthLogin(ctx *gin.Context) {
 	})
 }
 
-// POST /auth/verify
+type APIPostAuthVerifyBody struct {
+	Token string `json:"token"`
+}
+
+type APIPostAuthVerifySuccessResponse struct {
+	Ok bool `json:"ok"`
+}
+
+// APIPostAuthVerify
+// @Router /auth/verify [post]
+// @Summary Verify token
+// @Tags auth
+// @Accept json
+// @Param body body APIPostAuthVerifyBody true "body"
+// @Produce json
+// @Success 200 {object} APIPostAuthVerifySuccessResponse
 func (web *Web) APIPostAuthVerify(ctx *gin.Context) {
-	body := struct {
-		Token string `json:"token"`
-	}{}
+	body := APIPostAuthVerifyBody{}
 
 	err := ctx.BindJSON(body)
 	if err != nil {
@@ -117,9 +142,7 @@ func (web *Web) APIPostAuthVerify(ctx *gin.Context) {
 		return
 	}
 
-	response := struct {
-		Ok bool `json:"ok"`
-	}{Ok: token.Valid}
+	response := APIPostAuthVerifySuccessResponse{Ok: token.Valid}
 
 	ctx.JSON(http.StatusOK, response)
 }

@@ -1,3 +1,6 @@
+// @title OverHours API
+// @version 2.0
+
 package main
 
 import (
