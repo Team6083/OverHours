@@ -40,12 +40,12 @@ func (web *Web) HandleAuthRoutes(router *gin.Engine) {
 // API Handlers
 
 type APIPostAuthLoginBody struct {
-	Password string `json:"password"`
-	Username string `json:"username"`
+	Password string `json:"password" validate:"required"`
+	Username string `json:"username" validate:"required"`
 }
 
 type APIPostAuthLoginSuccessResponse struct {
-	TokenString string `json:"token_string"`
+	TokenString string `json:"token_string" validate:"required"`
 }
 
 // APIPostAuthLogin
@@ -112,11 +112,11 @@ func (web *Web) APIPostAuthLogin(ctx *gin.Context) {
 }
 
 type APIPostAuthVerifyBody struct {
-	Token string `json:"token"`
+	Token string `json:"token" validate:"required"`
 }
 
 type APIPostAuthVerifySuccessResponse struct {
-	Ok bool `json:"ok"`
+	Ok bool `json:"ok" validate:"required"`
 }
 
 // APIPostAuthVerify
