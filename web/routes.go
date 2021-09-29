@@ -41,7 +41,7 @@ func (web *Web) GetPageInfos() []PageInfo {
 	pages = append(pages, PageInfo{"/users/form/password", web.UserChangePasswordGET, "GET", PageLogin, true})
 	pages = append(pages, PageInfo{"/users/form/password/submit", web.UserChangePasswordPOST, "POST", PageLogin, true})
 	pages = append(pages, PageInfo{"/users/form/submit", web.UsersFormPOST, "POST", PageLogin, true})
-	pages = append(pages, PageInfo{"/users/delete/{id}", web.UsersDeleteGET, "GET", PageLeader, true})
+	pages = append(pages, PageInfo{"/users/delete/{userName}", web.UsersDeleteGET, "GET", PageLeader, true})
 	// Boards
 	pages = append(pages, PageInfo{"/board/ranking", web.leaderboardGET, "GET", PageLogin, true})
 	pages = append(pages, PageInfo{"/board/chart", web.ChartGet, "GET", PageLeader, true})

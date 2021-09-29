@@ -138,9 +138,9 @@
     <script>
 
         $("#deleteUser").on('click', function () {
-            const r = confirm("Are you sure you want to delete user: '" + $("#editUUID").val() + "' ?");
+            const r = confirm("Are you sure you want to delete user: '" + $("#inputUserName").val() + "' ?");
             if (r === true) {
-                window.location.href = document.location.origin + "/users/delete/" +{{.EditUser.UUID}};
+                window.location.href = document.location.origin + "/users/delete/" +{{.EditUser.UserName}};
             }
         });
 

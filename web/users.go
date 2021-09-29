@@ -285,9 +285,9 @@ func (web *Web) UsersDeleteGET(w http.ResponseWriter, r *http.Request) {
 	currentUser := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
-	targetId := vars["id"]
+	targetUserName := vars["userName"]
 
-	user, err := web.database.GetUserByUUID(targetId)
+	user, err := web.database.GetUserByUserName(targetUserName)
 	if err != nil {
 		handleWebErr(w, err)
 		return

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fix
+
+- Fix user can't delete
+
 ## [1.4.5] - 2020-02-25
 
 ### Fix
