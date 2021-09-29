@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fix
 
 - Fix user can't delete
+- Creating user with exist userName will update that user
 
 ## [1.4.5] - 2020-02-25
 
