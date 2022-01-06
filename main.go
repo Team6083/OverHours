@@ -10,7 +10,6 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
 	"strconv"
