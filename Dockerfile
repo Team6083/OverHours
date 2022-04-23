@@ -1,4 +1,4 @@
-FROM golang:alpine
+FROM golang:1.16 as builder
 
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
@@ -21,12 +21,14 @@ COPY . .
 # Build the application
 RUN go build -o main .
 
+FROM alpine:latest
+
 WORKDIR /dist
-RUN cp -r /build/templates ./templates
-RUN cp -r /build/res ./res
+COPY --from=builder /build/templates ./templates
+COPY --from=builder /build/res ./res
 
 # Copy binary from build to main folder
-RUN cp /build/main .
+COPY --from=builder /build/main .
 
 # Export necessary port
 EXPOSE 3000
