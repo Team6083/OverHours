@@ -32,6 +32,7 @@ COPY --from=builder /build/main .
 
 # Timezone file
 COPY --from=builder /usr/local/go/lib/time/zoneinfo.zip /opt/zoneinfo.zip
+ENV ZONEINFO /opt/zoneinfo.zip
 
 # Export necessary port
 EXPOSE 3000
