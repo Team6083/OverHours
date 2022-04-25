@@ -30,6 +30,9 @@ COPY --from=builder /build/res ./res
 # Copy binary from build to main folder
 COPY --from=builder /build/main .
 
+# Timezone file
+COPY --from=builder /usr/local/go/lib/time/zoneinfo.zip /opt/zoneinfo.zip
+
 # Export necessary port
 EXPOSE 3000
 
