@@ -9,10 +9,10 @@ import (
 )
 
 type TimeLog struct {
-	UserID   string        `json:"userId"`
+	UserId   string        `json:"userId"`
 	TimeIn   int64         `json:"timeIn"`
 	TimeOut  int64         `json:"timeOut"`
-	SeasonId string        `json:"seasonId"`
+	SeasonId bson.ObjectId `json:"seasonId"`
 	Id       bson.ObjectId `bson:"_id,omitempty"`
 }
 
@@ -25,7 +25,7 @@ var AlreadyCheckInError = errors.New("already checkin")
 var AlreadyCheckOutError = errors.New("already checkout")
 
 func NewTimeLogAtNow(studentId string, seasonId string) TimeLog {
-	return TimeLog{studentId, time.Now().Unix(), 0, seasonId, bson.NewObjectId()}
+	return TimeLog{studentId, time.Now().Unix(), 0, bson.ObjectIdHex(seasonId), bson.NewObjectId()}
 }
 
 func (timeLog *TimeLog) GetDuration() *time.Duration {
@@ -188,14 +188,14 @@ func GetTimeLogsSummary(seasonLogs []TimeLog) []TimeLogSummary {
 	for _, logs := range seasonLogs {
 		if logs.IsOut() {
 			duration := logs.GetDuration()
-			rank, ok := ranking[logs.UserID]
+			rank, ok := ranking[logs.UserId]
 			if ok {
 				rank.add(duration)
 			} else {
-				rank = TimeLogSummary{logs.UserID, 0}
+				rank = TimeLogSummary{logs.UserId, 0}
 				rank.add(duration)
 			}
-			ranking[logs.UserID] = rank
+			ranking[logs.UserId] = rank
 		}
 	}
 

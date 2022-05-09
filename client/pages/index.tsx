@@ -53,7 +53,7 @@ const Home: NextPage = () => {
         <Container maxWidth={"xl"} sx={{marginTop: theme.spacing(3)}}>
             <Grid container spacing={2}>
                 <Grid item xs={12}>
-                    <Typography variant={"h4"}>Team 6083 - OverHours</Typography>
+                    <Typography variant={"h4"}>Team 6083</Typography>
                 </Grid>
             </Grid>
             <Grid container spacing={2} marginTop={2}>

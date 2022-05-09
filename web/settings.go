@@ -18,7 +18,7 @@ import (
 //		return
 //	}
 //
-//	user, err := web.database.GetUserByUserName(session.Username)
+//	user, err := web.database.GetUserByUserName(session.UserName)
 //	if err != nil {
 //		handleWebErr(w, err)
 //		return
@@ -64,7 +64,7 @@ import (
 //		return
 //	}
 //
-//	currUser, err := web.database.GetUserByUserName(session.Username)
+//	currUser, err := web.database.GetUserByUserName(session.UserName)
 //	if err != nil {
 //		handleWebErr(w, err)
 //		return

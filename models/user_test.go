@@ -23,8 +23,8 @@ func TestUser(t *testing.T) {
 	}
 
 	assert.NotNil(t, user1)
-	assert.Equal(t, user.Username, user1.Username)
-	assert.Equal(t, user.Name, user1.Name)
+	assert.Equal(t, user.UserName, user1.UserName)
+	assert.Equal(t, user.DisplayName, user1.DisplayName)
 	assert.Equal(t, user.Email, user1.Email)
 	assert.Equal(t, user.FirstYear, user1.FirstYear)
 	assert.Equal(t, user.GraduationYear, user1.GraduationYear)

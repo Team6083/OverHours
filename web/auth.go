@@ -45,7 +45,7 @@ type APIPostAuthLoginBody struct {
 }
 
 type APIPostAuthLoginSuccessResponse struct {
-	TokenString string `json:"token_string" validate:"required"`
+	TokenString string `json:"token_string"`
 }
 
 // APIPostAuthLogin
@@ -116,7 +116,7 @@ type APIPostAuthVerifyBody struct {
 }
 
 type APIPostAuthVerifySuccessResponse struct {
-	Ok bool `json:"ok" validate:"required"`
+	Ok bool `json:"ok"`
 }
 
 // APIPostAuthVerify
@@ -165,7 +165,7 @@ func getTokenFromString(tokenString string, secret string) (*jwt.Token, error) {
 func newLoginToken(user *models.User) LoginToken {
 	return LoginToken{
 		UserId:         user.Id,
-		Name:           user.Name,
+		Name:           user.DisplayName,
 		Id:             uuid.NewV4().String(),
 		ExpirationTime: time.Now().Add(tokenExp),
 	}

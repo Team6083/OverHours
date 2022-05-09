@@ -7,7 +7,6 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"net/http"
-	"time"
 )
 
 func (web *Web) HandleMeetingRoutes(router *gin.Engine) {
@@ -21,9 +20,6 @@ func (web *Web) HandleMeetingRoutes(router *gin.Engine) {
 	meetingGroup := router.Group("/meeting")
 	meetingGroup.GET("/logs/:meetingId", web.APIGetMeetingLogs)
 	meetingGroup.PUT("/participants/:meetingId/:userId", web.APIPutMeetingParticipants)
-
-	calendarMeetingGroup := router.Group("/calendarMeetings")
-	calendarMeetingGroup.POST("/", web.IFTTTPostMeetings)
 }
 
 //APIHandler
@@ -49,56 +45,6 @@ func (web *Web) APIPostMeetings(ctx *gin.Context) {
 
 	if err := ctx.ShouldBind(&meeting); err != nil {
 		handleBadRequest(ctx, err)
-	}
-
-	change, err := web.database.SaveMeeting(&meeting)
-	if err != nil {
-		handleWebErr(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusCreated, change)
-}
-
-// POST /calendarMeetings
-func (web *Web) IFTTTPostMeetings(ctx *gin.Context) {
-	const dateLayout = "January 2, 2006 at 03:04PM"
-
-	type IFTTTInput struct {
-		Title          string `json:"title"`
-		Description    string `json:"description"`
-		EventStartTime string `json:"starts"`
-		EventEndTime   string `json:"ends"`
-		CreateTime     string `json:"createdAt"`
-	}
-
-	var newCalendarEvent IFTTTInput
-	if err := ctx.ShouldBind(&newCalendarEvent); err != nil {
-		handleBadRequest(ctx, err)
-	}
-
-	// setting schema data: startTime, startCheckinTime, finishTime
-	startTime, _ := time.Parse(dateLayout, newCalendarEvent.CreateTime)
-	startCheckTime, _ := time.Parse(dateLayout, newCalendarEvent.EventStartTime)
-	finishTime, _ := time.Parse(dateLayout, newCalendarEvent.EventEndTime)
-
-	// setting schema data: Participants
-	participants := make(map[string]models.ParticipantData)
-	users, _ := web.database.GetAllUsers()
-	for _, user := range users {
-		participants[user.GetIdentify()] = models.ParticipantData{UserId: user.Id.String(), Leave: false, IsAdmin: false}
-	}
-
-	meeting := models.Meeting{
-		Id:               bson.NewObjectId(),
-		StartTime:        startTime.Unix(),
-		SeasonId:         web.settings.SeasonId,
-		Title:            newCalendarEvent.Title,
-		Description:      newCalendarEvent.Description,
-		CheckinLevel:     models.PermissionMember,
-		StartCheckinTime: startCheckTime.Add(-30 * time.Minute).Unix(),
-		FinishTime:       finishTime.Unix(),
-		Participants:     participants,
 	}
 
 	change, err := web.database.SaveMeeting(&meeting)
@@ -250,12 +196,23 @@ func (web *Web) APIPutMeetingParticipants(ctx *gin.Context) {
 		return
 	}
 
-	if participantData.UserId != userId {
+	if participantData.UserId.Hex() != userId {
 		handleBadRequest(ctx, errors.New("userId dose not match"))
 		return
 	}
 
-	meeting.Participants[userId] = *participantData
+	flag := false
+	for i, v := range meeting.Participants {
+		if v.UserId.Hex() == participantData.UserId.Hex() {
+			meeting.Participants[i] = *participantData
+			flag = true
+			break
+		}
+	}
+
+	if !flag {
+		meeting.Participants = append(meeting.Participants, *participantData)
+	}
 
 	change, err := web.database.SaveMeeting(meeting)
 	if err != nil {

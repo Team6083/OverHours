@@ -26,13 +26,24 @@ func (web *Web) HandleTimeLogRoutes(router *gin.Engine) {
 	timeLogGroup.GET("/checkin", web.APICheckin)
 	timeLogGroup.GET("/checkout", web.APICheckout)
 	timeLogGroup.GET("/unfinished", web.APIGetUnfinishedTimeLogs)
-	timeLogGroup.GET("/seasonIds", web.APITimeLogSeasonIds)
 }
 
 // API handlers
 
-// GET /timeLogs/
+// APIGetTimeLogs
+// @Router /timeLogs [get]
+// @Summary Get time logs
+// @Param seasonId query string false "Season id"
+// @Param userId query string false "User id"
+// @Tags TimeLog
+// @Produce json
+// @Success 200 {object} []models.TimeLog
+// @Failure default {object} APIException
 func (web *Web) APIGetTimeLogs(ctx *gin.Context) {
+	// TODO: add support of userId and seasonId
+	//userId := ctx.Query("userId")
+	//seasonId := ctx.Query("seasonId")
+
 	timeLogs, err := web.database.GetAllTimeLogs()
 	if err != nil && err != mgo.ErrNotFound {
 		handleWebErr(ctx, err)
@@ -46,7 +57,14 @@ func (web *Web) APIGetTimeLogs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, timeLogs)
 }
 
-// GET /timeLog/unfinished
+// APIGetUnfinishedTimeLogs
+// @Router /timeLog/unfinished [get]
+// @Summary Get unfinished time logs
+// @Param seasonId query string false "Season id"
+// @Tags TimeLog
+// @Produce json
+// @Success 200 {object} []models.TimeLog
+// @Failure default {object} APIException
 func (web *Web) APIGetUnfinishedTimeLogs(ctx *gin.Context) {
 	timeLogs, err := web.database.GetAllUnfinishedTimeLogs()
 	if err != nil && err != mgo.ErrNotFound {
@@ -61,7 +79,18 @@ func (web *Web) APIGetUnfinishedTimeLogs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, timeLogs)
 }
 
-// POST /timeLogs
+type APIPostTimeLogSuccessResponse struct {
+	Ok bool `json:"ok"`
+}
+
+// APIPostTimeLog
+// @Router /timeLogs [post]
+// @Summary Add time log
+// @Param timeLog body models.TimeLog true "Time log"
+// @Tags TimeLog
+// @Produce json
+// @Success 200 {object} APIPostTimeLogSuccessResponse
+// @Failure default {object} APIException
 func (web *Web) APIPostTimeLog(ctx *gin.Context) {
 	timeLog := models.TimeLog{Id: bson.NewObjectId()}
 
@@ -69,16 +98,23 @@ func (web *Web) APIPostTimeLog(ctx *gin.Context) {
 		handleBadRequest(ctx, err)
 	}
 
-	change, err := web.database.SaveTimeLog(&timeLog)
+	_, err := web.database.SaveTimeLog(&timeLog)
 	if err != nil {
 		handleWebErr(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, change)
+	ctx.JSON(http.StatusOK, APIPostTimeLogSuccessResponse{true})
 }
 
-// GET /timeLogs/data/:timeLogId
+// APIGetTimeLog
+// @Router /timeLogs/{timeLogId} [get]
+// @Summary Get time log
+// @Param timeLogId path string true "Time log id"
+// @Tags TimeLog
+// @Produce json
+// @Success 200 {object} models.TimeLog
+// @Failure default {object} APIException
 func (web *Web) APIGetTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
 
@@ -101,7 +137,19 @@ func (web *Web) APIGetTimeLog(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, timeLog)
 }
 
-// PUT /timeLogs/data/:timeLogId
+type APIPutTimeLogSuccessResponse struct {
+	Ok bool `json:"ok"`
+}
+
+// APIPutTimeLog
+// @Router /timeLogs/{timeLogId} [put]
+// @Summary Update a time log
+// @Param timeLogId path string true "Time log id"
+// @Param timeLog body models.TimeLog true "Time log"
+// @Tags TimeLog
+// @Produce json
+// @Success 200 {object} APIPutTimeLogSuccessResponse
+// @Failure default {object} APIException
 func (web *Web) APIPutTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
 
@@ -117,16 +165,23 @@ func (web *Web) APIPutTimeLog(ctx *gin.Context) {
 		handleBadRequest(ctx, err)
 	}
 
-	change, err := web.database.SaveTimeLog(&timeLog)
+	_, err := web.database.SaveTimeLog(&timeLog)
 	if err != nil {
 		handleWebErr(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusAccepted, change)
+	ctx.JSON(http.StatusOK, APIPutTimeLogSuccessResponse{true})
 }
 
-// DELETE /timeLog/data/:timeLogId
+// APIDeleteTimeLog
+// @Router /timeLogs/{timeLogId} [delete]
+// @Summary Delete a time log
+// @Param timeLogId path string true "Time log id"
+// @Tags TimeLog
+// @Produce json
+// @Success 204
+// @Failure default {object} APIException
 func (web *Web) APIDeleteTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
 
@@ -144,14 +199,27 @@ func (web *Web) APIDeleteTimeLog(ctx *gin.Context) {
 	ctx.Writer.WriteHeader(http.StatusNoContent)
 }
 
-// POST /timeLog/rfid
-func (web *Web) TimeLogRFIDPost(ctx *gin.Context) {
-	type RFIDInput struct {
-		UID   string `json:"uid"`
-		Token string `json:"token"`
-	}
+type TimeLogRFIDPostBody struct {
+	UID   string `json:"uid"`
+	Token string `json:"token"`
+}
 
-	var data RFIDInput
+type TimeLogRFIDPostSuccessResponse struct {
+	Status    string    `json:"status"`
+	UserName  string    `json:"username"`
+	CheckTime time.Time `json:"checkTime"`
+}
+
+// TimeLogRFIDPost
+// @Router /timeLog/rfid [post]
+// @Summary Entry for card reader checkin/out
+// @Param body body TimeLogRFIDPostBody true "body"
+// @Tags TimeLog
+// @Produce json
+// @Success 200 {object} TimeLogRFIDPostSuccessResponse
+// @Failure default {object} APIException
+func (web *Web) TimeLogRFIDPost(ctx *gin.Context) {
+	var data TimeLogRFIDPostBody
 
 	err := ctx.ShouldBindJSON(data)
 	if err != nil {
@@ -159,8 +227,10 @@ func (web *Web) TimeLogRFIDPost(ctx *gin.Context) {
 		return
 	}
 
+	rfidToken := ""
+
 	// check given token
-	if data.Token != web.settings.Token {
+	if data.Token != rfidToken {
 		handleForbidden(ctx, err)
 		return
 	}
@@ -175,18 +245,11 @@ func (web *Web) TimeLogRFIDPost(ctx *gin.Context) {
 		}
 		return
 	}
-
-	type RFIDResponse struct {
-		Status    string    `json:"status"`
-		UserName  string    `json:"username"`
-		CheckTime time.Time `json:"checkTime"`
-	}
-
 	// checkin
-	err = web.StudentCheckin(user.Username, web.settings.SeasonId)
+	err = web.StudentCheckin(user.UserName, "")
 	if err == nil {
 		// checkin response if no error
-		response, err := json.Marshal(RFIDResponse{"checkin", user.Username, time.Now()})
+		response, err := json.Marshal(TimeLogRFIDPostSuccessResponse{"checkin", user.UserName, time.Now()})
 		if err != nil {
 			handleWebErr(ctx, err)
 			return
@@ -201,14 +264,14 @@ func (web *Web) TimeLogRFIDPost(ctx *gin.Context) {
 	}
 
 	// checkout
-	err = web.StudentCheckOut(user.Username)
+	err = web.StudentCheckOut(user.UserName)
 	if err != nil {
 		handleWebErr(ctx, err)
 		return
 	}
 
 	// checkout response
-	response, err := json.Marshal(RFIDResponse{"checkout", user.Username, time.Now()})
+	response, err := json.Marshal(TimeLogRFIDPostSuccessResponse{"checkout", user.UserName, time.Now()})
 	if err != nil {
 		handleWebErr(ctx, err)
 		return
@@ -217,11 +280,19 @@ func (web *Web) TimeLogRFIDPost(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
-// GET /timeLog/checkin
+// APICheckin
+// @Router /timeLog/checkin [get]
+// @Summary User checkin
+// @Param user query string true "user id"
+// @Param season query string false "season id"
+// @Tags TimeLog
+// @Produce json
+// @Success 204
+// @Failure default {object} APIException
 func (web *Web) APICheckin(ctx *gin.Context) {
 	userId := ctx.Query("user")
 
-	seasonId := ctx.DefaultQuery("season", web.settings.SeasonId)
+	seasonId := ctx.DefaultQuery("season", "")
 
 	err := web.StudentCheckin(userId, seasonId)
 	if err == StudentNotExistError || err == models.AlreadyCheckInError {
@@ -235,7 +306,14 @@ func (web *Web) APICheckin(ctx *gin.Context) {
 	ctx.Writer.WriteHeader(http.StatusNoContent)
 }
 
-// GET /timeLog/checkout
+// APICheckout
+// @Router /timeLog/checkout [get]
+// @Summary User checkout
+// @Param user query string true "user id"
+// @Tags TimeLog
+// @Produce json
+// @Success 204
+// @Failure default {object} APIException
 func (web *Web) APICheckout(ctx *gin.Context) {
 	userId := ctx.Query("user")
 
@@ -251,19 +329,6 @@ func (web *Web) APICheckout(ctx *gin.Context) {
 	ctx.Writer.WriteHeader(http.StatusNoContent)
 }
 
-// GET /timeLog/seasonIds
-func (web *Web) APITimeLogSeasonIds(ctx *gin.Context) {
-	seasonIds, err := web.database.GetTimeLogSeasons()
-	if err != nil {
-		handleWebErr(ctx, err)
-		return
-	}
-
-	fmt.Println(seasonIds)
-
-	ctx.JSON(http.StatusOK, seasonIds)
-}
-
 // Checkin and Checkout
 
 var StudentNotExistError = errors.New("student doesn't exist")
@@ -276,7 +341,8 @@ func (web *Web) StudentCheckOut(studentId string) error {
 	}
 
 	if !timeLog.IsOut() {
-		if web.settings.CheckIfExceedLastOut(timeLog.GetInTime(), time.Now()) {
+		// TODO: check exceed last out
+		if false {
 			timeLog.TimeOut = -1
 		} else {
 			timeLog.TimeOut = time.Now().Unix()

@@ -9,68 +9,60 @@ import (
 )
 
 type Meeting struct {
-	StartTime        int64  `json:"startTime"`
-	SeasonId         string `json:"seasonId"`
-	Title            string `json:"title"`
-	Description      string `json:"description"`
-	CheckinLevel     int    `json:"checkinLevel"`
-	StartCheckinTime int64  `json:"startCheckinTime"`
-	FinishTime       int64  `json:"finishTime"`
-	Participants     map[string]ParticipantData
+	SeasonId         bson.ObjectId `json:"seasonId" bson:"seasonId"`
+	Title            string        `json:"title"`
+	Description      string        `json:"description"`
+	StartTime        int64         `json:"startTime" bson:"startTime"`
+	StartCheckinTime int64         `json:"startCheckinTime" bson:"startCheckinTime"`
+	FinishTime       int64         `json:"finishTime" bson:"finishTime"`
+	Participants     []ParticipantData
 	Id               bson.ObjectId `bson:"_id,omitempty"`
 }
 
 type ParticipantData struct {
-	UserId  string
+	UserId  bson.ObjectId
 	Leave   bool
 	IsAdmin bool
 }
 
 // Any change of this struct are required to update the hidden form part of meetings_form.html
 
-// Check auth status
 var UserNotInMeeting = errors.New("this user is not a participant of the meeting")
 var CantCheckinError = errors.New("can't checkin right now")
-
-func GetNewMeeting() *Meeting {
-	meeting := new(Meeting)
-	meeting.Participants = make(map[string]ParticipantData)
-	return meeting
-}
 
 func (meeting *Meeting) GetMeetingLogId() string {
 	return fmt.Sprintf("m:%s", meeting.Id.Hex())
 }
 
 func (meeting *Meeting) ParticipantAdmin(userId string, admin bool) {
-	data := meeting.Participants[userId]
-	data.Leave = admin
-	meeting.Participants[userId] = data
+
 }
 
 func (meeting *Meeting) ParticipantLeave(userId string, leave bool) {
-	data := meeting.Participants[userId]
-	data.Leave = leave
-	meeting.Participants[userId] = data
+
 }
 
 func (meeting *Meeting) CheckUserParticipate(userId string) bool {
-	if _, ok := meeting.Participants[userId]; ok {
-		return true
+	for _, v := range meeting.Participants {
+		if v.UserId.Hex() == userId {
+			return true
+		}
 	}
 	return false
 }
 
 func (meeting *Meeting) CheckUserAdmin(userId string) bool {
-	if val, ok := meeting.Participants[userId]; ok {
-		return val.IsAdmin
+	for _, v := range meeting.Participants {
+		if v.UserId.Hex() == userId {
+			return v.IsAdmin
+		}
 	}
 	return false
 }
 
 func (meeting *Meeting) CheckIfMeetingCanCheckInNow(user *User) bool {
 	if meeting.CheckinStarted() && !meeting.MeetingFinished() {
-		if meeting.CheckinLevel == 0 || user.CheckPermissionLevel(PermissionLeader) {
+		{
 			return true
 		}
 	}
@@ -79,7 +71,7 @@ func (meeting *Meeting) CheckIfMeetingCanCheckInNow(user *User) bool {
 }
 
 func (meeting *Meeting) CheckIfVisibleToUser(user *User) bool {
-	if user.CheckPermissionLevel(PermissionLeader) || meeting.CheckUserParticipate(user.GetIdentify()) {
+	if meeting.CheckUserParticipate(user.GetIdentify()) {
 		return true
 	}
 	return false
@@ -100,7 +92,7 @@ func (meeting *Meeting) CheckinStarted() bool {
 }
 
 func (meeting *Meeting) DeleteParticipant(userId string) {
-	delete(meeting.Participants, userId)
+
 }
 
 func (database *Database) DeleteAllMeetingLog(meeting *Meeting) error {
@@ -153,7 +145,7 @@ func (database *Database) MeetingCheckin(meeting *Meeting, user *User) error {
 
 func (database *Database) GetAllMeeting() ([]Meeting, error) {
 	var meet []Meeting
-	err := database.DB.C("meetings").Find(bson.M{}).Sort("-starttime").All(&meet)
+	err := database.DB.C("meetings").Find(bson.M{}).Sort("-startTime").All(&meet)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +163,7 @@ func (database *Database) GetMeetingById(id string) (*Meeting, error) {
 
 func (database *Database) GetMeetingsBySeasonId(seasonId string) ([]Meeting, error) {
 	var meet []Meeting
-	err := database.DB.C("meetings").Find(bson.M{"seasonid": seasonId}).All(&meet)
+	err := database.DB.C("meetings").Find(bson.M{"seasonId": seasonId}).All(&meet)
 	if err != nil {
 		return nil, err
 	}

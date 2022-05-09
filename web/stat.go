@@ -13,7 +13,7 @@ func (web *Web) HandleStatRoutes(router *gin.Engine) {
 func (web *Web) APIGetStatUsers(ctx *gin.Context) {
 	seasonId := ctx.Query("seasonId")
 	if seasonId == "" {
-		seasonId = web.settings.SeasonId
+
 	}
 
 	ranking, err := web.database.GetRankingBySeason(seasonId)

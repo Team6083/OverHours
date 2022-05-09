@@ -15,7 +15,7 @@ func TestDatabase_GetMeetingsBySeason(t *testing.T) {
 	participant["test"] = ParticipantData{UserId: "test", Leave: false, IsAdmin: false}
 
 	for i := 0; i < 10; i++ {
-		meeting := Meeting{time.Now().Unix(), "seasonTest", "title", "desc", 0, time.Now().Unix(), 0, participant, bson.NewObjectId()}
+		meeting := Meeting{SeasonId: "seasonTest", Title: "title", Description: "desc", StartCheckinTime: time.Now().Unix(), Participants: participant, Id: bson.NewObjectId()}
 		_, err := Database.SaveMeeting(&meeting)
 		if err != nil {
 			panic(err)
@@ -39,7 +39,7 @@ func TestDatabase_DeleteMeeting(t *testing.T) {
 	participant := make(map[string]ParticipantData)
 	participant["test"] = ParticipantData{UserId: "test", Leave: false, IsAdmin: false}
 
-	meeting := Meeting{time.Now().Unix(), "seasonTest", "title", "desc", 0, time.Now().Unix(), 0, participant, bson.NewObjectId()}
+	meeting := Meeting{SeasonId: "seasonTest", Title: "title", Description: "desc", StartCheckinTime: time.Now().Unix(), Participants: participant, Id: bson.NewObjectId()}
 
 	_, err := database.SaveMeeting(&meeting)
 	if err != nil {
@@ -60,7 +60,6 @@ func TestDatabase_DeleteMeeting(t *testing.T) {
 
 	assert.Equal(t, meeting2.Participants, meeting.Participants)
 	assert.Equal(t, meeting2.Title, meeting.Title)
-	assert.Equal(t, meeting2.CheckinLevel, meeting.CheckinLevel)
 
 	err = database.DeleteMeeting(meeting2)
 	if err != nil {

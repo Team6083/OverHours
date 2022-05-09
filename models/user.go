@@ -6,30 +6,19 @@ import (
 )
 
 type User struct {
-	Name               string        `json:"name"`
-	Username           string        `json:"userName"`
-	Email              string        `json:"email"`
-	PermissionLevel    int           `json:"permissionLevel"`
-	FirstYear          int           `json:"firstYear"`
-	GraduationYear     int           `json:"graduationYear"`
-	PasswordNeedChange bool          `json:"passwordNeedChange"`
-	Category           string        `json:"category"`
-	Id                 bson.ObjectId `bson:"_id,omitempty" json:"id"`
+	DisplayName string        `json:"displayName"`
+	UserName    string        `json:"userName"`
+	Email       string        `json:"email"`
+	IsSiteAdmin bool          `json:"isSiteAdmin"`
+	Id          bson.ObjectId `bson:"_id,omitempty" json:"id"`
 }
-
-const (
-	PermissionMember = 0
-	PermissionLeader = 1
-	PermissionAdmin  = 2
-	PermissionSuper  = 3
-)
 
 func (user *User) GetIdentify() string {
-	return user.Username
+	return user.UserName
 }
 
-func (database *Database) CheckUserExist(studentName string) (bool, error) {
-	_, err := database.GetUserByUserName(studentName)
+func (database *Database) CheckUserExist(userName string) (bool, error) {
+	_, err := database.GetUserByUserName(userName)
 	if err == mgo.ErrNotFound {
 		return false, nil
 	} else if err != nil {
@@ -37,29 +26,6 @@ func (database *Database) CheckUserExist(studentName string) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (database *Database) GetUserNameMap() (map[string]string, error) {
-	names := make(map[string]string)
-
-	users, err := database.GetAllUsers()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, user := range users {
-		names[user.Username] = user.Name
-	}
-
-	return names, nil
-}
-
-func (user *User) CheckPermissionLevel(level int) bool {
-	if user.PermissionLevel >= level {
-		return true
-	} else {
-		return false
-	}
 }
 
 func (database *Database) GetAllUsers() ([]User, error) {
@@ -80,6 +46,11 @@ func (database *Database) GetUserByUserName(name string) (*User, error) {
 	return &user, nil
 }
 
+func (database *Database) GetUserByUUID(name string) (*User, error) {
+	// TODO: implement this
+	return nil, nil
+}
+
 func (database *Database) GetUserByID(id string) (*User, error) {
 	user := User{}
 	err := database.DB.C("users").FindId(bson.ObjectIdHex(id)).One(&user)
@@ -87,18 +58,6 @@ func (database *Database) GetUserByID(id string) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
-}
-
-func (database *Database) GetUserByUUID(uuid string) (*User, error) {
-	cred, err := database.GetCredentialByUUID(uuid)
-	if err != nil {
-		return nil, err
-	}
-	user, err := database.GetUserByID(cred.UserId.Hex())
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
 }
 
 func (database *Database) SaveUser(user User) (*mgo.ChangeInfo, error) {

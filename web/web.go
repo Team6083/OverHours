@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/Team6083/OverHours/models"
 	"github.com/getsentry/sentry-go"
-	sentryhttp "github.com/getsentry/sentry-go/http"
+	sentryHttp "github.com/getsentry/sentry-go/http"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	stats "github.com/semihalev/gin-stats"
@@ -77,7 +77,7 @@ func (web *Web) ServeWebInterface(webPort int) {
 
 	web.database.DB.C("session").DropCollection()
 
-	sentryHandler := sentryhttp.New(sentryhttp.Options{})
+	sentryHandler := sentryHttp.New(sentryHttp.Options{})
 
 	http.Handle("/", sentryHandler.Handle(web.newHandler()))
 

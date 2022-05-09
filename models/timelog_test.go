@@ -40,7 +40,7 @@ func TestDatabase_GetLastLogByUser(t *testing.T) {
 	}
 	assert.Nil(t, err)
 
-	timeLog, err := database.GetLastLogByUser(timeLog1.UserID)
+	timeLog, err := database.GetLastLogByUser(timeLog1.UserId)
 	if err != nil {
 		panic(err)
 	}
@@ -63,14 +63,14 @@ func TestDatabase_DeleteTimeLog(t *testing.T) {
 	}
 	assert.Nil(t, err)
 
-	timeLog2, err := database.GetTimeLogsByUser(timeLog.UserID)
+	timeLog2, err := database.GetTimeLogsByUser(timeLog.UserId)
 	if err != nil {
 		panic(err)
 	}
 	assert.Nil(t, err)
 
 	assert.NotNil(t, timeLog2)
-	assert.Equal(t, timeLog2[0].UserID, timeLog.UserID)
+	assert.Equal(t, timeLog2[0].UserId, timeLog.UserId)
 
 	log.Print(timeLog.TimeIn, timeLog2[0].TimeIn)
 
