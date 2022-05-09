@@ -31,6 +31,7 @@
                             <div class="invalid-feedback">
                                 Please choose a username.
                             </div>
+                            {{if .New}}<input name="isNew" type="hidden" value="true">{{end}}
                         </div>
                     </div>
                     <div class="form-group col-md-3">
@@ -138,9 +139,9 @@
     <script>
 
         $("#deleteUser").on('click', function () {
-            const r = confirm("Are you sure you want to delete user: '" + $("#editUUID").val() + "' ?");
+            const r = confirm("Are you sure you want to delete user: '" + $("#inputUserName").val() + "' ?");
             if (r === true) {
-                window.location.href = document.location.origin + "/users/delete/" +{{.EditUser.UUID}};
+                window.location.href = document.location.origin + "/users/delete/" +{{.EditUser.UserName}};
             }
         });
 

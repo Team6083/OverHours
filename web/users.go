@@ -156,6 +156,11 @@ func (web *Web) UsersFormPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if user != nil && r.Form["isNew"] != nil && r.Form["isNew"][0] == "true" {
+		handleBadRequest(w, errors.New("userName already taken"))
+		return
+	}
+
 	if user != nil {
 		if currUser.PermissionLevel <= user.PermissionLevel && currUser.Username != user.Username {
 			handleBadRequest(w, errors.New("you didn't have the permission to edit this user"))
@@ -285,9 +290,9 @@ func (web *Web) UsersDeleteGET(w http.ResponseWriter, r *http.Request) {
 	currentUser := r.Context().Value("user").(*models.User)
 
 	vars := mux.Vars(r)
-	targetId := vars["id"]
+	targetUserName := vars["userName"]
 
-	user, err := web.database.GetUserByUUID(targetId)
+	user, err := web.database.GetUserByUserName(targetUserName)
 	if err != nil {
 		handleWebErr(w, err)
 		return
