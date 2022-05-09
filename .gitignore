@@ -14,7 +14,10 @@
 # Goland
 .idea/
 
+# Build files
 main
+OverHours
 
 # swag generated
 docs/
+
