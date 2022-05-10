@@ -8,11 +8,15 @@ A simple hour tracking software for CMS Robotics teams.
 
 ### Backend
 
-First you need a running MongoDB server.
+You need a running MongoDB server to run backend of OverHours.
 
-Then run `go mod download` to download all required modules.
+#### Install dependencies
+1. Run `go mod download` to download all required modules.
+2. Run `go install github.com/swaggo/swag/cmd/swag@v1.7.1` to get `swag`.
 
-And run `go run main.go` to start the server.
+#### Running backend
+1. Run `swag init` to generate the docs.
+2. Use `go run main.go` to start the server.
 (Use environment variable `PORT` to select the port)
 
 ### Frontend
