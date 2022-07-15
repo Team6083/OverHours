@@ -36,7 +36,16 @@ func (meeting *Meeting) GetMeetingLogId() string {
 }
 
 func (meeting *Meeting) ParticipantAdmin(userId string, admin bool) {
-
+	index := -1
+	for i, v := range meeting.Participants {
+		if v.UserId.Hex() == userId {
+			index = i
+			break
+		}
+	}
+	if index >= 0 {
+		meeting.Participants[index].IsAdmin = admin
+	}
 }
 
 func (meeting *Meeting) ParticipantLeave(userId string, leave bool) {
