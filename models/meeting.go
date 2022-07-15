@@ -3,9 +3,10 @@ package models
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"time"
 )
 
 type Meeting struct {
@@ -39,7 +40,16 @@ func (meeting *Meeting) ParticipantAdmin(userId string, admin bool) {
 }
 
 func (meeting *Meeting) ParticipantLeave(userId string, leave bool) {
-
+	index := -1
+	for i, v := range meeting.Participants {
+		if v.UserId.Hex() == userId {
+			index = i
+			break
+		}
+	}
+	if index >= 0 {
+		meeting.Participants[index].Leave = leave
+	}
 }
 
 func (meeting *Meeting) CheckUserParticipate(userId string) bool {
