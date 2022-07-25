@@ -10,7 +10,7 @@ import (
 )
 
 type Meeting struct {
-	SeasonId         bson.ObjectId `json:"seasonId" bson:"seasonId"`
+	TeamId           bson.ObjectId `json:"teamId" bson:"teamId"`
 	Title            string        `json:"title"`
 	Description      string        `json:"description"`
 	StartTime        int64         `json:"startTime" bson:"startTime"`
