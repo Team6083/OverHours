@@ -2,18 +2,18 @@ package models
 
 import (
 	"errors"
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
 	"sort"
 	"time"
+
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 type TimeLog struct {
-	UserId   string        `json:"userId"`
-	TimeIn   int64         `json:"timeIn"`
-	TimeOut  int64         `json:"timeOut"`
-	SeasonId bson.ObjectId `json:"seasonId"`
-	Id       bson.ObjectId `bson:"_id,omitempty"`
+	UserId  string        `json:"userId"`
+	TimeIn  int64         `json:"timeIn"`
+	TimeOut int64         `json:"timeOut"`
+	Id      bson.ObjectId `bson:"_id,omitempty"`
 }
 
 type TimeLogSummary struct {
@@ -25,7 +25,7 @@ var AlreadyCheckInError = errors.New("already checkin")
 var AlreadyCheckOutError = errors.New("already checkout")
 
 func NewTimeLogAtNow(studentId string, seasonId string) TimeLog {
-	return TimeLog{studentId, time.Now().Unix(), 0, bson.ObjectIdHex(seasonId), bson.NewObjectId()}
+	return TimeLog{studentId, time.Now().Unix(), 0, bson.NewObjectId()}
 }
 
 func (timeLog *TimeLog) GetDuration() *time.Duration {
