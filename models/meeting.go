@@ -21,9 +21,10 @@ type Meeting struct {
 }
 
 type ParticipantData struct {
-	UserId  bson.ObjectId
-	Leave   bool
-	IsAdmin bool
+	UserId      bson.ObjectId
+	Present     bool
+	PresentTime int64
+	IsAdmin     bool
 }
 
 // Any change of this struct are required to update the hidden form part of meetings_form.html
@@ -48,7 +49,7 @@ func (meeting *Meeting) ParticipantAdmin(userId string, admin bool) {
 	}
 }
 
-func (meeting *Meeting) ParticipantLeave(userId string, leave bool) {
+func (meeting *Meeting) ParticipantPresent(userId string, present bool) {
 	index := -1
 	for i, v := range meeting.Participants {
 		if v.UserId.Hex() == userId {
@@ -57,7 +58,20 @@ func (meeting *Meeting) ParticipantLeave(userId string, leave bool) {
 		}
 	}
 	if index >= 0 {
-		meeting.Participants[index].Leave = leave
+		meeting.Participants[index].Present = present
+	}
+}
+
+func (meeting *Meeting) ParticipantPresentTime(userId string, presentTime int64) {
+	index := -1
+	for i, v := range meeting.Participants {
+		if v.UserId.Hex() == userId {
+			index = i
+			break
+		}
+	}
+	if index >= 0 {
+		meeting.Participants[index].PresentTime = presentTime
 	}
 }
 
