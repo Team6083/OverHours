@@ -6,12 +6,12 @@ import (
 )
 
 type Team struct {
-	Name         string `json:"name"`
-	IsActive     bool   `json:"isActive"`
-	TeamMember   []TeamMemberInfo
-	TeamSetting  TeamSetting
-	ParentTeamId string        `json:"parentTeamId"`
-	Id           bson.ObjectId `bson:"_id,omitempty" json:"id"`
+	Name        string `json:"name"`
+	IsActive    bool   `json:"isActive"`
+	TeamMember  []TeamMemberInfo
+	TeamSetting TeamSetting
+	SubTeams    []SubTeamInfo
+	Id          bson.ObjectId `bson:"_id,omitempty" json:"id"`
 }
 
 const (
@@ -33,6 +33,10 @@ type TeamSetting struct {
 	SeasonId bson.ObjectId
 	LastOut  int
 	TimeZone string
+}
+
+type SubTeamInfo struct {
+	TeamId bson.ObjectId `json:"subTeamId"`
 }
 
 func (database *Database) GetAllTeams() ([]Team, error) {
@@ -75,6 +79,14 @@ func (t *Team) AddUserToTeam(user *User) {
 	}
 
 	t.TeamMember = append(t.TeamMember, teamMemberInfo)
+}
+
+func (t *Team) AddSubTeamToTeam(subTeam *Team) {
+	subTeamInfo := SubTeamInfo{
+		TeamId: subTeam.Id,
+	}
+
+	t.SubTeams = append(t.SubTeams, subTeamInfo)
 }
 
 func (database *Database) SaveTeam(team Team) (*mgo.ChangeInfo, error) {
