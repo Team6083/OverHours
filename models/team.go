@@ -6,11 +6,12 @@ import (
 )
 
 type Team struct {
-	Name        string `json:"name"`
-	IsActive    bool   `json:"isActive"`
-	TeamMember  []TeamMemberInfo
-	TeamSetting TeamSetting
-	Id          bson.ObjectId `bson:"_id,omitempty" json:"id"`
+	Name         string `json:"name"`
+	IsActive     bool   `json:"isActive"`
+	TeamMember   []TeamMemberInfo
+	TeamSetting  TeamSetting
+	ParentTeamId string        `json:"parentTeamId"`
+	Id           bson.ObjectId `bson:"_id,omitempty" json:"id"`
 }
 
 const (
