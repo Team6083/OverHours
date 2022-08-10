@@ -237,7 +237,7 @@ func (web *Web) TimeLogRFIDPost(ctx *gin.Context) {
 	}
 
 	// get user
-	user, err := web.database.GetUserByUUID(data.UID)
+	user, err := web.database.GetUserByCardID(data.UID)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			handleBadRequest(ctx, err)

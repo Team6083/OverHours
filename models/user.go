@@ -10,6 +10,7 @@ type User struct {
 	Email       string        `json:"email"`
 	IsSiteAdmin bool          `json:"isSiteAdmin"`
 	Id          bson.ObjectId `bson:"_id,omitempty" json:"id"`
+	CardId      string        `json:"cardId"`
 }
 
 func (user *User) GetIdentify() string {
@@ -45,9 +46,13 @@ func (database *Database) GetUserByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
-func (database *Database) GetUserByUUID(name string) (*User, error) {
-	// TODO: implement this
-	return nil, nil
+func (database *Database) GetUserByCardID(cardId string) (*User, error) {
+	user := User{}
+	err := database.DB.C("users").Find(bson.M{"cardId": cardId}).One(&user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (database *Database) GetUserByID(id string) (*User, error) {
