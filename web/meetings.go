@@ -2,11 +2,12 @@ package web
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"net/http"
 )
 
 func (web *Web) HandleMeetingRoutes(router *gin.Engine) {
@@ -168,7 +169,7 @@ func (web *Web) APIPutMeetingParticipants(ctx *gin.Context) {
 		return
 	}
 
-	_, err := web.database.GetUserByUserName(userId)
+	_, err := web.database.GetUserByID(userId)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			handleBadRequest(ctx, errors.New("cant find user for userId"))

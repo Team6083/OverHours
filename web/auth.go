@@ -3,15 +3,16 @@ package web
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/Team6083/OverHours/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
-	"time"
 )
 
 const tokenExp = 10 * 24 * time.Hour
@@ -41,7 +42,7 @@ func (web *Web) HandleAuthRoutes(router *gin.Engine) {
 
 type APIPostAuthLoginBody struct {
 	Password string `json:"password" validate:"required"`
-	Username string `json:"username" validate:"required"`
+	Email    string `json:"email" validate:"required"`
 }
 
 type APIPostAuthLoginSuccessResponse struct {
@@ -65,7 +66,7 @@ func (web *Web) APIPostAuthLogin(ctx *gin.Context) {
 		return
 	}
 
-	user, err := web.database.GetUserByUserName(cred.Username)
+	user, err := web.database.GetUserByEmail(cred.Email)
 	if err != nil && err != mgo.ErrNotFound {
 		handleWebErr(ctx, err)
 		return

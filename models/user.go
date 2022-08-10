@@ -7,18 +7,17 @@ import (
 
 type User struct {
 	DisplayName string        `json:"displayName"`
-	UserName    string        `json:"userName"`
 	Email       string        `json:"email"`
 	IsSiteAdmin bool          `json:"isSiteAdmin"`
 	Id          bson.ObjectId `bson:"_id,omitempty" json:"id"`
 }
 
 func (user *User) GetIdentify() string {
-	return user.UserName
+	return user.Id.String()
 }
 
-func (database *Database) CheckUserExist(userName string) (bool, error) {
-	_, err := database.GetUserByUserName(userName)
+func (database *Database) CheckUserExist(userId string) (bool, error) {
+	_, err := database.GetUserByID(userId)
 	if err == mgo.ErrNotFound {
 		return false, nil
 	} else if err != nil {
@@ -37,9 +36,9 @@ func (database *Database) GetAllUsers() ([]User, error) {
 	return users, nil
 }
 
-func (database *Database) GetUserByUserName(name string) (*User, error) {
+func (database *Database) GetUserByEmail(email string) (*User, error) {
 	user := User{}
-	err := database.DB.C("users").Find(bson.M{"username": name}).One(&user)
+	err := database.DB.C("users").Find(bson.M{"email": email}).One(&user)
 	if err != nil {
 		return nil, err
 	}

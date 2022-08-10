@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"net/http"
-	"time"
 )
 
 func (web *Web) HandleTimeLogRoutes(router *gin.Engine) {
@@ -246,10 +247,10 @@ func (web *Web) TimeLogRFIDPost(ctx *gin.Context) {
 		return
 	}
 	// checkin
-	err = web.StudentCheckin(user.UserName, "")
+	err = web.StudentCheckin(user.GetIdentify(), "")
 	if err == nil {
 		// checkin response if no error
-		response, err := json.Marshal(TimeLogRFIDPostSuccessResponse{"checkin", user.UserName, time.Now()})
+		response, err := json.Marshal(TimeLogRFIDPostSuccessResponse{"checkin", user.GetIdentify(), time.Now()})
 		if err != nil {
 			handleWebErr(ctx, err)
 			return
@@ -264,14 +265,14 @@ func (web *Web) TimeLogRFIDPost(ctx *gin.Context) {
 	}
 
 	// checkout
-	err = web.StudentCheckOut(user.UserName)
+	err = web.StudentCheckOut(user.GetIdentify())
 	if err != nil {
 		handleWebErr(ctx, err)
 		return
 	}
 
 	// checkout response
-	response, err := json.Marshal(TimeLogRFIDPostSuccessResponse{"checkout", user.UserName, time.Now()})
+	response, err := json.Marshal(TimeLogRFIDPostSuccessResponse{"checkout", user.GetIdentify(), time.Now()})
 	if err != nil {
 		handleWebErr(ctx, err)
 		return
