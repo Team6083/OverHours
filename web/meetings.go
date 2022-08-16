@@ -25,7 +25,12 @@ func (web *Web) HandleMeetingRoutes(router *gin.Engine) {
 
 //APIHandler
 
-// GET /meetings
+// APIGetMeetings
+// @Router /meetings [get]
+// @Summary Get all meetings
+// @Tags meeting
+// @Produce json
+// @Success 200 {object} []models.Meeting
 func (web *Web) APIGetMeetings(ctx *gin.Context) {
 	meetings, err := web.database.GetAllMeeting()
 	if err != nil && err != mgo.ErrNotFound {
@@ -40,7 +45,14 @@ func (web *Web) APIGetMeetings(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, meetings)
 }
 
-// POST /meetings
+// APIPostMeetings
+// @Router /meetings [post]
+// @Summary Post meeting
+// @Tags meeting
+// @Accept json
+// @Param body body models.Meeting true "body"
+// @Produce json
+// @Success 200 {object} mgo.ChangeInfo
 func (web *Web) APIPostMeetings(ctx *gin.Context) {
 	meeting := models.Meeting{Id: bson.NewObjectId()}
 
@@ -57,7 +69,14 @@ func (web *Web) APIPostMeetings(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, change)
 }
 
-// GET /meetings/:meetingId
+// APIGetMeeting
+// @Router /meetings/:meetingId [get]
+// @Summary Get meeting by Id
+// @Tags meeting
+// @Accept json
+// @Param meetingId path string true "meetingId"
+// @Produce json
+// @Success 200 {object} models.Meeting
 func (web *Web) APIGetMeeting(ctx *gin.Context) {
 	meetingId := ctx.Param("meetingId")
 
@@ -82,7 +101,15 @@ func (web *Web) APIGetMeeting(ctx *gin.Context) {
 	ctx.JSON(http.StatusBadRequest, meeting)
 }
 
-// PUT /meetings/:meetingId
+// APIPutMeetings
+// @Router /meetings/:meetingId [put]
+// @Summary Modify meeting
+// @Tags meeting
+// @Accept json
+// @Param meetingId path string true "meetingId"
+// @Param body body models.Meeting true "body"
+// @Produce json
+// @Success 200 {object} mgo.ChangeInfo
 func (web *Web) APIPutMeetings(ctx *gin.Context) {
 	meetingId := ctx.Param("meetingId")
 
@@ -108,7 +135,14 @@ func (web *Web) APIPutMeetings(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, change)
 }
 
-// Delete /meetings/:meetingId
+// API DeleteMeetings
+// @Router /meetings/:meetingId [delete]
+// @Summary Delete Meeting
+// @Tags meeting
+// @Accept json
+// @Param meetingId path string true "meetingId"
+// @Produce json
+// @Success 204
 func (web *Web) APIDeleteMeetings(ctx *gin.Context) {
 	meetingId := ctx.Param("meetingId")
 
@@ -126,7 +160,14 @@ func (web *Web) APIDeleteMeetings(ctx *gin.Context) {
 	ctx.Writer.WriteHeader(http.StatusNoContent)
 }
 
-// GET /meeting/logs/:meetingId
+// APIGetMeetingLogs
+// @Router /meeting/logs/:meetingId [get]
+// @Summary Get meeting logs
+// @Tags meeting
+// @Accept json
+// @Param meetingId path string true "meetingId"
+// @Produce json
+// @Success 200 {object} []models.TimeLog
 func (web *Web) APIGetMeetingLogs(ctx *gin.Context) {
 	meetingId := ctx.Param("meetingId")
 
@@ -154,7 +195,15 @@ func (web *Web) APIGetMeetingLogs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, timeLogs)
 }
 
-// PUT /meeting/participants/:meetingId/:userId
+// APIPutMeetingParticipants
+// @Router /meeting/participants/:meetingId/:userId [put]
+// @Summary Modify Meeting Participants
+// @Tags meeting
+// @Accept json
+// @Param meetingId path string true "meetingId"
+// @Param userId path string true "userId"
+// @Produce json
+// @Success 202 {object} mgo.ChangeInfo
 func (web *Web) APIPutMeetingParticipants(ctx *gin.Context) {
 	meetingId := ctx.Param("meetingId")
 	userId := ctx.Param("userId")
