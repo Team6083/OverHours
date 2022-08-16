@@ -1,11 +1,12 @@
 package web
 
 import (
+	"net/http"
+
 	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"net/http"
 )
 
 func (web *Web) HandleUserRoutes(router *gin.Engine) {
@@ -21,7 +22,13 @@ func (web *Web) HandleUserRoutes(router *gin.Engine) {
 
 // API handlers
 
-// GET /users
+// APIGetUsers
+// @Router /users [get]
+// @Summary Get all users
+// @Tags user
+// @Accept json
+// @Produce json
+// @Success 200 {object} []models.User
 func (web *Web) APIGetUsers(ctx *gin.Context) {
 	users, err := web.database.GetAllUsers()
 	if err != nil && err != mgo.ErrNotFound {
@@ -36,13 +43,25 @@ func (web *Web) APIGetUsers(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, users)
 }
 
-// POST /users
-func (web *Web) APIPostUser(ctx *gin.Context) {
-	type APIPostUserBody struct {
-		User     models.User `json:"user"`
-		Password string      `json:"password"`
-	}
+type APIPostUserBody struct {
+	User     models.User `json:"user"`
+	Password string      `json:"password"`
+}
 
+type APIPostUserResponse struct {
+	SaveUserChange *mgo.ChangeInfo
+	SaveCredChange *mgo.ChangeInfo
+}
+
+// APIPostUser
+// @Router /users [post]
+// @Summary Create user
+// @Tags user
+// @Accept json
+// @Param body body APIPostUserBody true "Post user body"
+// @Produce json
+// @Success 200 {object} APIPostUserResponse
+func (web *Web) APIPostUser(ctx *gin.Context) {
 	body := APIPostUserBody{
 		User: models.User{Id: bson.NewObjectId()},
 	}
@@ -65,16 +84,20 @@ func (web *Web) APIPostUser(ctx *gin.Context) {
 	}
 	saveCredChange, err := web.database.SaveCredential(*cred)
 
-	ctx.JSON(http.StatusCreated, struct {
-		SaveUserChange *mgo.ChangeInfo
-		SaveCredChange *mgo.ChangeInfo
-	}{
+	ctx.JSON(http.StatusCreated, APIPostUserResponse{
 		SaveUserChange: saveUserChange,
 		SaveCredChange: saveCredChange,
 	})
 }
 
-// GET /users/:id
+// APIGetUser
+// @Router /users/:id [get]
+// @Summary Get user by id
+// @Tags user
+// @Accept json
+// @Param id path string true "user id"
+// @Produce json
+// @Success 200 {object} models.User
 func (web *Web) APIGetUser(ctx *gin.Context) {
 	targetId := ctx.Param("id")
 
@@ -97,7 +120,15 @@ func (web *Web) APIGetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// PUT /users/:id
+// APIPutUser
+// @Router /users/:id [put]
+// @Summary Modify user
+// @Tags user
+// @Accept json
+// @Param id path string true "user id"
+// @Param body body models.User true "body"
+// @Produce json
+// @Success 200 {object} APIPostAuthLoginSuccessResponse
 func (web *Web) APIPutUser(ctx *gin.Context) {
 	userId := ctx.Param("id")
 
@@ -122,7 +153,14 @@ func (web *Web) APIPutUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, change)
 }
 
-// DELETE /users/:id
+// APIDeleteUser
+// @Router /users/:id [delete]
+// @Summary Delete user
+// @Tags user
+// @Accept json
+// @Param id path string true "user id"
+// @Produce json
+// @Success 204
 func (web *Web) APIDeleteUser(ctx *gin.Context) {
 	targetId := ctx.Param("id")
 
