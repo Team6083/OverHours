@@ -2,10 +2,11 @@ package web
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/Team6083/OverHours/models"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
-	"net/http"
 )
 
 //func (web *Web) SettingsGET(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +153,13 @@ func (web *Web) HandleSettingRoutes(router *gin.Engine) {
 
 // APIHandler
 
-// GET /settings
+// APIGetSettings
+// @Router /settings [get]
+// @Summary Get settings
+// @Tags setting
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.Setting
 func (web *Web) APIGetSettings(ctx *gin.Context) {
 	setting, err := web.database.GetSetting()
 	if err != nil {
@@ -164,6 +171,14 @@ func (web *Web) APIGetSettings(ctx *gin.Context) {
 }
 
 // PUT /settings/:settingName
+// APIPutSetting
+// @Router /settings/:settingName [put]
+// @Summary Modify setting
+// @Tags setting
+// @Accept json
+// @Param settingName path string true "setting name"
+// @Produce json
+// @Success 201 {object} mgo.ChangeInfo
 func (web *Web) APIPutSetting(ctx *gin.Context) {
 	settingName := ctx.Param("settingName")
 
