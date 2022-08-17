@@ -1,9 +1,10 @@
 package web
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
-	"net/http"
 )
 
 func (web *Web) HandleBoardRoutes(router *gin.Engine) {
@@ -13,7 +14,14 @@ func (web *Web) HandleBoardRoutes(router *gin.Engine) {
 
 // API Handlers
 
-// GET /boards/season/:SeasonId
+// APIGetSeasonBoards
+// @Router /boards/season/:SeasonId [get]
+// @Summary Get season boards
+// @Tags board
+// @Accept json
+// @Param seasonId path string true "season id"
+// @Produce json
+// @Success 200 {object} []models.TimeLogSummary
 func (web *Web) APIGetSeasonBoards(ctx *gin.Context) {
 	seasonId := ctx.Param("seasonId")
 
