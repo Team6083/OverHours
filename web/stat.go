@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/globalsign/mgo/bson"
 )
 
 type UserInfoPayload struct {
@@ -31,8 +32,8 @@ func (web *Web) HandleStatRoutes(router *gin.Engine) {
 // @Success 200 {object} StatUsersPayload
 func (web *Web) APIGetStatUsers(ctx *gin.Context) {
 	seasonId := ctx.Query("seasonId")
-	if seasonId == "" {
-
+	if !bson.IsObjectIdHex(seasonId) {
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 	}
 
 	ranking, err := web.database.GetRankingBySeason(seasonId)
