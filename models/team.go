@@ -77,7 +77,7 @@ func (t *Team) AddUserToTeam(user *User) {
 	t.TeamMember = append(t.TeamMember, teamMemberInfo)
 }
 
-func (database *Database) SaveTeam(team Team) (*mgo.ChangeInfo, error) {
+func (database *Database) SaveTeam(team *Team) (*mgo.ChangeInfo, error) {
 	change, err := database.DB.C("teams").UpsertId(team.Id, team)
 
 	if err != nil {
@@ -87,7 +87,7 @@ func (database *Database) SaveTeam(team Team) (*mgo.ChangeInfo, error) {
 	return change, nil
 }
 
-func (database *Database) DeleteTeam(team Team) error {
-	err := database.DB.C("teams").RemoveId(team.Id)
+func (database *Database) DeleteTeam(teamId bson.ObjectId) error {
+	err := database.DB.C("teams").RemoveId(teamId)
 	return err
 }
