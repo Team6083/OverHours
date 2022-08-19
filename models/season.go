@@ -39,8 +39,8 @@ func (database *Database) SaveSeason(season *Season) (*mgo.ChangeInfo, error) {
 	return change, nil
 }
 
-func (database *Database) DeleteSeason(season Season) error {
-	err := database.DB.C("seasons").RemoveId(season.Id)
+func (database *Database) DeleteSeason(seasonId bson.ObjectId) error {
+	err := database.DB.C("seasons").RemoveId(seasonId)
 	if err != nil {
 		return err
 	}
