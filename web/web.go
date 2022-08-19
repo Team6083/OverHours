@@ -84,7 +84,7 @@ func (web *Web) ServeWebInterface(webPort int) {
 
 	// Start Server
 	log.Printf("Serving HTTP requests on port %d", webPort)
-	log.Print(fmt.Sprintf(":%d", webPort))
+	log.Printf(":%d", webPort)
 	http.ListenAndServe(fmt.Sprintf(":%d", webPort), nil)
 }
 
