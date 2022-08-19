@@ -3,14 +3,15 @@ package web
 import (
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/Team6083/OverHours/models"
 	"github.com/getsentry/sentry-go"
 	sentryHttp "github.com/getsentry/sentry-go/http"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	stats "github.com/semihalev/gin-stats"
-	"log"
-	"net/http"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -49,7 +50,7 @@ type APIException struct {
 	Msg string `json:"error"`
 }
 
-var IdIsNotValidObjectIdError = errors.New("id is not a valid objectId")
+var ErrIdIsNotValidObjectId = errors.New("id is not a valid objectId")
 
 func handleWebErr(c *gin.Context, err error) {
 	fmt.Printf("Server internal error: %s\n", err)

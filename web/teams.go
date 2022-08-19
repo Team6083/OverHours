@@ -1,7 +1,6 @@
 package web
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/Team6083/OverHours/models"
@@ -47,7 +46,7 @@ func (web *Web) APIGetTeam(ctx *gin.Context) {
 	teamId := ctx.Param("teamId")
 
 	if !bson.IsObjectIdHex(teamId) {
-		handleBadRequest(ctx, errors.New("id not valid"))
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 
@@ -97,7 +96,7 @@ func (web *Web) APIPostTeam(ctx *gin.Context) {
 func (web *Web) APIPutTeam(ctx *gin.Context) {
 	teamId := ctx.Param("teamId")
 	if !bson.IsObjectIdHex(teamId) {
-		handleBadRequest(ctx, errors.New("id not valid"))
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 
@@ -128,7 +127,7 @@ func (web *Web) APIPutTeam(ctx *gin.Context) {
 func (web *Web) APIDeleteTeam(ctx *gin.Context) {
 	teamId := ctx.Param("teamId")
 	if !bson.IsObjectIdHex(teamId) {
-		handleBadRequest(ctx, errors.New("id not valid"))
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 

@@ -26,10 +26,10 @@ type LoginToken struct {
 
 // Define error
 var (
-	AuthSessionNotProvided = errors.New("no session provided")
-	AuthWrongSession       = errors.New("wrong session")
-	AuthNoPermission       = errors.New("no permission")
-	AuthTimeExpired        = errors.New("valid time expired")
+	ErrAuthSessionNotProvided = errors.New("no session provided")
+	ErrAuthWrongSession       = errors.New("wrong session")
+	ErrAuthNoPermission       = errors.New("no permission")
+	ErrAuthTimeExpired        = errors.New("valid time expired")
 )
 
 func (web *Web) HandleAuthRoutes(router *gin.Engine) {
@@ -151,7 +151,7 @@ func (web *Web) APIPostAuthVerify(ctx *gin.Context) {
 func getTokenFromString(tokenString string, secret string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
 		return []byte(secret), nil

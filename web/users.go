@@ -82,7 +82,11 @@ func (web *Web) APIPostUser(ctx *gin.Context) {
 		handleWebErr(ctx, err)
 		return
 	}
+
 	saveCredChange, err := web.database.SaveCredential(*cred)
+	if err != nil {
+		handleWebErr(ctx, err)
+	}
 
 	ctx.JSON(http.StatusCreated, APIPostUserResponse{
 		SaveUserChange: saveUserChange,
@@ -102,7 +106,7 @@ func (web *Web) APIGetUser(ctx *gin.Context) {
 	targetId := ctx.Param("id")
 
 	if !bson.IsObjectIdHex(targetId) {
-		handleBadRequest(ctx, IdIsNotValidObjectIdError)
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 
@@ -133,7 +137,7 @@ func (web *Web) APIPutUser(ctx *gin.Context) {
 	userId := ctx.Param("id")
 
 	if !bson.IsObjectIdHex(userId) {
-		handleBadRequest(ctx, IdIsNotValidObjectIdError)
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 
@@ -165,7 +169,7 @@ func (web *Web) APIDeleteUser(ctx *gin.Context) {
 	targetId := ctx.Param("id")
 
 	if !bson.IsObjectIdHex(targetId) {
-		handleBadRequest(ctx, IdIsNotValidObjectIdError)
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 

@@ -1,7 +1,6 @@
 package web
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/Team6083/OverHours/models"
@@ -30,7 +29,7 @@ func (web *Web) APIGetTeamSeasons(ctx *gin.Context) {
 	teamId := ctx.Param("teamId")
 
 	if !bson.IsObjectIdHex(teamId) {
-		handleWebErr(ctx, errors.New("team id not valid"))
+		handleWebErr(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 
@@ -55,7 +54,7 @@ func (web *Web) APIGetSeason(ctx *gin.Context) {
 	seasonId := ctx.Param("seasonId")
 
 	if !bson.IsObjectIdHex(seasonId) {
-		handleWebErr(ctx, errors.New("season id not valid"))
+		handleWebErr(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 
@@ -106,7 +105,7 @@ func (web *Web) APIPutSeason(ctx *gin.Context) {
 	seasonId := ctx.Param("seasonId")
 
 	if !bson.IsObjectIdHex(seasonId) {
-		handleBadRequest(ctx, errors.New("id not valid"))
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 
@@ -138,7 +137,7 @@ func (web *Web) APIDeleteSeason(ctx *gin.Context) {
 	seasonId := ctx.Param("seasonId")
 
 	if !bson.IsObjectIdHex(seasonId) {
-		handleBadRequest(ctx, errors.New("id not valid"))
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 

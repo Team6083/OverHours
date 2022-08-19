@@ -120,7 +120,7 @@ func (web *Web) APIGetTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
 
 	if !bson.IsObjectIdHex(targetId) {
-		handleBadRequest(ctx, IdIsNotValidObjectIdError)
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 
@@ -155,7 +155,7 @@ func (web *Web) APIPutTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
 
 	if !bson.IsObjectIdHex(targetId) {
-		handleBadRequest(ctx, IdIsNotValidObjectIdError)
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 
@@ -187,7 +187,7 @@ func (web *Web) APIDeleteTimeLog(ctx *gin.Context) {
 	targetId := ctx.Param("timeLogId")
 
 	if !bson.IsObjectIdHex(targetId) {
-		handleBadRequest(ctx, IdIsNotValidObjectIdError)
+		handleBadRequest(ctx, ErrIdIsNotValidObjectId)
 		return
 	}
 
@@ -296,7 +296,7 @@ func (web *Web) APICheckin(ctx *gin.Context) {
 	seasonId := ctx.DefaultQuery("season", "")
 
 	err := web.StudentCheckin(userId, seasonId)
-	if err == StudentNotExistError || err == models.AlreadyCheckInError {
+	if err == ErrStudentNotExist || err == models.AlreadyCheckInError {
 		handleUnprocessableEntity(ctx, err)
 		return
 	} else if err != nil {
@@ -332,7 +332,7 @@ func (web *Web) APICheckout(ctx *gin.Context) {
 
 // Checkin and Checkout
 
-var StudentNotExistError = errors.New("student doesn't exist")
+var ErrStudentNotExist = errors.New("student doesn't exist")
 
 func (web *Web) StudentCheckOut(studentId string) error {
 	//TODO: add season select support
@@ -366,7 +366,7 @@ func (web *Web) StudentCheckin(studentId string, seasonId string) error {
 		return err
 	}
 	if !exist {
-		return StudentNotExistError
+		return ErrStudentNotExist
 	}
 
 	lastLog, err := web.database.GetLastLogByUser(studentId)
