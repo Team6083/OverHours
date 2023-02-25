@@ -10,7 +10,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
 	gopkg.in/yaml.v2 v2.4.0 // indirect
