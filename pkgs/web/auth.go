@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Team6083/OverHours/models"
+	"github.com/Team6083/OverHours/pkgs/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"

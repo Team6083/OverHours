@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Team6083/OverHours/models"
+	"github.com/Team6083/OverHours/pkgs/models"
 	"github.com/getsentry/sentry-go"
 	sentryHttp "github.com/getsentry/sentry-go/http"
 	"github.com/gin-contrib/cors"

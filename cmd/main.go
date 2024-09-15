@@ -5,8 +5,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/Team6083/OverHours/models"
-	"github.com/Team6083/OverHours/web"
+	"github.com/Team6083/OverHours/pkgs/models"
+	"github.com/Team6083/OverHours/pkgs/web"
 	"github.com/getsentry/sentry-go"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
