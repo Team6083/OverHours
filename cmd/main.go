@@ -28,7 +28,7 @@ func main() {
 
 	debug := false
 
-	if len(os.Getenv("debug")) != 0 {
+	if len(os.Getenv("DEBUG")) != 0 {
 		debug = true
 	}
 
@@ -43,7 +43,7 @@ func main() {
 		panic(err)
 	}
 
-	databaseURL := getEnv("databaseURL", "mongodb://127.0.0.1/OverHours")
+	databaseURL := getEnv("DATABASE_URL", "mongodb://127.0.0.1/over-hours")
 
 	database, err := models.OpenDataBase(databaseURL)
 	if err != nil {
@@ -62,7 +62,7 @@ func main() {
 		}
 	}
 
-	signingSecret := getEnv("signingSecret", web.RandomString(10))
+	signingSecret := getEnv("SIGNING_SECRET", web.RandomString(10))
 	webServer := web.NewWeb(database, signingSecret)
 	webServer.ServeWebInterface(webPort)
 }
