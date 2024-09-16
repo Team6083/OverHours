@@ -7,22 +7,28 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate": "openapi-generator-cli generate -i ../docs/swagger.yaml -g typescript-axios -o generated"
+    "openapi-ts": "openapi-ts"
   },
   "dependencies": {
-    "@emotion/react": "^11.4.1",
-    "@emotion/styled": "^11.3.0",
-    "@mui/icons-material": "^5.2.5",
-    "@mui/material": "^5.0.0",
-    "next": "11.1.2",
-    "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "@emotion/cache": "^11.13.1",
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@fontsource/roboto": "^5.1.0",
+    "@hey-api/client-fetch": "^0.2.4",
+    "@mui/icons-material": "^6.1.0",
+    "@mui/material": "^6.1.0",
+    "@mui/material-nextjs": "^6.1.0",
+    "next": "14.2.11",
+    "react": "^18",
+    "react-dom": "^18"
   },
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.4.4",
-    "@types/react": "17.0.22",
-    "eslint": "7.32.0",
-    "eslint-config-next": "11.1.2",
-    "typescript": "4.4.3"
+    "@hey-api/openapi-ts": "^0.53.0",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.11",
+    "typescript": "^5"
   }
 }
