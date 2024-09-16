@@ -1,95 +1,150 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import {
+  Container,
+  Typography,
+  useTheme,
+  Grid2 as Grid,
+  CardContent,
+  Box,
+  Avatar,
+  Chip,
+  Button,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  IconButton,
+} from "@mui/material";
+
+import DeleteIcon from '@mui/icons-material/Delete';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { CardWithShadow } from "@/components/CardWithShadow";
+import { useState } from "react";
+
+function stringToColor(string: string) {
+  let hash = 0;
+  let i;
+
+  /* eslint-disable no-bitwise */
+  for (i = 0; i < string.length; i += 1) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  let color = '#';
+
+  for (i = 0; i < 3; i += 1) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += `00${value.toString(16)}`.substr(-2);
+  }
+  /* eslint-enable no-bitwise */
+
+  return color;
+}
+
+function stringAvatar(name: string) {
+  return {
+    sx: {
+      bgcolor: stringToColor(name),
+    },
+    children: `${name.split(' ')[0][0]}${name.split(' ')[1] ? name.split(' ')[1][0] : ""}`,
+  };
+}
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const theme = useTheme();
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  const [isCurrentIn, setIsCurrentIn] = useState(true);
+
+  return (
+    <Container maxWidth="xl" sx={{ marginTop: theme.spacing(3), marginBottom: theme.spacing(3) }}>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12 }}>
+          <Typography variant={"h4"}>Team 6083</Typography>
+        </Grid>
+      </Grid>
+      <Grid container spacing={2} marginTop={2}>
+        <Grid size={{ md: 4, xs: 12 }}>
+          <CardWithShadow>
+            <CardContent>
+              <Typography gutterBottom variant={"h5"}>
+                Current Season - {"N/A"}
+              </Typography>
+
+              <Box textAlign={"center"}>
+                <Box marginY={2}>
+                  <Avatar style={{ margin: ".5em auto" }} {...stringAvatar("Kenn Huang")} />
+                  <Typography variant="h6" gutterBottom>KennHuang</Typography>
+                  <Chip label={"9d 15h 48m 28s"} />
+                </Box>
+
+
+                <Button
+                  color={isCurrentIn ? "success" : "primary"}
+                  variant="contained"
+                  size="large"
+                  fullWidth={true}
+                  onClick={() => setIsCurrentIn(!isCurrentIn)}
+                >
+                  {isCurrentIn ? "Check out" : "Check in"}
+                </Button>
+
+                {isCurrentIn ?
+                  <Typography variant="caption">
+                    Check in at {(new Date()).toLocaleString()}
+                  </Typography> : null}
+              </Box>
+            </CardContent>
+          </CardWithShadow>
+        </Grid>
+        <Grid size={{ md: 8, xs: 12 }}>
+          <CardWithShadow>
+            <CardContent>
+              <Typography gutterBottom variant={"h5"}>
+                Checkin List
+              </Typography>
+
+              <TableContainer>
+                <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>User</TableCell>
+                      <TableCell>Time in</TableCell>
+                      <TableCell>Time out</TableCell>
+                      <TableCell>Season</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {["KennHuang"].map((row, i) => (
+                      <TableRow
+                        key={i}
+                      >
+                        <TableCell component="th" scope="row">
+                          {row}
+                        </TableCell>
+                        <TableCell>{new Date().toLocaleString()}</TableCell>
+                        <TableCell>{new Date().toLocaleString()}</TableCell>
+                        <TableCell>{"2021 Season"}</TableCell>
+                        <TableCell>
+                          <IconButton aria-label="delete">
+                            <DeleteIcon />
+                          </IconButton>
+                          <IconButton aria-label="logout">
+                            <LogoutIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </CardWithShadow>
+        </Grid>
+      </Grid>
+    </Container>
   );
 }

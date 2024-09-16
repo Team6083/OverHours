@@ -9,6 +9,8 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from '../theme';
 import { CssBaseline } from "@mui/material";
 
+import AppNav from "./AppNav";
+
 const inter = Inter({
   weight: ['300', '400', '500', '700'],
   subsets: ['latin'],
@@ -43,6 +45,7 @@ export default function RootLayout({
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline enableColorScheme />
+            <AppNav />
             {children}
           </ThemeProvider>
         </AppRouterCacheProvider>
