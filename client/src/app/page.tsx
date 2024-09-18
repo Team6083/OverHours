@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   Container,
   Typography,
@@ -10,19 +12,10 @@ import {
   Avatar,
   Chip,
   Button,
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  IconButton,
 } from "@mui/material";
 
-import DeleteIcon from '@mui/icons-material/Delete';
-import LogoutIcon from '@mui/icons-material/Logout';
 import { CardWithShadow } from "@/components/CardWithShadow";
-import { useState } from "react";
+import LogsTable from "@/components/LogsTable";
 
 function stringToColor(string: string) {
   let hash = 0;
@@ -106,39 +99,7 @@ export default function Home() {
                 Sign-In List
               </Typography>
 
-              <TableContainer>
-                <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Sign-In Time</TableCell>
-                      <TableCell>Season</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {["KennHuang"].map((row, i) => (
-                      <TableRow
-                        key={i}
-                      >
-                        <TableCell component="th" scope="row">
-                          {row}
-                        </TableCell>
-                        <TableCell>{new Date().toLocaleString()}</TableCell>
-                        <TableCell>{"2021 Season"}</TableCell>
-                        <TableCell>
-                          <IconButton aria-label="delete">
-                            <DeleteIcon />
-                          </IconButton>
-                          <IconButton aria-label="logout">
-                            <LogoutIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <LogsTable mode="current-in" />
             </CardContent>
           </CardWithShadow>
         </Grid>

@@ -113,8 +113,6 @@ export default function AppNav() {
                             const title = typeof item === 'object' ? item.title : item;
                             const href = typeof item === 'object' ? item.href : undefined;
 
-                            console.log(href);
-
                             return (
                                 <Button
                                     key={key}

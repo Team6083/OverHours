@@ -6,10 +6,10 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@mui/material/styles';
-import theme from '../theme';
 import { CssBaseline } from "@mui/material";
 
-import AppNav from "./AppNav";
+import theme from '../theme';
+import AppNav from "@/components/AppNav";
 
 const inter = Inter({
   weight: ['300', '400', '500', '700'],
