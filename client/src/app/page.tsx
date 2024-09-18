@@ -55,7 +55,7 @@ export default function Home() {
     <Container maxWidth="xl" sx={{ marginTop: theme.spacing(3), marginBottom: theme.spacing(3) }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
-          <Typography variant={"h4"}>Team 6083</Typography>
+          <Typography variant={"h4"}>FRC Team 6083</Typography>
         </Grid>
       </Grid>
       <Grid container spacing={2} marginTop={2}>
@@ -96,7 +96,7 @@ export default function Home() {
           <CardWithShadow>
             <CardContent>
               <Typography gutterBottom variant={"h5"}>
-                Sign-In List
+                Current Sign-In Members
               </Typography>
 
               <LogsTable mode="current-in" />

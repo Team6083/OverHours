@@ -3,10 +3,15 @@ import {
     Chip,
     Avatar,
     IconButton,
+    Typography,
+    Tooltip,
 } from "@mui/material";
 
 import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
+import LockClockIcon from '@mui/icons-material/LockClock';
+import LockPersonIcon from '@mui/icons-material/LockPerson';
+import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 
 import { ColumnInfo, EnhancedTable } from './EnhancedTable';
 import { secondToString } from "@/util";
@@ -28,26 +33,59 @@ const headCells: ColumnInfo[] = [
     },
     {
         key: "signOutTime", label: "Sign-Out Time", numeric: false, disablePadding: false,
-        valueMap: (val?: Date) => val?.toLocaleString() ?? '',
+        valueMap: (val: Date | undefined, data: SignInLog) => {
+            const { lockStatus, lockedBy } = data;
+
+            if (!val) return "";
+
+            const str = val.toLocaleString();
+            if (lockStatus !== undefined) {
+                const label = lockStatus === "manual" ? `Locked by ${lockedBy ?? 'Moderator'}` : "Auto Locked";
+                const tooltipTitle = `Locked at ${val.toLocaleString()}`;
+
+                return <Tooltip title={tooltipTitle}>
+                    <Chip icon={lockedBy ? <LockPersonIcon /> : <LockClockIcon />} label={label} />
+                </Tooltip>;
+            }
+
+            return str;
+        },
     },
     {
         key: "accumSec", label: "Accumulated Time", numeric: false, disablePadding: false,
         valueMap: (val: number | undefined, data: SignInLog) => {
-            if (val) {
-                return secondToString(val);
+            const { signOutTime, signInTime, lockStatus, accumNotes } = data;
+
+            const realSec = !lockStatus && signOutTime ? ((signOutTime.getTime() - signInTime.getTime()) / 1000) : undefined;
+
+            // Has accumulated time
+            if (val !== undefined) {
+                return <Tooltip title={accumNotes}>
+                    <Typography component="span" color="warning">
+                        {realSec ? <>
+                            <Typography component="span" style={{ textDecoration: 'line-through' }}>{secondToString(realSec)}</Typography>
+                            {" → "}
+                        </> : null}
+                        {secondToString(val)}
+                    </Typography>
+                </Tooltip>;
             }
 
-            const { signOutTime, signInTime } = data;
-            if (signOutTime) {
-                return secondToString((signOutTime.getTime() - signInTime.getTime()) / 1000);
+            if (realSec) {
+                return secondToString(realSec);
             }
 
-            return "";
+            return <Tooltip title={lockStatus ? "Please contact Moderators" : undefined}>
+                {
+                    lockStatus ? <Chip color="error" label="No Data" />
+                        : <Chip color="success" label="Currently Sign-In" />
+                }
+            </Tooltip>;
         }
     },
     { key: "season", label: "Season", numeric: false, disablePadding: false },
     {
-        key: "actions", label: "Actions", numeric: false, disablePadding: true, sortable: true,
+        key: "actions", label: "Actions", numeric: false, disablePadding: true, sortable: false,
         valueMap: () => (<>
             <IconButton>
                 <DeleteIcon />
@@ -72,8 +110,26 @@ const dummyData: SignInLog[] = [
         name: "Bob Smith",
         signInTime: new Date("2023-10-01T09:00:00"),
         signOutTime: new Date("2023-10-01T17:00:00"),
+        lockStatus: "auto",
         season: "2023 Season",
         accumSec: 10,
+    },
+    {
+        id: "66e92e53cef77100011f60be",
+        name: "Bob Smith",
+        signInTime: new Date("2023-10-03T11:00:00"),
+        signOutTime: new Date("2023-10-03T14:00:00"),
+        lockStatus: "manual",
+        lockedBy: "Alice Johnson",
+        season: "2023 Season",
+    },
+    {
+        id: "66e92e53cef77100011f60be",
+        name: "Charlie Brown",
+        signInTime: new Date("2023-10-01T10:00:00"),
+        signOutTime: new Date("2023-10-01T17:00:00"),
+        season: "2023 Season",
+        accumSec: 70,
     },
     {
         id: "66e92e53cef77100011f60be",
@@ -89,7 +145,12 @@ export type SignInLog = {
     signInTime: Date;
     signOutTime?: Date;
     season: string;
+
+    lockStatus?: "auto" | "manual";
+    lockedBy?: string;
+
     accumSec?: number;
+    accumNotes?: string;
 }
 
 export interface LogsTableProps {
@@ -112,11 +173,11 @@ export default function LogsTable(props: LogsTableProps) {
     const rows = (data ?? dummyData).map((v) => ({
         key: v.id,
         data: v
-    }))
+    }));
 
     return <>
         <EnhancedTable
-            title="Logs"
+            // title={mode === "current-in" ? "Current Sign-In Logs" : "Logs"}
             hideCheckbox={mode === "current-in"}
             hideMoreVert={mode === "current-in"}
             headCells={columns}

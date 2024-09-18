@@ -10,6 +10,7 @@ import {
     TableCell,
     TableContainer,
     TableHead,
+    TablePagination,
     TableRow,
     TableSortLabel,
     Toolbar,
@@ -33,7 +34,7 @@ export type ColumnInfo = {
 
 export interface EnhancedTableToolbarProps {
     numSelected: number;
-    title: string;
+    title?: string;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
@@ -67,7 +68,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
                     id="tableTitle"
                     component="div"
                 >
-                    {props.title}
+                    {props.title ?? ""}
                 </Typography>
             )}
             {numSelected > 0 ? (
@@ -96,7 +97,7 @@ export type TableRow = {
 }
 
 export interface EnhancedTableProps {
-    title: string;
+    title?: string;
     hideCheckbox?: boolean;
     hideMoreVert?: boolean;
     headCells: ColumnInfo[];
@@ -205,5 +206,17 @@ export function EnhancedTable(props: EnhancedTableProps) {
                 </TableBody>
             </Table>
         </TableContainer>
+        <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={rows.length}
+            rowsPerPage={5}
+            page={0}
+            onPageChange={() => { }}
+            // rowsPerPage={rowsPerPage}
+            // page={page}
+            // onPageChange={handleChangePage}
+            // onRowsPerPageChange={handleChangeRowsPerPage}
+        />
     </>
 }
