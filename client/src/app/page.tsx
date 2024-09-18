@@ -82,18 +82,18 @@ export default function Home() {
 
 
                 <Button
-                  color={isCurrentIn ? "success" : "primary"}
+                  color={isCurrentIn ? "secondary" : "success"}
                   variant="contained"
                   size="large"
                   fullWidth={true}
                   onClick={() => setIsCurrentIn(!isCurrentIn)}
                 >
-                  {isCurrentIn ? "Check out" : "Check in"}
+                  {isCurrentIn ? "Sign-out" : "Sign-in"}
                 </Button>
 
                 {isCurrentIn ?
                   <Typography variant="caption">
-                    Check in at {(new Date()).toLocaleString()}
+                    Sign-in at {(new Date()).toLocaleString()}
                   </Typography> : null}
               </Box>
             </CardContent>
@@ -103,16 +103,15 @@ export default function Home() {
           <CardWithShadow>
             <CardContent>
               <Typography gutterBottom variant={"h5"}>
-                Checkin List
+                Sign-In List
               </Typography>
 
               <TableContainer>
                 <Table sx={{ minWidth: 650 }} aria-label="simple table">
                   <TableHead>
                     <TableRow>
-                      <TableCell>User</TableCell>
-                      <TableCell>Time in</TableCell>
-                      <TableCell>Time out</TableCell>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Sign-In Time</TableCell>
                       <TableCell>Season</TableCell>
                       <TableCell>Actions</TableCell>
                     </TableRow>
@@ -125,7 +124,6 @@ export default function Home() {
                         <TableCell component="th" scope="row">
                           {row}
                         </TableCell>
-                        <TableCell>{new Date().toLocaleString()}</TableCell>
                         <TableCell>{new Date().toLocaleString()}</TableCell>
                         <TableCell>{"2021 Season"}</TableCell>
                         <TableCell>
