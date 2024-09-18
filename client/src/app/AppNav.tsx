@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
     AppBar,
@@ -22,14 +23,26 @@ import {
     useTheme,
 } from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
+import Link from "next/link";
 
 const drawerWidth = 240;
 
-const navItems = ['Home', 'About', 'Contact'];
+const navItems: (NavItem | string)[] = [
+    { key: 'home', title: 'Home', href: '/' },
+    { key: 'logs', title: 'Logs', href: '/logs' },
+    'About', 'Contact'
+];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
+
+type NavItem = {
+    key: string;
+    title: string;
+    href: string;
+};
 
 export default function AppNav() {
     const theme = useTheme();
+    const router = useRouter();
 
     const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -54,13 +67,24 @@ export default function AppNav() {
             </Typography>
             <Divider />
             <List>
-                {navItems.map((item) => (
-                    <ListItem key={item} disablePadding>
-                        <ListItemButton sx={{ textAlign: 'center' }}>
-                            <ListItemText primary={item} />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
+                {navItems.map((item) => {
+                    const key = typeof item === 'object' ? item.key : item;
+                    const title = typeof item === 'object' ? item.title : item;
+                    const href = typeof item === 'object' ? item.href : undefined;
+
+                    return (
+                        <ListItem key={key} disablePadding>
+                            <ListItemButton
+                                sx={{ textAlign: 'center' }}
+                                onClick={() => {
+                                    if (href) router.push(href);
+                                }}
+                            >
+                                <ListItemText primary={title} />
+                            </ListItemButton>
+                        </ListItem>
+                    );
+                })}
             </List>
         </Box>
     );
@@ -79,16 +103,30 @@ export default function AppNav() {
                         <MenuIcon />
                     </IconButton>
 
-                    <Typography variant="h4" component="div" sx={{ flexGrow: 1 }}>
+                    <Typography variant="h4" component={Link} sx={{ flexGrow: 1 }} href="/">
                         OverHours
                     </Typography>
 
                     <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                        {navItems.map((item) => (
-                            <Button key={item} sx={{ color: '#fff' }}>
-                                {item}
-                            </Button>
-                        ))}
+                        {navItems.map((item) => {
+                            const key = typeof item === 'object' ? item.key : item;
+                            const title = typeof item === 'object' ? item.title : item;
+                            const href = typeof item === 'object' ? item.href : undefined;
+
+                            console.log(href);
+
+                            return (
+                                <Button
+                                    key={key}
+                                    sx={{ color: '#fff' }}
+                                    onClick={() => {
+                                        if (href) router.push(href);
+                                    }}
+                                >
+                                    {title}
+                                </Button>
+                            )
+                        })}
                     </Box>
 
                     <Box sx={{ flexGrow: 0, paddingLeft: theme.spacing(1) }}>
