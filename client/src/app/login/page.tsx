@@ -1,8 +1,28 @@
 "use client";
 
-import { Box, FormControl, FormLabel, TextField, Typography, Container, CardContent as MuiCardContent, styled, FormControlLabel, Checkbox, Button, Link, Divider } from "@mui/material";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+    Box,
+    FormControl,
+    FormLabel,
+    TextField,
+    Typography,
+    Container,
+    CardContent as MuiCardContent,
+    styled,
+    FormControlLabel,
+    Checkbox,
+    Button,
+    Link,
+    Divider
+} from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 import SmartToyIcon from '@mui/icons-material/SmartToy';
+import { useSnackbar } from "notistack";
+
 import { CardWithShadow } from "@/components/CardWithShadow";
+import { login, setAuthToken } from "@/auth";
 
 const CardContent = styled(MuiCardContent)(({ theme }) => ({
     display: 'flex',
@@ -12,15 +32,66 @@ const CardContent = styled(MuiCardContent)(({ theme }) => ({
 }));
 
 export default function LoginPage() {
+    const router = useRouter();
+    const { enqueueSnackbar } = useSnackbar();
 
-    const emailError = false;
-    const emailErrorMessage = emailError ? 'Please enter a valid email address' : '';
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
-    const passwordError = false;
-    const passwordErrorMessage = passwordError ? 'Please enter a valid password' : '';
+    const [emailError, setEmailError] = useState(false);
+    const [emailErrorMessage, setEmailErrorMessage] = useState('');
 
-    const handleSubmit = () => {
+    const [passwordError, setPasswordError] = useState(false);
+    const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
 
+    const [loginLoading, setLoginLoading] = useState(false);
+
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        let isValid = true;
+        if (!email || !/\S+@\S+\.\S+/.test(email)) {
+            setEmailError(true);
+            setEmailErrorMessage('Please enter a valid email address.');
+            isValid = false;
+        } else {
+            setEmailError(false);
+            setEmailErrorMessage('');
+        }
+
+        if (!password) {
+            setPasswordError(true);
+            setPasswordErrorMessage('Please enter a valid password.');
+            isValid = false;
+        } else {
+            setPasswordError(false);
+            setPasswordErrorMessage('');
+        }
+
+        if (!isValid) return;
+
+        setLoginLoading(true);
+        login(email, password)
+            .then((token) => {
+                if (!token) {
+                    enqueueSnackbar('No token received', { variant: 'error' });
+                    return;
+                }
+
+                setAuthToken(token);
+                router.push('/');
+            })
+            .catch((error) => {
+                const errMessage = error.response?.data?.error;
+
+                if (errMessage) {
+                    enqueueSnackbar(errMessage, { variant: 'warning' });
+                } else {
+                    enqueueSnackbar('An error occurred while logging in', { variant: 'error' });
+                    console.error(error);
+                }
+            })
+            .finally(() => setLoginLoading(false));
     }
 
     return (
@@ -65,6 +136,8 @@ export default function LoginPage() {
                                 variant="outlined"
                                 color={emailError ? 'error' : 'primary'}
                                 sx={{ ariaLabel: 'email' }}
+                                onChange={(event) => setEmail(event.target.value)}
+                                value={email}
                             />
                         </FormControl>
                         <FormControl>
@@ -82,20 +155,22 @@ export default function LoginPage() {
                                 fullWidth
                                 variant="outlined"
                                 color={passwordError ? 'error' : 'primary'}
+                                onChange={(event) => setPassword(event.target.value)}
+                                value={password}
                             />
                         </FormControl>
                         <FormControlLabel
                             control={<Checkbox value="remember" color="primary" />}
                             label="Remember me"
                         />
-                        <Button
+                        <LoadingButton
                             type="submit"
                             fullWidth
                             variant="contained"
-                            onClick={() => { }}
+                            loading={loginLoading}
                         >
                             Sign in
-                        </Button>
+                        </LoadingButton>
                         <Typography sx={{ textAlign: 'center' }}>
                             Don&apos;t have an account?{' '}
                             <span>
@@ -112,7 +187,6 @@ export default function LoginPage() {
                     <Divider>or</Divider>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <Button
-                            type="submit"
                             fullWidth
                             variant="outlined"
                             onClick={() => alert('Sign in with CMS Robotics SSO')}

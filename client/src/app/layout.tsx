@@ -8,8 +8,10 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from "@mui/material";
 
-import theme from '../theme';
-import AppNav from "@/components/AppNav";
+import theme from '@/theme';
+
+import AppNav from "./AppNav";
+import { NotistackProvider } from "./SnackbarProviderClient";
 
 const inter = Inter({
   weight: ['300', '400', '500', '700'],
@@ -46,7 +48,9 @@ export default function RootLayout({
           <ThemeProvider theme={theme}>
             <CssBaseline enableColorScheme />
             <AppNav />
-            {children}
+            <NotistackProvider>
+              {children}
+            </NotistackProvider>
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>

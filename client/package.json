@@ -7,23 +7,24 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "openapi-ts": "openapi-ts"
+    "gen-api": "openapi-generator-cli generate -i ../docs/swagger.json -g typescript-axios -o ./src/client"
   },
   "dependencies": {
     "@emotion/cache": "^11.13.1",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@fontsource/roboto": "^5.1.0",
-    "@hey-api/client-fetch": "^0.2.4",
     "@mui/icons-material": "^6.1.0",
-    "@mui/material": "^6.1.0",
+    "@mui/lab": "^6.0.0-beta.9",
+    "@mui/material": "^6.1.1",
     "@mui/material-nextjs": "^6.1.0",
     "next": "14.2.11",
+    "notistack": "^3.0.1",
     "react": "^18",
     "react-dom": "^18"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.53.0",
+    "@openapitools/openapi-generator-cli": "^2.13.7",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
