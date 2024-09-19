@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useFormState, useFormStatus } from "react-dom";
 import {
     Box,
     FormControl,
@@ -15,14 +14,14 @@ import {
     Checkbox,
     Button,
     Link,
-    Divider
+    Divider,
+    Alert
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import SmartToyIcon from '@mui/icons-material/SmartToy';
-import { useSnackbar } from "notistack";
 
 import { CardWithShadow } from "@/components/CardWithShadow";
-import { login, setAuthToken } from "@/auth";
+import { signin } from "./actions/auth";
 
 const CardContent = styled(MuiCardContent)(({ theme }) => ({
     display: 'flex',
@@ -32,67 +31,13 @@ const CardContent = styled(MuiCardContent)(({ theme }) => ({
 }));
 
 export default function LoginPage() {
-    const router = useRouter();
-    const { enqueueSnackbar } = useSnackbar();
+    const [state, action] = useFormState(signin, undefined);
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const emailError = state?.errors?.email && state?.errors?.email?.length > 0 ? true : false;
+    const emailErrorMessage = state?.errors?.email?.join(', ');
 
-    const [emailError, setEmailError] = useState(false);
-    const [emailErrorMessage, setEmailErrorMessage] = useState('');
-
-    const [passwordError, setPasswordError] = useState(false);
-    const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
-
-    const [loginLoading, setLoginLoading] = useState(false);
-
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        let isValid = true;
-        if (!email || !/\S+@\S+\.\S+/.test(email)) {
-            setEmailError(true);
-            setEmailErrorMessage('Please enter a valid email address.');
-            isValid = false;
-        } else {
-            setEmailError(false);
-            setEmailErrorMessage('');
-        }
-
-        if (!password) {
-            setPasswordError(true);
-            setPasswordErrorMessage('Please enter a valid password.');
-            isValid = false;
-        } else {
-            setPasswordError(false);
-            setPasswordErrorMessage('');
-        }
-
-        if (!isValid) return;
-
-        setLoginLoading(true);
-        login(email, password)
-            .then((token) => {
-                if (!token) {
-                    enqueueSnackbar('No token received', { variant: 'error' });
-                    return;
-                }
-
-                setAuthToken(token);
-                router.push('/');
-            })
-            .catch((error) => {
-                const errMessage = error.response?.data?.error;
-
-                if (errMessage) {
-                    enqueueSnackbar(errMessage, { variant: 'warning' });
-                } else {
-                    enqueueSnackbar('An error occurred while logging in', { variant: 'error' });
-                    console.error(error);
-                }
-            })
-            .finally(() => setLoginLoading(false));
-    }
+    const passwordError = state?.errors?.password && state?.errors?.password?.length > 0 ? true : false;
+    const passwordErrorMessage = state?.errors?.password?.join(', ');
 
     return (
         <Container maxWidth="xs" style={{
@@ -111,7 +56,7 @@ export default function LoginPage() {
                     </Typography>
                     <Box
                         component="form"
-                        onSubmit={handleSubmit}
+                        action={action}
                         noValidate
                         sx={{
                             display: 'flex',
@@ -120,6 +65,11 @@ export default function LoginPage() {
                             gap: 2,
                         }}
                     >
+                        {
+                            state?.message &&
+                            <Alert severity="error">{state.message}</Alert>
+                        }
+
                         <FormControl>
                             <FormLabel htmlFor="email">Email</FormLabel>
                             <TextField
@@ -136,8 +86,6 @@ export default function LoginPage() {
                                 variant="outlined"
                                 color={emailError ? 'error' : 'primary'}
                                 sx={{ ariaLabel: 'email' }}
-                                onChange={(event) => setEmail(event.target.value)}
-                                value={email}
                             />
                         </FormControl>
                         <FormControl>
@@ -155,22 +103,13 @@ export default function LoginPage() {
                                 fullWidth
                                 variant="outlined"
                                 color={passwordError ? 'error' : 'primary'}
-                                onChange={(event) => setPassword(event.target.value)}
-                                value={password}
                             />
                         </FormControl>
                         <FormControlLabel
                             control={<Checkbox value="remember" color="primary" />}
                             label="Remember me"
                         />
-                        <LoadingButton
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            loading={loginLoading}
-                        >
-                            Sign in
-                        </LoadingButton>
+                        <SignInButton />
                         <Typography sx={{ textAlign: 'center' }}>
                             Don&apos;t have an account?{' '}
                             <span>
@@ -199,4 +138,20 @@ export default function LoginPage() {
             </CardWithShadow>
         </Container>
     );
+}
+
+function SignInButton() {
+    const status = useFormStatus();
+    const { pending } = status;
+
+    console.log(status);
+
+    return <LoadingButton
+        type="submit"
+        fullWidth
+        variant="contained"
+        loading={pending}
+    >
+        Sign in
+    </LoadingButton>;
 }

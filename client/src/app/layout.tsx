@@ -9,9 +9,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from "@mui/material";
 
 import theme from '@/theme';
-
-import AppNav from "./AppNav";
-import { NotistackProvider } from "./SnackbarProviderClient";
+import LayoutClient from "./LayoutClient";
 
 const inter = Inter({
   weight: ['300', '400', '500', '700'],
@@ -47,10 +45,9 @@ export default function RootLayout({
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline enableColorScheme />
-            <AppNav />
-            <NotistackProvider>
+            <LayoutClient>
               {children}
-            </NotistackProvider>
+            </LayoutClient>
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>
