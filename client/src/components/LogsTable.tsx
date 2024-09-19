@@ -11,17 +11,17 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LockClockIcon from '@mui/icons-material/LockClock';
 import LockPersonIcon from '@mui/icons-material/LockPerson';
-import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 
-import { ColumnInfo, EnhancedTable } from './EnhancedTable';
-import { secondToString } from "@/util";
+import { ColumnInfo, EnhancedTable, TableRow } from './EnhancedTable';
+import { secondToString } from "@/utils";
 import { useMemo } from "react";
+import { SignInLog } from "@/types";
 
 const headCells: ColumnInfo[] = [
     { key: "id", label: "ID", numeric: false, disablePadding: true, sortable: false },
     {
         key: "name", label: "Name", numeric: false, disablePadding: false,
-        valueMap: (val: string) => (<Chip
+        mapToElement: (val: TableRowData['name']) => (<Chip
             avatar={<Avatar alt={val} src="https://2.gravatar.com/avatar/7d153db9ab817d315b65e64e0fc78ff51b05f32673e1ff90696d398bc28adc43?size=512" />}
             label={val}
             variant="outlined"
@@ -29,19 +29,19 @@ const headCells: ColumnInfo[] = [
     },
     {
         key: "signInTime", label: "Sign-In Time", numeric: false, disablePadding: false,
-        valueMap: (val: Date) => val.toLocaleString(),
+        mapToElement: (val: TableRowData['signInTime']) => val.toLocaleString(),
     },
     {
         key: "signOutTime", label: "Sign-Out Time", numeric: false, disablePadding: false,
-        valueMap: (val: Date | undefined, data: SignInLog) => {
-            const { lockStatus, lockedBy } = data;
+        mapToElement: (val: TableRowData['signOutTime']) => {
+            const { time, lockStatus, lockedBy } = val ?? {};
 
-            if (!val) return "";
+            if (!time) return "";
 
-            const str = val.toLocaleString();
+            const str = time.toLocaleString();
             if (lockStatus !== undefined) {
                 const label = lockStatus === "manual" ? `Locked by ${lockedBy ?? 'Moderator'}` : "Auto Locked";
-                const tooltipTitle = `Locked at ${val.toLocaleString()}`;
+                const tooltipTitle = `Locked at ${time.toLocaleString()}`;
 
                 return <Tooltip title={tooltipTitle}>
                     <Chip icon={lockedBy ? <LockPersonIcon /> : <LockClockIcon />} label={label} />
@@ -50,43 +50,49 @@ const headCells: ColumnInfo[] = [
 
             return str;
         },
+        sortFunc: (a: TableRowData['signOutTime'], b: TableRowData['signOutTime']) => {
+            const valA = a?.time.getTime() ?? 0;
+            const valB = b?.time.getTime() ?? 0;
+
+            return valA === valB ? 0 : valA > valB ? 1 : -1;
+        }
     },
     {
-        key: "accumSec", label: "Accumulated Time", numeric: false, disablePadding: false,
-        valueMap: (val: number | undefined, data: SignInLog) => {
-            const { signOutTime, signInTime, lockStatus, accumNotes } = data;
-
-            const realSec = !lockStatus && signOutTime ? ((signOutTime.getTime() - signInTime.getTime()) / 1000) : undefined;
-
-            // Has accumulated time
-            if (val !== undefined) {
-                return <Tooltip title={accumNotes}>
-                    <Typography component="span" color="warning">
-                        {realSec ? <>
-                            <Typography component="span" style={{ textDecoration: 'line-through' }}>{secondToString(realSec)}</Typography>
-                            {" → "}
-                        </> : null}
-                        {secondToString(val)}
-                    </Typography>
+        key: "accumTime", label: "Accumulated Time", numeric: false, disablePadding: false,
+        mapToElement: (val: TableRowData['accumTime']) => {
+            if (typeof val === 'string') {
+                return <Tooltip title={val === 'no-data' ? "Please contact Moderators" : undefined}>
+                    {
+                        val === 'no-data' ? <Chip color="error" label="No Data" />
+                            : <Chip color="success" label="Currently Sign-In" />
+                    }
                 </Tooltip>;
             }
 
-            if (realSec) {
-                return secondToString(realSec);
-            }
+            const { sec, originalSec, notes } = val;
 
-            return <Tooltip title={lockStatus ? "Please contact Moderators" : undefined}>
-                {
-                    lockStatus ? <Chip color="error" label="No Data" />
-                        : <Chip color="success" label="Currently Sign-In" />
-                }
+            return <Tooltip title={notes}>
+                <Typography component="span" color={originalSec !== undefined ? "warning" : undefined}>
+                    {originalSec !== undefined ? <>
+                        <Typography component="span" style={{ textDecoration: 'line-through' }}>{secondToString(originalSec)}</Typography>
+                        {" → "}
+                    </> : null}
+                    {secondToString(sec)}
+                </Typography>
             </Tooltip>;
+
+        },
+        sortFunc: (a: TableRowData['accumTime'], b: TableRowData['accumTime']) => {
+            const valA = typeof a === 'string' ? 0 : a.sec;
+            const valB = typeof b === 'string' ? 0 : b.sec;
+
+            return valA === valB ? 0 : valA > valB ? 1 : -1;
         }
     },
     { key: "season", label: "Season", numeric: false, disablePadding: false },
     {
         key: "actions", label: "Actions", numeric: false, disablePadding: true, sortable: false,
-        valueMap: () => (<>
+        mapToElement: () => (<>
             <IconButton>
                 <DeleteIcon />
             </IconButton>
@@ -97,61 +103,22 @@ const headCells: ColumnInfo[] = [
     }
 ];
 
-const dummyData: SignInLog[] = [
-    {
-        id: "66e92e53cef77100011f60be",
-        name: "Alice Johnson",
-        signInTime: new Date("2023-10-01T08:00:00"),
-        signOutTime: new Date("2023-10-01T12:00:00"),
-        season: "2023 Season",
-    },
-    {
-        id: "66e92e53cef77100011f60be",
-        name: "Bob Smith",
-        signInTime: new Date("2023-10-01T09:00:00"),
-        signOutTime: new Date("2023-10-01T17:00:00"),
-        lockStatus: "auto",
-        season: "2023 Season",
-        accumSec: 10,
-    },
-    {
-        id: "66e92e53cef77100011f60be",
-        name: "Bob Smith",
-        signInTime: new Date("2023-10-03T11:00:00"),
-        signOutTime: new Date("2023-10-03T14:00:00"),
-        lockStatus: "manual",
-        lockedBy: "Alice Johnson",
-        season: "2023 Season",
-    },
-    {
-        id: "66e92e53cef77100011f60be",
-        name: "Charlie Brown",
-        signInTime: new Date("2023-10-01T10:00:00"),
-        signOutTime: new Date("2023-10-01T17:00:00"),
-        season: "2023 Season",
-        accumSec: 70,
-    },
-    {
-        id: "66e92e53cef77100011f60be",
-        name: "Charlie Brown",
-        signInTime: new Date("2023-10-01T10:00:00"),
-        season: "2023 Season",
-    }
-];
-
-export type SignInLog = {
+type TableRowData = {
     id: string;
     name: string;
     signInTime: Date;
-    signOutTime?: Date;
+    signOutTime?: {
+        time: Date;
+        lockStatus?: "auto" | "manual";
+        lockedBy?: string;
+    };
+    accumTime: {
+        sec: number;
+        originalSec?: number;
+        notes?: string;
+    } | 'sign-in' | 'no-data';
     season: string;
-
-    lockStatus?: "auto" | "manual";
-    lockedBy?: string;
-
-    accumSec?: number;
-    accumNotes?: string;
-}
+};
 
 export interface LogsTableProps {
     mode: "current-in" | "history";
@@ -170,10 +137,38 @@ export default function LogsTable(props: LogsTableProps) {
         return headCells;
     }, [mode]);
 
-    const rows = (data ?? dummyData).map((v) => ({
-        key: v.id,
-        data: v
-    }));
+    const rows: TableRow<TableRowData>[] = useMemo(() => (data ?? []).map((v) => {
+        const { id, name, signInTime, signOutTime, season, lockStatus, lockedBy, accumSec, accumNotes } = v;
+
+        const realAccumSec = signOutTime ? (signOutTime.getTime() - signInTime.getTime()) / 1000 : undefined;
+
+        const accumTime: TableRowData['accumTime'] = realAccumSec === undefined ? 'sign-in' :
+            lockStatus !== undefined && accumSec === undefined ? 'no-data' :
+                {
+                    sec: accumSec ?? realAccumSec,
+                    originalSec: accumSec ? realAccumSec : undefined,
+                    notes: accumNotes,
+                };
+
+        // const originalAccumSec = lockStatus !== undefined && signOutTime ?
+        //     (signOutTime.getTime() - signInTime.getTime()) / 1000 : undefined;
+
+        return {
+            key: id,
+            data: {
+                id,
+                name,
+                signInTime,
+                signOutTime: signOutTime ? {
+                    time: signOutTime,
+                    lockStatus,
+                    lockedBy,
+                } : undefined,
+                season,
+                accumTime,
+            }
+        };
+    }), [data]);
 
     return <>
         <EnhancedTable

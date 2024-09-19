@@ -1,8 +1,9 @@
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import {
     alpha,
+    Box,
     Checkbox,
     IconButton,
     Table,
@@ -17,6 +18,7 @@ import {
     Tooltip,
     Typography
 } from "@mui/material";
+import { visuallyHidden } from '@mui/utils';
 
 import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -29,7 +31,8 @@ export type ColumnInfo = {
     disablePadding: boolean;
     sortable?: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    valueMap?: (val: any, data: any) => JSX.Element | string;
+    mapToElement?: (val: any) => JSX.Element | string;
+    sortFunc?: (a: any, b: any) => number;
 };
 
 export interface EnhancedTableToolbarProps {
@@ -88,28 +91,58 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
     );
 }
 
-export type TableRow = {
+export type TableRow<T extends { [key: string]: any }> = {
     key: string;
-    data: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        [key: string]: any;
-    };
+    data: T;
 }
 
-export interface EnhancedTableProps {
+export interface EnhancedTableProps<T extends { [key: string]: any }> {
     title?: string;
     hideCheckbox?: boolean;
     hideMoreVert?: boolean;
     headCells: ColumnInfo[];
-    rows: TableRow[];
+    rows: TableRow<T>[];
 }
 
-export function EnhancedTable(props: EnhancedTableProps) {
+export function EnhancedTable<T extends { [key: string]: any }>(props: EnhancedTableProps<T>) {
     const { title, headCells, rows, hideCheckbox, hideMoreVert } = props;
 
+    const [orderBy, setOrderBy] = useState<string>('');
+    const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
+    const handleSortRequest = (key: string) => {
+        if (orderBy === key) {
+            if (order === 'asc') {
+                setOrder('desc');
+            } else if (order === 'desc') {
+                setOrderBy('');
+                setOrder('asc');
+            }
+        } else {
+            setOrderBy(key);
+            setOrder('asc');
+        }
+    }
+
     const processedRows = useMemo(() => {
-        return rows;
-    }, [rows]);
+        let filteredRows = rows.filter((v) => true);
+
+        if (orderBy !== '') {
+            const sortFunc = headCells.find((v) => v.key === orderBy)?.sortFunc;
+
+            return filteredRows.toSorted(((a, b) => {
+                const aVal = a.data[orderBy];
+                const bVal = b.data[orderBy];
+
+                const result = sortFunc ? sortFunc(aVal, bVal)
+                    : (aVal === bVal ? 0 : aVal > bVal ? 1 : -1);
+
+                return order === 'asc' ? result : -result;
+            }));
+        }
+
+        return filteredRows;
+    }, [rows, orderBy, order]);
 
     return <>
         <EnhancedTableToolbar title={title} numSelected={0} />
@@ -136,21 +169,21 @@ export function EnhancedTable(props: EnhancedTableProps) {
                                     key={headCell.key}
                                     align={headCell.numeric ? 'right' : 'left'}
                                     padding={headCell.disablePadding ? 'none' : 'normal'}
-                                // sortDirection={orderBy === headCell.id ? order : false}
+                                    sortDirection={orderBy === headCell.key ? order : false}
                                 >
                                     {headCell.sortable === false ? headCell.label :
                                         (
                                             <TableSortLabel
-                                            // active={orderBy === headCell.id}
-                                            // direction={orderBy === headCell.id ? order : 'asc'}
-                                            // onClick={createSortHandler(headCell.id)}
+                                                active={orderBy === headCell.key}
+                                                direction={orderBy === headCell.key ? order : 'asc'}
+                                                onClick={() => handleSortRequest(headCell.key)}
                                             >
                                                 {headCell.label}
-                                                {/* {orderBy === headCell.id ? (
-                                                <Box component="span" sx={visuallyHidden}>
-                                                    {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                                                </Box>
-                                            ) : null} */}
+                                                {orderBy === headCell.key ? (
+                                                    <Box component="span" sx={visuallyHidden}>
+                                                        {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                                                    </Box>
+                                                ) : null}
                                             </TableSortLabel>
                                         )
                                     }
@@ -187,8 +220,8 @@ export function EnhancedTable(props: EnhancedTableProps) {
                                             scope: "row",
                                         } : {})}
                                     >
-                                        {headCell.valueMap ?
-                                            headCell.valueMap(row.data[headCell.key], row.data)
+                                        {headCell.mapToElement ?
+                                            headCell.mapToElement(row.data[headCell.key])
                                             : row.data[headCell.key]}
                                     </TableCell>
                                 ))
@@ -213,10 +246,10 @@ export function EnhancedTable(props: EnhancedTableProps) {
             rowsPerPage={5}
             page={0}
             onPageChange={() => { }}
-            // rowsPerPage={rowsPerPage}
-            // page={page}
-            // onPageChange={handleChangePage}
-            // onRowsPerPageChange={handleChangeRowsPerPage}
+        // rowsPerPage={rowsPerPage}
+        // page={page}
+        // onPageChange={handleChangePage}
+        // onRowsPerPageChange={handleChangeRowsPerPage}
         />
     </>
 }
