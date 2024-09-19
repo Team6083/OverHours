@@ -121,6 +121,7 @@ type TableRowData = {
 };
 
 export interface LogsTableProps {
+    title?: string;
     mode: "current-in" | "history";
     data?: SignInLog[];
 }
@@ -130,7 +131,7 @@ export default function LogsTable(props: LogsTableProps) {
 
     const columns = useMemo(() => {
         if (mode === "current-in") {
-            return headCells.filter((v) => v.key !== "id" && v.key !== "signOutTime" && v.key !== "accumSec");
+            return headCells.filter((v) => v.key !== "id" && v.key !== "signOutTime" && v.key !== "accumTime");
         } else if (mode === "history") {
             return headCells.filter((v) => v.key !== "actions");
         }
@@ -149,9 +150,6 @@ export default function LogsTable(props: LogsTableProps) {
                     originalSec: accumSec ? realAccumSec : undefined,
                     notes: accumNotes,
                 };
-
-        // const originalAccumSec = lockStatus !== undefined && signOutTime ?
-        //     (signOutTime.getTime() - signInTime.getTime()) / 1000 : undefined;
 
         return {
             key: id,
@@ -172,9 +170,10 @@ export default function LogsTable(props: LogsTableProps) {
 
     return <>
         <EnhancedTable
-            // title={mode === "current-in" ? "Current Sign-In Logs" : "Logs"}
-            hideCheckbox={mode === "current-in"}
-            hideMoreVert={mode === "current-in"}
+            title={props.title}
+            showCheckbox={mode !== "current-in"}
+            showMoreVert={mode !== "current-in"}
+            usePagination={mode !== "current-in"}
             headCells={columns}
             rows={rows}
         />

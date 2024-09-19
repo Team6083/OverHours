@@ -99,7 +99,14 @@ export default function Home() {
                 Current Sign-In Members
               </Typography>
 
-              <LogsTable mode="current-in" />
+              <LogsTable mode="current-in" data={[
+                {
+                  id: "1",
+                  name: "Kenn Huang",
+                  signInTime: new Date(),
+                  season: "2021",
+                }
+              ]} />
             </CardContent>
           </CardWithShadow>
         </Grid>

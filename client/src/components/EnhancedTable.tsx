@@ -24,6 +24,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type anyObject = { [key: string]: any };
+
 export type ColumnInfo = {
     key: string;
     label: string;
@@ -32,6 +35,7 @@ export type ColumnInfo = {
     sortable?: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mapToElement?: (val: any) => JSX.Element | string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sortFunc?: (a: any, b: any) => number;
 };
 
@@ -91,24 +95,36 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
     );
 }
 
-export type TableRow<T extends { [key: string]: any }> = {
+export type TableRow<T extends anyObject> = {
     key: string;
     data: T;
 }
 
-export interface EnhancedTableProps<T extends { [key: string]: any }> {
+export interface EnhancedTableProps<T extends anyObject> {
     title?: string;
-    hideCheckbox?: boolean;
-    hideMoreVert?: boolean;
+
+    showCheckbox?: boolean;
+    showMoreVert?: boolean;
+    usePagination?: boolean;
+
     headCells: ColumnInfo[];
     rows: TableRow<T>[];
 }
 
-export function EnhancedTable<T extends { [key: string]: any }>(props: EnhancedTableProps<T>) {
-    const { title, headCells, rows, hideCheckbox, hideMoreVert } = props;
+export function EnhancedTable<T extends anyObject>(props: EnhancedTableProps<T>) {
+    const { title, headCells, rows } = props;
 
-    const [orderBy, setOrderBy] = useState<string>('');
+    const showCheckbox = props.showCheckbox ?? true;
+    const showMoreVert = props.showMoreVert ?? true;
+    const usePagination = props.usePagination ?? true;
+
     const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+    const [orderBy, setOrderBy] = useState<string>('');
+
+    const [selected, setSelected] = useState<readonly string[]>([]);
+
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
 
     const handleSortRequest = (key: string) => {
         if (orderBy === key) {
@@ -124,8 +140,38 @@ export function EnhancedTable<T extends { [key: string]: any }>(props: EnhancedT
         }
     }
 
-    const processedRows = useMemo(() => {
-        let filteredRows = rows.filter((v) => true);
+    const handleSelectClick = (event: React.MouseEvent<unknown>, id: string) => {
+        const selectedIndex = selected.indexOf(id);
+        let newSelected: readonly string[] = [];
+
+        if (selectedIndex === -1) {
+            newSelected = newSelected.concat(selected, id);
+        } else if (selectedIndex === 0) {
+            newSelected = newSelected.concat(selected.slice(1));
+        } else if (selectedIndex === selected.length - 1) {
+            newSelected = newSelected.concat(selected.slice(0, -1));
+        } else if (selectedIndex > 0) {
+            newSelected = newSelected.concat(
+                selected.slice(0, selectedIndex),
+                selected.slice(selectedIndex + 1),
+            );
+        }
+        setSelected(newSelected);
+    };
+
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+        setSelected([]);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    // Filter and sort the rows
+    const processedRows: TableRow<T>[] = useMemo(() => {
+        const filteredRows = rows.filter(() => true);
 
         if (orderBy !== '') {
             const sortFunc = headCells.find((v) => v.key === orderBy)?.sortFunc;
@@ -142,21 +188,48 @@ export function EnhancedTable<T extends { [key: string]: any }>(props: EnhancedT
         }
 
         return filteredRows;
-    }, [rows, orderBy, order]);
+    }, [rows, orderBy, headCells, order]);
+
+    const rowCount = processedRows.length;
+    const numSelected = selected.length;
+
+    // Paginate the rows
+    const paginatedRows: TableRow<T>[][] = useMemo(() => !usePagination ? [processedRows]
+        : processedRows.reduce((acc: TableRow<T>[][], cur) => {
+            const lastPage = acc[acc.length - 1];
+            if (!lastPage || lastPage.length >= rowsPerPage) {
+                return [...acc, [cur]];
+            } else {
+                return [...acc.slice(0, -1), [...lastPage, cur]];
+            }
+        }, []),
+        [processedRows, rowsPerPage, usePagination]);
+
+    const paginatedRowCount = paginatedRows[page]?.length;
+
+    const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.checked) {
+            const newSelected = paginatedRows[page]?.map((n) => n.key);
+            setSelected(newSelected);
+            return;
+        }
+        setSelected([]);
+    };
 
     return <>
-        <EnhancedTableToolbar title={title} numSelected={0} />
+        <EnhancedTableToolbar title={title} numSelected={numSelected} />
         <TableContainer>
             <Table sx={{ minWidth: 650 }} aria-label="sing-in list table">
                 <TableHead>
                     <TableRow>
                         {
-                            hideCheckbox ? null : (
+                            !showCheckbox ? null : (
                                 <TableCell padding="checkbox">
                                     <Checkbox
                                         color="primary"
-                                        // indeterminate={numSelected > 0 && numSelected < rowCount}
-                                        // checked={rowCount > 0 && numSelected === rowCount}
+                                        indeterminate={numSelected > 0 && numSelected < paginatedRowCount}
+                                        checked={paginatedRowCount > 0 && numSelected === paginatedRowCount}
+                                        onChange={handleSelectAllClick}
                                         inputProps={{
                                             'aria-label': 'select all desserts',
                                         }}
@@ -164,6 +237,7 @@ export function EnhancedTable<T extends { [key: string]: any }>(props: EnhancedT
                                 </TableCell>)
                         }
                         {
+                            // Table Header Mapping
                             headCells.map((headCell) => (
                                 <TableCell
                                     key={headCell.key}
@@ -191,22 +265,27 @@ export function EnhancedTable<T extends { [key: string]: any }>(props: EnhancedT
                             )
                         }
                         {
-                            hideMoreVert ? null : (
+                            !showMoreVert ? null : (
                                 <TableCell>
                                     {/* For MoreVertIcon */}
                                 </TableCell>)
                         }
                     </TableRow>
                 </TableHead>
+
                 <TableBody>
-                    {processedRows.map((row) => (
+                    {paginatedRows[page]?.map((row) => (
                         <TableRow
                             key={row.key}
                         >
                             {
-                                hideCheckbox ? null : (
+                                !showCheckbox ? null : (
                                     <TableCell padding="checkbox">
-                                        <Checkbox color="primary" />
+                                        <Checkbox
+                                            color="primary"
+                                            checked={selected.indexOf(row.key) !== -1}
+                                            onClick={(event) => handleSelectClick(event, row.key)}
+                                        />
                                     </TableCell>)
                             }
                             {
@@ -227,7 +306,7 @@ export function EnhancedTable<T extends { [key: string]: any }>(props: EnhancedT
                                 ))
                             }
                             {
-                                hideMoreVert ? null : (
+                                !showMoreVert ? null : (
                                     <TableCell>
                                         <IconButton aria-label="more">
                                             <MoreVertIcon />
@@ -239,17 +318,17 @@ export function EnhancedTable<T extends { [key: string]: any }>(props: EnhancedT
                 </TableBody>
             </Table>
         </TableContainer>
-        <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={rows.length}
-            rowsPerPage={5}
-            page={0}
-            onPageChange={() => { }}
-        // rowsPerPage={rowsPerPage}
-        // page={page}
-        // onPageChange={handleChangePage}
-        // onRowsPerPageChange={handleChangeRowsPerPage}
-        />
+        {
+            usePagination ?
+                <TablePagination
+                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                    component="div"
+                    count={rowCount}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                /> : null
+        }
     </>
 }
