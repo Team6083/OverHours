@@ -50,10 +50,32 @@ func main() {
 		handleErr(err)
 	}
 
+	// Setup setting
 	_, err = database.GetSetting()
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			_, err = database.SaveSetting(&models.Setting{Id: bson.NewObjectId()})
+			if err != nil {
+				handleErr(err)
+			}
+
+			changeInfo, err := database.SaveUser(models.User{
+				Id:          bson.NewObjectId(),
+				DisplayName: "Admin",
+				Email:       "admin@example.com",
+				IsSiteAdmin: true,
+			})
+			if err != nil {
+				handleErr(err)
+			}
+
+			id := changeInfo.UpsertedId.(bson.ObjectId)
+			cred, err := models.CreateCredential(id, "admin")
+			if err != nil {
+				handleErr(err)
+			}
+
+			_, err = database.SaveCredential(*cred)
 			if err != nil {
 				handleErr(err)
 			}

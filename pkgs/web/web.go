@@ -66,6 +66,10 @@ func handleUnprocessableEntity(c *gin.Context, err error) {
 	c.AbortWithStatusJSON(http.StatusUnprocessableEntity, APIException{err.Error()})
 }
 
+func handleUnauthorized(c *gin.Context, err error) {
+	c.AbortWithStatusJSON(http.StatusUnauthorized, APIException{err.Error()})
+}
+
 func handleForbidden(c *gin.Context, err error) {
 	c.AbortWithStatusJSON(http.StatusForbidden, APIException{err.Error()})
 }

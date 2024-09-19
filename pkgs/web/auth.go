@@ -131,7 +131,7 @@ type APIPostAuthVerifySuccessResponse struct {
 func (web *Web) APIPostAuthVerify(ctx *gin.Context) {
 	body := APIPostAuthVerifyBody{}
 
-	err := ctx.BindJSON(body)
+	err := ctx.BindJSON(&body)
 	if err != nil {
 		handleWebErr(ctx, err)
 		return
@@ -139,6 +139,7 @@ func (web *Web) APIPostAuthVerify(ctx *gin.Context) {
 
 	token, err := getTokenFromString(body.Token, web.signingSecret)
 	if err != nil {
+		// TODO: handle invalid signature
 		handleWebErr(ctx, err)
 		return
 	}
