@@ -1,16 +1,16 @@
-'use server';
+"use server";
 
 import axios from 'axios';
-import { z } from 'zod'
+import { z } from 'zod';
 import { redirect } from 'next/navigation';
 
-import { createSession } from '@/app/lib/session'
+import { createSession } from '@/app/lib/session';
 import { AuthApi, Configuration } from '@/client';
 
 const SignupFormSchema = z.object({
     email: z.string().email({ message: 'Please enter a valid email.' }).trim(),
     password: z.string().min(1, { message: 'Please enter a password.' }).trim(),
-})
+});
 
 export type FormState =
     | {
@@ -22,7 +22,7 @@ export type FormState =
     }
     | undefined
 
-export async function signin(state: FormState, formData: FormData) {
+export async function signin(state: FormState, formData: FormData): Promise<FormState> {
     const validatedFields = SignupFormSchema.safeParse({
         email: formData.get('email'),
         password: formData.get('password'),

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import {
     AppBar,
@@ -23,7 +24,7 @@ import {
     useTheme,
 } from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
-import Link from "next/link";
+import LoginIcon from '@mui/icons-material/Login';
 
 const drawerWidth = 240;
 
@@ -40,7 +41,18 @@ type NavItem = {
     href: string;
 };
 
-export default function AppNav() {
+export type UserInfo = {
+    name: string;
+    avatarSrc?: string;
+};
+
+export interface AppNavProps {
+    userInfo?: UserInfo;
+}
+
+export default function AppNav(props: AppNavProps) {
+    const { userInfo } = props;
+
     const theme = useTheme();
     const router = useRouter();
 
@@ -63,7 +75,7 @@ export default function AppNav() {
     const drawer = (
         <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
             <Typography variant="h6" sx={{ my: 2 }}>
-                MUI
+                OverHours
             </Typography>
             <Divider />
             <List>
@@ -76,9 +88,7 @@ export default function AppNav() {
                         <ListItem key={key} disablePadding>
                             <ListItemButton
                                 sx={{ textAlign: 'center' }}
-                                onClick={() => {
-                                    if (href) router.push(href);
-                                }}
+                                onClick={() => href && router.push(href)}
                             >
                                 <ListItemText primary={title} />
                             </ListItemButton>
@@ -117,9 +127,7 @@ export default function AppNav() {
                                 <Button
                                     key={key}
                                     sx={{ color: '#fff' }}
-                                    onClick={() => {
-                                        if (href) router.push(href);
-                                    }}
+                                    onClick={() => href && router.push(href)}
                                 >
                                     {title}
                                 </Button>
@@ -128,11 +136,21 @@ export default function AppNav() {
                     </Box>
 
                     <Box sx={{ flexGrow: 0, paddingLeft: theme.spacing(1) }}>
-                        <Tooltip title="Open settings">
-                            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                <Avatar alt="Kenn Huang" src="/static/images/avatar/2.jpg" />
-                            </IconButton>
-                        </Tooltip>
+                        {userInfo ?
+                            <Tooltip title="Open settings">
+                                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                                    <Avatar alt={userInfo.name} src={userInfo.avatarSrc} />
+                                </IconButton>
+                            </Tooltip>
+                            : <Button
+                                startIcon={<LoginIcon />}
+                                variant="contained"
+                                color="secondary"
+                                onClick={() => router.push('/login')}
+                            >
+                                Login
+                            </Button>
+                        }
                         <Menu
                             sx={{ mt: '45px' }}
                             anchorEl={anchorElUser}

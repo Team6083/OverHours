@@ -21,7 +21,7 @@ import { LoadingButton } from "@mui/lab";
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 
 import { CardWithShadow } from "@/components/CardWithShadow";
-import { signin } from "./actions/auth";
+import { signin } from "@/app/actions/auth";
 
 const CardContent = styled(MuiCardContent)(({ theme }) => ({
     display: 'flex',

@@ -10,6 +10,8 @@ import { CssBaseline } from "@mui/material";
 
 import theme from '@/theme';
 import LayoutClient from "./LayoutClient";
+import { getSession } from "./lib/session";
+import AppNav from "./AppNav";
 
 const inter = Inter({
   weight: ['300', '400', '500', '700'],
@@ -39,12 +41,21 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = getSession();
+  console.log('session', session);
+
+  const userInfo = {
+    name: 'John Doe',
+    avatarSrc: '/static/images/avatar/2.jpg'
+  }
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable}`}>
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline enableColorScheme />
+            <AppNav userInfo={userInfo} />
             <LayoutClient>
               {children}
             </LayoutClient>

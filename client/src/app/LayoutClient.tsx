@@ -1,6 +1,5 @@
 "use client";
 
-import AppNav from "./AppNav";
 import { NotistackProvider } from "./SnackbarProviderClient";
 
 export default function LayoutClient({
@@ -9,10 +8,8 @@ export default function LayoutClient({
     children: React.ReactNode;
 }>) {
 
-
     return (
         <>
-            <AppNav />
             <NotistackProvider>
                 {children}
             </NotistackProvider>
