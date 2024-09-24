@@ -1,6 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { redirect, useRouter } from "next/navigation";
+
 import {
     Box,
     FormControl,
@@ -20,11 +23,10 @@ import {
 import { LoadingButton } from "@mui/lab";
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 
-import { CardWithShadow } from "@/components/CardWithShadow";
-import { signin } from "@/app/actions/auth";
 import { signIn as nextSignIn, useSession } from "next-auth/react"
-import { useEffect } from "react";
-import { redirect } from "next/navigation";
+
+import { signin } from "@/app/actions/auth";
+import { CardWithShadow } from "@/components/CardWithShadow";
 
 const CardContent = styled(MuiCardContent)(({ theme }) => ({
     display: 'flex',
@@ -34,6 +36,7 @@ const CardContent = styled(MuiCardContent)(({ theme }) => ({
 }));
 
 export default function LoginPage() {
+    const router = useRouter();
     const data = useSession();
 
     // Redirect to home page if user is already authenticated
@@ -45,11 +48,21 @@ export default function LoginPage() {
 
     const [state, action] = useFormState(signin, undefined);
 
-    const emailError = state?.errors?.email && state?.errors?.email?.length > 0 ? true : false;
-    const emailErrorMessage = state?.errors?.email?.join(', ');
+    useEffect(() => {
+        if (state && 'ok' in state && state.ok) {
+            // FIXME: This is a workaround to reload the page after successful login
+            window.location.reload();
+        }
+    }, [router, state]);
 
-    const passwordError = state?.errors?.password && state?.errors?.password?.length > 0 ? true : false;
-    const passwordErrorMessage = state?.errors?.password?.join(', ');
+    const errors = state && 'errors' in state && state?.errors ? state.errors : undefined;
+    const message = state && 'message' in state && state?.message ? state.message : undefined;
+
+    const emailError = errors?.email && errors?.email?.length > 0 ? true : false;
+    const emailErrorMessage = errors?.email?.join(', ');
+
+    const passwordError = errors?.password && errors?.password?.length > 0 ? true : false;
+    const passwordErrorMessage = errors?.password?.join(', ');
 
     return (
         <Container maxWidth="xs" style={{
@@ -78,8 +91,8 @@ export default function LoginPage() {
                         }}
                     >
                         {
-                            state?.message &&
-                            <Alert severity="error">{state.message}</Alert>
+                            message &&
+                            <Alert severity="error">{message}</Alert>
                         }
 
                         <FormControl>
@@ -155,8 +168,6 @@ export default function LoginPage() {
 function SignInButton() {
     const status = useFormStatus();
     const { pending } = status;
-
-    console.log(status);
 
     return <LoadingButton
         type="submit"

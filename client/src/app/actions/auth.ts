@@ -1,13 +1,7 @@
 "use server";
 
-import { z } from 'zod';
-
-import { signIn } from "@/auth"
-
-const SignupFormSchema = z.object({
-    email: z.string().email({ message: 'Please enter a valid email.' }).trim(),
-    password: z.string().min(1, { message: 'Please enter a password.' }).trim(),
-});
+import { signIn } from "@/auth";
+import { signInSchema } from "@/app/lib/zod";
 
 export type FormState =
     | {
@@ -17,13 +11,14 @@ export type FormState =
         }
         message?: string
     }
-    | undefined
+    | { ok: true }
+    | undefined;
 
 export async function signin(state: FormState, formData: FormData): Promise<FormState> {
-    const validatedFields = SignupFormSchema.safeParse({
+    const validatedFields = signInSchema.safeParse({
         email: formData.get('email'),
         password: formData.get('password'),
-    })
+    });
 
 
     if (!validatedFields.success) {
@@ -32,5 +27,15 @@ export async function signin(state: FormState, formData: FormData): Promise<Form
         }
     }
 
-    await signIn('credentials', formData);
+    try {
+        await signIn('credentials', { ...validatedFields.data, redirect: false });
+    } catch (error) {
+        console.error(error);
+
+        return {
+            message: "Wrong email or password",
+        };
+    }
+
+    return { ok: true };
 }

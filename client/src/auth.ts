@@ -4,9 +4,6 @@ import Keycloak from "next-auth/providers/keycloak";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     debug: true,
-    pages: {
-        signIn: "/login",
-    },
     providers: [
         Keycloak,
         Credentials({
@@ -28,4 +25,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
         }),
     ],
+    callbacks: {
+        jwt({ token, user, account, profile, trigger }) {
+            if (trigger === "signIn") {
+                console.log('trigger', trigger);
+                console.log('token', token);
+                console.log('user', user);
+                console.log('account', account);
+                console.log('profile', profile);
+            }
+            return token
+        },
+        // session({ session, token, user }) {
+        //     console.log('session_session', session);
+        //     console.log('session_token', token);
+        //     console.log('session_user', user);
+        //     return session
+        // },
+    },
 });

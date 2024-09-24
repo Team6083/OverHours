@@ -86,7 +86,7 @@ export default function Home() {
 
                 {isCurrentIn ?
                   <Typography variant="caption">
-                    Sign-in at {(new Date()).toLocaleString()}
+                    Sign-in at {(new Date("2024-09-07")).toLocaleString()}
                   </Typography> : null}
               </Box>
             </CardContent>
@@ -103,7 +103,7 @@ export default function Home() {
                 {
                   id: "1",
                   name: "Kenn Huang",
-                  signInTime: new Date(),
+                  signInTime: new Date("2024-09-07"),
                   season: "2021",
                 }
               ]} />
