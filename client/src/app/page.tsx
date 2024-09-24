@@ -16,35 +16,7 @@ import {
 
 import { CardWithShadow } from "@/components/CardWithShadow";
 import LogsTable from "@/components/LogsTable";
-
-function stringToColor(string: string) {
-  let hash = 0;
-  let i;
-
-  /* eslint-disable no-bitwise */
-  for (i = 0; i < string.length; i += 1) {
-    hash = string.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  let color = '#';
-
-  for (i = 0; i < 3; i += 1) {
-    const value = (hash >> (i * 8)) & 0xff;
-    color += `00${value.toString(16)}`.substr(-2);
-  }
-  /* eslint-enable no-bitwise */
-
-  return color;
-}
-
-function stringAvatar(name: string) {
-  return {
-    sx: {
-      bgcolor: stringToColor(name),
-    },
-    children: `${name.split(' ')[0][0]}${name.split(' ')[1] ? name.split(' ')[1][0] : ""}`,
-  };
-}
+import { stringAvatar } from "@/utils";
 
 export default function Home() {
   const theme = useTheme();
@@ -81,7 +53,7 @@ export default function Home() {
                   fullWidth={true}
                   onClick={() => setIsCurrentIn(!isCurrentIn)}
                 >
-                  {isCurrentIn ? "Sign-out" : "Sign-in"}
+                  {isCurrentIn ? "Clock-out" : "Clock-in"}
                 </Button>
 
                 {isCurrentIn ?

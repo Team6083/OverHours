@@ -27,6 +27,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import LoginIcon from '@mui/icons-material/Login';
 
 import { useSession, signOut } from "next-auth/react";
+import { stringAvatar } from "@/utils";
 
 const drawerWidth = 240;
 
@@ -145,7 +146,7 @@ export default function AppNav() {
                         {session.status === "authenticated" ?
                             <Tooltip title="Open settings">
                                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                    <Avatar alt={session.data.user?.name ?? ""} src={session.data.user?.image ?? undefined} />
+                                    <Avatar {...stringAvatar(session.data.user?.name ?? "")} />
                                 </IconButton>
                             </Tooltip>
                             : <Button
