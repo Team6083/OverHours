@@ -1,23 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+
+import { auth } from "@/auth";
+import { NextResponse } from "next/server";
 
 const publicRoutes = ['/login'];
 
 const isDevMode = process.env.NODE_ENV === 'development';
 
-export default async function middleware(req: NextRequest) {
+export default auth(async (req) => {
+    const session = await auth();
+
     const path = req.nextUrl.pathname;
     const isPublicRoute = publicRoutes.includes(path);
 
-    const cookie = cookies().get('session')?.value;
-    const session = cookie;
-
-    if (!isPublicRoute && !session && !isDevMode) {
-        return NextResponse.redirect(new URL('/login', req.nextUrl));
+    if (!session && !isPublicRoute && !isDevMode) {
+        return NextResponse.redirect('/login');
     }
 
-    return NextResponse.next();
-}
+});
 
 // Routes Middleware should not run on
 export const config = {

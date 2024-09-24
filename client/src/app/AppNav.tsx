@@ -26,6 +26,8 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import LoginIcon from '@mui/icons-material/Login';
 
+import { useSession, signOut } from "next-auth/react";
+
 const drawerWidth = 240;
 
 const navItems: (NavItem | string)[] = [
@@ -46,12 +48,8 @@ export type UserInfo = {
     avatarSrc?: string;
 };
 
-export interface AppNavProps {
-    userInfo?: UserInfo;
-}
-
-export default function AppNav(props: AppNavProps) {
-    const { userInfo } = props;
+export default function AppNav() {
+    const session = useSession();
 
     const theme = useTheme();
     const router = useRouter();
@@ -70,6 +68,14 @@ export default function AppNav(props: AppNavProps) {
 
     const handleCloseUserMenu = () => {
         setAnchorElUser(null);
+    };
+
+    const handleSettingsClick = (setting: string) => {
+        if (setting === 'Logout') {
+            signOut();
+        }
+
+        handleCloseUserMenu();
     };
 
     const drawer = (
@@ -136,10 +142,10 @@ export default function AppNav(props: AppNavProps) {
                     </Box>
 
                     <Box sx={{ flexGrow: 0, paddingLeft: theme.spacing(1) }}>
-                        {userInfo ?
+                        {session.status === "authenticated" ?
                             <Tooltip title="Open settings">
                                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                    <Avatar alt={userInfo.name} src={userInfo.avatarSrc} />
+                                    <Avatar alt={session.data.user?.name ?? ""} src={session.data.user?.image ?? undefined} />
                                 </IconButton>
                             </Tooltip>
                             : <Button
@@ -167,7 +173,7 @@ export default function AppNav(props: AppNavProps) {
                             onClose={handleCloseUserMenu}
                         >
                             {settings.map((setting) => (
-                                <MenuItem key={setting} onClick={handleCloseUserMenu}>
+                                <MenuItem key={setting} onClick={() => handleSettingsClick(setting)}>
                                     <Typography sx={{ textAlign: 'center' }}>{setting}</Typography>
                                 </MenuItem>
                             ))}

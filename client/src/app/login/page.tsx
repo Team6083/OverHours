@@ -22,6 +22,9 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 
 import { CardWithShadow } from "@/components/CardWithShadow";
 import { signin } from "@/app/actions/auth";
+import { signIn as nextSignIn, useSession } from "next-auth/react"
+import { useEffect } from "react";
+import { redirect } from "next/navigation";
 
 const CardContent = styled(MuiCardContent)(({ theme }) => ({
     display: 'flex',
@@ -31,6 +34,15 @@ const CardContent = styled(MuiCardContent)(({ theme }) => ({
 }));
 
 export default function LoginPage() {
+    const data = useSession();
+
+    // Redirect to home page if user is already authenticated
+    useEffect(() => {
+        if (data.status === 'authenticated') {
+            redirect('/');
+        }
+    }, [data]);
+
     const [state, action] = useFormState(signin, undefined);
 
     const emailError = state?.errors?.email && state?.errors?.email?.length > 0 ? true : false;
@@ -128,7 +140,7 @@ export default function LoginPage() {
                         <Button
                             fullWidth
                             variant="outlined"
-                            onClick={() => alert('Sign in with CMS Robotics SSO')}
+                            onClick={() => nextSignIn('keycloak')}
                             startIcon={<SmartToyIcon />}
                         >
                             Sign in with CMS Robotics SSO
