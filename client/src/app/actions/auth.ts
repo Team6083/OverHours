@@ -1,7 +1,7 @@
-"use server";
+'use server';
 
-import { signIn } from "@/auth";
-import { signInSchema } from "@/app/lib/zod";
+import { signIn } from '@/auth';
+import { signInSchema } from '@/app/lib/zod';
 
 export type FormState =
     | {
@@ -15,27 +15,26 @@ export type FormState =
     | undefined;
 
 export async function signin(state: FormState, formData: FormData): Promise<FormState> {
-    const validatedFields = signInSchema.safeParse({
-        email: formData.get('email'),
-        password: formData.get('password'),
-    });
+  const validatedFields = signInSchema.safeParse({
+    email: formData.get('email'),
+    password: formData.get('password'),
+  });
 
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
 
-    if (!validatedFields.success) {
-        return {
-            errors: validatedFields.error.flatten().fieldErrors,
-        }
-    }
+  try {
+    await signIn('credentials', { ...validatedFields.data, redirect: false });
+  } catch (error) {
+    console.error(error);
 
-    try {
-        await signIn('credentials', { ...validatedFields.data, redirect: false });
-    } catch (error) {
-        console.error(error);
+    return {
+      message: 'Wrong email or password',
+    };
+  }
 
-        return {
-            message: "Wrong email or password",
-        };
-    }
-
-    return { ok: true };
+  return { ok: true };
 }

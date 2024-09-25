@@ -1,4 +1,3 @@
-
 export interface SignInLog {
     id: string;
     name: string;
@@ -6,7 +5,7 @@ export interface SignInLog {
     signOutTime?: Date;
     season: string;
 
-    lockStatus?: "auto" | "manual";
+    lockStatus?: 'auto' | 'manual';
     lockedBy?: string;
 
     accumSec?: number;

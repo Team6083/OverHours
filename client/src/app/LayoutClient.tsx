@@ -1,19 +1,15 @@
-"use client";
+'use client';
 
-import { NotistackProvider } from "./SnackbarProviderClient";
+import { NotistackProvider } from './SnackbarProviderClient';
 
 export default function LayoutClient({
-    children,
+  children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-
-    return (
-        <>
-            <NotistackProvider>
-                {children}
-            </NotistackProvider>
-        </>
-    );
-
+  return (
+    <NotistackProvider>
+      {children}
+    </NotistackProvider>
+  );
 }
