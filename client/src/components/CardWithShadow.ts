@@ -1,3 +1,5 @@
+'use client';
+
 import { Card, styled } from '@mui/material';
 
 const CardWithShadow = styled(Card)(({ theme }) => ({

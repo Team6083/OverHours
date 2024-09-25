@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { SessionProvider } from 'next-auth/react';
 
-import localFont from 'next/font/local';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
@@ -17,18 +16,7 @@ const inter = Inter({
   weight: ['300', '400', '500', '700'],
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-roboto',
-});
-
-const geistSans = localFont({
-  src: './fonts/GeistVF.woff',
-  variable: '--font-geist-sans',
-  weight: '100 900',
-});
-const geistMono = localFont({
-  src: './fonts/GeistMonoVF.woff',
-  variable: '--font-geist-mono',
-  weight: '100 900',
+  variable: '--font-inter',
 });
 
 export const metadata: Metadata = {
@@ -43,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable}`}>
+      <body className={`${inter.variable}`}>
         <AppRouterCacheProvider>
           <ThemeProvider theme={appTheme}>
             <CssBaseline enableColorScheme />

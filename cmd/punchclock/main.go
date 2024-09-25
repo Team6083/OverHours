@@ -23,7 +23,7 @@ func main() {
 	svc := punchclock.NewService(eventRepo)
 
 	r := chi.NewRouter()
-	r.Mount("/punchClock/v1", punchclock.MakeHTTPHandler(svc, httpLogger))
+	r.Mount("/v1", punchclock.MakeHTTPHandler(svc, httpLogger))
 
 	err = logger.Log("msg", "HTTP", "addr", ":8081")
 	if err != nil {

@@ -1,11 +1,5 @@
-'use client';
-
-import { useState } from 'react';
-
 import {
-  Container,
   Typography,
-  useTheme,
   Grid2 as Grid,
   CardContent,
   Box,
@@ -17,14 +11,32 @@ import {
 import CardWithShadow from '@/components/CardWithShadow';
 import LogsTable from '@/components/LogsTable';
 import { stringAvatar } from '@/utils';
+import HomeContainer from './HomeContainer';
 
-export default function Home() {
-  const theme = useTheme();
+interface TimeLog {
+  userId: string;
+  status: 'CurrentlyIn' | 'Done' | 'Locked';
+  inTime: string;
+  outTime: string;
+  relatedEventIds: string[];
+}
 
-  const [isCurrentIn, setIsCurrentIn] = useState(true);
+export default async function Home() {
+  const isCurrentIn = false;
+
+  const resp = await fetch('http://localhost:8081/v1/timeLogs', { cache: 'no-store' });
+  const data: { logs: TimeLog[] } = await resp.json();
+
+  const tmpData = data.logs.filter((log) => log.status === 'CurrentlyIn').map((log) => ({
+    id: 'abcd',
+    name: log.userId,
+    signInTime: new Date(log.inTime),
+    signOutTime: log.outTime ? new Date(log.outTime) : undefined,
+    season: 'none',
+  }));
 
   return (
-    <Container maxWidth="xl" sx={{ marginTop: theme.spacing(3), marginBottom: theme.spacing(3) }}>
+    <HomeContainer>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
           <Typography variant="h4">FRC Team 6083</Typography>
@@ -52,7 +64,6 @@ export default function Home() {
                   variant="contained"
                   size="large"
                   fullWidth
-                  onClick={() => setIsCurrentIn(!isCurrentIn)}
                 >
                   {isCurrentIn ? 'Clock-out' : 'Clock-in'}
                 </Button>
@@ -78,19 +89,20 @@ export default function Home() {
 
               <LogsTable
                 mode="current-in"
-                data={[
-                  {
-                    id: '1',
-                    name: 'Kenn Huang',
-                    signInTime: new Date('2024-09-07'),
-                    season: '2021',
-                  },
-                ]}
+                // data={[
+                //   {
+                //     id: '1',
+                //     name: 'Kenn Huang',
+                //     signInTime: new Date('2024-09-07'),
+                //     season: '2021',
+                //   },
+                // ]}
+                data={tmpData}
               />
             </CardContent>
           </CardWithShadow>
         </Grid>
       </Grid>
-    </Container>
+    </HomeContainer>
   );
 }
