@@ -1,17 +1,17 @@
 package punchclock
 
 import (
-	"errors"
-	"github.com/Team6083/OverHours/pkgs/punchclock/internal"
-	"github.com/Team6083/OverHours/pkgs/punchclock/internal/timelog"
 	"time"
 
+	"github.com/Team6083/OverHours/internal/errors"
+	"github.com/Team6083/OverHours/pkgs/punchclock/internal"
 	"github.com/Team6083/OverHours/pkgs/punchclock/internal/event"
+	"github.com/Team6083/OverHours/pkgs/punchclock/internal/timelog"
 )
 
-var ErrAlreadyIn = errors.New("already in")
-var ErrNotIn = errors.New("not in")
-var ErrInvTime = errors.New("invalid time")
+var ErrAlreadyIn = errors.NewInvalidArgumentsError("already in")
+var ErrNotIn = errors.NewInvalidArgumentsError("not in")
+var ErrInvTime = errors.NewInvalidArgumentsError("invalid time")
 
 type GetTimeLogsOptions struct {
 	UserID    internal.UserID

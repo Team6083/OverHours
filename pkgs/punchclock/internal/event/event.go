@@ -30,7 +30,8 @@ type Event struct {
 	LastEditAt time.Time
 }
 
-func NewEvent(id ID, userId internal.UserID, eventType Type, time time.Time, executor internal.UserID, lastEditAt time.Time) Event {
+func NewEvent(id ID, userId internal.UserID, eventType Type, time time.Time,
+	executor internal.UserID, lastEditAt time.Time) Event {
 
 	return Event{
 		ID: id,
