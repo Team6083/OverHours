@@ -3,165 +3,139 @@ package punchclock
 import (
 	"context"
 	"errors"
-	"github.com/Team6083/OverHours/pkgs/punchclock/internal"
-	"github.com/Team6083/OverHours/pkgs/punchclock/internal/timelog"
+	"fmt"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
 
-	"github.com/Team6083/OverHours/pkgs/punchclock/internal/event"
+	"github.com/Team6083/OverHours/pkgs/punchclock/internal"
+	"github.com/Team6083/OverHours/pkgs/punchclock/internal/timelog"
 )
 
 var (
 	ErrMissingParam = errors.New("missing parameter")
 )
 
-type EventDTO struct {
-	ID string `json:"id"`
-
-	UserID string    `json:"userId"`
-	Type   string    `json:"type"`
-	Time   time.Time `json:"time"`
-
-	Executor   string    `json:"executor"`
-	LastEditAt time.Time `json:"lastEditAt"`
-}
-
-func NewEventDTO(ev *event.Event) EventDTO {
-	var eventType string
-	if ev.Type == event.PunchIn {
-		eventType = "PunchIn"
-	} else if ev.Type == event.PunchOut {
-		eventType = "PunchOut"
-	} else if ev.Type == event.Locked {
-		eventType = "Locked"
-	} else {
-		eventType = "Unknown"
-	}
-
-	return EventDTO{
-		string(ev.ID),
-		string(ev.UserID),
-		eventType,
-		ev.Time,
-		string(ev.Executor),
-		ev.LastEditAt,
-	}
-}
-
 type TimeLogDTO struct {
-	UserID  string    `json:"userId"`
-	Status  string    `json:"status"`
-	InTime  time.Time `json:"inTime"`
-	OutTime time.Time `json:"outTime"`
+	ID     string `json:"id"`
+	UserID string `json:"userId"`
 
-	RelatedEventIDs []string `json:"relatedEventIds"`
+	Status  string     `json:"status"`
+	InTime  time.Time  `json:"inTime"`
+	OutTime *time.Time `json:"outTime"`
+
+	Notes string `json:"notes"`
 }
 
-func NewTimeLogDTO(l timelog.TimeLog) TimeLogDTO {
+func NewTimeLogDTO(l *timelog.TimeLog) TimeLogDTO {
 	var status string
 	if l.Status == timelog.CurrentlyIn {
-		status = "CurrentlyIn"
+		status = "currently-in"
 	} else if l.Status == timelog.Done {
-		status = "Done"
+		status = "done"
 	} else if l.Status == timelog.Locked {
-		status = "Locked"
+		status = "locked"
 	} else {
-		status = "Unknown"
+		status = "unknown"
 	}
 
-	rIds := make([]string, len(l.RelatedEventIDs))
-	for i, id := range l.RelatedEventIDs {
-		rIds[i] = string(id)
+	var outTime *time.Time
+	if !l.OutTime.IsZero() {
+		outTime = &l.OutTime
 	}
 
 	return TimeLogDTO{
+		string(l.ID),
 		string(l.UserID),
 		status,
 		l.InTime,
-		l.OutTime,
-		rIds,
+		outTime,
+		l.Notes,
 	}
 }
 
-type basicEventRequest struct {
-	UserId   string    `json:"userId"`
-	Time     time.Time `json:"time"`
-	Executor string    `json:"executor"`
+type generalInOutRequest struct {
+	UserId string    `json:"userId"`
+	Time   time.Time `json:"time"`
+}
+
+type generalInOutResponse struct {
+	TimeLog TimeLogDTO `json:"timeLog"`
 }
 
 type punchInRequest struct {
-	basicEventRequest
+	generalInOutRequest
 }
 
 type punchInResponse struct {
-	Event EventDTO `json:"event"`
+	generalInOutResponse
 }
 
 func makePunchInEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*punchInRequest)
 
-		if req.UserId == "" || time.Time.IsZero(req.Time) || req.Executor == "" {
-			return nil, ErrMissingParam
+		if req.UserId == "" || time.Time.IsZero(req.Time) {
+			return nil, fmt.Errorf("%w: userId, time is required", ErrMissingParam)
 		}
 
-		ev, err := s.PunchIn(internal.UserID(req.UserId), req.Time, internal.UserID(req.Executor))
+		tl, err := s.PunchIn(internal.UserID(req.UserId), req.Time)
 		if err != nil {
 			return nil, err
 		}
 
-		return punchInResponse{NewEventDTO(ev)}, nil
+		return punchInResponse{generalInOutResponse{NewTimeLogDTO(tl)}}, nil
 	}
 }
 
 type punchOutRequest struct {
-	basicEventRequest
+	generalInOutRequest
 }
 
 type punchOutResponse struct {
-	Event EventDTO `json:"event"`
+	generalInOutResponse
 }
 
 func makePunchOutEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*punchOutRequest)
 
-		if req.UserId == "" || time.Time.IsZero(req.Time) || req.Executor == "" {
-			return nil, ErrMissingParam
+		if req.UserId == "" || time.Time.IsZero(req.Time) {
+			return nil, fmt.Errorf("%w: userId, time is required", ErrMissingParam)
 		}
 
-		ev, err := s.PunchOut(internal.UserID(req.UserId), req.Time, internal.UserID(req.Executor))
+		tl, err := s.PunchOut(internal.UserID(req.UserId), req.Time)
 		if err != nil {
 			return nil, err
 		}
 
-		return punchOutResponse{NewEventDTO(ev)}, nil
+		return punchOutResponse{generalInOutResponse{NewTimeLogDTO(tl)}}, nil
 	}
 }
 
 type lockRequest struct {
-	basicEventRequest
+	generalInOutRequest
+	Notes string `json:"notes"`
 }
 
 type lockResponse struct {
-	Event EventDTO `json:"event"`
+	generalInOutResponse
 }
 
 func makeLockEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*lockRequest)
 
-		if req.UserId == "" || time.Time.IsZero(req.Time) || req.Executor == "" {
-			return nil, ErrMissingParam
+		if req.UserId == "" || time.Time.IsZero(req.Time) {
+			return nil, fmt.Errorf("%w: userId, time is required", ErrMissingParam)
 		}
 
-		ev, err := s.Lock(internal.UserID(req.UserId), req.Time, internal.UserID(req.Executor))
+		tl, err := s.Lock(internal.UserID(req.UserId), req.Time, req.Notes)
 		if err != nil {
 			return nil, err
 		}
 
-		return lockResponse{NewEventDTO(ev)}, nil
+		return lockResponse{generalInOutResponse{NewTimeLogDTO(tl)}}, nil
 	}
 }
 
@@ -176,16 +150,16 @@ func makeGetTimeLogsEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 
 		var opts GetTimeLogsOptions
-		logs, err := s.GetTimeLogs(opts)
+		timeLogs, err := s.GetTimeLogs(opts)
 		if err != nil {
 			return nil, err
 		}
 
-		dtos := make([]TimeLogDTO, len(logs))
-		for i, log := range logs {
-			dtos[i] = NewTimeLogDTO(log)
+		timeLogDTOs := make([]TimeLogDTO, len(timeLogs))
+		for i, log := range timeLogs {
+			timeLogDTOs[i] = NewTimeLogDTO(log)
 		}
 
-		return getTimeLogsResponse{dtos}, nil
+		return getTimeLogsResponse{timeLogDTOs}, nil
 	}
 }

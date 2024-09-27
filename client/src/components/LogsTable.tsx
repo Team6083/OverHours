@@ -6,8 +6,8 @@ import {
   Chip,
   Avatar,
   IconButton,
-  Typography,
   Tooltip,
+  Typography,
 } from '@mui/material';
 
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -16,25 +16,27 @@ import LockClockIcon from '@mui/icons-material/LockClock';
 import LockPersonIcon from '@mui/icons-material/LockPerson';
 
 import { secondToString } from '@/utils';
-import { SignInLog } from '@/types';
 
 import { ColumnInfo, EnhancedTable, TableRow } from './EnhancedTable';
 
-type TableRowData = {
+export interface LogsTableData {
   id: string;
-  name: string;
-  signInTime: Date;
-  signOutTime?: {
+  user: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  inTime: Date;
+  outTime: {
     time: Date;
     lockStatus?: 'auto' | 'manual';
     lockedBy?: string;
-  };
-  accumTime: {
+  } | 'in';
+  accumTime?: {
     sec: number;
-    originalSec?: number;
+    notCounted?: boolean;
     notes?: string;
-  } | 'sign-in' | 'no-data';
-  season: string;
+  };
 }
 
 const headCells: ColumnInfo[] = [
@@ -42,32 +44,34 @@ const headCells: ColumnInfo[] = [
     key: 'id', label: 'ID', numeric: false, disablePadding: true, sortable: false,
   },
   {
-    key: 'name',
+    key: 'user',
     label: 'Name',
     numeric: false,
     disablePadding: false,
-    mapToElement: (val: TableRowData['name']) => (
+    mapToElement: (val: LogsTableData['user']) => (
       <Chip
-        avatar={<Avatar alt={val} src="https://2.gravatar.com/avatar/7d153db9ab817d315b65e64e0fc78ff51b05f32673e1ff90696d398bc28adc43?size=512" />}
-        label={val}
+        avatar={<Avatar alt={val.name} src={val.avatar ?? 'https://2.gravatar.com/avatar/7d153db9ab817d315b65e64e0fc78ff51b05f32673e1ff90696d398bc28adc43?size=512'} />}
+        label={val.name}
         variant="outlined"
       />
     ),
   },
   {
-    key: 'signInTime',
+    key: 'inTime',
     label: 'Sign-In Time',
     numeric: false,
     disablePadding: false,
-    mapToElement: (val: TableRowData['signInTime']) => val.toLocaleString(),
+    mapToElement: (val: LogsTableData['inTime']) => val.toLocaleString(),
   },
   {
-    key: 'signOutTime',
+    key: 'outTime',
     label: 'Sign-Out Time',
     numeric: false,
     disablePadding: false,
-    mapToElement: (val: TableRowData['signOutTime']) => {
-      const { time, lockStatus, lockedBy } = val ?? {};
+    mapToElement: (val: LogsTableData['outTime']) => {
+      if (val === 'in') return <Chip color="success" label="Currently Sign-In" />;
+
+      const { time, lockStatus, lockedBy } = val;
 
       if (!time) return '';
 
@@ -85,9 +89,9 @@ const headCells: ColumnInfo[] = [
 
       return str;
     },
-    sortFunc: (a: TableRowData['signOutTime'], b: TableRowData['signOutTime']) => {
-      const valA = a?.time.getTime() ?? 0;
-      const valB = b?.time.getTime() ?? 0;
+    sortFunc: (a: LogsTableData['outTime'], b: LogsTableData['outTime']) => {
+      const valA = a === 'in' ? Number.MAX_VALUE : a.time.getTime();
+      const valB = b === 'in' ? Number.MAX_VALUE : b.time.getTime();
 
       // eslint-disable-next-line no-nested-ternary
       return valA === valB ? 0
@@ -99,45 +103,23 @@ const headCells: ColumnInfo[] = [
     label: 'Accumulated Time',
     numeric: false,
     disablePadding: false,
-    mapToElement: (val: TableRowData['accumTime']) => {
-      if (typeof val === 'string') {
-        return (
-          <Tooltip title={val === 'no-data' ? 'Please contact Moderators' : undefined}>
-            {
-              val === 'no-data' ? <Chip color="error" label="No Data" />
-                : <Chip color="success" label="Currently Sign-In" />
-            }
-          </Tooltip>
-        );
+    mapToElement: (val: LogsTableData['accumTime']) => {
+      if (!val) return '';
+
+      if (val.notCounted) {
+        return <Typography component="span" color="warning">{val.notes ?? ''}</Typography>;
       }
 
-      const { sec, originalSec, notes } = val;
-
-      return (
-        <Tooltip title={notes}>
-          <Typography component="span" color={originalSec !== undefined ? 'warning' : undefined}>
-            {originalSec !== undefined ? (
-              <>
-                <Typography component="span" style={{ textDecoration: 'line-through' }}>{secondToString(originalSec)}</Typography>
-                {' → '}
-              </>
-            ) : null}
-            {secondToString(sec)}
-          </Typography>
-        </Tooltip>
-      );
+      return secondToString(val.sec);
     },
-    sortFunc: (a: TableRowData['accumTime'], b: TableRowData['accumTime']) => {
-      const valA = typeof a === 'string' ? 0 : a.sec;
-      const valB = typeof b === 'string' ? 0 : b.sec;
+    sortFunc: (a: LogsTableData['accumTime'], b: LogsTableData['accumTime']) => {
+      const valA = a && !a.notCounted ? a.sec : 0;
+      const valB = b && !b.notCounted ? b.sec : 0;
 
       // eslint-disable-next-line no-nested-ternary
       return valA === valB ? 0
         : (valA > valB ? 1 : -1);
     },
-  },
-  {
-    key: 'season', label: 'Season', numeric: false, disablePadding: false,
   },
   {
     key: 'actions',
@@ -161,54 +143,28 @@ const headCells: ColumnInfo[] = [
 export interface LogsTableProps {
   title?: string;
   mode: 'current-in' | 'history';
-  data?: SignInLog[];
+  data?: LogsTableData[];
 }
 
 export default function LogsTable(props: LogsTableProps) {
   const { mode, data, title } = props;
 
   const columns = useMemo(() => {
-    if (mode === 'current-in') {
-      return headCells.filter((v) => v.key !== 'id' && v.key !== 'signOutTime' && v.key !== 'accumTime');
-    } if (mode === 'history') {
-      return headCells.filter((v) => v.key !== 'actions');
-    }
-    return headCells;
+    const fieldsToHide = {
+      'current-in': ['id', 'outTime', 'accumTime', 'notes'],
+      history: ['id', 'actions'],
+    };
+
+    return headCells.filter((v) => !fieldsToHide[mode].includes(v.key));
   }, [mode]);
 
-  const rows: TableRow<TableRowData>[] = useMemo(() => (data ?? []).map((v) => {
-    const {
-      id, name, signInTime, signOutTime, season, lockStatus, lockedBy, accumSec, accumNotes,
-    } = v;
-
-    const realAccumSec = signOutTime
-      ? (signOutTime.getTime() - signInTime.getTime()) / 1000
-      : undefined;
-
-    const accumTime: TableRowData['accumTime'] = realAccumSec === undefined ? 'sign-in'
-      : lockStatus !== undefined && accumSec === undefined ? 'no-data'
-        : {
-          sec: accumSec ?? realAccumSec,
-          originalSec: accumSec ? realAccumSec : undefined,
-          notes: accumNotes,
-        };
-
-    return {
-      key: id,
-      data: {
-        id,
-        name,
-        signInTime,
-        signOutTime: signOutTime ? {
-          time: signOutTime,
-          lockStatus,
-          lockedBy,
-        } : undefined,
-        season,
-        accumTime,
-      },
-    };
-  }), [data]);
+  const rows: TableRow<LogsTableData>[] = useMemo(
+    () => (data ?? []).map((v) => ({
+      key: v.id,
+      data: v,
+    })),
+    [data],
+  );
 
   return (
     <EnhancedTable

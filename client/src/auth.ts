@@ -11,7 +11,7 @@ export const {
     Credentials({
       // You can specify which fields should be submitted,
       // by adding keys to the `credentials` object.
-      // e.g. domain, username, password, 2FA token, etc.
+      // e.g. timelog, username, password, 2FA token, etc.
       credentials: {
         email: {},
         password: {},

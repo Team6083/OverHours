@@ -9,31 +9,45 @@ import {
 } from '@mui/material';
 
 import CardWithShadow from '@/components/CardWithShadow';
-import LogsTable from '@/components/LogsTable';
+import LogsTable, { LogsTableData } from '@/components/LogsTable';
 import { stringAvatar } from '@/utils';
+import { APITimeLog } from '@/types';
+import { mapTimeLogToLogsTableRow } from '@/mappers';
 import HomeContainer from './HomeContainer';
-
-interface TimeLog {
-  userId: string;
-  status: 'CurrentlyIn' | 'Done' | 'Locked';
-  inTime: string;
-  outTime: string;
-  relatedEventIds: string[];
-}
 
 export default async function Home() {
   const isCurrentIn = false;
 
   const resp = await fetch('http://localhost:8081/v1/timeLogs', { cache: 'no-store' });
-  const data: { logs: TimeLog[] } = await resp.json();
+  const respData = await resp.json();
 
-  const tmpData = data.logs.filter((log) => log.status === 'CurrentlyIn').map((log) => ({
-    id: 'abcd',
-    name: log.userId,
-    signInTime: new Date(log.inTime),
-    signOutTime: log.outTime ? new Date(log.outTime) : undefined,
-    season: 'none',
-  }));
+  const logs: LogsTableData[] = respData.logs.map((v: APITimeLog) => {
+    const partial = {
+      id: v.id,
+      userId: v.userId,
+      inTime: new Date(v.inTime),
+      status: v.status,
+      season: '2024 Season',
+    };
+
+    if (v.status === 'currently-in') {
+      return mapTimeLogToLogsTableRow({
+        ...partial,
+        status: 'currently-in',
+      });
+    }
+
+    if (!v.outTime) {
+      throw new Error('Out time is missing');
+    }
+
+    return mapTimeLogToLogsTableRow({
+      ...partial,
+      status: v.status,
+      outTime: new Date(v.outTime),
+      notes: v.notes ? v.notes : undefined,
+    });
+  });
 
   return (
     <HomeContainer>
@@ -97,7 +111,7 @@ export default async function Home() {
                 //     season: '2021',
                 //   },
                 // ]}
-                data={tmpData}
+                data={logs}
               />
             </CardContent>
           </CardWithShadow>

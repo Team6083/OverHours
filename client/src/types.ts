@@ -1,13 +1,31 @@
-export interface SignInLog {
+export type APITimeLog = {
     id: string;
-    name: string;
-    signInTime: Date;
-    signOutTime?: Date;
-    season: string;
-
-    lockStatus?: 'auto' | 'manual';
-    lockedBy?: string;
-
-    accumSec?: number;
-    accumNotes?: string;
+    userId: string;
+    status: 'currently-in' | 'done' | 'locked';
+    inTime: string;
+    outTime: string | null;
+    notes: string;
 }
+
+interface TimeLogBase {
+    id: string;
+    userId: string;
+
+    status: 'currently-in' | 'done' | 'locked';
+    inTime: Date;
+
+    notes?: string;
+
+    season: string;
+}
+
+export type InTimeLog = TimeLogBase & {
+    status: 'currently-in';
+};
+
+export type OutTimeLog = TimeLogBase & {
+    status: 'done' | 'locked';
+    outTime: Date;
+};
+
+export type TimeLog = InTimeLog | OutTimeLog;

@@ -19,8 +19,8 @@ func main() {
 	}
 	httpLogger := log.With(logger, "component", "http")
 
-	eventRepo := punchclock.NewInMemEventRepository()
-	svc := punchclock.NewService(eventRepo)
+	timeLogRepo := punchclock.NewInMemTimeLogRepository()
+	svc := punchclock.NewService(timeLogRepo)
 
 	r := chi.NewRouter()
 	r.Mount("/v1", punchclock.MakeHTTPHandler(svc, httpLogger))

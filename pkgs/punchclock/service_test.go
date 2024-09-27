@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/Team6083/OverHours/pkgs/punchclock/internal/event"
-	"github.com/Team6083/OverHours/pkgs/punchclock/internal/inmem"
+	"github.com/Team6083/OverHours/pkgs/punchclock/internal/inmemrepo"
 )
 
 func setup() (Service, event.Repository) {
-	repo := inmem.NewEventRepository()
+	repo := inmemrepo.NewTimeLogRepository()
 	return NewService(repo), repo
 }
 
