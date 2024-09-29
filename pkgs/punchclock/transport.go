@@ -54,7 +54,15 @@ func MakeHTTPHandler(svc Service, logger kitlog.Logger) http.Handler {
 		makeGetTimeLogsEndpoint(svc),
 		func(ctx context.Context, r *http.Request) (interface{}, error) {
 			var req getTimeLogsRequest
-			return req, nil
+			if r.URL.Query().Has("userId") {
+				req.UserID = r.URL.Query().Get("userId")
+			}
+
+			if r.URL.Query().Has("status") {
+				req.Status = r.URL.Query().Get("status")
+			}
+
+			return &req, nil
 		},
 		encodeResponse,
 		opts...,

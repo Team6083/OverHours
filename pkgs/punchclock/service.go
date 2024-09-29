@@ -63,7 +63,14 @@ func (s *service) PunchOut(userID internal.UserID, t time.Time) (*timelog.TimeLo
 		return nil, err
 	}
 
-	err = last.FinishLog(t, false)
+	if last == nil {
+		return nil, ErrNotIn
+	}
+
+	err = last.FinishLog(t, true)
+	if err != nil {
+		return nil, err
+	}
 
 	err = s.timeLogRepo.Store(last)
 	if err != nil {
@@ -79,7 +86,15 @@ func (s *service) Lock(userID internal.UserID, t time.Time, notes string) (*time
 		return nil, err
 	}
 
+	if last == nil {
+		return nil, ErrNotIn
+	}
+
 	err = last.FinishLog(t, true)
+	if err != nil {
+		return nil, err
+	}
+
 	last.SetNotes(notes)
 
 	err = s.timeLogRepo.Store(last)

@@ -8,12 +8,20 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 
+	internalErrors "github.com/Team6083/OverHours/internal/errors"
 	"github.com/Team6083/OverHours/pkgs/punchclock/internal"
 	"github.com/Team6083/OverHours/pkgs/punchclock/internal/timelog"
 )
 
 var (
 	ErrMissingParam = errors.New("missing parameter")
+)
+
+const (
+	StatusCurrentlyIn = "currently-in"
+	StatusDone        = "done"
+	StatusLocked      = "locked"
+	StatusUnknown     = "unknown"
 )
 
 type TimeLogDTO struct {
@@ -30,13 +38,13 @@ type TimeLogDTO struct {
 func NewTimeLogDTO(l *timelog.TimeLog) TimeLogDTO {
 	var status string
 	if l.Status == timelog.CurrentlyIn {
-		status = "currently-in"
+		status = StatusCurrentlyIn
 	} else if l.Status == timelog.Done {
-		status = "done"
+		status = StatusDone
 	} else if l.Status == timelog.Locked {
-		status = "locked"
+		status = StatusLocked
 	} else {
-		status = "unknown"
+		status = StatusUnknown
 	}
 
 	var outTime *time.Time
@@ -140,6 +148,8 @@ func makeLockEndpoint(s Service) endpoint.Endpoint {
 }
 
 type getTimeLogsRequest struct {
+	Status string
+	UserID string
 }
 
 type getTimeLogsResponse struct {
@@ -148,8 +158,26 @@ type getTimeLogsResponse struct {
 
 func makeGetTimeLogsEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(*getTimeLogsRequest)
 
 		var opts GetTimeLogsOptions
+		if req.Status != "" {
+			switch req.Status {
+			case StatusCurrentlyIn:
+				opts.Status = timelog.CurrentlyIn
+			case StatusDone:
+				opts.Status = timelog.Done
+			case StatusLocked:
+				opts.Status = timelog.Locked
+			default:
+				return nil, internalErrors.NewInvalidArgumentsError("invalid status")
+			}
+		}
+
+		if req.UserID != "" {
+			opts.UserID = internal.UserID(req.UserID)
+		}
+
 		timeLogs, err := s.GetTimeLogs(opts)
 		if err != nil {
 			return nil, err
