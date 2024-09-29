@@ -29,3 +29,10 @@ export type OutTimeLog = TimeLogBase & {
 };
 
 export type TimeLog = InTimeLog | OutTimeLog;
+
+export type UserInfo = {
+    id: string;
+    name?: string;
+    email?: string;
+    avatar?: string;
+}

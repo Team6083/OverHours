@@ -20,7 +20,7 @@ export const {
         let user = null;
 
         if (credentials.email === 'test@example.com' && credentials.password === 'password') {
-          user = { id: '1', name: 'Test User', email: 'test@example.com' };
+          user = { id: '1', name: 'John Doe', email: 'test@example.com' };
         }
 
         // return user object with their profile data
@@ -29,18 +29,18 @@ export const {
     }),
   ],
   callbacks: {
-    jwt({
-      token, user, account, profile, trigger,
-    }) {
-      if (trigger === 'signIn') {
-        console.log('trigger', trigger);
-        console.log('token', token);
-        console.log('user', user);
-        console.log('account', account);
-        console.log('profile', profile);
-      }
-      return token;
-    },
+    // jwt({
+    //   token, user, account, profile, trigger,
+    // }) {
+    //   if (trigger === 'signIn') {
+    //     console.log('trigger', trigger);
+    //     console.log('token', token);
+    //     console.log('user', user);
+    //     console.log('account', account);
+    //     console.log('profile', profile);
+    //   }
+    //   return token;
+    // },
     // session({ session, token, user }) {
     //     console.log('session_session', session);
     //     console.log('session_token', token);

@@ -2,18 +2,19 @@
 
 import { signIn } from '@/auth';
 import { signInSchema } from '@/app/lib/zod';
+import { redirect } from 'next/navigation';
 
 export type FormState =
-    | {
-        errors?: {
-            email?: string[]
-            password?: string[]
-        }
-        message?: string
+  | {
+    errors?: {
+      email?: string[]
+      password?: string[]
     }
-    | { ok: true }
-    | undefined;
+    message?: string
+  }
+  | undefined;
 
+// eslint-disable-next-line consistent-return
 export async function signin(state: FormState, formData: FormData): Promise<FormState> {
   const validatedFields = signInSchema.safeParse({
     email: formData.get('email'),
@@ -36,5 +37,5 @@ export async function signin(state: FormState, formData: FormData): Promise<Form
     };
   }
 
-  return { ok: true };
+  redirect('/');
 }

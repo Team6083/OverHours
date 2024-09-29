@@ -26,8 +26,9 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import LoginIcon from '@mui/icons-material/Login';
 
-import { useSession, signOut } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import { stringAvatar } from '@/utils';
+import { UserInfo } from '@/types';
 
 const drawerWidth = 240;
 
@@ -45,14 +46,11 @@ const navItems: (NavItem | string)[] = [
 
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
-export type UserInfo = {
-  name: string;
-  avatarSrc?: string;
-};
+export interface AppNavProps {
+  user?: UserInfo;
+}
 
-export default function AppNav() {
-  const session = useSession();
-
+export default function AppNav({ user }: AppNavProps) {
   const theme = useTheme();
   const router = useRouter();
 
@@ -144,10 +142,10 @@ export default function AppNav() {
           </Box>
 
           <Box sx={{ flexGrow: 0, paddingLeft: theme.spacing(1) }}>
-            {session.status === 'authenticated' ? (
+            {user ? (
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar {...stringAvatar(session.data.user?.name ?? '')} />
+                  <Avatar {...stringAvatar(user?.name ?? '')} />
                 </IconButton>
               </Tooltip>
             )

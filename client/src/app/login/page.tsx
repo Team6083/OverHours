@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
-import { redirect, useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
 import {
   Box,
@@ -25,8 +25,8 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 
 import { signIn as nextSignIn, useSession } from 'next-auth/react';
 
-import { signin } from '@/app/actions/auth';
 import CardWithShadow from '@/components/CardWithShadow';
+import { signin } from './actions';
 
 const CardContent = styled(MuiCardContent)(({ theme }) => ({
   display: 'flex',
@@ -52,7 +52,6 @@ function SignInButton() {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const data = useSession();
 
   // Redirect to home page if user is already authenticated
@@ -63,13 +62,6 @@ export default function LoginPage() {
   }, [data]);
 
   const [state, action] = useFormState(signin, undefined);
-
-  useEffect(() => {
-    if (state && 'ok' in state && state.ok) {
-      // FIXME: This is a workaround to reload the page after successful login
-      window.location.reload();
-    }
-  }, [router, state]);
 
   const errors = state && 'errors' in state && state?.errors ? state.errors : undefined;
   const message = state && 'message' in state && state?.message ? state.message : undefined;

@@ -12,7 +12,9 @@ export default auth(async (req) => {
   const isPublicRoute = publicRoutes.includes(path);
 
   if (!session && !isPublicRoute && !isDevMode) {
-    return NextResponse.redirect('/login');
+    const url = req.nextUrl;
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
   return undefined;
