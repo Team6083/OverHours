@@ -9,8 +9,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
+
+	internalErrors "github.com/Team6083/OverHours/internal/errors"
 )
 
 var (
@@ -21,6 +22,10 @@ func formatError(err error) (int, string) {
 	var syntaxError *json.SyntaxError
 	switch {
 	case errors.Is(err, ErrMissingParam):
+		return http.StatusBadRequest, err.Error()
+	case errors.Is(err, internalErrors.ErrNotFound):
+		return http.StatusNotFound, err.Error()
+	case errors.Is(err, internalErrors.ErrInvalidArguments):
 		return http.StatusBadRequest, err.Error()
 	case errors.As(err, &syntaxError):
 		return http.StatusBadRequest, fmt.Sprintf("json decode error: %s", syntaxError)
@@ -40,16 +45,7 @@ func NewErrorEncoder() kithttp.ErrorEncoder {
 func encodeError(ctx context.Context, inputErr error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	var httpStatus int
-	var errorMessage string
-
-	if isBusinessError, ok := ctx.Value("is_business_error").(bool); ok && isBusinessError {
-		httpStatus = http.StatusBadRequest
-		errorMessage = inputErr.Error()
-	} else {
-		httpStatus, errorMessage = formatError(inputErr)
-	}
-
+	httpStatus, errorMessage := formatError(inputErr)
 	w.WriteHeader(httpStatus)
 
 	err := json.NewEncoder(w).Encode(ErrorWrapper{
@@ -71,12 +67,6 @@ func EncodeHTTPGenericRequest(_ context.Context, r *http.Request, request interf
 }
 
 func EncodeHTTPGenericResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if f, ok := response.(endpoint.Failer); ok && f.Failed() != nil {
-		ctx = context.WithValue(ctx, "is_business_error", true)
-		encodeError(ctx, f.Failed(), w)
-		return nil
-	}
-
 	return json.NewEncoder(w).Encode(response)
 }
 
@@ -91,4 +81,12 @@ func DecodeError(_ context.Context, r *http.Response) error {
 	}
 
 	return nil
+}
+
+func DecodeHTTPGenericRequestFromJson(_ context.Context, r *http.Request, req interface{}) (interface{}, error) {
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }

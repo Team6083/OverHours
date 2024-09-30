@@ -1,4 +1,4 @@
-package punchclock
+package manager
 
 import (
 	"context"
@@ -20,59 +20,50 @@ func MakeHTTPHandler(svc Service, logger kitlog.Logger) http.Handler {
 		kithttp.ServerErrorEncoder(errorEncoder),
 	}
 
-	punchInHandler := kithttp.NewServer(
-		makePunchInEndpoint(svc),
-		func(ctx context.Context, r *http.Request) (interface{}, error) {
-			var req punchInRequest
-			return transport.DecodeHTTPGenericRequestFromJson(ctx, r, req)
-		},
-		transport.EncodeHTTPGenericResponse,
-		opts...,
-	)
-
-	punchOutHandler := kithttp.NewServer(
-		makePunchOutEndpoint(svc),
-		func(ctx context.Context, r *http.Request) (interface{}, error) {
-			var req punchOutRequest
-			return transport.DecodeHTTPGenericRequestFromJson(ctx, r, &req)
-		},
-		transport.EncodeHTTPGenericResponse,
-		opts...,
-	)
-
-	lockHandler := kithttp.NewServer(
-		makeLockEndpoint(svc),
-		func(ctx context.Context, r *http.Request) (interface{}, error) {
-			var req lockRequest
-			return transport.DecodeHTTPGenericRequestFromJson(ctx, r, &req)
-		},
-		transport.EncodeHTTPGenericResponse,
-		opts...,
-	)
-
-	getTimeLogsHandler := kithttp.NewServer(
-		makeGetTimeLogsEndpoint(svc),
-		func(ctx context.Context, r *http.Request) (interface{}, error) {
-			var req getTimeLogsRequest
-			if r.URL.Query().Has("userId") {
-				req.UserID = r.URL.Query().Get("userId")
-			}
-
-			if r.URL.Query().Has("status") {
-				req.Status = r.URL.Query().Get("status")
-			}
-
-			return &req, nil
-		},
-		transport.EncodeHTTPGenericResponse,
-		opts...,
-	)
-
 	r := chi.NewRouter()
-	r.Post("/punchIn", punchInHandler.ServeHTTP)
-	r.Post("/punchOut", punchOutHandler.ServeHTTP)
-	r.Post("/lock", lockHandler.ServeHTTP)
-	r.Get("/timeLogs", getTimeLogsHandler.ServeHTTP)
+	r.Route("/user", newUserRouteHandler(svc, opts))
 
 	return r
+}
+
+func newUserRouteHandler(svc Service, opts []kithttp.ServerOption) func(r chi.Router) {
+	createUser := kithttp.NewServer(
+		makeCreateUserEndpoint(svc),
+		func(ctx context.Context, r *http.Request) (interface{}, error) {
+			var req createUserRequest
+			return transport.DecodeHTTPGenericRequestFromJson(ctx, r, &req)
+		},
+		transport.EncodeHTTPGenericResponse,
+		opts...,
+	)
+
+	getUser := kithttp.NewServer(
+		makeGetUserEndpoint(svc),
+		func(ctx context.Context, r *http.Request) (interface{}, error) {
+			var req getUserRequest
+
+			id := chi.URLParam(r, "id")
+			req.ID = id
+
+			return transport.DecodeHTTPGenericRequestFromJson(ctx, r, &req)
+		},
+		transport.EncodeHTTPGenericResponse,
+		opts...,
+	)
+
+	getAllUsers := kithttp.NewServer(
+		makeGetAllUsersEndpoint(svc),
+		func(ctx context.Context, r *http.Request) (interface{}, error) {
+			var req getAllUsersRequest
+			return req, nil
+		},
+		transport.EncodeHTTPGenericResponse,
+		opts...,
+	)
+
+	return func(r chi.Router) {
+		r.Get("/", getAllUsers.ServeHTTP)
+		r.Post("/", createUser.ServeHTTP)
+		r.Get("/{id}", getUser.ServeHTTP)
+	}
 }

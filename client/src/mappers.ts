@@ -43,7 +43,7 @@ export function getTimeLogToLogsTableRowMapper(users: UserInfo[]) {
       id,
       user: {
         id: userId,
-        name: user?.name ?? user?.email ?? user?.id ?? userId,
+        name: user?.name ?? user?.id ?? userId,
       },
       inTime,
       outTime: status === 'currently-in' ? 'in' : {
