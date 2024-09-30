@@ -2,12 +2,13 @@ package manager
 
 import (
 	"errors"
+
 	internalErrors "github.com/Team6083/OverHours/internal/errors"
 	"github.com/Team6083/OverHours/pkgs/manager/internal/user"
 )
 
 type Service interface {
-	CreateUser(id user.ID, name string, email string, isSiteAdmin bool) (*user.User, error)
+	CreateUser(id user.ID, name string, email string, password string) (*user.User, error)
 	UpdateUser(id user.ID, input user.UpdateUserInput) (*user.User, error)
 	DeleteUser(id user.ID) error
 
@@ -25,7 +26,7 @@ func NewService(userRepo user.Repository) Service {
 	}
 }
 
-func (s *service) CreateUser(id user.ID, name string, email string, isSiteAdmin bool) (*user.User, error) {
+func (s *service) CreateUser(id user.ID, name string, email string, password string) (*user.User, error) {
 	_, err := s.userRepo.Find(id)
 	if err == nil {
 		return nil, internalErrors.NewInvalidArgumentsError("user with id already exists")
@@ -35,7 +36,17 @@ func (s *service) CreateUser(id user.ID, name string, email string, isSiteAdmin 
 		return nil, err
 	}
 
-	newUser := user.NewUser(id, name, email, isSiteAdmin)
+	newUser, err := user.NewUser(id, name, email)
+	if err != nil {
+		return nil, err
+	}
+
+	if password != "" {
+		err := newUser.SetPassword(password)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	err = s.userRepo.Store(&newUser)
 	if err != nil {

@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"github.com/Team6083/OverHours/internal/kitutil/transport"
 
 	"github.com/go-kit/kit/endpoint"
 
@@ -9,26 +10,24 @@ import (
 )
 
 type UserDTO struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	IsSiteAdmin bool   `json:"isSiteAdmin"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 func NewUserDTO(u *user.User) UserDTO {
 	return UserDTO{
-		ID:          string(u.ID),
-		Name:        u.Name,
-		Email:       u.Email,
-		IsSiteAdmin: u.IsSiteAdmin,
+		ID:    string(u.ID),
+		Name:  u.Name,
+		Email: u.Email,
 	}
 }
 
 type createUserRequest struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	IsAdmin bool   `json:"isAdmin"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type createUserResponse struct {
@@ -39,7 +38,11 @@ func makeCreateUserEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*createUserRequest)
 
-		u, err := s.CreateUser(user.ID(req.ID), req.Name, req.Email, req.IsAdmin)
+		if len(req.ID) == 0 {
+			return nil, transport.NewMissingParam("id is required")
+		}
+
+		u, err := s.CreateUser(user.ID(req.ID), req.Name, req.Email, req.Password)
 		if err != nil {
 			return nil, err
 		}

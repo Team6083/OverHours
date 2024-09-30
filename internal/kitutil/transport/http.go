@@ -18,6 +18,10 @@ var (
 	ErrMissingParam = errors.New("missing parameter")
 )
 
+func NewMissingParam(msg string) error {
+	return fmt.Errorf("%w: %s", ErrMissingParam, msg)
+}
+
 func formatError(err error) (int, string) {
 	var syntaxError *json.SyntaxError
 	switch {
