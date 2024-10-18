@@ -1,10 +1,10 @@
-package manager
+package identity
 
 import (
 	"errors"
 
 	internalErrors "github.com/Team6083/OverHours/internal/errors"
-	"github.com/Team6083/OverHours/pkgs/manager/internal/user"
+	"github.com/Team6083/OverHours/pkgs/identity/internal/user"
 )
 
 type Service interface {
@@ -14,6 +14,8 @@ type Service interface {
 
 	GetUser(id user.ID) (*user.User, error)
 	GetAllUsers() ([]*user.User, error)
+
+	Login(id user.ID, password string) (string, error)
 }
 
 type service struct {
@@ -100,4 +102,27 @@ func (s *service) GetUser(id user.ID) (*user.User, error) {
 
 func (s *service) GetAllUsers() ([]*user.User, error) {
 	return s.userRepo.FindAll()
+}
+
+func (s *service) Login(id user.ID, password string) (string, error) {
+	u, err := s.userRepo.Find(id)
+	if err != nil {
+		return "", err
+	}
+
+	loginFailErr := internalErrors.NewUnAuthError("wrong username or password")
+	if u == nil {
+		return "", loginFailErr
+	}
+
+	ok, err := u.ValidatePassword(password)
+	if err != nil {
+		return "", err
+	}
+
+	if !ok {
+		return "", loginFailErr
+	}
+
+	return "", nil
 }

@@ -1,4 +1,4 @@
-package manager
+package identity
 
 import (
 	"context"

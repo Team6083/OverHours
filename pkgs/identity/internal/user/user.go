@@ -55,6 +55,19 @@ func (u *User) SetPassword(password string) error {
 	return nil
 }
 
+func (u *User) ValidatePassword(password string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	if err != nil {
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
+}
+
 func hashPassword(password string) (string, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {

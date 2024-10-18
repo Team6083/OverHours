@@ -4,7 +4,7 @@ import (
 	"github.com/lithammer/shortuuid/v4"
 
 	"github.com/Team6083/OverHours/internal/inmem"
-	"github.com/Team6083/OverHours/pkgs/manager/internal/user"
+	"github.com/Team6083/OverHours/pkgs/identity/internal/user"
 )
 
 type InMemUserRepo struct {

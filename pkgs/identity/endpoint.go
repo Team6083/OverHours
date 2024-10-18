@@ -1,4 +1,4 @@
-package manager
+package identity
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 
-	"github.com/Team6083/OverHours/pkgs/manager/internal/user"
+	"github.com/Team6083/OverHours/pkgs/identity/internal/user"
 )
 
 type UserDTO struct {

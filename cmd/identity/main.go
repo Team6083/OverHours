@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/Team6083/OverHours/pkgs/manager"
 	"net/http"
 	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-kit/kit/log"
+
+	"github.com/Team6083/OverHours/pkgs/identity"
 )
 
 func main() {
@@ -20,11 +21,11 @@ func main() {
 	}
 	httpLogger := log.With(logger, "component", "http")
 
-	userRepo := manager.NewInMemUserRepository()
-	svc := manager.NewService(userRepo)
+	userRepo := identity.NewInMemUserRepository()
+	svc := identity.NewService(userRepo)
 
 	r := chi.NewRouter()
-	r.Mount("/v1", manager.MakeHTTPHandler(svc, httpLogger))
+	r.Mount("/v1", identity.MakeHTTPHandler(svc, httpLogger))
 
 	err = logger.Log("msg", "HTTP", "addr", ":8081")
 	if err != nil {
