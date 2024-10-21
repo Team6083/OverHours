@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/ed25519"
+	"encoding/base64"
 	"net/http"
 	"os"
 
@@ -9,6 +11,15 @@ import (
 
 	"github.com/Team6083/OverHours/pkgs/identity"
 )
+
+func getEd25519PrivateKey(base64EncodedKey string) ed25519.PrivateKey {
+	decoded, err := base64.StdEncoding.DecodeString(base64EncodedKey)
+	if err != nil {
+		panic(err)
+	}
+
+	return ed25519.PrivateKey(decoded)
+}
 
 func main() {
 	var err error
@@ -21,8 +32,10 @@ func main() {
 	}
 	httpLogger := log.With(logger, "component", "http")
 
+	signingKey := getEd25519PrivateKey(os.Getenv("signingKey"))
+
 	userRepo := identity.NewInMemUserRepository()
-	svc := identity.NewService(userRepo)
+	svc := identity.NewService(userRepo, &signingKey)
 
 	r := chi.NewRouter()
 	r.Mount("/v1", identity.MakeHTTPHandler(svc, httpLogger))

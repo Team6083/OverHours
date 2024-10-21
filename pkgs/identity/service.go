@@ -2,6 +2,8 @@ package identity
 
 import (
 	"errors"
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/ed25519"
 
 	internalErrors "github.com/Team6083/OverHours/internal/errors"
 	"github.com/Team6083/OverHours/pkgs/identity/internal/user"
@@ -15,16 +17,35 @@ type Service interface {
 	GetUser(id user.ID) (*user.User, error)
 	GetAllUsers() ([]*user.User, error)
 
-	Login(id user.ID, password string) (string, error)
+	Login(id user.ID, password string) (token string, err error)
 }
 
 type service struct {
 	userRepo user.Repository
+
+	tokenSigningKey *ed25519.PrivateKey
 }
 
-func NewService(userRepo user.Repository) Service {
+func (s *service) issueToken(userID string) (token string, err error) {
+	claims := jwt.RegisteredClaims{
+		Issuer:  "overhours/identity",
+		Subject: userID,
+	}
+
+	t := jwt.NewWithClaims(jwt.SigningMethodEdDSA, claims)
+
+	str, err := t.SignedString(s.tokenSigningKey)
+	if err != nil {
+		return "", err
+	}
+
+	return str, nil
+}
+
+func NewService(userRepo user.Repository, tokenSigningKey *ed25519.PrivateKey) Service {
 	return &service{
-		userRepo: userRepo,
+		userRepo:        userRepo,
+		tokenSigningKey: tokenSigningKey,
 	}
 }
 
@@ -124,5 +145,10 @@ func (s *service) Login(id user.ID, password string) (string, error) {
 		return "", loginFailErr
 	}
 
-	return "", nil
+	token, err := s.issueToken(string(u.ID))
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }

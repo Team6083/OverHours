@@ -3,7 +3,6 @@ module github.com/Team6083/OverHours
 go 1.12
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/getsentry/sentry-go v0.7.0
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.4
