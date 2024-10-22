@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "lint:fix": "next lint --fix",
-    "gen-api": "openapi-generator-cli generate -i ../docs/swagger.json -g typescript-axios -o ./src/client"
+    "lint:fix": "next lint --fix"
   },
   "dependencies": {
     "@emotion/cache": "^11.13.1",
@@ -20,6 +19,7 @@
     "@mui/material": "^6.1.1",
     "@mui/material-nextjs": "^6.1.0",
     "@mui/utils": "^6.1.1",
+    "@prisma/client": "^5.21.1",
     "next": "14.2.11",
     "next-auth": "^5.0.0-beta.21",
     "notistack": "^3.0.1",
@@ -28,7 +28,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.13.7",
     "@types/axios": "^0.14.0",
     "@types/node": "^20",
     "@types/react": "^18",
@@ -36,6 +35,7 @@
     "eslint": "^8",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-next": "14.2.11",
+    "prisma": "^5.21.1",
     "typescript": "^5"
   }
 }

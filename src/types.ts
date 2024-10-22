@@ -1,12 +1,3 @@
-export type APITimeLog = {
-    id: string;
-    userId: string;
-    status: 'currently-in' | 'done' | 'locked';
-    inTime: string;
-    outTime: string | null;
-    notes: string;
-}
-
 interface TimeLogBase {
     id: string;
     userId: string;

@@ -7,7 +7,7 @@ import {
 import CardWithShadow from '@/components/CardWithShadow';
 import LogsTable, { LogsTableData } from '@/components/LogsTable';
 import { UserInfo } from '@/types';
-import { mapAPITimeLogToTimeLog, getTimeLogToLogsTableRowMapper } from '@/mappers';
+import { getTimeLogToLogsTableRowMapper } from '@/mappers';
 import HomeContainer from './HomeContainer';
 import UserStatusCard from './UserStatusCard';
 import { getTimeLogs } from './actions';
@@ -20,7 +20,7 @@ export default async function Home() {
     avatar: '',
   };
 
-  const timeLogs = (await getTimeLogs({ status: 'currently-in' })).map(mapAPITimeLogToTimeLog);
+  const timeLogs = await getTimeLogs({ status: 'currently-in' });
 
   const mapTimeLogToLogsTableRow = getTimeLogToLogsTableRowMapper([userInfo]);
   const tableRows: LogsTableData[] = timeLogs.map(mapTimeLogToLogsTableRow);
