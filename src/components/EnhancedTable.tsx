@@ -5,6 +5,10 @@ import {
   Box,
   Checkbox,
   IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
@@ -18,7 +22,6 @@ import {
   Typography,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
-
 import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -110,10 +113,17 @@ export interface EnhancedTableProps<T extends anyObject> {
 
   headCells: ColumnInfo[];
   rows: TableRow<T>[];
+  moreMenuItems?: {
+    label: string;
+    icon: JSX.Element;
+    onClick: (data: T) => void;
+  }[];
 }
 
 export function EnhancedTable<T extends anyObject>(props: EnhancedTableProps<T>) {
-  const { title, headCells, rows } = props;
+  const {
+    title, headCells, rows, moreMenuItems,
+  } = props;
 
   // eslint-disable-next-line react/destructuring-assignment
   const showCheckbox = props.showCheckbox ?? true;
@@ -128,7 +138,11 @@ export function EnhancedTable<T extends anyObject>(props: EnhancedTableProps<T>)
   const [selected, setSelected] = useState<readonly string[]>([]);
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const handleClose = () => setAnchorEl(null);
+  const [moreMenuRow, setMoreMenuRow] = useState<null | TableRow<T>>(null);
 
   const handleSortRequest = (key: string) => {
     if (orderBy === key) {
@@ -320,9 +334,42 @@ export function EnhancedTable<T extends anyObject>(props: EnhancedTableProps<T>)
                 {
                   !showMoreVert ? null : (
                     <TableCell>
-                      <IconButton aria-label="more">
+                      <IconButton
+                        aria-label="more"
+                        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                          setAnchorEl(event.currentTarget);
+                          setMoreMenuRow(row);
+                        }}
+                      >
                         <MoreVertIcon />
                       </IconButton>
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl)}
+                        onClose={handleClose}
+                        MenuListProps={{
+                          'aria-labelledby': 'basic-button',
+                        }}
+                      >
+                        {
+                          moreMenuItems?.map((item) => (
+                            <MenuItem
+                              key={item.label}
+                              onClick={() => {
+                                if (moreMenuRow) {
+                                  item.onClick(moreMenuRow.data);
+                                }
+                                handleClose();
+                              }}
+                            >
+                              <ListItemIcon>
+                                {item.icon}
+                              </ListItemIcon>
+                              <ListItemText>{item.label}</ListItemText>
+                            </MenuItem>
+                          ))
+                        }
+                      </Menu>
                     </TableCell>
                   )
                 }

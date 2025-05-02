@@ -8,20 +8,22 @@ import { enqueueSnackbar } from 'notistack';
 import { LoadingButton } from '@mui/lab';
 
 import CardWithShadow from '@/components/CardWithShadow';
-import { stringAvatar } from '@/utils';
+import { secondToString, stringAvatar } from '@/utils';
 import { } from '@/auth';
 import { UserInfo } from '@/types';
 import { punchIn, punchOut } from './actions';
 
 export interface UserStatusCardProps {
   userInfo: UserInfo;
-  isCurrentIn: boolean;
+  userAccumulatedTime?: number;
+  inTime?: Date;
 }
 
 export default function UserStatusCard(
-  { userInfo, isCurrentIn }: UserStatusCardProps,
+  { userInfo, userAccumulatedTime, inTime }: UserStatusCardProps,
 ) {
   const [loading, setLoading] = useState<boolean>(false);
+  const isCurrentIn = inTime !== undefined;
 
   const handlePunchButtonClick = async () => {
     setLoading(true);
@@ -44,7 +46,8 @@ export default function UserStatusCard(
           <Box marginY={2}>
             <Avatar style={{ margin: '.5em auto' }} {...(userInfo.name ? stringAvatar(userInfo.name) : {})} />
             <Typography variant="h6" gutterBottom>{userInfo.name}</Typography>
-            <Chip label="9d 15h 48m 28s" />
+            {userAccumulatedTime ? <Chip label={userAccumulatedTime ? secondToString(userAccumulatedTime) : ''} />
+              : null}
           </Box>
 
           <LoadingButton
@@ -60,11 +63,13 @@ export default function UserStatusCard(
 
           {isCurrentIn
             ? (
-              <Typography variant="caption">
-                Sign-in at
-                {' '}
-                {(new Date('2024-09-07')).toLocaleString()}
-              </Typography>
+              <Box marginTop={1}>
+                <Typography variant="caption">
+                  Sign-in at
+                  {' '}
+                  {inTime.toLocaleString()}
+                </Typography>
+              </Box>
             ) : null}
         </Box>
       </CardContent>

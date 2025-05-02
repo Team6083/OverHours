@@ -44,7 +44,7 @@ const navItems: (NavItem | string)[] = [
   'About', 'Contact',
 ];
 
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
+const settings = ['Profile', 'Settings', 'Logout'];
 
 export interface AppNavProps {
   user?: UserInfo;

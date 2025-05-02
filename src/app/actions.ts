@@ -104,7 +104,6 @@ export async function getTimeLogs(opts?: Partial<GetTimeLogsOptions>): Promise<T
       userId: v.userId,
       inTime: v.inTime,
       notes: v.notes ?? undefined,
-      season: 'n/a',
     };
 
     if (v.status === 'CurrentlyIn') {
@@ -124,6 +123,42 @@ export async function getTimeLogs(opts?: Partial<GetTimeLogsOptions>): Promise<T
       outTime: v.outTime,
     };
   });
+}
+
+export async function deleteTimeLog(id: string) {
+  const result = await prisma.timeLog.delete({
+    where: {
+      id,
+    },
+  });
+
+  revalidatePath('/logs');
+
+  return result;
+}
+
+export async function getUserAccumulatedTime(userId: string): Promise<number> {
+  const timeLogs = await prisma.timeLog.findMany({
+    where: {
+      userId,
+      status: {
+        in: ['Done'],
+      },
+    },
+    select: {
+      inTime: true,
+      outTime: true,
+    },
+  });
+  const totalTime = timeLogs.reduce((acc, log) => {
+    if (!log.outTime) {
+      throw new Error('Out time is missing');
+    }
+    const inTime = log.inTime.getTime();
+    const outTime = log.outTime.getTime();
+    return acc + (outTime - inTime) / 1000;
+  }, 0);
+  return totalTime;
 }
 
 export async function getUsers(): Promise<UserInfo[]> {

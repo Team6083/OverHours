@@ -6,8 +6,6 @@ interface TimeLogBase {
     inTime: Date;
 
     notes?: string;
-
-    season: string;
 }
 
 export type InTimeLog = TimeLogBase & {

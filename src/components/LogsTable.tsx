@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useActionState, useMemo, useState } from 'react';
 
 import {
   Chip,
@@ -8,8 +8,16 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Divider,
 } from '@mui/material';
 
+import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LockClockIcon from '@mui/icons-material/LockClock';
@@ -18,6 +26,10 @@ import LockPersonIcon from '@mui/icons-material/LockPerson';
 import { secondToString } from '@/utils';
 
 import { ColumnInfo, EnhancedTable, TableRow } from './EnhancedTable';
+import { useRouter } from 'next/navigation';
+import prisma from '@/db';
+import { deleteTimeLog } from '@/app/actions';
+import { TimeLog } from '@/types';
 
 export interface LogsTableData {
   id: string;
@@ -149,6 +161,8 @@ export interface LogsTableProps {
 export default function LogsTable(props: LogsTableProps) {
   const { mode, data, title } = props;
 
+  const router = useRouter();
+
   const columns = useMemo(() => {
     const fieldsToHide = {
       'current-in': ['id', 'outTime', 'accumTime', 'notes'],
@@ -166,7 +180,12 @@ export default function LogsTable(props: LogsTableProps) {
     [data],
   );
 
-  return (
+  const [logToDelete, setLogToDelete] = useState<LogsTableData | undefined>(undefined);
+  const handleDeleteConfirmClose = () => {
+    setLogToDelete(undefined);
+  };
+
+  return <>
     <EnhancedTable
       title={title}
       showCheckbox={mode !== 'current-in'}
@@ -174,6 +193,48 @@ export default function LogsTable(props: LogsTableProps) {
       usePagination={mode !== 'current-in'}
       headCells={columns}
       rows={rows}
+      moreMenuItems={[
+        {
+          label: 'Edit',
+          icon: <EditIcon fontSize="small" />,
+          onClick: ({ id }: LogsTableData) => router.push(`/logs/edit/${id}`),
+        },
+        {
+          label: 'Delete',
+          icon: <DeleteIcon fontSize="small" />,
+          onClick: (data: LogsTableData) => setLogToDelete(data),
+        },
+      ]}
     />
-  );
+    <Dialog
+      open={logToDelete !== undefined}
+      onClose={handleDeleteConfirmClose}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">
+        TimeLog with ID {logToDelete?.id} will be permanently deleted. Are you sure you want to proceed?
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          User: {`${logToDelete?.user.name} (${logToDelete?.user.id})`}
+          <br />
+          Start Time: {logToDelete?.inTime.toLocaleString()}
+          <br />
+          End Time: {logToDelete?.outTime === 'in' ? 'Currently Sign-In' : logToDelete?.outTime.time.toLocaleString()}
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button color='error' onClick={async () => {
+          if (logToDelete?.id) {
+            deleteTimeLog(logToDelete.id);
+          }
+          handleDeleteConfirmClose();
+        }}>Delete</Button>
+        <Button onClick={handleDeleteConfirmClose} autoFocus>
+          Cancel
+        </Button>
+      </DialogActions>
+    </Dialog>
+  </>;
 }

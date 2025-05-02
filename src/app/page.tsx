@@ -10,7 +10,7 @@ import { UserInfo } from '@/types';
 import { getTimeLogToLogsTableRowMapper } from '@/mappers';
 import HomeContainer from './HomeContainer';
 import UserStatusCard from './UserStatusCard';
-import { getTimeLogs, getUsers } from './actions';
+import { getTimeLogs, getUserAccumulatedTime, getUsers } from './actions';
 
 export default async function Home() {
   const userInfo: UserInfo = {
@@ -22,11 +22,12 @@ export default async function Home() {
 
   const timeLogs = await getTimeLogs({ status: 'currently-in' });
   const users = await getUsers();
+  const userAccumulatedTime = await getUserAccumulatedTime(userInfo.id);
 
   const mapTimeLogToLogsTableRow = getTimeLogToLogsTableRowMapper(users);
   const tableRows: LogsTableData[] = timeLogs.map(mapTimeLogToLogsTableRow);
 
-  const isCurrentIn = timeLogs.some((v) => v.userId === userInfo.id && v.status === 'currently-in');
+  const lastInLog = timeLogs.find((v) => v.userId === userInfo.id && v.status === 'currently-in');
 
   return (
     <HomeContainer>
@@ -39,7 +40,8 @@ export default async function Home() {
         <Grid size={{ md: 4, xs: 12 }}>
           <UserStatusCard
             userInfo={userInfo}
-            isCurrentIn={isCurrentIn}
+            userAccumulatedTime={userAccumulatedTime}
+            inTime={lastInLog?.inTime}
           />
         </Grid>
         <Grid size={{ md: 8, xs: 12 }}>

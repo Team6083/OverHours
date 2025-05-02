@@ -68,93 +68,93 @@ const appTheme = createTheme({
         }),
       },
     },
-    MuiButton: {
-      styleOverrides: {
-        root: ({ theme }) => ({
-          borderRadius: (theme.vars || theme).shape.borderRadius,
-          textTransform: 'none',
-        }),
-      },
-    },
-    MuiInputBase: {
-      styleOverrides: {
-        root: {
-          border: 'none',
-        },
-        input: ({ theme }) => ({
-          '&::placeholder': {
-            opacity: 0.7,
-            color: theme.palette.grey[500],
-          },
-        }),
-      },
-    },
-    MuiOutlinedInput: {
-      styleOverrides: {
-        input: {
-          padding: 0,
-        },
-        root: ({ theme }) => ({
-          padding: '8px 12px',
-          color: (theme.vars || theme).palette.text.primary,
-          borderRadius: (theme.vars || theme).shape.borderRadius,
-          border: `1px solid ${(theme.vars || theme).palette.divider}`,
-          backgroundColor: (theme.vars || theme).palette.background.default,
-          transition: 'border 120ms ease-in',
-          '&:hover': {
-            borderColor: theme.palette.grey[400],
-          },
-          [`&.${outlinedInputClasses.focused}`]: {
-            outline: `3px solid ${alpha(theme.palette.primary.main, 0.5)}`,
-            borderColor: theme.palette.primary.main,
-          },
-          ...theme.applyStyles('dark', {
-            '&:hover': {
-              borderColor: theme.palette.grey[500],
-            },
-          }),
-          variants: [
-            {
-              props: {
-                size: 'small',
-              },
-              style: {
-                height: '2.25rem',
-              },
-            },
-            {
-              props: {
-                size: 'medium',
-              },
-              style: {
-                height: '2.5rem',
-              },
-            },
-          ],
-        }),
-        notchedOutline: {
-          border: 'none',
-        },
-      },
-    },
-    MuiInputAdornment: {
-      styleOverrides: {
-        root: ({ theme }) => ({
-          color: (theme.vars || theme).palette.grey[500],
-          ...theme.applyStyles('dark', {
-            color: (theme.vars || theme).palette.grey[400],
-          }),
-        }),
-      },
-    },
-    MuiFormLabel: {
-      styleOverrides: {
-        root: ({ theme }) => ({
-          typography: theme.typography.caption,
-          marginBottom: 8,
-        }),
-      },
-    },
+    // MuiButton: {
+    //   styleOverrides: {
+    //     root: ({ theme }) => ({
+    //       borderRadius: (theme.vars || theme).shape.borderRadius,
+    //       textTransform: 'none',
+    //     }),
+    //   },
+    // },
+    // MuiInputBase: {
+    //   styleOverrides: {
+    //     root: {
+    //       border: 'none',
+    //     },
+    //     input: ({ theme }) => ({
+    //       '&::placeholder': {
+    //         opacity: 0.7,
+    //         color: theme.palette.grey[500],
+    //       },
+    //     }),
+    //   },
+    // },
+    // MuiOutlinedInput: {
+    //   styleOverrides: {
+    //     input: {
+    //       padding: 0,
+    //     },
+    //     root: ({ theme }) => ({
+    //       padding: '8px 12px',
+    //       color: (theme.vars || theme).palette.text.primary,
+    //       borderRadius: (theme.vars || theme).shape.borderRadius,
+    //       border: `1px solid ${(theme.vars || theme).palette.divider}`,
+    //       backgroundColor: (theme.vars || theme).palette.background.default,
+    //       transition: 'border 120ms ease-in',
+    //       '&:hover': {
+    //         borderColor: theme.palette.grey[400],
+    //       },
+    //       [`&.${outlinedInputClasses.focused}`]: {
+    //         outline: `3px solid ${alpha(theme.palette.primary.main, 0.5)}`,
+    //         borderColor: theme.palette.primary.main,
+    //       },
+    //       ...theme.applyStyles('dark', {
+    //         '&:hover': {
+    //           borderColor: theme.palette.grey[500],
+    //         },
+    //       }),
+    //       variants: [
+    //         {
+    //           props: {
+    //             size: 'small',
+    //           },
+    //           style: {
+    //             height: '2.25rem',
+    //           },
+    //         },
+    //         {
+    //           props: {
+    //             size: 'medium',
+    //           },
+    //           style: {
+    //             height: '2.5rem',
+    //           },
+    //         },
+    //       ],
+    //     }),
+    //     notchedOutline: {
+    //       border: 'none',
+    //     },
+    //   },
+    // },
+    // MuiInputAdornment: {
+    //   styleOverrides: {
+    //     root: ({ theme }) => ({
+    //       color: (theme.vars || theme).palette.grey[500],
+    //       ...theme.applyStyles('dark', {
+    //         color: (theme.vars || theme).palette.grey[400],
+    //       }),
+    //     }),
+    //   },
+    // },
+    // MuiFormLabel: {
+    //   styleOverrides: {
+    //     root: ({ theme }) => ({
+    //       typography: theme.typography.caption,
+    //       marginBottom: 8,
+    //     }),
+    //   },
+    // },
   },
 });
 

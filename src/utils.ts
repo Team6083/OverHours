@@ -27,7 +27,8 @@ export function stringAvatar(name: string) {
   };
 }
 
-export function secondToString(sec: number): string {
+export function secondToString(inputSecond: number): string {
+  let sec = Math.floor(inputSecond);
   const day = 60 * 60 * 24;
   const hr = 60 * 60;
   const min = 60;
