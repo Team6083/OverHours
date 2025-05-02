@@ -10,19 +10,20 @@ import { UserInfo } from '@/types';
 import { getTimeLogToLogsTableRowMapper } from '@/mappers';
 import HomeContainer from './HomeContainer';
 import UserStatusCard from './UserStatusCard';
-import { getTimeLogs } from './actions';
+import { getTimeLogs, getUsers } from './actions';
 
 export default async function Home() {
   const userInfo: UserInfo = {
-    id: 'kenn',
+    id: '6739b690605170eed6067b04',
     name: 'Kenn Huang',
     email: '',
     avatar: '',
   };
 
   const timeLogs = await getTimeLogs({ status: 'currently-in' });
+  const users = await getUsers();
 
-  const mapTimeLogToLogsTableRow = getTimeLogToLogsTableRowMapper([userInfo]);
+  const mapTimeLogToLogsTableRow = getTimeLogToLogsTableRowMapper(users);
   const tableRows: LogsTableData[] = timeLogs.map(mapTimeLogToLogsTableRow);
 
   const isCurrentIn = timeLogs.some((v) => v.userId === userInfo.id && v.status === 'currently-in');
@@ -38,7 +39,6 @@ export default async function Home() {
         <Grid size={{ md: 4, xs: 12 }}>
           <UserStatusCard
             userInfo={userInfo}
-            currentSeason="2024 Season"
             isCurrentIn={isCurrentIn}
           />
         </Grid>

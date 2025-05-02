@@ -2,14 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { TimeLog } from '@/types';
+import { TimeLog, UserInfo } from '@/types';
 import prisma, { timeLogStatusToApp, timeLogStatusToDb } from '@/db';
 
-export async function punchIn(userName: string) {
+export async function punchIn(id: string) {
   const last = await prisma.timeLog.findFirst({
     where: {
       user: {
-        userName,
+        id,
       },
     },
     orderBy: {
@@ -29,7 +29,7 @@ export async function punchIn(userName: string) {
     data: {
       user: {
         connect: {
-          userName,
+          id,
         },
       },
       status: 'CurrentlyIn',
@@ -40,11 +40,11 @@ export async function punchIn(userName: string) {
   revalidatePath('/');
 }
 
-export async function punchOut(userName: string, time?: Date) {
+export async function punchOut(id: string, time?: Date) {
   const last = await prisma.timeLog.findFirst({
     where: {
       user: {
-        userName,
+        id,
       },
       status: 'CurrentlyIn',
     },
@@ -53,21 +53,23 @@ export async function punchOut(userName: string, time?: Date) {
     },
   });
 
-  if (!last) {
+  if (!last || last.status !== 'CurrentlyIn') {
     throw new Error('The user has not punched in yet.');
   }
 
   last.outTime = time ?? new Date();
 
-  await prisma.timeLog.create({
+  if (last.inTime > last.outTime) {
+    throw new Error('Invalid time');
+  }
+
+  await prisma.timeLog.update({
+    where: {
+      id: last.id,
+    },
     data: {
-      user: {
-        connect: {
-          userName,
-        },
-      },
-      status: 'CurrentlyIn',
-      inTime: new Date(),
+      status: 'Done',
+      outTime: last.outTime,
     },
   });
 
@@ -122,4 +124,14 @@ export async function getTimeLogs(opts?: Partial<GetTimeLogsOptions>): Promise<T
       outTime: v.outTime,
     };
   });
+}
+
+export async function getUsers(): Promise<UserInfo[]> {
+  const users = await prisma.user.findMany({});
+
+  return users.map((v) => ({
+    id: v.id,
+    name: v.displayName ?? v.userName,
+    email: v.email ?? undefined,
+  }));
 }

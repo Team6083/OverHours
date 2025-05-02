@@ -15,12 +15,11 @@ import { punchIn, punchOut } from './actions';
 
 export interface UserStatusCardProps {
   userInfo: UserInfo;
-  currentSeason: string;
   isCurrentIn: boolean;
 }
 
 export default function UserStatusCard(
-  { userInfo, currentSeason, isCurrentIn }: UserStatusCardProps,
+  { userInfo, isCurrentIn }: UserStatusCardProps,
 ) {
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -41,12 +40,6 @@ export default function UserStatusCard(
   return (
     <CardWithShadow>
       <CardContent>
-        <Typography gutterBottom variant="h5">
-          Current Season -
-          {' '}
-          {currentSeason}
-        </Typography>
-
         <Box textAlign="center">
           <Box marginY={2}>
             <Avatar style={{ margin: '.5em auto' }} {...(userInfo.name ? stringAvatar(userInfo.name) : {})} />

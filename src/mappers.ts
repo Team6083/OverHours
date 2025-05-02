@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 // TODO: move to a better place
 
 import { LogsTableData } from './components/LogsTable';
