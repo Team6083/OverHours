@@ -5,13 +5,72 @@ import { revalidatePath } from 'next/cache';
 import { TimeLog } from '@/types';
 import prisma, { timeLogStatusToApp, timeLogStatusToDb } from '@/db';
 
-export async function punchIn(userName: string, time?: Date) {
-  // TODO: Implement punchIn
+export async function punchIn(userName: string) {
+  const last = await prisma.timeLog.findFirst({
+    where: {
+      user: {
+        userName,
+      },
+    },
+    orderBy: {
+      inTime: 'desc',
+    },
+  });
+
+  if (last?.status === 'CurrentlyIn') {
+    throw new Error('User is already punched in');
+  }
+
+  if (last?.outTime && last.outTime > new Date()) {
+    throw new Error('Invalid time');
+  }
+
+  await prisma.timeLog.create({
+    data: {
+      user: {
+        connect: {
+          userName,
+        },
+      },
+      status: 'CurrentlyIn',
+      inTime: new Date(),
+    },
+  });
+
   revalidatePath('/');
 }
 
 export async function punchOut(userName: string, time?: Date) {
-  // TODO: Implement punchOut
+  const last = await prisma.timeLog.findFirst({
+    where: {
+      user: {
+        userName,
+      },
+      status: 'CurrentlyIn',
+    },
+    orderBy: {
+      inTime: 'desc',
+    },
+  });
+
+  if (!last) {
+    throw new Error('The user has not punched in yet.');
+  }
+
+  last.outTime = time ?? new Date();
+
+  await prisma.timeLog.create({
+    data: {
+      user: {
+        connect: {
+          userName,
+        },
+      },
+      status: 'CurrentlyIn',
+      inTime: new Date(),
+    },
+  });
+
   revalidatePath('/');
 }
 
