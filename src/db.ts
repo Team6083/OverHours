@@ -1,6 +1,4 @@
-import { PrismaClient, TimeLog as PrismaTimeLog } from '@prisma/client';
-
-import { TimeLog } from './types';
+import { PrismaClient } from '@prisma/client';
 
 const prismaClientSingleton = () => new PrismaClient();
 
