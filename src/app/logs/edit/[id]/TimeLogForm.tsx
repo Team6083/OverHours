@@ -1,21 +1,18 @@
 'use client';
 
+import { useActionState } from 'react';
+
 import {
-  Box, TextField, MenuItem, Button,
-  Alert,
-  Checkbox,
-  FormControlLabel,
+  Alert, Box, Button, Checkbox, FormControlLabel, Grid, MenuItem, TextField,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
 import { TimeLog, User } from '@prisma/client';
-import { useFormState } from 'react-dom';
 import { saveTimeLog } from './actions';
 
 export default function TimeLogForm({ timeLog }:
   {
     timeLog: TimeLog & { user: Pick<User, 'id' | 'name'> }
   }) {
-  const [state, action] = useFormState(saveTimeLog, undefined);
+  const [state, action] = useActionState(saveTimeLog, undefined);
   const errors = state && 'errors' in state && state?.errors ? state.errors : undefined;
   const message = state && 'message' in state && state?.message ? state.message : undefined;
 
@@ -33,8 +30,11 @@ export default function TimeLogForm({ timeLog }:
 
   const user = timeLog.user.name;
 
-  const defaultInTime = timeLog?.inTime.toISOString().slice(0, 19);
-  const defaultOutTime = timeLog?.status !== 'CurrentlyIn' ? timeLog?.outTime?.toISOString().slice(0, 19) : undefined;
+  const tzOffset = new Date().getTimezoneOffset() * 60000;
+  const defaultInTime = timeLog?.inTime
+    ? new Date(timeLog.inTime.getTime() - tzOffset).toISOString().slice(0, 19) : undefined;
+  const defaultOutTime = timeLog?.status !== 'CurrentlyIn' && timeLog?.outTime
+    ? new Date(timeLog.outTime.getTime() - tzOffset).toISOString().slice(0, 19) : undefined;
 
   return (
     <Box

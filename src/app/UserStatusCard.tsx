@@ -2,14 +2,12 @@
 
 import { useState } from 'react';
 import {
-  CardContent, Typography, Box, Avatar, Chip,
+  Avatar, Box, Button, CardContent, Chip, Typography,
 } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
-import { LoadingButton } from '@mui/lab';
 
 import CardWithShadow from '@/components/CardWithShadow';
 import { secondToString, stringAvatar } from '@/utils';
-import { } from '@/auth';
 import { UserInfo } from '@/types';
 import { clockIn, clockOut } from './actions';
 
@@ -40,7 +38,7 @@ export default function UserStatusCard(
                 {typeof userAccumulatedTime === 'number' ? <Chip label={secondToString(userAccumulatedTime)} /> : null}
               </Box>
 
-              <LoadingButton
+              <Button
                 loading={loading}
                 color={isCurrentIn ? 'secondary' : 'success'}
                 variant="contained"
@@ -61,7 +59,7 @@ export default function UserStatusCard(
                 }}
               >
                 {isCurrentIn ? 'Clock-out' : 'Clock-in'}
-              </LoadingButton>
+              </Button>
 
               {isCurrentIn
                 ? (

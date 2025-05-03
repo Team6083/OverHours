@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type JSX } from 'react';
 
 import {
   alpha,
@@ -205,8 +205,7 @@ export function EnhancedTable<T extends anyObject>(props: EnhancedTableProps<T>)
         const result = sortFunc ? sortFunc(aVal, bVal)
           : (
             // eslint-disable-next-line no-nested-ternary
-            aVal === bVal ? 0
-              : (aVal > bVal ? 1 : -1)
+            (aVal === bVal ? 0 : (aVal > bVal ? 1 : -1))
           );
 
         return order === 'asc' ? result : -result;

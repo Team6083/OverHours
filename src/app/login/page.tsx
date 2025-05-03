@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { redirect } from 'next/navigation';
 
 import {
@@ -59,7 +59,7 @@ export default function LoginPage() {
     }
   }, [data]);
 
-  const [state, action] = useFormState(signin, undefined);
+  const [state, action] = useActionState(signin, undefined);
 
   const errors = state && 'errors' in state && state?.errors ? state.errors : undefined;
   const message = state && 'message' in state && state?.message ? state.message : undefined;

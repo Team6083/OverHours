@@ -1,8 +1,4 @@
-import {
-  Typography,
-  Grid2 as Grid,
-  CardContent,
-} from '@mui/material';
+import { Typography, CardContent, Grid } from '@mui/material';
 
 import CardWithShadow from '@/components/CardWithShadow';
 import LogsTable, { LogsTableData } from '@/components/LogsTable';
