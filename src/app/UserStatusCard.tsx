@@ -28,54 +28,58 @@ export default function UserStatusCard(
   return (
     <CardWithShadow>
       <CardContent>
-        {userInfo ?
-          <Box textAlign="center">
-            <Box marginY={2}>
-              <Avatar
-                style={{ margin: '.5em auto' }}
-                {...(userInfo.avatar ? { src: userInfo.avatar } : stringAvatar(userInfo.name ?? ''))}
-              />
-              <Typography variant="h6" gutterBottom>{userInfo.name}</Typography>
-              {typeof userAccumulatedTime === 'number' ? <Chip label={secondToString(userAccumulatedTime)} /> : null}
-            </Box>
+        {userInfo
+          ? (
+            <Box textAlign="center">
+              <Box marginY={2}>
+                <Avatar
+                  style={{ margin: '.5em auto' }}
+                  {...(userInfo.avatar ? { src: userInfo.avatar } : stringAvatar(userInfo.name ?? ''))}
+                />
+                <Typography variant="h6" gutterBottom>{userInfo.name}</Typography>
+                {typeof userAccumulatedTime === 'number' ? <Chip label={secondToString(userAccumulatedTime)} /> : null}
+              </Box>
 
-            <LoadingButton
-              loading={loading}
-              color={isCurrentIn ? 'secondary' : 'success'}
-              variant="contained"
-              size="large"
-              fullWidth
-              onClick={async () => {
-                setLoading(true);
-                try {
-                  if (isCurrentIn) {
-                    await punchOut(userInfo.id);
-                  } else {
-                    await punchIn(userInfo.id);
+              <LoadingButton
+                loading={loading}
+                color={isCurrentIn ? 'secondary' : 'success'}
+                variant="contained"
+                size="large"
+                fullWidth
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    if (isCurrentIn) {
+                      await punchOut(userInfo.id);
+                    } else {
+                      await punchIn(userInfo.id);
+                    }
+                  } catch (error) {
+                    enqueueSnackbar((error as Error).message, { variant: 'error' });
                   }
-                } catch (error) {
-                  enqueueSnackbar((error as Error).message, { variant: 'error' });
-                }
-                setLoading(false);
-              }}
-            >
-              {isCurrentIn ? 'Clock-out' : 'Clock-in'}
-            </LoadingButton>
+                  setLoading(false);
+                }}
+              >
+                {isCurrentIn ? 'Clock-out' : 'Clock-in'}
+              </LoadingButton>
 
-            {isCurrentIn
-              ? (
-                <Box marginTop={1}>
-                  <Typography variant="caption">
-                    Clock-in at
-                    {' '}
-                    {inTime.toLocaleString()}
-                  </Typography>
-                </Box>
-              ) : null}
-          </Box> :
-          <Typography variant="h6" gutterBottom>
-            Login to see your status
-          </Typography>}
+              {isCurrentIn
+                ? (
+                  <Box marginTop={1}>
+                    <Typography variant="caption">
+                      Clock-in at
+                      {' '}
+                      {inTime.toLocaleString()}
+                    </Typography>
+                  </Box>
+                ) : null}
+            </Box>
+          )
+          : (
+            <Typography variant="h6" gutterBottom>
+              Login to see your status
+            </Typography>
+          )}
       </CardContent>
     </CardWithShadow>
   );

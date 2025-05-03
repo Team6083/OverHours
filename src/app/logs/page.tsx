@@ -5,7 +5,6 @@ import LogsTable from '@/components/LogsTable';
 import { getTimeLogToLogsTableRowMapper } from '@/mappers';
 import { getTimeLogs, getUsers } from '../actions';
 import LogsContainer from './LogsContainer';
-import { redirect } from 'next/navigation';
 
 export default async function LogsPage() {
   const timeLogs = await getTimeLogs();

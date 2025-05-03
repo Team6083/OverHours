@@ -60,7 +60,7 @@ export default function TimeLogForm({ timeLog }:
             slotProps={{
               htmlInput: {
                 readOnly: true,
-              }
+              },
             }}
           />
         </Grid>
@@ -92,7 +92,7 @@ export default function TimeLogForm({ timeLog }:
             slotProps={{
               htmlInput: {
                 step: 1,
-              }
+              },
             }}
           />
         </Grid>
@@ -111,7 +111,7 @@ export default function TimeLogForm({ timeLog }:
             slotProps={{
               htmlInput: {
                 step: 1,
-              }
+              },
             }}
           />
           <FormControlLabel

@@ -3,7 +3,6 @@ import Credentials from 'next-auth/providers/credentials';
 import Keycloak from 'next-auth/providers/keycloak';
 import { UserInfo } from './types';
 import prisma from './db';
-import { createHash } from 'crypto';
 
 export const {
   handlers, signIn, signOut, auth,
@@ -39,6 +38,7 @@ export const {
   ],
   callbacks: {
     async jwt({
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       token, user, account, profile, trigger,
     }) {
       if (trigger === 'signIn') {
@@ -50,7 +50,7 @@ export const {
         if (account?.provider === 'keycloak' && user.email) {
           const userProps = {
             name: user.name ?? `kc-${account.providerAccountId}`,
-          }
+          };
 
           const dbUser = await prisma.user.upsert({
             create: {
@@ -63,8 +63,10 @@ export const {
             },
           });
 
+          // eslint-disable-next-line no-param-reassign
           token.id = dbUser.id;
         } else if (account?.provider === 'credentials') {
+          // eslint-disable-next-line no-param-reassign
           token.id = account.providerAccountId;
         }
       }
@@ -75,10 +77,11 @@ export const {
       // console.log('session_token', token);
 
       if ('id' in token && typeof token.id === 'string') {
+        // eslint-disable-next-line no-param-reassign
         session.user.id = token.id;
       }
 
-      return session
+      return session;
     },
   },
 });
@@ -104,13 +107,10 @@ export async function authUser(): Promise<UserInfo | undefined> {
 
   const email = user?.email ?? session.user.email ?? undefined;
 
-  const emailHash = email ? createHash('sha256').update(email.trim().toLowerCase()).digest('hex') : undefined;
-  const gravatarURL = emailHash ? `https://gravatar.com/avatar/${emailHash}?s=200&d=404` : undefined;
-
   return {
     id,
     name: user?.name ?? session.user.name ?? undefined,
     email,
-    avatar: session.user.image ?? gravatarURL ?? undefined,
+    avatar: session.user.image ?? undefined,
   };
 }

@@ -7,10 +7,11 @@ import {
 import CardWithShadow from '@/components/CardWithShadow';
 import LogsTable, { LogsTableData } from '@/components/LogsTable';
 import { getTimeLogToLogsTableRowMapper } from '@/mappers';
+import { authUser } from '@/auth';
+import { enqueueSnackbar } from 'notistack';
 import HomeContainer from './HomeContainer';
 import UserStatusCard from './UserStatusCard';
 import { getTimeLogs, getUserAccumulatedTime, getUsers } from './actions';
-import { authUser } from '@/auth';
 
 export default async function Home() {
   const userInfo = await authUser();
@@ -20,7 +21,7 @@ export default async function Home() {
   const userAccumulatedTime = userInfo
     ? await getUserAccumulatedTime(userInfo.id)
       .catch((error) => {
-        console.error('Failed to fetch user accumulated time:', error);
+        enqueueSnackbar(`Failed to fetch user accumulated time: ${(error as Error).message}`, { variant: 'error' });
         return undefined;
       })
     : undefined;

@@ -49,7 +49,7 @@ export async function saveTimeLog(formState: FormState, formData: FormData): Pro
 
   const { inTime, outTime } = validatedFields.data;
   const inTimeDate = new Date(inTime);
-  const outTimeDate = outTime && clearOutTime != 'on' ? new Date(outTime) : null;
+  const outTimeDate = outTime && clearOutTime !== 'on' ? new Date(outTime) : null;
 
   if (Number.isNaN(inTimeDate.getTime())) {
     return {

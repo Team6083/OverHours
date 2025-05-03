@@ -6,8 +6,6 @@ import { redirect } from 'next/navigation';
 
 import {
   Box,
-  FormControl,
-  FormLabel,
   TextField,
   Typography,
   Container,
@@ -90,7 +88,9 @@ export default function LoginPage() {
             component="form"
             action={action}
             noValidate
-            sx={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 2 }}
+            sx={{
+              display: 'flex', flexDirection: 'column', width: '100%', gap: 2,
+            }}
           >
             {
               message
@@ -134,7 +134,7 @@ export default function LoginPage() {
               {' '}
               <span>
                 <Link
-                  href="#"
+                  href="/login"
                   variant="body2"
                   sx={{ alignSelf: 'center' }}
                 >

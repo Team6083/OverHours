@@ -1,7 +1,6 @@
 'use client';
 
-import { outlinedInputClasses } from '@mui/material';
-import { alpha, createTheme } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
 
 const defaultTheme = createTheme();
 
