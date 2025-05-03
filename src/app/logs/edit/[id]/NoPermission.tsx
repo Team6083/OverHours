@@ -3,13 +3,12 @@
 import { Alert, Button } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { ArrowBack } from '@mui/icons-material';
-import LogsEditContainer from './LogsEditContainer';
 
 export default function NoPermission() {
   const router = useRouter();
 
   return (
-    <LogsEditContainer>
+    <>
       <Alert severity="error">
         You do not have permission to edit this time log.
         {' '}
@@ -24,6 +23,6 @@ export default function NoPermission() {
       >
         Back to Logs
       </Button>
-    </LogsEditContainer>
+    </>
   );
 }

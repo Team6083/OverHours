@@ -1,9 +1,10 @@
-import { Typography, CardContent, Grid } from '@mui/material';
+import {
+  CardContent, Container, Grid, Typography,
+} from '@mui/material';
 
 import CardWithShadow from '@/components/CardWithShadow';
 import LogsTable, { LogsTableData } from '@/components/LogsTable';
 import { authUser } from '@/auth';
-import HomeContainer from './HomeContainer';
 import UserStatusCard from './UserStatusCard';
 import { getCurrentInTimeLogs, getUserAccumulatedTime } from './actions';
 
@@ -27,7 +28,7 @@ export default async function Home() {
   const lastInLog = currentInTimeLogs.find((v) => v.userId === userInfo?.id);
 
   return (
-    <HomeContainer>
+    <Container maxWidth="lg">
       <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
           <Typography variant="h4">FRC Team 6083</Typography>
@@ -56,6 +57,6 @@ export default async function Home() {
           </CardWithShadow>
         </Grid>
       </Grid>
-    </HomeContainer>
+    </Container>
   );
 }

@@ -10,9 +10,7 @@
     "lint:fix": "next lint --fix"
   },
   "dependencies": {
-    "@emotion/cache": "^11.13.1",
-    "@emotion/react": "^11.13.3",
-    "@emotion/styled": "^11.13.0",
+    "@emotion/cache": "^11.14.0",
     "@fontsource/roboto": "^5.1.0",
     "@mui/icons-material": "^7.0.2",
     "@mui/lab": "^7.0.0-beta.11",

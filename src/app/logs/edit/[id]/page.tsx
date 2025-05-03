@@ -1,9 +1,8 @@
 import {
-  Card, CardContent, Typography,
+  Card, CardContent, Container, Typography,
 } from '@mui/material';
 import prisma from '@/db';
 import { auth } from '@/auth';
-import LogsEditContainer from './LogsEditContainer';
 import TimeLogForm from './TimeLogForm';
 import NoPermission from './NoPermission';
 
@@ -16,7 +15,7 @@ export default async function LogsPage({
 
   const session = await auth();
   if (session?.user?.role !== 'admin') {
-    return <NoPermission />;
+    return <Container maxWidth="md"><NoPermission /></Container>;
   }
 
   const timeLog = await prisma.timeLog.findUnique({
@@ -34,7 +33,7 @@ export default async function LogsPage({
   });
 
   return (
-    <LogsEditContainer>
+    <Container maxWidth="lg">
       <Card>
         <CardContent>
           <Typography variant="h4" marginBottom={2}>
@@ -47,6 +46,6 @@ export default async function LogsPage({
 
         </CardContent>
       </Card>
-    </LogsEditContainer>
+    </Container>
   );
 }

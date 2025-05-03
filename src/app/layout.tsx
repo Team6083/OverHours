@@ -4,9 +4,9 @@ import { SessionProvider } from 'next-auth/react';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
+import { Box, CssBaseline } from '@mui/material';
 
 import appTheme from '@/theme';
 import { authUser } from '@/auth';
@@ -41,7 +41,9 @@ export default async function RootLayout({
             <SessionProvider>
               <AppNav user={user} />
               <NotistackProvider>
-                {children}
+                <Box marginY={3}>
+                  {children}
+                </Box>
               </NotistackProvider>
             </SessionProvider>
           </ThemeProvider>

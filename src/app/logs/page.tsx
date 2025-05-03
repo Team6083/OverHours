@@ -1,4 +1,4 @@
-import { CardContent } from '@mui/material';
+import { CardContent, Container } from '@mui/material';
 
 import CardWithShadow from '@/components/CardWithShadow';
 import LogsTable, { LogsTableData } from '@/components/LogsTable';
@@ -6,7 +6,6 @@ import { auth } from '@/auth';
 import prisma from '@/db';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import LogsContainer from './LogsContainer';
 
 export default async function LogsPage() {
   const session = await auth();
@@ -66,7 +65,7 @@ export default async function LogsPage() {
   });
 
   return (
-    <LogsContainer>
+    <Container maxWidth="lg">
       <CardWithShadow>
         <CardContent>
           <LogsTable
@@ -97,6 +96,6 @@ export default async function LogsPage() {
           />
         </CardContent>
       </CardWithShadow>
-    </LogsContainer>
+    </Container>
   );
 }
