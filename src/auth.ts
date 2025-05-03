@@ -38,7 +38,6 @@ export const {
   ],
   callbacks: {
     async jwt({
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       token, user, account, profile, trigger,
     }) {
       /* eslint-disable no-param-reassign */
@@ -66,6 +65,10 @@ export const {
           });
 
           token.id = dbUser.id;
+
+          if (profile && Array.isArray(profile.roles) && profile.roles.includes('admin')) {
+            token.role = 'admin';
+          }
         } else if (account?.provider === 'credentials') {
           token.id = account.providerAccountId;
         }
@@ -82,7 +85,7 @@ export const {
 
       if ('id' in token && typeof token.id === 'string') {
         session.user.id = token.id;
-        session.user.role = 'admin'; // FIXME: temporary
+        session.user.role = token.role ?? 'user';
       }
 
       /* eslint-enable no-param-reassign */
