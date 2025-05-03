@@ -6,28 +6,29 @@ import {
 
 import CardWithShadow from '@/components/CardWithShadow';
 import LogsTable, { LogsTableData } from '@/components/LogsTable';
-import { UserInfo } from '@/types';
 import { getTimeLogToLogsTableRowMapper } from '@/mappers';
 import HomeContainer from './HomeContainer';
 import UserStatusCard from './UserStatusCard';
 import { getTimeLogs, getUserAccumulatedTime, getUsers } from './actions';
+import { authUser } from '@/auth';
 
 export default async function Home() {
-  const userInfo: UserInfo = {
-    id: '6739b690605170eed6067b04',
-    name: 'Kenn Huang',
-    email: '',
-    avatar: '',
-  };
+  const userInfo = await authUser();
 
   const timeLogs = await getTimeLogs({ status: 'currently-in' });
   const users = await getUsers();
-  const userAccumulatedTime = await getUserAccumulatedTime(userInfo.id);
+  const userAccumulatedTime = userInfo
+    ? await getUserAccumulatedTime(userInfo.id)
+      .catch((error) => {
+        console.error('Failed to fetch user accumulated time:', error);
+        return undefined;
+      })
+    : undefined;
 
   const mapTimeLogToLogsTableRow = getTimeLogToLogsTableRowMapper(users);
   const tableRows: LogsTableData[] = timeLogs.map(mapTimeLogToLogsTableRow);
 
-  const lastInLog = timeLogs.find((v) => v.userId === userInfo.id && v.status === 'currently-in');
+  const lastInLog = userInfo ? timeLogs.find((v) => v.userId === userInfo.id && v.status === 'currently-in') : undefined;
 
   return (
     <HomeContainer>

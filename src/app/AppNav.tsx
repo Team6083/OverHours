@@ -145,7 +145,9 @@ export default function AppNav({ user }: AppNavProps) {
             {user ? (
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar {...stringAvatar(user?.name ?? '')} />
+                  <Avatar
+                    {...(user.avatar ? { src: user.avatar } : stringAvatar(user.name ?? ''))}
+                  />
                 </IconButton>
               </Tooltip>
             )

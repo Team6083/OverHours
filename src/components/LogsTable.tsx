@@ -62,7 +62,7 @@ const headCells: ColumnInfo[] = [
     disablePadding: false,
     mapToElement: (val: LogsTableData['user']) => (
       <Chip
-        avatar={<Avatar alt={val.name} src={val.avatar ?? 'https://2.gravatar.com/avatar/7d153db9ab817d315b65e64e0fc78ff51b05f32673e1ff90696d398bc28adc43?size=512'} />}
+        avatar={<Avatar alt={val.name} src={val.avatar} />}
         label={val.name}
         variant="outlined"
       />

@@ -150,6 +150,7 @@ export async function getUserAccumulatedTime(userId: string): Promise<number> {
       outTime: true,
     },
   });
+
   const totalTime = timeLogs.reduce((acc, log) => {
     if (!log.outTime) {
       throw new Error('Out time is missing');
@@ -158,6 +159,7 @@ export async function getUserAccumulatedTime(userId: string): Promise<number> {
     const outTime = log.outTime.getTime();
     return acc + (outTime - inTime) / 1000;
   }, 0);
+
   return totalTime;
 }
 
@@ -166,7 +168,7 @@ export async function getUsers(): Promise<UserInfo[]> {
 
   return users.map((v) => ({
     id: v.id,
-    name: v.displayName ?? v.userName,
+    name: v.name,
     email: v.email ?? undefined,
   }));
 }

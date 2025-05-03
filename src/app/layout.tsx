@@ -9,8 +9,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 
 import appTheme from '@/theme';
-import { auth } from '@/auth';
-import { UserInfo } from '@/types';
+import { authUser } from '@/auth';
 import AppNav from './AppNav';
 import { NotistackProvider } from './SnackbarProviderClient';
 
@@ -31,23 +30,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
-
-  let user: UserInfo | undefined;
-  if (session?.user) {
-    const id = session.user.id ?? session.user.email ?? session.user.name ?? undefined;
-
-    if (id === undefined) {
-      throw new Error('User ID is required');
-    }
-
-    user = {
-      id,
-      name: session.user.name ?? undefined,
-      email: session.user.email ?? undefined,
-      avatar: session.user.image ?? undefined,
-    };
-  }
+  const user = await authUser();
 
   return (
     <html lang="en">
