@@ -24,8 +24,6 @@ import LockPersonIcon from '@mui/icons-material/LockPerson';
 
 import { secondToString } from '@/utils';
 
-import { useRouter } from 'next/navigation';
-import { deleteTimeLog } from '@/app/actions';
 import { ColumnInfo, EnhancedTable, TableRow } from './EnhancedTable';
 
 export interface LogsTableData {
@@ -149,16 +147,75 @@ const headCells: ColumnInfo[] = [
   },
 ];
 
+function DeleteConfirmDialog(props: {
+  logToDelete: LogsTableData | undefined;
+  handleDeleteConfirmClose: () => void;
+  handleDelete: (id: string) => Promise<void>;
+}) {
+  const { logToDelete, handleDeleteConfirmClose, handleDelete } = props;
+
+  return (
+    <Dialog
+      open={logToDelete !== undefined}
+      onClose={handleDeleteConfirmClose}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">
+        TimeLog with ID
+        {' '}
+        {logToDelete?.id}
+        {' '}
+        will be permanently deleted. Are you sure you want to proceed?
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          User:
+          {' '}
+          {`${logToDelete?.user.name} (${logToDelete?.user.id})`}
+          <br />
+          Start Time:
+          {' '}
+          {logToDelete?.inTime.toLocaleString()}
+          <br />
+          End Time:
+          {' '}
+          {logToDelete?.outTime === 'in' ? 'Currently Clock-In' : logToDelete?.outTime.time.toLocaleString()}
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          color="error"
+          onClick={async () => {
+            if (logToDelete?.id) {
+              handleDelete(logToDelete.id);
+            }
+            handleDeleteConfirmClose();
+          }}
+        >
+          Delete
+        </Button>
+        <Button onClick={handleDeleteConfirmClose} autoFocus>
+          Cancel
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 export interface LogsTableProps {
   title?: string;
   mode: 'current-in' | 'history';
   data?: LogsTableData[];
+  showAdminActions?: boolean;
+  handleEdit?: (id: string) => Promise<void>;
+  handleDelete?: (id: string) => Promise<void>;
 }
 
 export default function LogsTable(props: LogsTableProps) {
-  const { mode, data, title } = props;
-
-  const router = useRouter();
+  const {
+    title, mode, data, showAdminActions, handleEdit, handleDelete,
+  } = props;
 
   const columns = useMemo(() => {
     const fieldsToHide = {
@@ -182,73 +239,46 @@ export default function LogsTable(props: LogsTableProps) {
     setLogToDelete(undefined);
   };
 
+  const moreMenuItems = useMemo(() => {
+    if (showAdminActions) {
+      return [
+        {
+          label: 'Edit',
+          icon: <EditIcon fontSize="small" />,
+          onClick: ({ id }: LogsTableData) => handleEdit?.(id),
+          disabled: Boolean(!handleEdit),
+        },
+        {
+          label: 'Delete',
+          icon: <DeleteIcon fontSize="small" />,
+          onClick: setLogToDelete,
+          disabled: Boolean(!handleDelete),
+        },
+      ];
+    }
+
+    return [];
+  }, [handleDelete, handleEdit, showAdminActions]);
+
   return (
     <>
       <EnhancedTable
         title={title}
-        showCheckbox={mode !== 'current-in'}
-        showMoreVert={mode !== 'current-in'}
+        showCheckbox={mode !== 'current-in' && Boolean(showAdminActions)}
+        showMoreVert={mode !== 'current-in' && moreMenuItems.length > 0}
         usePagination={mode !== 'current-in'}
         headCells={columns}
         rows={rows}
-        moreMenuItems={[
-          {
-            label: 'Edit',
-            icon: <EditIcon fontSize="small" />,
-            onClick: ({ id }: LogsTableData) => router.push(`/logs/edit/${id}`),
-          },
-          {
-            label: 'Delete',
-            icon: <DeleteIcon fontSize="small" />,
-            onClick: setLogToDelete,
-          },
-        ]}
+        moreMenuItems={moreMenuItems}
       />
-      <Dialog
-        open={logToDelete !== undefined}
-        onClose={handleDeleteConfirmClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          TimeLog with ID
-          {' '}
-          {logToDelete?.id}
-          {' '}
-          will be permanently deleted. Are you sure you want to proceed?
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            User:
-            {' '}
-            {`${logToDelete?.user.name} (${logToDelete?.user.id})`}
-            <br />
-            Start Time:
-            {' '}
-            {logToDelete?.inTime.toLocaleString()}
-            <br />
-            End Time:
-            {' '}
-            {logToDelete?.outTime === 'in' ? 'Currently Clock-In' : logToDelete?.outTime.time.toLocaleString()}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            color="error"
-            onClick={async () => {
-              if (logToDelete?.id) {
-                deleteTimeLog(logToDelete.id);
-              }
-              handleDeleteConfirmClose();
-            }}
-          >
-            Delete
-          </Button>
-          <Button onClick={handleDeleteConfirmClose} autoFocus>
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
+
+      {handleDelete ? (
+        <DeleteConfirmDialog
+          logToDelete={logToDelete}
+          handleDeleteConfirmClose={handleDeleteConfirmClose}
+          handleDelete={handleDelete}
+        />
+      ) : null}
     </>
   );
 }

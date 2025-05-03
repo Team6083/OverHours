@@ -25,6 +25,7 @@ import { visuallyHidden } from '@mui/utils';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { enqueueSnackbar } from 'notistack';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type anyObject = { [key: string]: any };
@@ -48,6 +49,7 @@ export interface EnhancedTableToolbarProps {
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   const { numSelected, title } = props;
+
   return (
     <Toolbar
       sx={[
@@ -84,7 +86,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
       )}
       {numSelected > 0 ? (
         <Tooltip title="Delete">
-          <IconButton>
+          <IconButton onClick={() => enqueueSnackbar('Oops! This feature is not implemented yet.', { variant: 'warning' })}>
             <DeleteIcon />
           </IconButton>
         </Tooltip>
@@ -117,6 +119,7 @@ export interface EnhancedTableProps<T extends anyObject> {
     label: string;
     icon: JSX.Element;
     onClick: (data: T) => void;
+    disabled?: boolean;
   }[];
 }
 
@@ -291,9 +294,7 @@ export function EnhancedTable<T extends anyObject>(props: EnhancedTableProps<T>)
               }
               {
                 !showMoreVert ? null : (
-                  <TableCell>
-                    {/* For MoreVertIcon */}
-                  </TableCell>
+                  <TableCell>{/* Intentionally Empty. For MoreVertIcon. */}</TableCell>
                 )
               }
             </TableRow>
@@ -361,6 +362,7 @@ export function EnhancedTable<T extends anyObject>(props: EnhancedTableProps<T>)
                                 }
                                 handleClose();
                               }}
+                              disabled={item.disabled}
                             >
                               <ListItemIcon>
                                 {item.icon}

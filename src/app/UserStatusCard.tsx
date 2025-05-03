@@ -11,7 +11,7 @@ import CardWithShadow from '@/components/CardWithShadow';
 import { secondToString, stringAvatar } from '@/utils';
 import { } from '@/auth';
 import { UserInfo } from '@/types';
-import { punchIn, punchOut } from './actions';
+import { clockIn, clockOut } from './actions';
 
 export interface UserStatusCardProps {
   userInfo?: UserInfo;
@@ -50,9 +50,9 @@ export default function UserStatusCard(
                   setLoading(true);
                   try {
                     if (isCurrentIn) {
-                      await punchOut(userInfo.id);
+                      await clockOut(userInfo.id);
                     } else {
-                      await punchIn(userInfo.id);
+                      await clockIn(userInfo.id);
                     }
                   } catch (error) {
                     enqueueSnackbar((error as Error).message, { variant: 'error' });

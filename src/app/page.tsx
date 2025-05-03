@@ -6,29 +6,29 @@ import {
 
 import CardWithShadow from '@/components/CardWithShadow';
 import LogsTable, { LogsTableData } from '@/components/LogsTable';
-import { getTimeLogToLogsTableRowMapper } from '@/mappers';
 import { authUser } from '@/auth';
 import HomeContainer from './HomeContainer';
 import UserStatusCard from './UserStatusCard';
-import { getTimeLogs, getUserAccumulatedTime, getUsers } from './actions';
+import { getCurrentInTimeLogs, getUserAccumulatedTime } from './actions';
 
 export default async function Home() {
   const userInfo = await authUser();
 
-  const timeLogs = await getTimeLogs({ status: 'currently-in' });
-  const users = await getUsers();
-  const userAccumulatedTime = userInfo
-    ? await getUserAccumulatedTime(userInfo.id)
-      .catch((error) => {
-        console.error(`Failed to fetch user accumulated time: ${(error as Error).message}`);
-        return undefined;
-      })
-    : undefined;
+  const currentInTimeLogs = await getCurrentInTimeLogs();
 
-  const mapTimeLogToLogsTableRow = getTimeLogToLogsTableRowMapper(users);
-  const tableRows: LogsTableData[] = timeLogs.map(mapTimeLogToLogsTableRow);
+  const tableRows = currentInTimeLogs
+    .map((log): LogsTableData => ({
+      id: log.id,
+      user: {
+        id: log.userId,
+        name: log.user.name ?? log.userId,
+      },
+      inTime: log.inTime,
+      outTime: 'in',
+    }));
 
-  const lastInLog = userInfo ? timeLogs.find((v) => v.userId === userInfo.id && v.status === 'currently-in') : undefined;
+  const userAccumulatedTime = userInfo?.id ? await getUserAccumulatedTime(userInfo.id) : undefined;
+  const lastInLog = currentInTimeLogs.find((v) => v.userId === userInfo?.id);
 
   return (
     <HomeContainer>

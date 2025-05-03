@@ -2,14 +2,25 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { TimeLog, UserInfo } from '@/types';
-import prisma, { timeLogStatusToApp, timeLogStatusToDb } from '@/db';
+import prisma from '@/db';
+import { auth } from '@/auth';
 
-export async function punchIn(id: string) {
+// Clock-In a user
+export async function clockIn(userId: string) {
+  const session = await auth();
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+
+  // Only admin or the user can clock in
+  if (session.user?.id !== userId && session?.user?.role !== 'admin') {
+    throw new Error('You are not authorized to clock in this user');
+  }
+
   const last = await prisma.timeLog.findFirst({
     where: {
       user: {
-        id,
+        id: userId,
       },
     },
     orderBy: {
@@ -18,7 +29,7 @@ export async function punchIn(id: string) {
   });
 
   if (last?.status === 'CurrentlyIn') {
-    throw new Error('User is already punched in');
+    throw new Error('User is already clocked in');
   }
 
   if (last?.outTime && last.outTime > new Date()) {
@@ -29,7 +40,7 @@ export async function punchIn(id: string) {
     data: {
       user: {
         connect: {
-          id,
+          id: userId,
         },
       },
       status: 'CurrentlyIn',
@@ -40,11 +51,22 @@ export async function punchIn(id: string) {
   revalidatePath('/');
 }
 
-export async function punchOut(id: string, time?: Date) {
+// Clock-Out a user
+export async function clockOut(userId: string, time?: Date) {
+  const session = await auth();
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+
+  // Only admin or the user can clock out
+  if (session.user?.id !== userId && session?.user?.role !== 'admin') {
+    throw new Error('You are not authorized to clock out this user');
+  }
+
   const last = await prisma.timeLog.findFirst({
     where: {
       user: {
-        id,
+        id: userId,
       },
       status: 'CurrentlyIn',
     },
@@ -54,7 +76,7 @@ export async function punchOut(id: string, time?: Date) {
   });
 
   if (!last || last.status !== 'CurrentlyIn') {
-    throw new Error('The user has not punched in yet.');
+    throw new Error('The user has not clocked in yet.');
   }
 
   last.outTime = time ?? new Date();
@@ -76,68 +98,38 @@ export async function punchOut(id: string, time?: Date) {
   revalidatePath('/');
 }
 
-export type GetTimeLogsOptions = {
-  userId: TimeLog['userId'];
-  status: TimeLog['status'];
-};
-
-export async function getTimeLogs(opts?: Partial<GetTimeLogsOptions>): Promise<TimeLog[]> {
-  const findManyOpts: Parameters<typeof prisma.timeLog.findMany>[0] = {};
-  if (opts?.userId) {
-    findManyOpts.where = {
-      userId: opts.userId,
-    };
-  }
-
-  if (opts?.status) {
-    findManyOpts.where = {
-      ...findManyOpts.where,
-      status: timeLogStatusToDb(opts.status),
-    };
-  }
-
-  const timeLogs = await prisma.timeLog.findMany(findManyOpts);
-
-  return timeLogs.map((v): TimeLog => {
-    const base = {
-      id: v.id,
-      userId: v.userId,
-      inTime: v.inTime,
-      notes: v.notes ?? undefined,
-    };
-
-    if (v.status === 'CurrentlyIn') {
-      return {
-        ...base,
-        status: 'currently-in',
-      };
-    }
-
-    if (!v.outTime) {
-      throw new Error('Out time is missing');
-    }
-
-    return {
-      ...base,
-      status: timeLogStatusToApp(v.status),
-      outTime: v.outTime,
-    };
-  });
-}
-
-export async function deleteTimeLog(id: string) {
-  const result = await prisma.timeLog.delete({
+// Get Clocked-in Time Logs
+export async function getCurrentInTimeLogs() {
+  return prisma.timeLog.findMany({
     where: {
-      id,
+      status: 'CurrentlyIn',
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      inTime: 'desc',
     },
   });
-
-  revalidatePath('/logs');
-
-  return result;
 }
 
+// Get Accumulated Time for a user
 export async function getUserAccumulatedTime(userId: string): Promise<number> {
+  const session = await auth();
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+
+  // Only admin or the user can get the accumulated time
+  if (session.user?.id !== userId && session?.user?.role !== 'admin') {
+    throw new Error('You are not authorized to get the accumulated time of this user');
+  }
+
   const timeLogs = await prisma.timeLog.findMany({
     where: {
       userId,
@@ -161,14 +153,4 @@ export async function getUserAccumulatedTime(userId: string): Promise<number> {
   }, 0);
 
   return totalTime;
-}
-
-export async function getUsers(): Promise<UserInfo[]> {
-  const users = await prisma.user.findMany({});
-
-  return users.map((v) => ({
-    id: v.id,
-    name: v.name,
-    email: v.email ?? undefined,
-  }));
 }

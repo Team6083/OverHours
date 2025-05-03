@@ -2,18 +2,18 @@ interface TimeLogBase {
     id: string;
     userId: string;
 
-    status: 'currently-in' | 'done' | 'locked';
+    status: 'CurrentlyIn' | 'Done' | 'Locked';
     inTime: Date;
 
     notes?: string;
 }
 
 export type InTimeLog = TimeLogBase & {
-    status: 'currently-in';
+    status: 'CurrentlyIn';
 };
 
 export type OutTimeLog = TimeLogBase & {
-    status: 'done' | 'locked';
+    status: 'Done' | 'Locked';
     outTime: Date;
 };
 

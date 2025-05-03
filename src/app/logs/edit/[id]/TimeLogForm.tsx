@@ -90,9 +90,8 @@ export default function TimeLogForm({ timeLog }:
             sx={{ ariaLabel: 'inTime' }}
             defaultValue={defaultInTime}
             slotProps={{
-              htmlInput: {
-                step: 1,
-              },
+              htmlInput: { step: 1 },
+              inputLabel: { shrink: true },
             }}
           />
         </Grid>
@@ -109,9 +108,8 @@ export default function TimeLogForm({ timeLog }:
             sx={{ ariaLabel: 'outTime' }}
             defaultValue={defaultOutTime}
             slotProps={{
-              htmlInput: {
-                step: 1,
-              },
+              htmlInput: { step: 1 },
+              inputLabel: { shrink: true },
             }}
           />
           <FormControlLabel

@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import prisma from '@/db';
+import { auth } from '@/auth';
 
 export type FormState =
   | {
@@ -25,6 +26,20 @@ const signInSchema = z.object({
 
 // eslint-disable-next-line consistent-return
 export async function saveTimeLog(formState: FormState, formData: FormData): Promise<FormState> {
+  const session = await auth();
+
+  if (!session) {
+    return {
+      message: 'You must be logged in to edit time logs',
+    };
+  }
+
+  if (session.user?.role !== 'admin') {
+    return {
+      message: 'You do not have permission to edit time logs',
+    };
+  }
+
   const validatedFields = signInSchema.safeParse({
     inTime: formData.get('inTime'),
     outTime: formData.get('outTime'),

@@ -2,28 +2,28 @@ import {
   Card, CardContent, Typography,
 } from '@mui/material';
 import prisma from '@/db';
+import { auth } from '@/auth';
 import LogsEditContainer from './LogsEditContainer';
 import TimeLogForm from './TimeLogForm';
+import NoPermission from './NoPermission';
 
 export default async function LogsPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params;
+  const { id: timeLogId } = await params;
+
+  const session = await auth();
+  if (session?.user?.role !== 'admin') {
+    return <NoPermission />;
+  }
 
   const timeLog = await prisma.timeLog.findUnique({
     where: {
-      id,
+      id: timeLogId,
     },
-    select: {
-      id: true,
-      userId: true,
-      inTime: true,
-      outTime: true,
-      status: true,
-      notes: true,
-      createdAt: true,
+    include: {
       user: {
         select: {
           id: true,
@@ -40,7 +40,7 @@ export default async function LogsPage({
           <Typography variant="h4" marginBottom={2}>
             Edit TimeLog -
             {' '}
-            {`${id}`}
+            {`${timeLogId}`}
           </Typography>
 
           {timeLog ? <TimeLogForm timeLog={timeLog} /> : null}

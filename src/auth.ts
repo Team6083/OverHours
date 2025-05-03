@@ -41,6 +41,8 @@ export const {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       token, user, account, profile, trigger,
     }) {
+      /* eslint-disable no-param-reassign */
+
       if (trigger === 'signIn') {
         // console.log('token', token);
         // console.log('user', user);
@@ -63,24 +65,27 @@ export const {
             },
           });
 
-          // eslint-disable-next-line no-param-reassign
           token.id = dbUser.id;
         } else if (account?.provider === 'credentials') {
-          // eslint-disable-next-line no-param-reassign
           token.id = account.providerAccountId;
         }
       }
+
+      /* eslint-enable no-param-reassign */
       return token;
     },
     session({ session, token }) {
+      /* eslint-disable no-param-reassign */
+
       // console.log('session_session', session);
       // console.log('session_token', token);
 
       if ('id' in token && typeof token.id === 'string') {
-        // eslint-disable-next-line no-param-reassign
         session.user.id = token.id;
+        session.user.role = 'admin'; // FIXME: temporary
       }
 
+      /* eslint-enable no-param-reassign */
       return session;
     },
   },
