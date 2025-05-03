@@ -27,8 +27,7 @@ export default async function LogsPage({
       user: {
         select: {
           id: true,
-          userName: true,
-          displayName: true,
+          name: true,
         },
       },
     },

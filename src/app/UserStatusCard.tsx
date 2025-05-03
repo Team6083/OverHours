@@ -66,7 +66,7 @@ export default function UserStatusCard(
               ? (
                 <Box marginTop={1}>
                   <Typography variant="caption">
-                    Sign-in at
+                    Clock-in at
                     {' '}
                     {inTime.toLocaleString()}
                   </Typography>

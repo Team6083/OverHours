@@ -13,7 +13,7 @@ import { saveTimeLog } from './actions';
 
 export default function TimeLogForm({ timeLog }:
   {
-    timeLog: TimeLog & { user: Pick<User, 'id' | 'userName' | 'displayName'> }
+    timeLog: TimeLog & { user: Pick<User, 'id' | 'name'> }
   }) {
   const [state, action] = useFormState(saveTimeLog, undefined);
   const errors = state && 'errors' in state && state?.errors ? state.errors : undefined;
@@ -31,7 +31,7 @@ export default function TimeLogForm({ timeLog }:
   const notesError = !!(errors?.notes && errors?.notes?.length > 0);
   const notesErrorMessage = errors?.notes?.join(', ');
 
-  const user = timeLog.user.displayName ?? timeLog.user.userName;
+  const user = timeLog.user.name;
 
   const defaultInTime = timeLog?.inTime.toISOString().slice(0, 19);
   const defaultOutTime = timeLog?.status !== 'CurrentlyIn' ? timeLog?.outTime?.toISOString().slice(0, 19) : undefined;

@@ -70,18 +70,18 @@ const headCells: ColumnInfo[] = [
   },
   {
     key: 'inTime',
-    label: 'Sign-In Time',
+    label: 'Clock-In Time',
     numeric: false,
     disablePadding: false,
     mapToElement: (val: LogsTableData['inTime']) => val.toLocaleString(),
   },
   {
     key: 'outTime',
-    label: 'Sign-Out Time',
+    label: 'Clock-Out Time',
     numeric: false,
     disablePadding: false,
     mapToElement: (val: LogsTableData['outTime']) => {
-      if (val === 'in') return <Chip color="success" label="Currently Sign-In" />;
+      if (val === 'in') return <Chip color="success" label="Currently Clocked-In" />;
 
       const { time, lockStatus, lockedBy } = val;
 
@@ -221,7 +221,7 @@ export default function LogsTable(props: LogsTableProps) {
           <br />
           Start Time: {logToDelete?.inTime.toLocaleString()}
           <br />
-          End Time: {logToDelete?.outTime === 'in' ? 'Currently Sign-In' : logToDelete?.outTime.time.toLocaleString()}
+          End Time: {logToDelete?.outTime === 'in' ? 'Currently Clock-In' : logToDelete?.outTime.time.toLocaleString()}
         </DialogContentText>
       </DialogContent>
       <DialogActions>

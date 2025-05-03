@@ -19,7 +19,7 @@ export default async function LogsPage() {
       <CardWithShadow>
         <CardContent>
           <LogsTable
-            title="Sign-In Logs"
+            title="Clock-In Logs"
             mode="history"
             data={tableData}
           />

@@ -49,7 +49,7 @@ export default async function Home() {
           <CardWithShadow>
             <CardContent>
               <Typography gutterBottom variant="h5">
-                Current Sign-In Members
+                Clocked-in Members
               </Typography>
 
               <LogsTable

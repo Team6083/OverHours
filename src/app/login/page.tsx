@@ -46,7 +46,7 @@ function SignInButton() {
       variant="contained"
       loading={pending}
     >
-      Sign in
+      Login
     </LoadingButton>
   );
 }
@@ -83,64 +83,47 @@ export default function LoginPage() {
       <CardWithShadow variant="outlined">
         <CardContent>
 
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
-          >
-            Sign in
+          <Typography component="h1" variant="h4">
+            Login to OverHours
           </Typography>
           <Box
             component="form"
             action={action}
             noValidate
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              gap: 2,
-            }}
+            sx={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 2 }}
           >
             {
               message
               && <Alert severity="error">{message}</Alert>
             }
 
-            <FormControl>
-              <FormLabel htmlFor="email">Email</FormLabel>
-              <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
-                id="email"
-                type="email"
-                name="email"
-                placeholder="your@email.com"
-                autoComplete="email"
-                autoFocus
-                required
-                fullWidth
-                variant="outlined"
-                color={emailError ? 'error' : 'primary'}
-                sx={{ ariaLabel: 'email' }}
-              />
-            </FormControl>
-            <FormControl>
-              <FormLabel htmlFor="password">Password</FormLabel>
-              <TextField
-                error={passwordError}
-                helperText={passwordErrorMessage}
-                name="password"
-                placeholder="••••••"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-                autoFocus
-                required
-                fullWidth
-                variant="outlined"
-                color={passwordError ? 'error' : 'primary'}
-              />
-            </FormControl>
+            <TextField
+              error={emailError}
+              helperText={emailErrorMessage}
+              type="email"
+              label="Email"
+              name="email"
+              placeholder="your@email.com"
+              autoComplete="email"
+              autoFocus
+              required
+              fullWidth
+              variant="outlined"
+              sx={{ ariaLabel: 'email' }}
+            />
+
+            <TextField
+              error={passwordError}
+              helperText={passwordErrorMessage}
+              type="password"
+              label="Password"
+              name="password"
+              placeholder="••••••"
+              autoComplete="current-password"
+              required
+              fullWidth
+              variant="outlined"
+            />
             <FormControlLabel
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
@@ -151,7 +134,7 @@ export default function LoginPage() {
               {' '}
               <span>
                 <Link
-                  href="/material-ui/getting-started/templates/sign-in/"
+                  href="#"
                   variant="body2"
                   sx={{ alignSelf: 'center' }}
                 >
@@ -168,7 +151,7 @@ export default function LoginPage() {
               onClick={() => nextSignIn('keycloak')}
               startIcon={<SmartToyIcon />}
             >
-              Sign in with CMS Robotics SSO
+              Login with CMS Robotics SSO
             </Button>
           </Box>
         </CardContent>
