@@ -51,18 +51,14 @@ export default function TimeLogForm({ timeLog }:
           <TextField
             type="text"
             label="ID"
-            name="id"
             fullWidth
+            disabled
             variant="outlined"
             color="primary"
             sx={{ ariaLabel: 'id' }}
             value={timeLog.id}
-            slotProps={{
-              htmlInput: {
-                readOnly: true,
-              },
-            }}
           />
+          <input type="hidden" name="id" value={timeLog.id} />
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }}>
           <TextField

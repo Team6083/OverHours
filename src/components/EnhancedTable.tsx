@@ -347,8 +347,8 @@ export function EnhancedTable<T extends anyObject>(props: EnhancedTableProps<T>)
                         anchorEl={anchorEl}
                         open={Boolean(anchorEl)}
                         onClose={handleClose}
-                        MenuListProps={{
-                          'aria-labelledby': 'basic-button',
+                        slotProps={{
+                          list: { 'aria-labelledby': 'basic-button' },
                         }}
                       >
                         {

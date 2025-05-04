@@ -1,8 +1,9 @@
 import {
-  Card, CardContent, Container, Typography,
+  CardContent, Container, Typography,
 } from '@mui/material';
 import prisma from '@/db';
 import { auth } from '@/auth';
+import CardWithShadow from '@/components/CardWithShadow';
 import TimeLogForm from './TimeLogForm';
 import NoPermission from './NoPermission';
 
@@ -33,8 +34,8 @@ export default async function LogsPage({
   });
 
   return (
-    <Container maxWidth="lg">
-      <Card>
+    <Container maxWidth="md">
+      <CardWithShadow>
         <CardContent>
           <Typography variant="h4" marginBottom={2}>
             Edit TimeLog -
@@ -45,7 +46,7 @@ export default async function LogsPage({
           {timeLog ? <TimeLogForm timeLog={timeLog} /> : null}
 
         </CardContent>
-      </Card>
+      </CardWithShadow>
     </Container>
   );
 }

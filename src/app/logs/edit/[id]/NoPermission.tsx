@@ -1,12 +1,16 @@
 'use client';
 
 import { Alert, Button } from '@mui/material';
-import { useRouter } from 'next/navigation';
 import { ArrowBack } from '@mui/icons-material';
+import Link, { LinkProps } from 'next/link';
+import { forwardRef } from 'react';
+
+const ToLogsLink = forwardRef<HTMLAnchorElement, Omit<LinkProps, 'href'>>((props, ref) => (
+  <Link href="/logs" ref={ref} {...props} />
+));
+ToLogsLink.displayName = 'ToLogsLink';
 
 export default function NoPermission() {
-  const router = useRouter();
-
   return (
     <>
       <Alert severity="error">
@@ -15,9 +19,9 @@ export default function NoPermission() {
         Please contact an administrator if you believe this is an error.
       </Alert>
       <Button
+        component={ToLogsLink}
         variant="contained"
         color="primary"
-        onClick={() => router.push('/logs')}
         sx={{ marginTop: 2 }}
         startIcon={<ArrowBack />}
       >
