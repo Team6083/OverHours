@@ -3,17 +3,9 @@
 import { useMemo, useState } from 'react';
 
 import {
-  Chip,
-  Avatar,
-  IconButton,
-  Tooltip,
-  Typography,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
+  Avatar, Button, Chip,
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+  IconButton, Tooltip, Typography,
 } from '@mui/material';
 
 import EditIcon from '@mui/icons-material/Edit';

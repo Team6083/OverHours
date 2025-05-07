@@ -18,6 +18,7 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  styled,
   Toolbar,
   Tooltip,
   Typography,
@@ -41,11 +42,12 @@ type NavItem = {
 const navItems: (NavItem | string)[] = [
   { key: 'home', title: 'Home', href: '/' },
   { key: 'logs', title: 'Logs', href: '/logs' },
-  'About', 'Contact',
+  { key: 'user', title: 'User', href: '/user' },
 ];
 
 const settings = ['Profile', 'Settings', 'Logout'];
 
+const Offset = styled('div')(({ theme }) => theme.mixins.toolbar);
 export interface AppNavProps {
   user?: UserInfo;
 }
@@ -107,7 +109,7 @@ export default function AppNav({ user }: AppNavProps) {
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar position="fixed">
         <Toolbar>
           <IconButton
             color="inherit"
@@ -201,6 +203,7 @@ export default function AppNav({ user }: AppNavProps) {
           {drawer}
         </Drawer>
       </nav>
+      <Offset />
     </>
   );
 }

@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { redirect } from 'next/navigation';
+import { forbidden, redirect, unauthorized } from 'next/navigation';
 import prisma from '@/db';
 import { auth } from '@/auth';
 
@@ -29,15 +29,11 @@ export async function saveTimeLog(formState: FormState, formData: FormData): Pro
   const session = await auth();
 
   if (!session) {
-    return {
-      message: 'You must be logged in to edit time logs',
-    };
+    unauthorized();
   }
 
   if (session.user?.role !== 'admin') {
-    return {
-      message: 'You do not have permission to edit time logs',
-    };
+    forbidden();
   }
 
   const validatedFields = signInSchema.safeParse({

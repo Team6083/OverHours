@@ -4,8 +4,8 @@ import {
 import prisma from '@/db';
 import { auth } from '@/auth';
 import CardWithShadow from '@/components/CardWithShadow';
+import { forbidden } from 'next/navigation';
 import TimeLogForm from './TimeLogForm';
-import NoPermission from './NoPermission';
 
 export default async function LogsPage({
   params,
@@ -16,7 +16,7 @@ export default async function LogsPage({
 
   const session = await auth();
   if (session?.user?.role !== 'admin') {
-    return <Container maxWidth="md"><NoPermission /></Container>;
+    forbidden();
   }
 
   const timeLog = await prisma.timeLog.findUnique({

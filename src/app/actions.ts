@@ -4,12 +4,13 @@ import { revalidatePath } from 'next/cache';
 
 import prisma from '@/db';
 import { auth } from '@/auth';
+import { unauthorized } from 'next/navigation';
 
 // Clock-In a user
 export async function clockIn(userId: string) {
   const session = await auth();
   if (!session) {
-    throw new Error('Unauthorized');
+    unauthorized();
   }
 
   // Only admin or the user can clock in
@@ -55,7 +56,7 @@ export async function clockIn(userId: string) {
 export async function clockOut(userId: string, time?: Date) {
   const session = await auth();
   if (!session) {
-    throw new Error('Unauthorized');
+    unauthorized();
   }
 
   // Only admin or the user can clock out
@@ -122,7 +123,7 @@ export async function getCurrentInTimeLogs() {
 export async function getUserAccumulatedTime(userId: string): Promise<number> {
   const session = await auth();
   if (!session) {
-    throw new Error('Unauthorized');
+    unauthorized();
   }
 
   // Only admin or the user can get the accumulated time
