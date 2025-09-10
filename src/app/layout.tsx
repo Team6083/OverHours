@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { Container } from "@chakra-ui/react";
+
+import { Provider } from "@/components/ui/provider"
+import AppNav from "./AppNav";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -22,9 +27,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+        <Provider>
+          <Container maxWidth="5xl" fluid p={4} my={2}>
+            <AppNav />
+            {children}
+          </Container>
+        </Provider>
       </body>
     </html>
   );
