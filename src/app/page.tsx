@@ -1,4 +1,4 @@
-import { Avatar, Badge, Button, ButtonGroup, Card, Center, GridItem, Heading, HStack, Icon, IconButton, Pagination, SimpleGrid, Stack, Table, Text, VStack } from "@chakra-ui/react";
+import { Avatar, Badge, Button, ButtonGroup, Card, Center, DataList, GridItem, Heading, HStack, Icon, IconButton, Pagination, SimpleGrid, Stack, Table, Tag, Text, VStack } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight, LuChevronsRight, LuUserCheck } from "react-icons/lu";
 
 import PaginationItems from "./PaginationItems";
@@ -31,14 +31,14 @@ export default function Home() {
   // });
 
   return (
-    <SimpleGrid columns={{ base: 1, lg: 5 }} gap={8}>
-      <GridItem colSpan={{ base: 1, lg: 2 }}>
+    <SimpleGrid columns={{ base: 1, md: 5 }} gapX={8} gapY={4}>
+      <GridItem colSpan={{ base: 1, md: 2 }}>
         <VStack gap={4}>
           <UserInfoCard />
           <StatsCard />
         </VStack>
       </GridItem>
-      <GridItem colSpan={{ base: 1, lg: 3 }}>
+      <GridItem colSpan={{ base: 1, md: 3 }}>
         <Pagination.Root count={items.length} pageSize={8} defaultPage={1}>
           <Stack width="full">
             <Heading size="xl">Currently Clocked-in Users</Heading>
@@ -71,23 +71,39 @@ function UserInfoCard() {
   return <Card.Root w="full" size="sm">
     <Card.Body>
       <VStack textAlign="center" gap={4}>
-        <HStack gap={4}>
-          <Avatar.Root>
+        <HStack gap={4} >
+          <Avatar.Root size="lg">
             <Avatar.Fallback name="John Doe" />
           </Avatar.Root>
-          <Stack gap="0">
+          <Stack gap={1}>
             <Text fontWeight="medium" fontSize="lg">John Doe</Text>
-            <Text color="fg.muted" textStyle="sm">Software Engineer</Text>
+            <HStack gap={1} justify="center" align="center" flexWrap="wrap">
+              <Tag.Root colorPalette="blue" variant="surface">
+                <Tag.Label>FRC - 6083</Tag.Label>
+              </Tag.Root>
+              <Tag.Root colorPalette="orange" variant="surface">
+                <Tag.Label>FTC - Arctic</Tag.Label>
+              </Tag.Root>
+              <Tag.Root colorPalette="green" variant="surface">
+                <Tag.Label>FLL</Tag.Label>
+              </Tag.Root>
+            </HStack>
           </Stack>
         </HStack>
-        <HStack>
-          <Badge colorPalette="blue">
-            1d 23h 12m 31s
-          </Badge>
-          <Badge colorPalette="pink">
-            <Text>1<sup>st</sup></Text>
-          </Badge>
-        </HStack>
+        {/* <HStack>
+          <Badge colorPalette="blue" size="md">1d 23h 12m 31s</Badge>
+          <Badge colorPalette="pink" size="md"><Text>1<sup>st</sup></Text></Badge>
+        </HStack> */}
+        <DataList.Root orientation="horizontal">
+          <DataList.Item>
+            <DataList.ItemLabel>Total Time</DataList.ItemLabel>
+            <DataList.ItemValue>1d 23h 12m 31s</DataList.ItemValue>
+          </DataList.Item>
+          <DataList.Item>
+            <DataList.ItemLabel>Ranking</DataList.ItemLabel>
+            <DataList.ItemValue><Badge colorPalette="pink"><Text>1<sup>st</sup></Text></Badge></DataList.ItemValue>
+          </DataList.Item>
+        </DataList.Root>
         <Button width="full" colorPalette="green" size="xs">
           Clock-in
           <Icon><LuUserCheck /></Icon>

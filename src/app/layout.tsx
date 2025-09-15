@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
-import { Breadcrumb, Container } from "@chakra-ui/react";
+import { Box, Breadcrumb, Container } from "@chakra-ui/react";
 
 import { Provider } from "@/components/ui/provider"
 import AppNav from "./AppNav";
@@ -33,8 +33,10 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Provider>
           <Container maxWidth="5xl" fluid p={4} my={2}>
-            <AppNav />
-            <Breadcrumbs mb={4} />
+            <Box mb={4}>
+              <AppNav />
+              {/* <Breadcrumbs /> */}
+            </Box>
             {children}
           </Container>
         </Provider>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Tooltip } from "@/components/ui/tooltip";
 import { ButtonGroup, IconButton, Table, usePaginationContext } from "@chakra-ui/react";
 import { LuDoorOpen, LuLock, LuTrash2 } from "react-icons/lu";
 
@@ -33,9 +34,9 @@ export default function CurrentlyInTable(props: { items: CurrentlyInItem[] }) {
           <Table.Cell>{item.inTime.toLocaleString()}</Table.Cell>
           <Table.Cell>
             <ButtonGroup variant="ghost" size="xs" gap={0}>
-              <IconButton colorPalette="yellow"><LuDoorOpen /></IconButton>
-              <IconButton colorPalette="orange"><LuLock /></IconButton>
-              <IconButton colorPalette="red"><LuTrash2 /></IconButton>
+              <Tooltip content="Clock-out User"><IconButton colorPalette="blue"><LuDoorOpen /></IconButton></Tooltip>
+              <Tooltip content="Lock User"><IconButton colorPalette="orange"><LuLock /></IconButton></Tooltip>
+              <Tooltip content="Remove Log"><IconButton colorPalette="red"><LuTrash2 /></IconButton></Tooltip>
             </ButtonGroup>
           </Table.Cell>
         </Table.Row>

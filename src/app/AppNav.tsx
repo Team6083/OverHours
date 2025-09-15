@@ -14,14 +14,7 @@ export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "chi
   return (
     <Box as="nav" {...boxProps}>
       {/* Main Navigation */}
-      <Flex
-        align="center"
-        justify="space-between"
-        // wrap="wrap"
-        // borderBottom="1px"
-        // borderColor="gray.200"
-        _dark={{ borderColor: "gray.700" }}
-      >
+      <Flex align="center" justify="space-between">
         {/* Logo and Brand */}
         <HStack>
           <Heading as="h1" size="xl" display="flex" alignItems="center">

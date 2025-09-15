@@ -1,3 +1,5 @@
+import { Pagination } from "@chakra-ui/react";
+
 import LogsTable from "./LogsTable";
 
 const logs = [
@@ -241,6 +243,14 @@ const logs = [
     // isLocked: true,
     notes: "Security vulnerability assessment",
   },
+  {
+    id: "31",
+    user: "grace-roberts",
+    inTime: new Date("2024-01-01T09:00:00"),
+    outTime: new Date("2024-01-01T17:15:00"),
+    // isLocked: true,
+    notes: "Security vulnerability assessment",
+  },
 ];
 
 const userInfo = new Map([
@@ -263,6 +273,8 @@ const userInfo = new Map([
 
 export default function LogsPage() {
   return <>
-    <LogsTable logs={logs} userInfo={userInfo} />
+    <Pagination.Root count={logs.length} defaultPageSize={10} defaultPage={1}>
+      <LogsTable logs={logs} userInfo={userInfo} />
+    </Pagination.Root>
   </>
 }
