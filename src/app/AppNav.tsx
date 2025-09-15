@@ -6,10 +6,13 @@ import { Box, Flex, HStack, Button, Heading } from "@chakra-ui/react";
 import { LuLogs, LuUsers } from "react-icons/lu";
 
 import { ColorModeButton } from "@/components/ui/color-mode";
+import { ComponentProps } from "react";
 
-export default function AppNav() {
+export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "children">) {
+  const {...boxProps} = props;
+  
   return (
-    <Box as="nav" mb={8}>
+    <Box as="nav" {...boxProps}>
       {/* Main Navigation */}
       <Flex
         align="center"

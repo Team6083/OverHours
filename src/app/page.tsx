@@ -1,5 +1,5 @@
-import { Avatar, Badge, Box, Button, ButtonGroup, Card, Center, FormatNumber, GridItem, Heading, HStack, Icon, IconButton, Pagination, SimpleGrid, Stack, Stat, Table, Text, VStack } from "@chakra-ui/react";
-import { LuChevronLeft, LuChevronRight, LuChevronsRight, LuEye, LuUserCheck } from "react-icons/lu";
+import { Avatar, Badge, Button, ButtonGroup, Card, Center, GridItem, Heading, HStack, Icon, IconButton, Pagination, SimpleGrid, Stack, Table, Text, VStack } from "@chakra-ui/react";
+import { LuChevronLeft, LuChevronRight, LuChevronsRight, LuUserCheck } from "react-icons/lu";
 
 import PaginationItems from "./PaginationItems";
 import CurrentlyInTable from "./CurrentlyInTable";
@@ -89,8 +89,8 @@ function UserInfoCard() {
           </Badge>
         </HStack>
         <Button width="full" colorPalette="green" size="xs">
-          <Icon><LuUserCheck /></Icon>
           Clock-in
+          <Icon><LuUserCheck /></Icon>
         </Button>
       </VStack>
     </Card.Body>

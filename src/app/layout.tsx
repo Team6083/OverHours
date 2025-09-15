@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
-import { Container } from "@chakra-ui/react";
+import { Breadcrumb, Container } from "@chakra-ui/react";
 
 import { Provider } from "@/components/ui/provider"
 import AppNav from "./AppNav";
+import { ComponentProps } from "react";
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,10 +34,31 @@ export default function RootLayout({
         <Provider>
           <Container maxWidth="5xl" fluid p={4} my={2}>
             <AppNav />
+            <Breadcrumbs mb={4} />
             {children}
           </Container>
         </Provider>
       </body>
     </html>
   );
+}
+
+function Breadcrumbs(props: {} & ComponentProps<typeof Breadcrumb.Root>) {
+  const { ...rootProps } = props;
+
+  return <Breadcrumb.Root {...rootProps}>
+    <Breadcrumb.List>
+      <Breadcrumb.Item>
+        <Breadcrumb.Link asChild><Link href="/">Home</Link></Breadcrumb.Link>
+      </Breadcrumb.Item>
+      <Breadcrumb.Separator />
+      <Breadcrumb.Item>
+        <Breadcrumb.Link asChild><Link href="/logs">Logs</Link></Breadcrumb.Link>
+      </Breadcrumb.Item>
+      <Breadcrumb.Separator />
+      <Breadcrumb.Item>
+        <Breadcrumb.CurrentLink>Props</Breadcrumb.CurrentLink>
+      </Breadcrumb.Item>
+    </Breadcrumb.List>
+  </Breadcrumb.Root>;
 }
