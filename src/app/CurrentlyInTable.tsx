@@ -18,7 +18,7 @@ export default function CurrentlyInTable(props: { items: CurrentlyInItem[] }) {
   const endIndex = startIndex + pageSize;
   const currentItems = items.slice(startIndex, endIndex);
 
-  return <Table.Root size="sm" interactive>
+  return <Table.Root size="md" interactive>
     <Table.Header>
       <Table.Row>
         <Table.ColumnHeader>User</Table.ColumnHeader>
@@ -32,8 +32,8 @@ export default function CurrentlyInTable(props: { items: CurrentlyInItem[] }) {
           <Table.Cell>{item.user}</Table.Cell>
           <Table.Cell>{item.inTime.toLocaleString()}</Table.Cell>
           <Table.Cell>
-            <ButtonGroup variant="ghost" size="2xs" gap={0}>
-              <IconButton colorPalette="blue"><LuDoorOpen /></IconButton>
+            <ButtonGroup variant="ghost" size="xs" gap={0}>
+              <IconButton colorPalette="yellow"><LuDoorOpen /></IconButton>
               <IconButton colorPalette="orange"><LuLock /></IconButton>
               <IconButton colorPalette="red"><LuTrash2 /></IconButton>
             </ButtonGroup>
