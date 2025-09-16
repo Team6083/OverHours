@@ -41,6 +41,14 @@ export async function getAllUserDTOs(): Promise<UserDTO[]> {
   return users.map(prismaUserToDTO);
 }
 
+export async function getAllUserNames(): Promise<{ id: string; name: string }[]> {
+  const users = await prisma.user.findMany({
+    select: { id: true, name: true },
+  });
+
+  return users.map(user => ({ id: user.id, name: user.name }));
+}
+
 export async function createUser(data: {
   email: string;
   name: string;

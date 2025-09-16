@@ -130,24 +130,32 @@ const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1] | null) 
 
 export default function LogsTable(props: {
   logs: Pick<TimeLogDTO, "id" | "userId" | "inTime" | "outTime" | "status" | "notes">[];
-  userInfo: Map<string, { name: string; avatarUrl?: string }>;
+  userInfo: Record<string, { name: string, avatarUrl?: string }>;
 }) {
   const { logs, userInfo } = props;
 
   const data = logs.map((log): TableData => {
-    const user = userInfo.get(log.userId);
+    const user = userInfo[log.userId];
 
     let durationStr = "N/A";
     if (log.outTime) {
       const durationMs = log.outTime.getTime() - log.inTime.getTime();
       const hours = Math.floor(durationMs / (1000 * 60 * 60));
       const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-      durationStr = `${hours}h ${minutes}m`;
+      const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+
+      if (hours > 0) {
+        durationStr = `${hours}h ${minutes}m ${seconds}s`;
+      } else if (minutes > 0) {
+        durationStr = `${minutes}m ${seconds}s`;
+      } else {
+        durationStr = `${seconds}s`;
+      }
     }
 
     return {
       ...log,
-      displayName: user?.name || log.userId,
+      displayName: user.name || log.userId,
       avatarUrl: user?.avatarUrl,
       inTimeStr: log.inTime.toLocaleString(),
       outTimeStr: log.outTime ? log.outTime.toLocaleString() : "N/A",

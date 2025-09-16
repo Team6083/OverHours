@@ -11,7 +11,12 @@ export type CurrentlyInItem = {
   inTime: Date;
 };
 
-export default function CurrentlyInTable(props: { items: CurrentlyInItem[] }) {
+export default function CurrentlyInTable(props: {
+  items: CurrentlyInItem[],
+  handleClockout?: (id: string) => void,
+  handleLock?: (id: string) => void,
+  handleRemove?: (id: string) => void,
+}) {
   const { items } = props;
 
   const { page, pageSize } = usePaginationContext();
@@ -36,9 +41,9 @@ export default function CurrentlyInTable(props: { items: CurrentlyInItem[] }) {
             <Table.Cell>{item.inTime.toLocaleString()}</Table.Cell>
             <Table.Cell>
               <ButtonGroup variant="ghost" size="xs" gap={0}>
-                <Tooltip content="Clock-out User"><IconButton colorPalette="blue"><LuDoorOpen /></IconButton></Tooltip>
-                <Tooltip content="Lock User"><IconButton colorPalette="orange"><LuLock /></IconButton></Tooltip>
-                <Tooltip content="Remove Log"><IconButton colorPalette="red"><LuTrash2 /></IconButton></Tooltip>
+                <Tooltip content="Clock-out User"><IconButton colorPalette="blue" onClick={() => props.handleClockout?.(item.id)}><LuDoorOpen /></IconButton></Tooltip>
+                <Tooltip content="Lock User"><IconButton colorPalette="orange" onClick={() => props.handleLock?.(item.id)}><LuLock /></IconButton></Tooltip>
+                <Tooltip content="Remove Log"><IconButton colorPalette="red" onClick={() => props.handleRemove?.(item.id)}><LuTrash2 /></IconButton></Tooltip>
               </ButtonGroup>
             </Table.Cell>
           </Table.Row>

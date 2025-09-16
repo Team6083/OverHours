@@ -1,9 +1,12 @@
-import { Card, Table, Badge, Button, Icon, Text } from "@chakra-ui/react";
+import { Card, Table, Button, Icon, Text } from "@chakra-ui/react";
 import { LuChevronsRight } from "react-icons/lu";
 
 import RankingBadge from "@/components/RankingBadge";
+import { formatDuration } from "@/lib/util";
 
-export default function StatsCard() {
+export default function StatsCard(props: { rankings: { id: string, name: string, duration: number }[] }) {
+  const { rankings } = props;
+
   return <Card.Root w="full" size="sm">
     <Card.Header>
       <Card.Title>Leaderboard</Card.Title>
@@ -18,45 +21,15 @@ export default function StatsCard() {
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          <Table.Row>
-            <Table.Cell><RankingBadge ranking={1} size="md" /></Table.Cell>
-            <Table.Cell>John Doe</Table.Cell>
-            <Table.Cell>
-              2d 5h 30m 11s
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell><RankingBadge ranking={2} size="md" /></Table.Cell>
-            <Table.Cell>Jane Smith</Table.Cell>
-            <Table.Cell>
-              5h 30m 11s
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell><RankingBadge ranking={3} size="md" /></Table.Cell>
-            <Table.Cell>Alice Johnson</Table.Cell>
-            <Table.Cell>
-              30m 11s
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell><RankingBadge ranking={4} size="md" /></Table.Cell>
-            <Table.Cell>Bob Brown</Table.Cell>
-            <Table.Cell>
-              10m 5s
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell>
-              <Badge size="md">
-                <Text>5<sup>th</sup></Text>
-              </Badge>
-            </Table.Cell>
-            <Table.Cell>Charlie Davis</Table.Cell>
-            <Table.Cell>
-              5m 30s
-            </Table.Cell>
-          </Table.Row>
+          {rankings.map(({ id, name, duration }, index) => (
+            <Table.Row key={id}>
+              <Table.Cell><RankingBadge ranking={index + 1} size="md" /></Table.Cell>
+              <Table.Cell>{name}</Table.Cell>
+              <Table.Cell>
+                {formatDuration(duration)}
+              </Table.Cell>
+            </Table.Row>
+          ))}
         </Table.Body>
       </Table.Root>
     </Card.Body>

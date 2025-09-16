@@ -51,22 +51,26 @@ export async function getTimelogDTO(id: string): Promise<TimeLogDTO | null> {
   return prismaTimeLogToDTO(timeLog);
 }
 
-export async function getAllCurrentlyInTimelogDTOs(): Promise<(TimeLogDTO & { userDisplayName: string })[]> {
+export async function getAllCurrentlyInTimelogDTOs(): Promise<TimeLogDTO[]> {
   const timeLogs = await prisma.timeLog.findMany({
     where: { status: "CurrentlyIn" },
     orderBy: { inTime: "desc" },
-    include: { user: { select: { name: true } } },
   });
 
-  return timeLogs.map((log) => ({
-    ...prismaTimeLogToDTO(log),
-    userDisplayName: log.user.name,
-  }));
+  return timeLogs.map(prismaTimeLogToDTO);
 }
 
 export async function getAllTimelogDTOsForUser(userId: string): Promise<TimeLogDTO[]> {
   const timeLogs = await prisma.timeLog.findMany({
     where: { userId },
+    orderBy: { inTime: "desc" },
+  });
+
+  return timeLogs.map(prismaTimeLogToDTO);
+}
+
+export async function getAllTimelogDTOs(): Promise<TimeLogDTO[]> {
+  const timeLogs = await prisma.timeLog.findMany({
     orderBy: { inTime: "desc" },
   });
 
@@ -80,12 +84,11 @@ export type UserClockStatus = {
   totalTimeSec: number;
 }
 
-export async function getUserClockStatus(userId: string): Promise<UserClockStatus | null> {
+export async function getAllUsersTotalTimeSec(): Promise<{ [userId: string]: number }> {
   const result = await prisma.timeLog.aggregateRaw({
     pipeline: [
       {
         $match: {
-          userId: { $oid: userId },
           status: "Done",
         }
       },
@@ -98,30 +101,37 @@ export async function getUserClockStatus(userId: string): Promise<UserClockStatu
       },
       {
         $group: {
-          _id: null,
+          _id: "$userId",
           totalDuration: { $sum: "$duration" },
+        }
+      },
+      {
+        $sort: {
+          totalDuration: -1
         }
       }
     ]
   });
 
-  console.log(result);
+  if (Array.isArray(result) && result.length > 0) {
+    return Object.fromEntries(result.map((v) => [v._id["$oid"], Math.round(v.totalDuration as number / 1000)]));
+  }
 
-  const totalDuration = Array.isArray(result) && result.length > 0 ? result[0].totalDuration : 0;
+  return {};
+}
 
+export async function getUserCurrentLogDTO(userId: string): Promise<TimeLogDTO | null> {
   const lastLog = await prisma.timeLog.findFirst({
     where: { userId, status: "CurrentlyIn" },
     orderBy: { inTime: "desc" },
   });
 
-  return {
-    isClockedin: !!lastLog,
-    currentLog: lastLog ? prismaTimeLogToDTO(lastLog) : undefined,
-    rank: 1,
-    totalTimeSec: Math.round((totalDuration as number) / 1000),
-  };
-}
+  if (!lastLog) {
+    return null;
+  }
 
+  return prismaTimeLogToDTO(lastLog);
+}
 
 export async function clockIn(userId: string): Promise<TimeLogDTO> {
   // Check if user already has a currently in time log
@@ -164,6 +174,66 @@ export async function clockOut(userId: string, notes?: string): Promise<TimeLogD
     where: { id: existingTimeLog.id },
     data: {
       status: "Done",
+      outTime: new Date(),
+      notes: notes || existingTimeLog.notes,
+    },
+  });
+
+  return prismaTimeLogToDTO(updatedTimeLog);
+}
+
+export async function deleteTimelog(timelogId: string): Promise<TimeLogDTO> {
+  const timeLog = await prisma.timeLog.delete({
+    where: { id: timelogId },
+  });
+
+  return prismaTimeLogToDTO(timeLog);
+}
+
+export async function adminClockOut(timelogId: string, notes?: string): Promise<TimeLogDTO> {
+  // Find the time log
+  const existingTimeLog = await prisma.timeLog.findUnique({
+    where: { id: timelogId },
+  });
+
+  if (!existingTimeLog) {
+    throw new Error("No time log found");
+  }
+
+  if (existingTimeLog.status !== "CurrentlyIn") {
+    throw new Error("Time log is not currently in");
+  }
+
+  const updatedTimeLog = await prisma.timeLog.update({
+    where: { id: existingTimeLog.id },
+    data: {
+      status: "Done",
+      outTime: new Date(),
+      notes: notes || existingTimeLog.notes,
+    },
+  });
+
+  return prismaTimeLogToDTO(updatedTimeLog);
+}
+
+export async function adminLockLog(timelogId: string, notes?: string): Promise<TimeLogDTO> {
+  // Find the time log
+  const existingTimeLog = await prisma.timeLog.findUnique({
+    where: { id: timelogId },
+  });
+
+  if (!existingTimeLog) {
+    throw new Error("No time log found");
+  }
+
+  if (existingTimeLog.status !== "CurrentlyIn") {
+    throw new Error("Only done time logs can be locked");
+  }
+
+  const updatedTimeLog = await prisma.timeLog.update({
+    where: { id: existingTimeLog.id },
+    data: {
+      status: "Locked",
       outTime: new Date(),
       notes: notes || existingTimeLog.notes,
     },
