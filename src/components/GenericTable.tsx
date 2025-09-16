@@ -1,4 +1,4 @@
-import { ComponentProps, useEffect, useMemo, useState } from "react";
+import { ComponentProps, useMemo, useState } from "react";
 import { createListCollection, Stack, usePaginationContext, HStack, Select, Portal, Table, Checkbox, ButtonGroup, Pagination, IconButton, ActionBar, Text } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
@@ -54,10 +54,6 @@ export default function GenericTable<T>(props: {
   const [selection, setSelection] = useState<string[]>([]);
   const hasSelection = selection.length > 0;
   const indeterminate = hasSelection && selection.length < tableData.length;
-
-  useEffect(() => {
-    setSelection([]);
-  }, [pageRange.start, pageRange.end, items]);
 
   return <Stack gap={4} {...stackProps}>
     <HStack px={2}>
