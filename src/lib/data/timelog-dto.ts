@@ -6,7 +6,7 @@ export type TimeLogDTO = {
   id: string;
   userId: string;
 
-  status: "CURRENTLY_IN" | "DONE" | "CANCELLED";
+  status: "CURRENTLY_IN" | "DONE" | "LOCKED";
   inTime: Date;
   outTime?: Date;
   notes?: string;
@@ -22,7 +22,7 @@ function prismaTimeLogToDTO(timeLog: TimeLog): TimeLogDTO {
   } else if (timeLog.status === "Done") {
     status = "DONE";
   } else if (timeLog.status === "Locked") {
-    status = "CANCELLED";
+    status = "LOCKED";
   } else {
     throw new Error("Unknown TimeLog status");
   }
