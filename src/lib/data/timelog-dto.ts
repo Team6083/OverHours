@@ -51,13 +51,17 @@ export async function getTimelogDTO(id: string): Promise<TimeLogDTO | null> {
   return prismaTimeLogToDTO(timeLog);
 }
 
-export async function getAllCurrentlyInTimelogDTOs(): Promise<TimeLogDTO[]> {
+export async function getAllCurrentlyInTimelogDTOs(): Promise<(TimeLogDTO & { userDisplayName: string })[]> {
   const timeLogs = await prisma.timeLog.findMany({
     where: { status: "CurrentlyIn" },
     orderBy: { inTime: "desc" },
+    include: { user: { select: { name: true } } },
   });
 
-  return timeLogs.map(prismaTimeLogToDTO);
+  return timeLogs.map((log) => ({
+    ...prismaTimeLogToDTO(log),
+    userDisplayName: log.user.name,
+  }));
 }
 
 export async function getAllTimelogDTOsForUser(userId: string): Promise<TimeLogDTO[]> {
@@ -68,6 +72,56 @@ export async function getAllTimelogDTOsForUser(userId: string): Promise<TimeLogD
 
   return timeLogs.map(prismaTimeLogToDTO);
 }
+
+export type UserClockStatus = {
+  isClockedin: boolean;
+  currentLog?: TimeLogDTO;
+  rank: number;
+  totalTimeSec: number;
+}
+
+export async function getUserClockStatus(userId: string): Promise<UserClockStatus | null> {
+  const result = await prisma.timeLog.aggregateRaw({
+    pipeline: [
+      {
+        $match: {
+          userId: { $oid: userId },
+          status: "Done",
+        }
+      },
+      {
+        $addFields: {
+          duration: {
+            $subtract: ["$outTime", "$inTime"]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalDuration: { $sum: "$duration" },
+        }
+      }
+    ]
+  });
+
+  console.log(result);
+
+  const totalDuration = Array.isArray(result) && result.length > 0 ? result[0].totalDuration : 0;
+
+  const lastLog = await prisma.timeLog.findFirst({
+    where: { userId, status: "CurrentlyIn" },
+    orderBy: { inTime: "desc" },
+  });
+
+  return {
+    isClockedin: !!lastLog,
+    currentLog: lastLog ? prismaTimeLogToDTO(lastLog) : undefined,
+    rank: 1,
+    totalTimeSec: Math.round((totalDuration as number) / 1000),
+  };
+}
+
 
 export async function clockIn(userId: string): Promise<TimeLogDTO> {
   // Check if user already has a currently in time log
