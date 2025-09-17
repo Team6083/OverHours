@@ -1,12 +1,13 @@
+import { ComponentProps } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 
 import { Box, Breadcrumb, Container } from "@chakra-ui/react";
 
 import { Provider } from "@/components/ui/provider"
 import AppNav from "./AppNav";
-import { ComponentProps } from "react";
-import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,14 +32,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Provider>
-          <Container maxWidth="5xl" fluid p={4} my={2}>
-            <Box mb={4}>
-              <AppNav />
-              {/* <Breadcrumbs /> */}
-            </Box>
-            {children}
-          </Container>
+        <Provider> {/* Chakra-UI provider */}
+          <SessionProvider> {/* Auth.js provider, for useSession() hook */}
+            <Container maxWidth="5xl" fluid p={4} my={2}>
+              <Box mb={4}>
+                <AppNav />
+                {/* <Breadcrumbs /> */}
+              </Box>
+              {children}
+            </Container>
+          </SessionProvider>
         </Provider>
       </body>
     </html>

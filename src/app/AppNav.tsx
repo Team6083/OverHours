@@ -1,16 +1,19 @@
 "use client";
-
+import { ComponentProps } from "react";
 import Link from "next/link";
+import { signIn, useSession } from "next-auth/react";
 
-import { Box, Flex, HStack, Button, Heading } from "@chakra-ui/react";
-import { LuLogs, LuUsers } from "react-icons/lu";
+import { Box, Flex, HStack, Button, Heading, Icon } from "@chakra-ui/react";
+import { LuLogIn, LuLogs, LuUsers } from "react-icons/lu";
 
 import { ColorModeButton } from "@/components/ui/color-mode";
-import { ComponentProps } from "react";
+import AvatarMenu from "./UserAvatarMenu";
 
 export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "children">) {
-  const {...boxProps} = props;
-  
+  const { ...boxProps } = props;
+
+  const { data: session } = useSession();
+
   return (
     <Box as="nav" {...boxProps}>
       {/* Main Navigation */}
@@ -30,22 +33,34 @@ export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "chi
         {/* Desktop Nav Links */}
         <HStack>
           <Link href="/logs" passHref>
-            <Button variant="ghost">
+            <Button size="sm" variant="ghost">
               <LuLogs />
               Logs
             </Button>
           </Link>
 
           <Link href="/admin/users" passHref>
-            <Button variant="ghost">
+            <Button size="sm" variant="ghost">
               <LuUsers />
               Users
             </Button>
           </Link>
 
           <ColorModeButton />
+
+          {session?.user
+            ? <AvatarMenu
+              user={{ name: session.user.name || undefined, image: session.user.image || undefined }}
+              size="sm"
+            />
+            : <Button size="sm" onClick={() => signIn("keycloak")}>
+              Sign-In
+              <Icon><LuLogIn /></Icon>
+            </Button>
+          }
         </HStack>
       </Flex>
     </Box>
   );
 }
+

@@ -13,7 +13,7 @@ export type UserDTO = {
   updatedAt: Date;
 }
 
-function prismaUserToDTO(user: User): UserDTO {
+export function prismaUserToDTO(user: User): UserDTO {
   return {
     id: user.id,
     email: user.email,

@@ -1,14 +1,17 @@
+import { revalidatePath } from "next/cache";
 import { EmptyState, GridItem, Heading, Pagination, SimpleGrid, VStack } from "@chakra-ui/react";
 import { LuBuilding } from "react-icons/lu";
 
 import { adminClockOut, adminLockLog, deleteTimelog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserCurrentLogDTO } from "@/lib/data/timelog-dto";
 import { getAllUserNames, getUserDTO } from "@/lib/data/user-dto";
+// import { authUser } from "@/lib/util";
 import CurrentlyInTable from "./CurrentlyInTable";
 import UserCard from "./UserCard";
 import StatsCard from "./StatsCard";
-import { revalidatePath } from "next/cache";
 
 export default async function Home() {
+  // const sessionUser = await authUser();
+  // const userId = sessionUser?.id;
 
   const userId: string | undefined = "68c91fd788fab1b583243a12";
 
