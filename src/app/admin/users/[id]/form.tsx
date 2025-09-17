@@ -3,8 +3,8 @@
 import { useActionState } from "react";
 import { Fieldset, Stack, Field, Input, Button, DataList } from "@chakra-ui/react";
 
-import { formSubmit } from "./actions";
 import { UserDTO } from "@/lib/data/user-dto";
+import { formSubmit } from "./actions";
 
 export default function UserForm(props: {
   isNew?: boolean;
@@ -46,6 +46,7 @@ export default function UserForm(props: {
             <Field.RequiredIndicator />
           </Field.Label>
           <Input name="email" type="email" defaultValue={state.prevValues?.email} />
+          <Field.ErrorText>{emailFieldError?.map((v) => v.message).join(", ")}</Field.ErrorText>
         </Field.Root>
       </Fieldset.Content>
 

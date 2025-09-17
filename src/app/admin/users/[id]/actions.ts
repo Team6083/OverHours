@@ -10,12 +10,12 @@ const schema = z.object({
   email: z.email().toLowerCase(),
 });
 
-export type CreateUserFormState = {
+export type UserFormState = {
   issues?: z.ZodError["issues"];
   prevValues?: z.infer<typeof schema>
 }
 
-export async function formSubmit(state: CreateUserFormState, formData: FormData): Promise<CreateUserFormState> {
+export async function formSubmit(state: UserFormState, formData: FormData): Promise<UserFormState> {
   const formDataObj = Object.fromEntries(formData.entries());
 
   try {

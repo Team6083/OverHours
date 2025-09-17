@@ -1,9 +1,9 @@
-import { Button, Container, HStack, Icon, IconButton } from "@chakra-ui/react";
-
-import UserForm from "./form";
-import { getUserDTO } from "@/lib/data/user-dto";
-import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
 import Link from "next/link";
+import { Button, Container, HStack, Icon, IconButton } from "@chakra-ui/react";
+import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
+
+import { getUserDTO } from "@/lib/data/user-dto";
+import UserForm from "./form";
 
 export default async function SingleUserPage(props: {
   params: Promise<{ id: string }>;
@@ -26,10 +26,12 @@ export default async function SingleUserPage(props: {
           Back to Users
         </Link>
       </Button>
-      <IconButton size="xs" variant="ghost" colorPalette="red" asChild><Link href={`/admin/users/${userDTO?.id}/delete`}>
+
+      {userDTO && <IconButton size="xs" variant="ghost" colorPalette="red" asChild><Link href={`/admin/users/${userDTO.id}/delete`}>
         <Icon><LuTrash2 /></Icon>
-      </Link></IconButton>
+      </Link></IconButton>}
     </HStack>
+
     <UserForm isNew={isNew} user={userDTO ?? undefined} />
   </>);
 }

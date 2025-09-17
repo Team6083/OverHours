@@ -182,18 +182,18 @@ export async function clockOut(userId: string, notes?: string): Promise<TimeLogD
   return prismaTimeLogToDTO(updatedTimeLog);
 }
 
-export async function deleteTimelog(timelogId: string): Promise<TimeLogDTO> {
+export async function deleteTimelog(timeLogId: string): Promise<TimeLogDTO> {
   const timeLog = await prisma.timeLog.delete({
-    where: { id: timelogId },
+    where: { id: timeLogId },
   });
 
   return prismaTimeLogToDTO(timeLog);
 }
 
-export async function adminClockOut(timelogId: string, notes?: string): Promise<TimeLogDTO> {
+export async function adminClockOut(timeLogId: string, notes?: string): Promise<TimeLogDTO> {
   // Find the time log
   const existingTimeLog = await prisma.timeLog.findUnique({
-    where: { id: timelogId },
+    where: { id: timeLogId },
   });
 
   if (!existingTimeLog) {
@@ -216,10 +216,10 @@ export async function adminClockOut(timelogId: string, notes?: string): Promise<
   return prismaTimeLogToDTO(updatedTimeLog);
 }
 
-export async function adminLockLog(timelogId: string, notes?: string): Promise<TimeLogDTO> {
+export async function adminLockLog(timeLogId: string, notes?: string): Promise<TimeLogDTO> {
   // Find the time log
   const existingTimeLog = await prisma.timeLog.findUnique({
-    where: { id: timelogId },
+    where: { id: timeLogId },
   });
 
   if (!existingTimeLog) {
@@ -241,3 +241,82 @@ export async function adminLockLog(timelogId: string, notes?: string): Promise<T
 
   return prismaTimeLogToDTO(updatedTimeLog);
 }
+
+export async function createTimeLog(data: {
+  userId: string;
+  status: TimeLogDTO["status"];
+  inTime: Date;
+  outTime?: Date;
+  notes: string | null;
+}): Promise<TimeLogDTO> {
+  const status = data.status === "CURRENTLY_IN"
+    ? "CurrentlyIn"
+    : (data.status === "DONE"
+      ? "Done"
+      : "Locked"
+    );
+
+  if (data.status !== "CURRENTLY_IN" && !data.outTime) {
+    throw new Error("Out time is required for DONE or LOCKED status");
+  }
+
+  if (data.outTime && data.outTime <= data.inTime) {
+    throw new Error("Out time must be after in time");
+  }
+
+  const result = await prisma.timeLog.create({
+    data: {
+      userId: data.userId,
+      status,
+      inTime: data.inTime,
+      outTime: data.outTime,
+      notes: data.notes,
+    }
+  });
+
+  return prismaTimeLogToDTO(result);
+}
+
+export async function updateTimeLog(timeLogId: string, data: {
+  userId: string;
+  status: TimeLogDTO["status"];
+  inTime: Date;
+  outTime?: Date;
+  notes: string | null;
+}): Promise<TimeLogDTO> {
+  const status = data.status === "CURRENTLY_IN"
+    ? "CurrentlyIn"
+    : (data.status === "DONE"
+      ? "Done"
+      : "Locked"
+    );
+
+  if (data.status !== "CURRENTLY_IN" && !data.outTime) {
+    throw new Error("Out time is required for DONE or LOCKED status");
+  }
+
+  if (data.outTime && data.outTime <= data.inTime) {
+    throw new Error("Out time must be after in time");
+  }
+
+  const result = await prisma.timeLog.update({
+    where: { id: timeLogId },
+    data: {
+      userId: data.userId,
+      status,
+      inTime: data.inTime,
+      outTime: data.outTime,
+      notes: data.notes,
+    }
+  });
+
+  return prismaTimeLogToDTO(result);
+}
+
+export async function deleteLogs(timeLogIds: string[]) {
+  const payload = await prisma.timeLog.deleteMany({
+    where: { id: { in: timeLogIds } },
+  });
+
+  return payload;
+} 

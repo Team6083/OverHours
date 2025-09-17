@@ -64,8 +64,8 @@ export async function createUser(data: {
 }
 
 export async function updateUser(id: string, data: {
-  email?: string;
-  name?: string;
+  email: string;
+  name: string;
 }): Promise<UserDTO | null> {
   const user = await prisma.user.update({
     where: { id },
