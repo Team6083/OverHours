@@ -113,14 +113,14 @@ export default function UsersTable(props: {
     ...user,
   }));
 
-  const topRightElement = (
+  const topRightElement = (<HStack justify="flex-end" w="full">
     <Button size="sm" variant="ghost" asChild>
       <Link href="/admin/users/new">
         <Icon><LuUserPlus /></Icon>
         Create User
       </Link>
     </Button>
-  );
+  </HStack>);
 
   return <GenericTable<TableData>
     columns={columns}
