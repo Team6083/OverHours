@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { Container } from "@chakra-ui/react";
 
-import { deleteTimelog, getTimelogDTO } from "@/lib/data/timelog-dto";
+import { deleteTimeLog, getTimelogDTO } from "@/lib/data/timelog-dto";
 import { getUserDTO } from "@/lib/data/user-dto";
 import DeleteTimeLogConfirm from "./DeleteTimeLogConfirm";
 
@@ -25,7 +25,7 @@ export default async function DeleteTimeLogPage(props: {
 
   const handleDelete = async () => {
     "use server";
-    await deleteTimelog(id);
+    await deleteTimeLog(id);
     redirect("/logs");
   };
 

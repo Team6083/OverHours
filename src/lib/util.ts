@@ -1,6 +1,3 @@
-import { auth } from "@/auth";
-import { UserDTO, prismaUserToDTO } from "./data/user-dto";
-import prisma from "./prisma";
 
 export function formatDuration(durationSec: number): string {
   const days = Math.floor(durationSec / 86400);
@@ -17,23 +14,16 @@ export function formatDuration(durationSec: number): string {
   return parts.join(' ');
 }
 
-export async function authUser(): Promise<UserDTO | null> {
-  const session = await auth();
+export function maskName(name: string): string {
+  if (!name) return "";
 
-  const userId = session?.user.id;
-  if (!userId) {
-    return null;
+  const length = name.length;
+
+  if (length <= 1) {
+    return "*"; // 太短就全遮
+  } else if (length === 2) {
+    return name[0] + "*";
+  } else {
+    return name[0] + "*".repeat(length - 2) + name[length - 1];
   }
-
-  const user = await prisma.user.findUnique({
-    where: {
-      id: session?.user.id,
-    }
-  });
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  return prismaUserToDTO(user);
 }

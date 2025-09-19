@@ -2,17 +2,21 @@ import Link from "next/link";
 import { Button, HStack, Icon, Pagination } from "@chakra-ui/react";
 import { LuClipboardPlus } from "react-icons/lu";
 
+import { auth, Role } from "@/auth";
 import { getAllTimelogDTOs } from "@/lib/data/timelog-dto";
 import { getAllUserNames } from "@/lib/data/user-dto";
 import LogsTable from "./LogsTable";
 
 export default async function LogsPage() {
-  const logs = await getAllTimelogDTOs();
+  const session = await auth();
+  const isAdmin = session?.user.role === Role.ADMIN;
+
+  const logs = await getAllTimelogDTOs(isAdmin ? undefined : session?.user.id);
   const userInfo = Object.fromEntries((await getAllUserNames()).map((user) => [user.id, { name: user.name }]));
 
   return <>
     <HStack justifyContent="flex-end" mb={4}>
-      <Button size="sm" variant="ghost" asChild>
+      <Button size="sm" variant="ghost" hidden={!isAdmin} asChild>
         <Link href="/logs/new">
           <Icon><LuClipboardPlus /></Icon>
           Create Log
@@ -20,7 +24,7 @@ export default async function LogsPage() {
       </Button>
     </HStack>
     <Pagination.Root count={logs.length} defaultPageSize={10} defaultPage={1}>
-      <LogsTable logs={logs} userInfo={userInfo} />
+      <LogsTable logs={logs} userInfo={userInfo} showAdminActions={isAdmin} />
     </Pagination.Root>
   </>
 }

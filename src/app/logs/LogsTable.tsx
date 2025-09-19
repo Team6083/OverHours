@@ -87,18 +87,19 @@ const columns: Column<TableData>[] = [
         {row.durationStr}
       </Text>
     ) : null,
-  },
-  {
-    dataKey: "actions",
-    renderHeader: () => "Actions",
-    renderCell: (row) => (
-      <ButtonGroup size="xs" variant="ghost">
-        <IconButton asChild><Link href={`/logs/${row.id}`}><Icon><LuPen /></Icon></Link></IconButton>
-        <IconButton colorPalette="red" asChild><Link href={`/logs/${row.id}/delete`}><Icon><LuTrash2 /></Icon></Link></IconButton>
-      </ButtonGroup>
-    ),
   }
 ]
+
+const actionsColumn: Column<TableData> = {
+  dataKey: "actions",
+  renderHeader: () => "Actions",
+  renderCell: (row) => (
+    <ButtonGroup size="xs" variant="ghost">
+      <IconButton asChild><Link href={`/logs/${row.id}`}><Icon><LuPen /></Icon></Link></IconButton>
+      <IconButton colorPalette="red" asChild><Link href={`/logs/${row.id}/delete`}><Icon><LuTrash2 /></Icon></Link></IconButton>
+    </ButtonGroup>
+  ),
+};
 
 const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1] | null) => {
   if (!sortBy) return 0;
@@ -135,8 +136,9 @@ const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1] | null) 
 export default function LogsTable(props: {
   logs: Pick<TimeLogDTO, "id" | "userId" | "inTime" | "outTime" | "status" | "notes">[];
   userInfo: Record<string, { name: string, avatarUrl?: string }>;
+  showAdminActions?: boolean;
 }) {
-  const { logs, userInfo } = props;
+  const { logs, userInfo, showAdminActions = false } = props;
 
   const data = logs.map((log): TableData => {
     const user = userInfo[log.userId];
@@ -168,14 +170,14 @@ export default function LogsTable(props: {
   });
 
   return <GenericTable<TableData>
-    columns={columns}
+    columns={showAdminActions ? [...columns, actionsColumn] : columns}
     items={data}
     keyFn={(item) => item.id}
     defaultSortBy={["time", 1]}
     sortingFn={sortingFn}
     checkboxOptions={{
-      show: true,
-      showActionBar: true,
+      show: showAdminActions,
+      showActionBar: showAdminActions,
       renderActionBarContent: (selection) => (
         <Dialog.Root size="lg">
 

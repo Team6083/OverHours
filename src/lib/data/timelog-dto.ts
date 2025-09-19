@@ -1,6 +1,7 @@
 import "server-only";
-import prisma from "../prisma";
+import { auth, Role } from "@/auth";
 import { TimeLog } from "@/generated/prisma";
+import prisma from "../prisma";
 
 export type TimeLogDTO = {
   id: string;
@@ -44,7 +45,8 @@ export async function getTimelogDTO(id: string): Promise<TimeLogDTO | null> {
     where: { id },
   });
 
-  if (!timeLog) {
+  const session = await auth();
+  if (!timeLog || (timeLog.userId !== session?.user.id && session?.user.role !== Role.ADMIN)) {
     return null;
   }
 
@@ -60,17 +62,19 @@ export async function getAllCurrentlyInTimelogDTOs(): Promise<TimeLogDTO[]> {
   return timeLogs.map(prismaTimeLogToDTO);
 }
 
-export async function getAllTimelogDTOsForUser(userId: string): Promise<TimeLogDTO[]> {
-  const timeLogs = await prisma.timeLog.findMany({
-    where: { userId },
-    orderBy: { inTime: "desc" },
-  });
+export async function getAllTimelogDTOs(userId?: string): Promise<TimeLogDTO[]> {
+  const session = await auth();
 
-  return timeLogs.map(prismaTimeLogToDTO);
-}
+  if (!session) {
+    return [];
+  }
 
-export async function getAllTimelogDTOs(): Promise<TimeLogDTO[]> {
+  if (session.user.role !== Role.ADMIN && (!userId || userId !== session.user.id)) {
+    return [];
+  }
+
   const timeLogs = await prisma.timeLog.findMany({
+    where: userId ? { userId } : {},
     orderBy: { inTime: "desc" },
   });
 
@@ -121,6 +125,11 @@ export async function getAllUsersTotalTimeSec(): Promise<{ [userId: string]: num
 }
 
 export async function getUserCurrentLogDTO(userId: string): Promise<TimeLogDTO | null> {
+  const session = await auth();
+  if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
+    return null;
+  }
+
   const lastLog = await prisma.timeLog.findFirst({
     where: { userId, status: "CurrentlyIn" },
     orderBy: { inTime: "desc" },
@@ -134,6 +143,11 @@ export async function getUserCurrentLogDTO(userId: string): Promise<TimeLogDTO |
 }
 
 export async function clockIn(userId: string): Promise<TimeLogDTO> {
+  const session = await auth();
+  if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
+    throw new Error("Unauthorized");
+  }
+
   // Check if user already has a currently in time log
   const existingTimeLog = await prisma.timeLog.findFirst({
     where: {
@@ -158,6 +172,11 @@ export async function clockIn(userId: string): Promise<TimeLogDTO> {
 }
 
 export async function clockOut(userId: string, notes?: string): Promise<TimeLogDTO> {
+  const session = await auth();
+  if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
+    throw new Error("Unauthorized");
+  }
+
   // Find the currently in time log
   const existingTimeLog = await prisma.timeLog.findFirst({
     where: {
@@ -182,15 +201,12 @@ export async function clockOut(userId: string, notes?: string): Promise<TimeLogD
   return prismaTimeLogToDTO(updatedTimeLog);
 }
 
-export async function deleteTimelog(timeLogId: string): Promise<TimeLogDTO> {
-  const timeLog = await prisma.timeLog.delete({
-    where: { id: timeLogId },
-  });
-
-  return prismaTimeLogToDTO(timeLog);
-}
-
 export async function adminClockOut(timeLogId: string, notes?: string): Promise<TimeLogDTO> {
+  const session = await auth();
+  if (session?.user.role !== Role.ADMIN) {
+    throw new Error("Unauthorized");
+  }
+
   // Find the time log
   const existingTimeLog = await prisma.timeLog.findUnique({
     where: { id: timeLogId },
@@ -217,6 +233,11 @@ export async function adminClockOut(timeLogId: string, notes?: string): Promise<
 }
 
 export async function adminLockLog(timeLogId: string, notes?: string): Promise<TimeLogDTO> {
+  const session = await auth();
+  if (session?.user.role !== Role.ADMIN) {
+    throw new Error("Unauthorized");
+  }
+
   // Find the time log
   const existingTimeLog = await prisma.timeLog.findUnique({
     where: { id: timeLogId },
@@ -249,6 +270,11 @@ export async function createTimeLog(data: {
   outTime?: Date;
   notes: string | null;
 }): Promise<TimeLogDTO> {
+  const session = await auth();
+  if (session?.user.role !== Role.ADMIN) {
+    throw new Error("Unauthorized");
+  }
+
   const status = data.status === "CURRENTLY_IN"
     ? "CurrentlyIn"
     : (data.status === "DONE"
@@ -284,6 +310,11 @@ export async function updateTimeLog(timeLogId: string, data: {
   outTime?: Date;
   notes: string | null;
 }): Promise<TimeLogDTO> {
+  const session = await auth();
+  if (session?.user.role !== Role.ADMIN) {
+    throw new Error("Unauthorized");
+  }
+
   const status = data.status === "CURRENTLY_IN"
     ? "CurrentlyIn"
     : (data.status === "DONE"
@@ -313,7 +344,25 @@ export async function updateTimeLog(timeLogId: string, data: {
   return prismaTimeLogToDTO(result);
 }
 
-export async function deleteLogs(timeLogIds: string[]) {
+export async function deleteTimeLog(timeLogId: string): Promise<TimeLogDTO> {
+  const session = await auth();
+  if (session?.user.role !== Role.ADMIN) {
+    throw new Error("Unauthorized");
+  }
+
+  const timeLog = await prisma.timeLog.delete({
+    where: { id: timeLogId },
+  });
+
+  return prismaTimeLogToDTO(timeLog);
+}
+
+export async function deleteTimeLogs(timeLogIds: string[]) {
+  const session = await auth();
+  if (session?.user.role !== Role.ADMIN) {
+    throw new Error("Unauthorized");
+  }
+
   const payload = await prisma.timeLog.deleteMany({
     where: { id: { in: timeLogIds } },
   });

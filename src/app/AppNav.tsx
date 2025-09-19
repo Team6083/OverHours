@@ -8,6 +8,7 @@ import { LuLogIn, LuLogs, LuUsers } from "react-icons/lu";
 
 import { ColorModeButton } from "@/components/ui/color-mode";
 import AvatarMenu from "./UserAvatarMenu";
+import { Role } from "@/auth";
 
 export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "children">) {
   const { ...boxProps } = props;
@@ -32,19 +33,23 @@ export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "chi
 
         {/* Desktop Nav Links */}
         <HStack>
-          <Link href="/logs" passHref>
-            <Button size="sm" variant="ghost">
-              <LuLogs />
-              Logs
-            </Button>
-          </Link>
+          {session && (
+            <Link href="/logs" passHref>
+              <Button size="sm" variant="ghost">
+                <LuLogs />
+                Logs
+              </Button>
+            </Link>
+          )}
 
-          <Link href="/admin/users" passHref>
-            <Button size="sm" variant="ghost">
-              <LuUsers />
-              Users
-            </Button>
-          </Link>
+          {session && session.user.role === Role.ADMIN && (
+            <Link href="/admin/users" passHref>
+              <Button size="sm" variant="ghost">
+                <LuUsers />
+                Users
+              </Button>
+            </Link>
+          )}
 
           <ColorModeButton />
 
