@@ -33,8 +33,9 @@ export default function GenericTable<T>(props: {
   sortingFn?: (a: T, b: T, sortBy: [string, 1 | -1]) => number;
   defaultSortBy?: [string, 1 | -1];
   checkboxOptions?: CheckboxOptions;
+  topRightElement?: React.ReactNode;
 } & ComponentProps<typeof Stack>) {
-  const { items, columns, sortingFn, keyFn, defaultSortBy, checkboxOptions, ...stackProps } = props;
+  const { items, columns, sortingFn, keyFn, defaultSortBy, checkboxOptions, topRightElement, ...stackProps } = props;
 
   // Sorting state: [columnKey, direction]
   const [sortBy, setSortBy] = useState<[string, 1 | -1] | null>(defaultSortBy || null);
@@ -58,38 +59,42 @@ export default function GenericTable<T>(props: {
   return <Stack gap={4} {...stackProps}>
     <HStack px={2}>
       {/* Entries per page select */}
-      <Select.Root
-        collection={itemsPerPage}
-        size="xs"
-        maxW="60px"
-        value={[pageSize.toString()]}
-        onValueChange={({ value }) => setPageSize(parseInt(value[0], 10))}
-      >
-        <Select.HiddenSelect />
-        <Select.Control>
-          <Select.Trigger>
-            <Select.ValueText placeholder="Select framework" />
-          </Select.Trigger>
-          <Select.IndicatorGroup>
-            <Select.Indicator />
-          </Select.IndicatorGroup>
-        </Select.Control>
-        <Portal>
-          <Select.Positioner>
-            <Select.Content>
-              {itemsPerPage.items.map((item) => (
-                <Select.Item item={item} key={item.value}>
-                  {item.label}
-                  <Select.ItemIndicator />
-                </Select.Item>
-              ))}
-            </Select.Content>
-          </Select.Positioner>
-        </Portal>
-      </Select.Root>
-      <Text fontSize="sm" fontWeight="medium">
-        entries per page
-      </Text>
+      <HStack>
+        <Select.Root
+          collection={itemsPerPage}
+          size="xs"
+          minW="60px"
+          w="60px"
+          value={[pageSize.toString()]}
+          onValueChange={({ value }) => setPageSize(parseInt(value[0], 10))}
+        >
+          <Select.HiddenSelect />
+          <Select.Control>
+            <Select.Trigger>
+              <Select.ValueText placeholder="Select framework" />
+            </Select.Trigger>
+            <Select.IndicatorGroup>
+              <Select.Indicator />
+            </Select.IndicatorGroup>
+          </Select.Control>
+          <Portal>
+            <Select.Positioner>
+              <Select.Content>
+                {itemsPerPage.items.map((item) => (
+                  <Select.Item item={item} key={item.value}>
+                    {item.label}
+                    <Select.ItemIndicator />
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Positioner>
+          </Portal>
+        </Select.Root>
+        <Text fontSize="sm" fontWeight="medium" minW="fit-content">
+          entries per page
+        </Text>
+      </HStack>
+      {topRightElement}
     </HStack>
 
     <Table.ScrollArea>

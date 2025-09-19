@@ -32,6 +32,8 @@ export default async function SingleUserPage(props: {
       </Link></IconButton>}
     </HStack>
 
-    <UserForm isNew={isNew} user={userDTO ?? undefined} />
+    <Container>
+      <UserForm isNew={isNew} user={userDTO ?? undefined} />
+    </Container>
   </>);
 }

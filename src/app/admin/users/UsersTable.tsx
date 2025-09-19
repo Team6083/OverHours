@@ -2,7 +2,7 @@
 import Link from "next/link";
 
 import { Button, ButtonGroup, Clipboard, Icon, IconButton, Link as ChakraLink, CloseButton, Dialog, Portal, Text, HStack, Badge } from "@chakra-ui/react";
-import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuPen, LuTrash2 } from "react-icons/lu";
+import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuPen, LuTrash2, LuUserPlus } from "react-icons/lu";
 
 import GenericTable, { Column } from "@/components/GenericTable";
 import { UserDTO } from "@/lib/data/user-dto";
@@ -113,6 +113,15 @@ export default function UsersTable(props: {
     ...user,
   }));
 
+  const topRightElement = (
+    <Button size="sm" variant="ghost" asChild>
+      <Link href="/admin/users/new">
+        <Icon><LuUserPlus /></Icon>
+        Create User
+      </Link>
+    </Button>
+  );
+
   return <GenericTable<TableData>
     columns={columns}
     items={items}
@@ -175,5 +184,6 @@ export default function UsersTable(props: {
       </>
       )
     }}
+    topRightElement={topRightElement}
   />;
 }

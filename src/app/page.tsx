@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { EmptyState, GridItem, Heading, Pagination, SimpleGrid, VStack } from "@chakra-ui/react";
 import { LuBuilding } from "react-icons/lu";
 
-import { auth } from "@/auth";
+import { auth, Role } from "@/auth";
 import { adminClockOut, adminLockLog, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserCurrentLogDTO } from "@/lib/data/timelog-dto";
 import { getAllUserNames, getUserDTO } from "@/lib/data/user-dto";
 import CurrentlyInTable from "./CurrentlyInTable";
@@ -11,6 +11,7 @@ import UserCard from "./UserCard";
 
 export default async function Home() {
   const session = await auth();
+  const isAdmin = session?.user.role === Role.ADMIN;
   const userId = session?.user.id;
 
   // Get All User Names
@@ -89,6 +90,7 @@ export default async function Home() {
                 await deleteTimeLog(id);
                 revalidatePath("/");
               }}
+              showAdminActions={isAdmin}
             />
             : <NoCurrentlyInEmptyState />}
         </Pagination.Root>

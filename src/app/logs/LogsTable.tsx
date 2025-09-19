@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog, HStack, Portal, Stack } from "@chakra-ui/react";
-import { LuArrowDown01, LuArrowUp10, LuLock, LuTimer, LuPen, LuTrash2, LuArrowDownAZ, LuArrowUpZA } from "react-icons/lu";
+import { LuArrowDown01, LuArrowUp10, LuLock, LuTimer, LuPen, LuTrash2, LuArrowDownAZ, LuArrowUpZA, LuClipboardPlus } from "react-icons/lu";
 
 import { Tooltip } from "@/components/ui/tooltip";
 import GenericTable, { Column } from "@/components/GenericTable";
@@ -169,6 +169,15 @@ export default function LogsTable(props: {
     };
   });
 
+  const topRightElement = showAdminActions && <HStack justify="flex-end" w="full">
+    <Button size="sm" variant="ghost" asChild>
+      <Link href="/logs/new">
+        <Icon><LuClipboardPlus /></Icon>
+        Create Log
+      </Link>
+    </Button>
+  </HStack>
+
   return <GenericTable<TableData>
     columns={showAdminActions ? [...columns, actionsColumn] : columns}
     items={data}
@@ -238,5 +247,6 @@ export default function LogsTable(props: {
         </Dialog.Root>
       )
     }}
+    topRightElement={topRightElement}
   />;
 }

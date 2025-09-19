@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HStack, Button, Icon, IconButton } from "@chakra-ui/react";
+import { HStack, Button, Icon, IconButton, Container } from "@chakra-ui/react";
 import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
 
 import { getTimelogDTO } from "@/lib/data/timelog-dto";
@@ -33,6 +33,8 @@ export default async function SingleUserPage(props: {
       }
     </HStack>
 
-    <LogForm isNew={isNew} timeLog={timeLogDTO ?? undefined} userOptions={users} />
+    <Container>
+      <LogForm isNew={isNew} timeLog={timeLogDTO ?? undefined} userOptions={users} />
+    </Container>
   </>);
 }
