@@ -1,19 +1,27 @@
 "use client";
 import { ComponentProps } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { signIn, useSession } from "next-auth/react";
 
-import { Box, Flex, HStack, Button, Heading, Icon } from "@chakra-ui/react";
-import { LuLogIn, LuLogs, LuUsers } from "react-icons/lu";
+import { Box, Flex, HStack, Button, Heading, Icon, Avatar, Menu, Portal, MenuSelectionDetails } from "@chakra-ui/react";
+import { LuLogIn, LuLogOut, LuLogs, LuUsers } from "react-icons/lu";
 
+import { Role, signOut } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
-import AvatarMenu from "./UserAvatarMenu";
-import { Role } from "@/auth";
 
 export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "children">) {
   const { ...boxProps } = props;
+  const t = useTranslations("AppNav");
 
   const { data: session } = useSession();
+
+  const handleUserAvatarMenuSelect = ({ value }: MenuSelectionDetails) => {
+    if (value === "signout") {
+      // Handle sign out logic here
+      signOut();
+    }
+  }
 
   return (
     <Box as="nav" {...boxProps}>
@@ -37,7 +45,7 @@ export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "chi
             <Link href="/logs" passHref>
               <Button size="sm" variant="ghost">
                 <LuLogs />
-                Logs
+                {t("nav.logs")}
               </Button>
             </Link>
           )}
@@ -46,7 +54,7 @@ export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "chi
             <Link href="/admin/users" passHref>
               <Button size="sm" variant="ghost">
                 <LuUsers />
-                Users
+                {t("nav.users")}
               </Button>
             </Link>
           )}
@@ -54,12 +62,28 @@ export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "chi
           <ColorModeButton />
 
           {session?.user
-            ? <AvatarMenu
-              user={{ name: session.user.name || undefined, image: session.user.image || undefined }}
-              size="sm"
-            />
+            ? <Menu.Root onSelect={handleUserAvatarMenuSelect}>
+              <Menu.Trigger asChild>
+                <Box cursor="pointer">
+                  <Avatar.Root size="sm" cursor="pointer">
+                    <Avatar.Fallback name={session.user.name || undefined} />
+                    <Avatar.Image src={session.user.image || undefined} />
+                  </Avatar.Root>
+                </Box>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content>
+                    <Menu.Item value="signout">
+                      <LuLogOut />
+                      {t("nav.signOut")}
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
             : <Button size="sm" onClick={() => signIn("keycloak")}>
-              Sign-In
+              {t("nav.signIn")}
               <Icon><LuLogIn /></Icon>
             </Button>
           }

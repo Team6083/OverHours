@@ -1,23 +1,28 @@
+import { ComponentProps } from "react";
 import { Card, Table, Button, Icon, Text } from "@chakra-ui/react";
 import { LuChevronsRight } from "react-icons/lu";
 
 import RankingBadge from "@/components/RankingBadge";
 import { formatDuration } from "@/lib/util";
+import { useTranslations } from "next-intl";
 
-export default function StatsCard(props: { rankings: { id: string, name: string, duration: number }[] }) {
-  const { rankings } = props;
+export default function LeaderboardCard(props: {
+  rankings: { id: string, name: string, duration: number }[]
+} & ComponentProps<typeof Card.Root>) {
+  const { rankings, ...cardRootProps } = props;
+  const t = useTranslations("LeaderboardCard");
 
-  return <Card.Root w="full" size="sm">
+  return <Card.Root {...cardRootProps}>
     <Card.Header>
-      <Card.Title>Leaderboard</Card.Title>
+      <Card.Title>{t("title")}</Card.Title>
     </Card.Header>
     <Card.Body>
       <Table.Root size="sm" interactive>
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader>Ranking</Table.ColumnHeader>
-            <Table.ColumnHeader>User</Table.ColumnHeader>
-            <Table.ColumnHeader>Hours</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("columns.ranking")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("columns.user")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("columns.totalTime")}</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -34,9 +39,9 @@ export default function StatsCard(props: { rankings: { id: string, name: string,
       </Table.Root>
     </Card.Body>
     <Card.Footer>
-      <Text fontSize="sm" color="gray.500">Top 5 users by total hours clocked-in</Text>
+      <Text fontSize="sm" color="gray.500">{t("footerText")}</Text>
       <Button size="xs" mt={2}>
-        View Full Leaderboard
+        {t("viewMore")}
         <Icon><LuChevronsRight /></Icon>
       </Button>
     </Card.Footer>

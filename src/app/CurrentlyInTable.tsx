@@ -1,5 +1,5 @@
 "use client";
-
+import { useTranslations } from "next-intl";
 import { ButtonGroup, Center, IconButton, Pagination, Table, usePaginationContext } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight, LuDoorOpen, LuLock, LuTrash2 } from "react-icons/lu";
 
@@ -24,6 +24,7 @@ export default function CurrentlyInTable(props: {
     handleLock,
     handleRemove,
   } = props;
+  const t = useTranslations("HomePage.currentlyInTable");
 
   const { page, pageSize } = usePaginationContext();
 
@@ -35,9 +36,9 @@ export default function CurrentlyInTable(props: {
     <Table.Root size="md" interactive>
       <Table.Header>
         <Table.Row>
-          <Table.ColumnHeader>User</Table.ColumnHeader>
-          <Table.ColumnHeader>Clocked-in Time</Table.ColumnHeader>
-          <Table.ColumnHeader hidden={!showAdminActions}>Actions</Table.ColumnHeader>
+          <Table.ColumnHeader>{t("header.user")}</Table.ColumnHeader>
+          <Table.ColumnHeader>{t("header.inTime")}</Table.ColumnHeader>
+          <Table.ColumnHeader hidden={!showAdminActions}>{t("header.actions")}</Table.ColumnHeader>
         </Table.Row>
       </Table.Header>
       <Table.Body>
@@ -47,9 +48,9 @@ export default function CurrentlyInTable(props: {
             <Table.Cell>{item.inTime.toLocaleString()}</Table.Cell>
             <Table.Cell hidden={!showAdminActions}>
               <ButtonGroup variant="ghost" size="xs" gap={0}>
-                <Tooltip content="Clock-out User"><IconButton colorPalette="blue" onClick={() => handleClockout?.(item.id)}><LuDoorOpen /></IconButton></Tooltip>
-                <Tooltip content="Lock User"><IconButton colorPalette="orange" onClick={() => handleLock?.(item.id)}><LuLock /></IconButton></Tooltip>
-                <Tooltip content="Remove Log"><IconButton colorPalette="red" onClick={() => handleRemove?.(item.id)}><LuTrash2 /></IconButton></Tooltip>
+                <Tooltip content={t("actions.forceClockOut")}><IconButton colorPalette="blue" onClick={() => handleClockout?.(item.id)}><LuDoorOpen /></IconButton></Tooltip>
+                <Tooltip content={t("actions.lockUser")}><IconButton colorPalette="orange" onClick={() => handleLock?.(item.id)}><LuLock /></IconButton></Tooltip>
+                <Tooltip content={t("actions.removeLog")}><IconButton colorPalette="red" onClick={() => handleRemove?.(item.id)}><LuTrash2 /></IconButton></Tooltip>
               </ButtonGroup>
             </Table.Cell>
           </Table.Row>

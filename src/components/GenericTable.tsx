@@ -1,6 +1,7 @@
 import { ComponentProps, useMemo, useState } from "react";
 import { createListCollection, Stack, usePaginationContext, HStack, Select, Portal, Table, Checkbox, ButtonGroup, Pagination, IconButton, ActionBar, Text } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { useTranslations } from "next-intl";
 
 const itemsPerPage = createListCollection({
   items: [
@@ -36,6 +37,7 @@ export default function GenericTable<T>(props: {
   topRightElement?: React.ReactNode;
 } & ComponentProps<typeof Stack>) {
   const { items, columns, sortingFn, keyFn, defaultSortBy, checkboxOptions, topRightElement, ...stackProps } = props;
+  const t = useTranslations("GenericTable");
 
   // Sorting state: [columnKey, direction]
   const [sortBy, setSortBy] = useState<[string, 1 | -1] | null>(defaultSortBy || null);
@@ -91,7 +93,7 @@ export default function GenericTable<T>(props: {
           </Portal>
         </Select.Root>
         <Text fontSize="sm" fontWeight="medium" minW="fit-content">
-          entries per page
+          {t("entriesPerPage")}
         </Text>
       </HStack>
       {topRightElement}
@@ -192,7 +194,7 @@ export default function GenericTable<T>(props: {
           <ActionBar.Positioner>
             <ActionBar.Content>
               <ActionBar.SelectionTrigger>
-                {selection.length} selected
+                {t("selectedCount", { count: selection.length })}
               </ActionBar.SelectionTrigger>
               {
                 checkboxOptions.renderActionBarContent && (<>
@@ -210,10 +212,11 @@ export default function GenericTable<T>(props: {
 }
 
 function StatText(props: ComponentProps<typeof Text>) {
+  const t = useTranslations("GenericTable");
   const { count, pageRange } = usePaginationContext();
 
   return <Text {...props}>
-    Showing {pageRange.start + 1} to {pageRange.end} of {count} entries
+    {t("showingEntries", { start: pageRange.start + 1, end: pageRange.end, count })}
   </Text>;
 }
 

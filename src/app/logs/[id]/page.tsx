@@ -5,12 +5,14 @@ import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
 import { getTimelogDTO } from "@/lib/data/timelog-dto";
 import { getAllUserDTOs } from "@/lib/data/user-dto";
 import LogForm from "./form";
+import { getTranslations } from "next-intl/server";
 
 export default async function SingleUserPage(props: {
   params: Promise<{ id: string }>;
 }) {
   const { params } = props;
   const { id } = await params;
+  const t = await getTranslations("LogEditPage");
 
   const users = (await getAllUserDTOs()).map((user) => ({ label: user.name, value: user.id }));
 
@@ -22,7 +24,7 @@ export default async function SingleUserPage(props: {
       <Button size="xs" variant="ghost" asChild>
         <Link href="/logs">
           <Icon><LuArrowLeft /></Icon>
-          Back to Logs
+          {t("buttons.backToLogs")}
         </Link>
       </Button>
 

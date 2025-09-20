@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NextIntlClientProvider } from "next-intl";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 
@@ -30,16 +31,18 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Provider> {/* Chakra-UI provider */}
-          <SessionProvider> {/* Auth.js provider, for useSession() hook */}
-            <Container maxWidth="5xl" fluid p={4} my={2}>
-              <Box mb={4}>
-                <AppNav />
-              </Box>
-              {children}
-            </Container>
-          </SessionProvider>
-        </Provider>
+        <NextIntlClientProvider>
+          <Provider> {/* Chakra-UI provider */}
+            <SessionProvider> {/* Auth.js provider, for useSession() hook */}
+              <Container maxWidth="5xl" fluid p={4} my={2}>
+                <Box mb={4}>
+                  <AppNav />
+                </Box>
+                {children}
+              </Container>
+            </SessionProvider>
+          </Provider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

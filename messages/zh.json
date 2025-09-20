@@ -1,0 +1,108 @@
+{
+  "HomePage": {
+    "headings": {
+      "currentlyIn": "目前簽到中的使用者"
+    },
+    "emptyStates": {
+      "noCurrentlyInUsers": {
+        "title": "無使用者",
+        "description": "目前沒有使用者簽到中。您可以點擊左側的「簽到」按鈕自行簽到。"
+      }
+    },
+    "buttons": {
+      "clockIn": "簽到",
+      "clockOut": "簽退"
+    },
+    "currentlyInTable": {
+      "header": {
+        "user": "使用者",
+        "inTime": "簽到時間",
+        "actions": "操作"
+      },
+      "actions": {
+        "forceClockOut": "強制簽退",
+        "lockUser": "鎖定紀錄",
+        "removeLog": "移除紀錄"
+      }
+    },
+    "userCard": {
+      "totalTime": "總時數",
+      "ranking": "排名"
+    }
+  },
+  "LogsPage": {
+    "table": {
+      "columns": {
+        "user": "使用者",
+        "inOutTime": "簽到 / 簽退時間",
+        "duration": "時長",
+        "actions": "操作"
+      }
+    },
+    "buttons": {
+      "createLog": "新增紀錄"
+    }
+  },
+  "LogEditPage": {
+    "headings": {
+      "createLog": "新增紀錄",
+      "editLog": "編輯紀錄"
+    },
+    "form": {
+      "headings": {
+        "createLog": "新增一筆新紀錄",
+        "editLog": "編輯紀錄"
+      },
+      "helperText": {
+        "createLog": "填寫以下詳細資訊以新增一筆新紀錄。",
+        "editLog": "修改以下詳細資訊並儲存更改以更新紀錄。"
+      },
+      "labels": {
+        "user": "使用者",
+        "status": "狀態",
+        "clockInTime": "簽到時間",
+        "clockOutTime": "簽退時間",
+        "notes": "備註",
+        "createdAt": "建立時間",
+        "lastUpdatedAt": "最後更新時間"
+      },
+      "buttons": {
+        "submitCreate": "新增紀錄",
+        "submitEdit": "儲存更改"
+      },
+      "combobox": {
+        "placeholder": "輸入以搜尋",
+        "noOptions": "找不到使用者"
+      },
+      "errors": {
+        "someFieldsInvalid": "部分欄位無效。請檢查後再試一次。"
+      }
+    },
+    "buttons": {
+      "backToLogs": "返回紀錄"
+    }
+  },
+  "AppNav": {
+    "nav": {
+      "logs": "紀錄",
+      "users": "使用者",
+      "signIn": "登入",
+      "signOut": "登出"
+    }
+  },
+  "LeaderboardCard": {
+    "title": "排行榜",
+    "columns": {
+      "ranking": "排名",
+      "user": "使用者",
+      "totalTime": "總時數"
+    },
+    "footerText": "按總簽到時數排名的前 5 名使用者。",
+    "viewMore": "查看完整排行榜"
+  },
+  "GenericTable": {
+    "entriesPerPage": "每頁條目數",
+    "selectedCount": "已選擇 {count} 項",
+    "showingEntries": "顯示第 {start} 至 {end} 項，共 {count} 項"
+  }
+}

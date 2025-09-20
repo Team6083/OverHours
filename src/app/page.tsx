@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { EmptyState, GridItem, Heading, Pagination, SimpleGrid, VStack } from "@chakra-ui/react";
 import { LuBuilding } from "react-icons/lu";
 
@@ -6,10 +7,12 @@ import { auth, Role } from "@/auth";
 import { adminClockOut, adminLockLog, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserCurrentLogDTO } from "@/lib/data/timelog-dto";
 import { getAllUserNames, getUserDTO } from "@/lib/data/user-dto";
 import CurrentlyInTable from "./CurrentlyInTable";
-import StatsCard from "./StatsCard";
+import LeaderboardCard from "../components/LeaderboardCard";
 import UserCard from "./UserCard";
 
 export default async function Home() {
+  const t = await getTranslations('HomePage');
+
   const session = await auth();
   const isAdmin = session?.user.role === Role.ADMIN;
   const userId = session?.user.id;
@@ -63,14 +66,14 @@ export default async function Home() {
           }
 
           {/* Stats card */}
-          <StatsCard rankings={rankings} />
+          <LeaderboardCard rankings={rankings} w="full" size="sm" />
         </VStack>
       </GridItem>
 
       {/* Right column */}
       <GridItem colSpan={{ base: 1, md: 3 }}>
         <Pagination.Root count={currentlyInLogs.length} pageSize={8} defaultPage={1}>
-          <Heading as="h2" size="xl" mb={4}>Currently Clocked-in Users</Heading>
+          <Heading as="h2" size="xl" mb={4}>{t("headings.currentlyIn")}</Heading>
 
           {currentlyInLogs.length > 0
             ? <CurrentlyInTable
@@ -92,28 +95,23 @@ export default async function Home() {
               }}
               showAdminActions={isAdmin}
             />
-            : <NoCurrentlyInEmptyState />}
+            : <>
+              <EmptyState.Root>
+                <EmptyState.Content>
+                  <EmptyState.Indicator>
+                    <LuBuilding />
+                  </EmptyState.Indicator>
+                  <VStack textAlign="center">
+                    <EmptyState.Title>{t("emptyStates.noCurrentlyInUsers.title")}</EmptyState.Title>
+                    <EmptyState.Description>
+                      {t("emptyStates.noCurrentlyInUsers.description")}
+                    </EmptyState.Description>
+                  </VStack>
+                </EmptyState.Content>
+              </EmptyState.Root>
+            </>}
         </Pagination.Root>
       </GridItem>
     </SimpleGrid >
-  );
-}
-
-function NoCurrentlyInEmptyState() {
-  return (
-    <EmptyState.Root>
-      <EmptyState.Content>
-        <EmptyState.Indicator>
-          <LuBuilding />
-        </EmptyState.Indicator>
-        <VStack textAlign="center">
-          <EmptyState.Title>No Users</EmptyState.Title>
-          <EmptyState.Description>
-            There are currently no users clocked-in. <br />
-            You can clock-in yourself by clicking the &quot;Clock-in&quot; button on the left.
-          </EmptyState.Description>
-        </VStack>
-      </EmptyState.Content>
-    </EmptyState.Root>
   );
 }

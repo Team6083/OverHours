@@ -5,6 +5,7 @@ import { LuCircleCheckBig, LuLock, LuTimer } from "react-icons/lu";
 
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { formSubmit } from "./actions";
+import { useTranslations } from "next-intl";
 
 const statusOptions = [
   {
@@ -27,6 +28,7 @@ export default function LogForm(props: {
   userOptions: { label: string; value: string }[];
 }) {
   const { isNew, timeLog, userOptions } = props;
+  const t = useTranslations("LogEditPage.form");
 
   const { contains } = useFilter({ sensitivity: "base" });
 
@@ -63,11 +65,11 @@ export default function LogForm(props: {
   return <form action={action}>
     <Fieldset.Root size="lg" invalid={hasFieldErrors} disabled={pending}>
       <Stack>
-        <Fieldset.Legend>{isNew ? "Create" : "Edit"} Log</Fieldset.Legend>
+        <Fieldset.Legend>{isNew ? t("headings.createLog") : t("headings.editLog")}</Fieldset.Legend>
         <Fieldset.HelperText>
           {isNew
-            ? "Fill out the form below to create a new log."
-            : "Update the information below to edit the log."}
+            ? t("helperText.createLog")
+            : t("helperText.editLog")}
         </Fieldset.HelperText>
       </Stack>
 
@@ -78,7 +80,7 @@ export default function LogForm(props: {
           {/* User Select */}
           <Field.Root required invalid={!!userFieldError}>
             <Field.Label>
-              User
+              {t("labels.user")}
               <Field.RequiredIndicator />
             </Field.Label>
 
@@ -92,7 +94,7 @@ export default function LogForm(props: {
                 {(ctx) => <input type="hidden" name="user" value={ctx.value} />}
               </Combobox.Context>
               <Combobox.Control>
-                <Combobox.Input placeholder="Type to search" />
+                <Combobox.Input placeholder={t("combobox.placeholder")} />
                 <Combobox.IndicatorGroup>
                   <Combobox.ClearTrigger />
                   <Combobox.Trigger />
@@ -101,7 +103,7 @@ export default function LogForm(props: {
               <Portal>
                 <Combobox.Positioner>
                   <Combobox.Content>
-                    <Combobox.Empty>No items found</Combobox.Empty>
+                    <Combobox.Empty>{t("combobox.noOptions")}</Combobox.Empty>
                     {collection.items.map((item) => (
                       <Combobox.Item item={item} key={item.value}>
                         {item.label}
@@ -119,7 +121,7 @@ export default function LogForm(props: {
           {/* Status */}
           <Field.Root required invalid={!!statusFieldError}>
             <Field.Label>
-              Status
+              {t("labels.status")}
               <Field.RequiredIndicator />
             </Field.Label>
 
@@ -139,7 +141,7 @@ export default function LogForm(props: {
           {/* Clock-in Time */}
           <Field.Root required invalid={!!clockInFieldError}>
             <Field.Label>
-              Clock-in Time
+              {t("labels.clockInTime")}
               <Field.RequiredIndicator />
             </Field.Label>
             <Input type="datetime-local" step="1" name="clockInTime" defaultValue={state.prevValues?.clockInTime} />
@@ -149,7 +151,7 @@ export default function LogForm(props: {
           {/* Clock-out Time */}
           <Field.Root disabled={selectedStatus === "CURRENTLY_IN"} invalid={!!clockOutFieldError}>
             <Field.Label>
-              Clock-out Time
+              {t("labels.clockOutTime")}
               <Field.RequiredIndicator />
             </Field.Label>
             <Input type="datetime-local" step="1" name="clockOutTime" defaultValue={state.prevValues?.clockOutTime} />
@@ -160,7 +162,7 @@ export default function LogForm(props: {
           <GridItem colSpan={{ base: 1, md: 2 }}>
             <Field.Root invalid={!!notesFieldError}>
               <Field.Label>
-                Notes
+                {t("labels.notes")}
                 <Field.RequiredIndicator />
               </Field.Label>
               <Textarea name="notes" defaultValue={state.prevValues?.notes} />
@@ -173,22 +175,22 @@ export default function LogForm(props: {
       {timeLog && (
         <DataList.Root orientation="horizontal">
           <DataList.Item>
-            <DataList.ItemLabel>Created At</DataList.ItemLabel>
+            <DataList.ItemLabel>{t("labels.createdAt")}</DataList.ItemLabel>
             <DataList.ItemValue>{timeLog.createdAt.toLocaleString()}</DataList.ItemValue>
           </DataList.Item>
           <DataList.Item>
-            <DataList.ItemLabel>Last Updated At</DataList.ItemLabel>
+            <DataList.ItemLabel>{t("labels.lastUpdatedAt")}</DataList.ItemLabel>
             <DataList.ItemValue>{timeLog.updatedAt.toLocaleString()}</DataList.ItemValue>
           </DataList.Item>
         </DataList.Root>
       )}
 
       <Button type="submit" loading={pending}>
-        {isNew ? "Create Log" : "Save Changes"}
+        {isNew ? t("buttons.submitCreate") : t("buttons.submitEdit")}
       </Button>
 
       <Fieldset.ErrorText>
-        Some fields are invalid. Please check them.
+        {t("errors.someFieldsInvalid")}
       </Fieldset.ErrorText>
     </Fieldset.Root>
   </form>;

@@ -5,14 +5,16 @@ import RankingBadge from "@/components/RankingBadge";
 import { clockIn, clockOut } from "@/lib/data/timelog-dto";
 import { formatDuration } from "@/lib/util";
 import UserClockInOutButton from "./ClockInOutButton";
+import { getTranslations } from "next-intl/server";
 
-export default function UserCard(props: {
+export default async function UserCard(props: {
   user: { id: string, email: string, name: string },
   isClockedin?: boolean,
   totalTimeSec?: number,
   ranking?: number,
 }) {
   const { user, totalTimeSec, ranking, isClockedin } = props;
+  const t = await getTranslations("HomePage.userCard");
 
   return (
     <Card.Root w="full" size="sm">
@@ -39,11 +41,11 @@ export default function UserCard(props: {
           </HStack>
           <DataList.Root orientation="horizontal" gap={2}>
             <DataList.Item>
-              <DataList.ItemLabel>Total Time</DataList.ItemLabel>
+              <DataList.ItemLabel>{t("totalTime")}</DataList.ItemLabel>
               <DataList.ItemValue>{typeof totalTimeSec === "number" ? formatDuration(totalTimeSec) : "None"}</DataList.ItemValue>
             </DataList.Item>
             <DataList.Item>
-              <DataList.ItemLabel>Ranking</DataList.ItemLabel>
+              <DataList.ItemLabel>{t("ranking")}</DataList.ItemLabel>
               <DataList.ItemValue>{ranking ? <RankingBadge ranking={ranking} /> : <Badge colorPalette="red">N/A</Badge>}</DataList.ItemValue>
             </DataList.Item>
           </DataList.Root>

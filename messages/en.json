@@ -1,0 +1,108 @@
+{
+  "HomePage": {
+    "headings": {
+      "currentlyIn": "Currently Clocked-in Users"
+    },
+    "emptyStates": {
+      "noCurrentlyInUsers": {
+        "title": "No Users",
+        "description": "There are currently no users clocked-in. You can clock-in yourself by clicking the \"Clock-in\" button on the left."
+      }
+    },
+    "buttons": {
+      "clockIn": "Clock-In",
+      "clockOut": "Clock-Out"
+    },
+    "currentlyInTable": {
+      "header": {
+        "user": "User",
+        "inTime": "Clocked-in Time",
+        "actions": "Actions"
+      },
+      "actions": {
+        "forceClockOut": "Force Clock-Out",
+        "lockUser": "Lock Log",
+        "removeLog": "Remove Log"
+      }
+    },
+    "userCard": {
+      "totalTime": "Total Time",
+      "ranking": "Ranking"
+    }
+  },
+  "LogsPage": {
+    "table": {
+      "columns": {
+        "user": "User",
+        "inOutTime": "Clocked-in / out Time",
+        "duration": "Duration",
+        "actions": "Actions"
+      }
+    },
+    "buttons": {
+      "createLog": "Create Log"
+    }
+  },
+  "LogEditPage": {
+    "headings": {
+      "createLog": "Create Log",
+      "editLog": "Edit Log"
+    },
+    "form": {
+      "headings": {
+        "createLog": "Create a new log",
+        "editLog": "Edit log"
+      },
+      "helperText": {
+        "createLog": "Fill in the details below to create a new log entry.",
+        "editLog": "Modify the details below and save changes to update the log entry."
+      },
+      "labels": {
+        "user": "User",
+        "status": "Status",
+        "clockInTime": "Clock-in Time",
+        "clockOutTime": "Clock-out Time",
+        "notes": "Notes",
+        "createdAt": "Created At",
+        "lastUpdatedAt": "Last Updated At"
+      },
+      "buttons": {
+        "submitCreate": "Create Log",
+        "submitEdit": "Save Changes"
+      },
+      "combobox": {
+        "placeholder": "Type to search",
+        "noOptions": "No users found"
+      },
+      "errors": {
+        "someFieldsInvalid": "Some fields are invalid. Please check and try again."
+      }
+    },
+    "buttons": {
+      "backToLogs": "Back to Logs"
+    }
+  },
+  "AppNav": {
+    "nav": {
+      "logs": "Logs",
+      "users": "Users",
+      "signIn": "Sign-In",
+      "signOut": "Sign-Out"
+    }
+  },
+  "LeaderboardCard": {
+    "title": "Leaderboard",
+    "columns": {
+      "ranking": "Ranking",
+      "user": "User",
+      "totalTime": "Total Time"
+    },
+    "footerText": "Top 5 users by total hours clocked-in.",
+    "viewMore": "View Full Leaderboard"
+  },
+  "GenericTable": {
+    "entriesPerPage": "entries per page",
+    "selectedCount": "{count} selected",
+    "showingEntries": "Showing {start} to {end} of {count} entries"
+  }
+}

@@ -9,6 +9,7 @@ import GenericClipboard from "@/components/ObjIdClipboard";
 import TimeLogStatusBadge from "@/components/TimeLogStatusBadge";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { handleDeleteLogs } from "./actions";
+import { useTranslations } from "next-intl";
 
 type TableData = Omit<TimeLogDTO, "createdAt" | "updatedAt"> & {
   displayName: string;
@@ -22,30 +23,36 @@ const columns: Column<TableData>[] = [
   {
     dataKey: "user",
     sortable: true,
-    renderHeader: (sort) => (
-      <>
-        User
+    renderHeader: (sort) => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const t = useTranslations("LogsPage.table");
+
+      return <>
+        {t("columns.user")}
         {sort && (
           sort === 1 ? <Icon ml={1}><LuArrowDownAZ /></Icon>
             : <Icon ml={1}><LuArrowUpZA /></Icon>
         )}
-      </>
-    ),
+      </>;
+    },
     renderCell: (row) => row.displayName,
   },
   {
     dataKey: "time",
     sortable: true,
     headerColSpan: 2,
-    renderHeader: (sort) => (
-      <>
-        Clock-in / out Time
+    renderHeader: (sort) => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const t = useTranslations("LogsPage.table");
+
+      return <>
+        {t("columns.inOutTime")}
         {sort && (
           sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
             : <Icon ml={1}><LuArrowUp10 /></Icon>
         )}
-      </>
-    ),
+      </>;
+    },
     renderCell: (row) => row.inTimeStr,
   },
   {
@@ -69,15 +76,18 @@ const columns: Column<TableData>[] = [
   {
     dataKey: "duration",
     sortable: true,
-    renderHeader: (sort) => (
-      <>
-        Duration
+    renderHeader: (sort) => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const t = useTranslations("LogsPage.table");
+
+      return <>
+        {t("columns.duration")}
         {sort && (
           sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
             : <Icon ml={1}><LuArrowUp10 /></Icon>
         )}
-      </>
-    ),
+      </>;
+    },
     renderCell: (row) => row.outTime ? (
       <Text
         as="span"
@@ -92,7 +102,11 @@ const columns: Column<TableData>[] = [
 
 const actionsColumn: Column<TableData> = {
   dataKey: "actions",
-  renderHeader: () => "Actions",
+  renderHeader: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const t = useTranslations("LogsPage.table");
+    return t("columns.actions");
+  },
   renderCell: (row) => (
     <ButtonGroup size="xs" variant="ghost">
       <IconButton asChild><Link href={`/logs/${row.id}`}><Icon><LuPen /></Icon></Link></IconButton>
@@ -139,6 +153,7 @@ export default function LogsTable(props: {
   showAdminActions?: boolean;
 }) {
   const { logs, userInfo, showAdminActions = false } = props;
+  const t = useTranslations("LogsPage");
 
   const data = logs.map((log): TableData => {
     const user = userInfo[log.userId];
@@ -173,7 +188,7 @@ export default function LogsTable(props: {
     <Button size="sm" variant="ghost" asChild>
       <Link href="/logs/new">
         <Icon><LuClipboardPlus /></Icon>
-        Create Log
+        {t("buttons.createLog")}
       </Link>
     </Button>
   </HStack>
