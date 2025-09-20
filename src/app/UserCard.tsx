@@ -8,7 +8,7 @@ import UserClockInOutButton from "./ClockInOutButton";
 import { getTranslations } from "next-intl/server";
 
 export default async function UserCard(props: {
-  user: { id: string, email: string, name: string },
+  user: { id: string, name?: string, image?: string },
   isClockedin?: boolean,
   totalTimeSec?: number,
   ranking?: number,
@@ -23,6 +23,7 @@ export default async function UserCard(props: {
           <HStack gap={4}>
             <Avatar.Root size="lg">
               <Avatar.Fallback name={user.name} />
+              <Avatar.Image src={user.image} />
             </Avatar.Root>
             <Stack gap={1}>
               <Text fontWeight="medium" fontSize="lg">{user.name}</Text>

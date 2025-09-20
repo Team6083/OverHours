@@ -19,6 +19,9 @@ declare module "next-auth" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [Keycloak],
+  session: {
+    maxAge: 3 * 24 * 60 * 60, // 3 days
+  },
   callbacks: {
     signIn: ({ account, profile }) => {
       if (account?.provider === 'keycloak' && profile?.email_verified) {
@@ -62,8 +65,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             update: userProps,
           });
           token.id = dbUser.id;
-
-          console.log('Profile:', profile);
 
           if (profile && Array.isArray(profile.roles)) {
             const roles = profile.roles;

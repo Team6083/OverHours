@@ -2,12 +2,12 @@
 import { ComponentProps } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 import { Box, Flex, HStack, Button, Heading, Icon, Avatar, Menu, Portal, MenuSelectionDetails } from "@chakra-ui/react";
 import { LuLogIn, LuLogOut, LuLogs, LuUsers } from "react-icons/lu";
 
-import { Role, signOut } from "@/auth";
+import { Role } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
 
 export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "children">) {
@@ -18,7 +18,6 @@ export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "chi
 
   const handleUserAvatarMenuSelect = ({ value }: MenuSelectionDetails) => {
     if (value === "signout") {
-      // Handle sign out logic here
       signOut();
     }
   }

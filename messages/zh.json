@@ -41,6 +41,10 @@
     },
     "buttons": {
       "createLog": "新增紀錄"
+    },
+    "status": {
+      "currentlyIn": "簽到中",
+      "locked": "鎖定"
     }
   },
   "LogEditPage": {

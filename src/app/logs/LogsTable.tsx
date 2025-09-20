@@ -57,21 +57,26 @@ const columns: Column<TableData>[] = [
   },
   {
     dataKey: "timeOut",
-    renderCell: (row) => <ClientOnly fallback={<SkeletonText noOfLines={1} />}>
-      {row.outTime ? (
-        row.status === "LOCKED"
-          ? (
-            <Tooltip content={`Clocked-out at ${row.outTimeStr}`}>
-              <Badge colorPalette="red" mr={2}><Icon><LuLock /></Icon>Locked</Badge>
-            </Tooltip>
-          ) : row.outTimeStr
-      ) : (
-        <Badge colorPalette="orange">
-          <Icon><LuTimer /></Icon>
-          In Progress
-        </Badge>
-      )}
-    </ClientOnly>
+    renderCell: (row) => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const t = useTranslations("LogsPage");
+
+      return <ClientOnly fallback={<SkeletonText noOfLines={1} />}>
+        {row.outTime ? (
+          row.status === "LOCKED"
+            ? (
+              <Tooltip content={`Clocked-out at ${row.outTimeStr}`}>
+                <Badge colorPalette="red" mr={2}><Icon><LuLock /></Icon>{t("status.locked")}</Badge>
+              </Tooltip>
+            ) : row.outTimeStr
+        ) : (
+          <Badge colorPalette="orange">
+            <Icon><LuTimer /></Icon>
+            {t("status.currentlyIn")}
+          </Badge>
+        )}
+      </ClientOnly>;
+    }
   },
   {
     dataKey: "duration",

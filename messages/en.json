@@ -41,6 +41,10 @@
     },
     "buttons": {
       "createLog": "Create Log"
+    },
+    "status": {
+      "currentlyIn": "Currently In",
+      "locked": "Locked"
     }
   },
   "LogEditPage": {

@@ -4,10 +4,10 @@ import { EmptyState, GridItem, Heading, Pagination, SimpleGrid, VStack } from "@
 import { LuBuilding } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
+import LeaderboardCard from "@/components/LeaderboardCard";
 import { adminClockOut, adminLockLog, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserCurrentLogDTO } from "@/lib/data/timelog-dto";
-import { getAllUserNames, getUserDTO } from "@/lib/data/user-dto";
+import { getAllUserNames } from "@/lib/data/user-dto";
 import CurrentlyInTable from "./CurrentlyInTable";
-import LeaderboardCard from "../components/LeaderboardCard";
 import UserCard from "./UserCard";
 
 export default async function Home() {
@@ -28,11 +28,12 @@ export default async function Home() {
     .map(([id, duration]) => ({ id, name: userNameMap[id], duration }));
 
   // Get Current User Info
-  const user = userId && await getUserDTO(userId);
-  if (userId && !user) {
-    throw new Error("User not found");
-    // TODO: implement proper error handling
-  }
+  const user = session?.user && session.user.id ? {
+    id: session.user.id,
+    name: session.user.name || undefined,
+    image: session.user.image || undefined,
+  } : undefined;
+
   const userCurrentLog = userId && await getUserCurrentLogDTO(userId);
   const userRank = rankings.findIndex(r => r.id === userId) + 1;
 
@@ -56,14 +57,14 @@ export default async function Home() {
       <GridItem colSpan={{ base: 1, md: 2 }}>
         <VStack gap={4}>
           {/* User card */}
-          {user &&
+          {user && (
             <UserCard
               user={user}
               isClockedin={!!userCurrentLog}
-              totalTimeSec={allUsersTotalTimeSec[userId] || 0}
+              totalTimeSec={allUsersTotalTimeSec[user.id] || 0}
               ranking={userRank}
             />
-          }
+          )}
 
           {/* Stats card */}
           <LeaderboardCard rankings={rankings} w="full" size="sm" />
@@ -112,6 +113,6 @@ export default async function Home() {
             </>}
         </Pagination.Root>
       </GridItem>
-    </SimpleGrid >
+    </SimpleGrid>
   );
 }

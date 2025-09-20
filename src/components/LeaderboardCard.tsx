@@ -17,9 +17,9 @@ export default function LeaderboardCard(props: {
       <Card.Title>{t("title")}</Card.Title>
     </Card.Header>
     <Card.Body>
-      <Table.Root size="sm" interactive>
+      <Table.Root size="sm">
         <Table.Header>
-          <Table.Row>
+          <Table.Row bg="transparent">
             <Table.ColumnHeader>{t("columns.ranking")}</Table.ColumnHeader>
             <Table.ColumnHeader>{t("columns.user")}</Table.ColumnHeader>
             <Table.ColumnHeader>{t("columns.totalTime")}</Table.ColumnHeader>
@@ -27,7 +27,7 @@ export default function LeaderboardCard(props: {
         </Table.Header>
         <Table.Body>
           {rankings.map(({ id, name, duration }, index) => (
-            <Table.Row key={id}>
+            <Table.Row key={id} bg="transparent">
               <Table.Cell><RankingBadge ranking={index + 1} size="md" /></Table.Cell>
               <Table.Cell>{name}</Table.Cell>
               <Table.Cell>
