@@ -44,4 +44,6 @@ next-env.d.ts
 /src/generated/prisma
 
 # docker related files
+/Dockerfile
+/docker-compose.yaml
 /docker-compose.override.yaml

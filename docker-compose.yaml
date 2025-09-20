@@ -1,0 +1,9 @@
+services:
+  app:
+    image: overhours
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production

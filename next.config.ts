@@ -4,6 +4,7 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: "standalone",
   experimental: {
     optimizePackageImports: ["@chakra-ui/react"],
   },
