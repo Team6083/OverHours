@@ -1,31 +1,40 @@
 import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
 
-export default getRequestConfig(async () => {
-  const h = await headers();
-  const headerLocale = h.get("Accept-Language")?.split(",")
-    .map((v) => {
-      let lang, q = 1;
-      if (v.includes(";")) {
-        const [v0, v1] = v.split(";");
-        lang = v0;
-        q = parseFloat(v1.split("=")[1]);
-      } else {
-        lang = v;
-      }
+const supportedLocales = ["en", "zh"];
 
-      return { lang, q: isNaN(q) ? 1 : q };
-    })
-    .sort((a, b) => b.q - a.q)[0]?.lang;
+export default getRequestConfig(async () => {
+  let locale: string = "en";
 
   const store = await cookies();
   const cookieLocale = store.get("locale")?.value;
 
-  const supportedLocales = ["en", "zh"];
-  let locale = cookieLocale && supportedLocales.includes(cookieLocale) ? cookieLocale
-    : (headerLocale && supportedLocales.includes(headerLocale) ? headerLocale : "en");
+  const h = await headers();
+  const acceptLanguageHeader = h.get("Accept-Language");
 
-  locale = "zh"; // Force locale to zh-TW for now
+  if (cookieLocale && supportedLocales.includes(cookieLocale)) {
+    locale = cookieLocale;
+  } else if (acceptLanguageHeader) {
+    const headerLocales = acceptLanguageHeader.split(",")
+      .map((v) => {
+        let lang, q = 1;
+        if (v.includes(";")) {
+          const [v0, v1] = v.split(";");
+          lang = v0;
+          q = parseFloat(v1.split("=")[1]);
+        } else {
+          lang = v;
+        }
+
+        return { lang, q: isNaN(q) ? 1 : q };
+      })
+      .filter((v) => supportedLocales.includes(v.lang))
+      .sort((a, b) => b.q - a.q);
+
+    if (headerLocales.length > 0) {
+      locale = headerLocales[0].lang;
+    }
+  }
 
   return {
     locale,
