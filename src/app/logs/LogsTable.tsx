@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog, HStack, Portal, Stack } from "@chakra-ui/react";
+import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog, HStack, Portal, Stack, ClientOnly, SkeletonText } from "@chakra-ui/react";
 import { LuArrowDown01, LuArrowUp10, LuLock, LuTimer, LuPen, LuTrash2, LuArrowDownAZ, LuArrowUpZA, LuClipboardPlus } from "react-icons/lu";
 
 import { Tooltip } from "@/components/ui/tooltip";
@@ -53,11 +53,11 @@ const columns: Column<TableData>[] = [
         )}
       </>;
     },
-    renderCell: (row) => row.inTimeStr,
+    renderCell: (row) => <ClientOnly fallback={<SkeletonText noOfLines={1} />}>{row.inTimeStr}</ClientOnly>,
   },
   {
     dataKey: "timeOut",
-    renderCell: (row) => <>
+    renderCell: (row) => <ClientOnly fallback={<SkeletonText noOfLines={1} />}>
       {row.outTime ? (
         row.status === "LOCKED"
           ? (
@@ -71,7 +71,7 @@ const columns: Column<TableData>[] = [
           In Progress
         </Badge>
       )}
-    </>
+    </ClientOnly>
   },
   {
     dataKey: "duration",

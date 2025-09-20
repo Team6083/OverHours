@@ -1,6 +1,6 @@
 "use client";
 import { useTranslations } from "next-intl";
-import { ButtonGroup, Center, IconButton, Pagination, Table, usePaginationContext } from "@chakra-ui/react";
+import { ButtonGroup, Center, ClientOnly, IconButton, Pagination, Table, usePaginationContext } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight, LuDoorOpen, LuLock, LuTrash2 } from "react-icons/lu";
 
 import { Tooltip } from "@/components/ui/tooltip";
@@ -45,7 +45,9 @@ export default function CurrentlyInTable(props: {
         {currentItems.map((item) => (
           <Table.Row key={item.id}>
             <Table.Cell>{item.user}</Table.Cell>
-            <Table.Cell>{item.inTime.toLocaleString()}</Table.Cell>
+            <Table.Cell>
+              <ClientOnly>{item.inTime.toLocaleString()}</ClientOnly>
+            </Table.Cell>
             <Table.Cell hidden={!showAdminActions}>
               <ButtonGroup variant="ghost" size="xs" gap={0}>
                 <Tooltip content={t("actions.forceClockOut")}><IconButton colorPalette="blue" onClick={() => handleClockout?.(item.id)}><LuDoorOpen /></IconButton></Tooltip>
