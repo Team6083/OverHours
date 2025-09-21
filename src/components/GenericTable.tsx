@@ -15,8 +15,8 @@ const itemsPerPage = createListCollection({
 export type Column<T> = {
   dataKey: string;
   sortable?: boolean;
-  renderHeader?: (sort: 1 | -1 | null) => React.ReactNode;
-  renderCell?: (row: T) => React.ReactNode;
+  renderHeader?: (sort: 1 | -1 | null, t?: ReturnType<typeof useTranslations>) => React.ReactNode;
+  renderCell?: (row: T, t?: ReturnType<typeof useTranslations>) => React.ReactNode;
   headerColSpan?: number;
   bodyColSpan?: number;
 };
@@ -35,9 +35,10 @@ export default function GenericTable<T>(props: {
   defaultSortBy?: [string, 1 | -1];
   checkboxOptions?: CheckboxOptions;
   topRightElement?: React.ReactNode;
+  t?: ReturnType<typeof useTranslations>
 } & ComponentProps<typeof Stack>) {
-  const { items, columns, sortingFn, keyFn, defaultSortBy, checkboxOptions, topRightElement, ...stackProps } = props;
-  const t = useTranslations("GenericTable");
+  const { items, columns, sortingFn, keyFn, defaultSortBy, checkboxOptions, topRightElement, t, ...stackProps } = props;
+  const genericTableTranslate = useTranslations("GenericTable");
 
   // Sorting state: [columnKey, direction]
   const [sortBy, setSortBy] = useState<[string, 1 | -1] | null>(defaultSortBy || null);
@@ -93,7 +94,7 @@ export default function GenericTable<T>(props: {
           </Portal>
         </Select.Root>
         <Text fontSize="sm" fontWeight="medium" minW="fit-content">
-          {t("entriesPerPage")}
+          {genericTableTranslate("entriesPerPage")}
         </Text>
       </HStack>
       {topRightElement}
@@ -133,7 +134,7 @@ export default function GenericTable<T>(props: {
                   onClick={col.sortable ? () => setSortBy(sortBy?.[1] === 1 ? [col.dataKey, -1] : [col.dataKey, 1]) : undefined}
                   cursor={col.sortable ? "pointer" : undefined}
                 >
-                  {col.renderHeader(sortBy?.[0] === col.dataKey ? sortBy[1] : null)}
+                  {col.renderHeader(sortBy?.[0] === col.dataKey ? sortBy[1] : null, t)}
                 </Table.ColumnHeader>
               );
             })}
@@ -172,7 +173,7 @@ export default function GenericTable<T>(props: {
 
                   return (
                     <Table.Cell key={col.dataKey} colSpan={col.bodyColSpan}>
-                      {col.renderCell(row)}
+                      {col.renderCell(row, t)}
                     </Table.Cell>
                   );
                 })}
@@ -194,7 +195,7 @@ export default function GenericTable<T>(props: {
           <ActionBar.Positioner>
             <ActionBar.Content>
               <ActionBar.SelectionTrigger>
-                {t("selectedCount", { count: selection.length })}
+                {genericTableTranslate("selectedCount", { count: selection.length })}
               </ActionBar.SelectionTrigger>
               {
                 checkboxOptions.renderActionBarContent && (<>

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog, HStack, Portal, Stack, ClientOnly, SkeletonText } from "@chakra-ui/react";
 import { LuArrowDown01, LuArrowUp10, LuLock, LuTimer, LuPen, LuTrash2, LuArrowDownAZ, LuArrowUpZA, LuClipboardPlus } from "react-icons/lu";
 
@@ -9,7 +10,6 @@ import GenericClipboard from "@/components/ObjIdClipboard";
 import TimeLogStatusBadge from "@/components/TimeLogStatusBadge";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { handleDeleteLogs } from "./actions";
-import { useTranslations } from "next-intl";
 
 type TableData = Omit<TimeLogDTO, "createdAt" | "updatedAt"> & {
   displayName: string;
@@ -23,12 +23,9 @@ const columns: Column<TableData>[] = [
   {
     dataKey: "user",
     sortable: true,
-    renderHeader: (sort) => {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      const t = useTranslations("LogsPage.table");
-
+    renderHeader: (sort, t) => {
       return <>
-        {t("columns.user")}
+        {t ? t("table.columns.user") : "User"}
         {sort && (
           sort === 1 ? <Icon ml={1}><LuArrowDownAZ /></Icon>
             : <Icon ml={1}><LuArrowUpZA /></Icon>
@@ -41,12 +38,9 @@ const columns: Column<TableData>[] = [
     dataKey: "time",
     sortable: true,
     headerColSpan: 2,
-    renderHeader: (sort) => {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      const t = useTranslations("LogsPage.table");
-
+    renderHeader: (sort, t) => {
       return <>
-        {t("columns.inOutTime")}
+        {t ? t("table.columns.inOutTime") : "In/Out Time"}
         {sort && (
           sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
             : <Icon ml={1}><LuArrowUp10 /></Icon>
@@ -57,22 +51,19 @@ const columns: Column<TableData>[] = [
   },
   {
     dataKey: "timeOut",
-    renderCell: (row) => {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      const t = useTranslations("LogsPage");
-
+    renderCell: (row, t) => {
       return <ClientOnly fallback={<SkeletonText noOfLines={1} />}>
         {row.outTime ? (
           row.status === "LOCKED"
             ? (
               <Tooltip content={`Clocked-out at ${row.outTimeStr}`}>
-                <Badge colorPalette="red" mr={2}><Icon><LuLock /></Icon>{t("status.locked")}</Badge>
+                <Badge colorPalette="red" mr={2}><Icon><LuLock /></Icon>{t ? t("status.locked") : "Locked"}</Badge>
               </Tooltip>
             ) : row.outTimeStr
         ) : (
           <Badge colorPalette="orange">
             <Icon><LuTimer /></Icon>
-            {t("status.currentlyIn")}
+            {t ? t("status.currentlyIn") : "Currently In"}
           </Badge>
         )}
       </ClientOnly>;
@@ -81,12 +72,9 @@ const columns: Column<TableData>[] = [
   {
     dataKey: "duration",
     sortable: true,
-    renderHeader: (sort) => {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      const t = useTranslations("LogsPage.table");
-
+    renderHeader: (sort, t) => {
       return <>
-        {t("columns.duration")}
+        {t ? t("table.columns.duration") : "Duration"}
         {sort && (
           sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
             : <Icon ml={1}><LuArrowUp10 /></Icon>
@@ -107,10 +95,8 @@ const columns: Column<TableData>[] = [
 
 const actionsColumn: Column<TableData> = {
   dataKey: "actions",
-  renderHeader: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const t = useTranslations("LogsPage.table");
-    return t("columns.actions");
+  renderHeader: (_, t) => {
+    return t ? t("table.columns.actions") : "Actions";
   },
   renderCell: (row) => (
     <ButtonGroup size="xs" variant="ghost">
@@ -268,5 +254,6 @@ export default function LogsTable(props: {
       )
     }}
     topRightElement={topRightElement}
+    t={t}
   />;
 }
