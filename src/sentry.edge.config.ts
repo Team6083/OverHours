@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 Sentry.init({
-  dsn: "https://64dc39d77b1f41d5823eaba5d5fac640@o275610.ingest.us.sentry.io/1493313",
+  dsn: process.env.SENTRY_DSN,
   // Adds request headers and IP for users, for more info visit:
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
