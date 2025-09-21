@@ -58,7 +58,7 @@ export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "chi
             </Link>
           )}
 
-          <ColorModeButton />
+          <ColorModeButton hideBelow="md" />
 
           {session?.user
             ? <Menu.Root onSelect={handleUserAvatarMenuSelect}>

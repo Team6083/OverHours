@@ -1,17 +1,18 @@
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { EmptyState, GridItem, Heading, Pagination, SimpleGrid, VStack } from "@chakra-ui/react";
-import { LuBuilding } from "react-icons/lu";
+import { EmptyState, GridItem, Heading, HStack, Pagination, SimpleGrid, Tabs, VStack } from "@chakra-ui/react";
+import { LuBuilding, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
-import LeaderboardCard from "@/components/LeaderboardCard";
-import { adminClockOut, adminLockLog, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO } from "@/lib/data/timelog-dto";
+import LeaderboardCard, { LeaderboardTable, LeaderboardTitle } from "@/components/LeaderboardCard";
+import { adminClockOut, adminLockLog, clockIn, clockOut, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO } from "@/lib/data/timelog-dto";
 import { getAllUserNames, getUserDTO } from "@/lib/data/user-dto";
 import CurrentlyInTable from "./CurrentlyInTable";
-import UserCard from "./UserCard";
+import UserCard, { UserCardStat, UserCardStatus, UserCardUserName } from "./UserCard";
+import UserClockInOutButton from "./ClockInOutButton";
 
 export default async function Home() {
-  const t = await getTranslations('HomePage');
+  const t = await getTranslations("HomePage");
 
   const session = await auth();
   const isAdmin = session?.user.role === Role.ADMIN;
@@ -45,15 +46,10 @@ export default async function Home() {
     inTime: log.inTime,
   }));
 
-  // const imageProps = getImageProps({
-  //   src: "/image.png",
-  //   alt: "John Doe's Avatar",
-  //   width: 128,
-  //   height: 128,
-  // });
+  const isClockedin = userLastLog ? userLastLog.status === "CURRENTLY_IN" : undefined;
 
-  return (
-    <SimpleGrid columns={{ base: 1, md: 5 }} gapX={8} gapY={4}>
+  return (<>
+    <SimpleGrid columns={{ base: 1, md: 5 }} gapX={8} gapY={4} hideBelow="sm">
       {/* Left column */}
       <GridItem colSpan={{ base: 1, md: 2 }}>
         <VStack gap={4}>
@@ -74,46 +70,111 @@ export default async function Home() {
 
       {/* Right column */}
       <GridItem colSpan={{ base: 1, md: 3 }}>
-        <Pagination.Root count={currentlyInLogs.length} pageSize={8} defaultPage={1}>
-          <Heading as="h2" size="xl" mb={4}>{t("headings.currentlyIn")}</Heading>
-
-          {currentlyInLogs.length > 0
-            ? <CurrentlyInTable
-              items={currentlyInLogs}
-              handleClockout={async (id: string) => {
-                "use server";
-                await adminClockOut(id);
-                revalidatePath("/");
-              }}
-              handleLock={async (id: string) => {
-                "use server";
-                await adminLockLog(id);
-                revalidatePath("/");
-              }}
-              handleRemove={async (id: string) => {
-                "use server";
-                await deleteTimeLog(id);
-                revalidatePath("/");
-              }}
-              showAdminActions={isAdmin}
-            />
-            : <>
-              <EmptyState.Root>
-                <EmptyState.Content>
-                  <EmptyState.Indicator>
-                    <LuBuilding />
-                  </EmptyState.Indicator>
-                  <VStack textAlign="center">
-                    <EmptyState.Title>{t("emptyStates.noCurrentlyInUsers.title")}</EmptyState.Title>
-                    <EmptyState.Description>
-                      {t("emptyStates.noCurrentlyInUsers.description")}
-                    </EmptyState.Description>
-                  </VStack>
-                </EmptyState.Content>
-              </EmptyState.Root>
-            </>}
-        </Pagination.Root>
+        <CurrentlyInPane currentlyInLogs={currentlyInLogs} isAdmin={isAdmin} />
       </GridItem>
     </SimpleGrid>
+
+    <Tabs.Root defaultValue="main" hideFrom="sm">
+      <Tabs.List>
+        <Tabs.Trigger value="main">
+          <LuHouse />
+          {t("tabs.home")}
+        </Tabs.Trigger>
+        <Tabs.Trigger value="leaderboard">
+          <LuTrophy />
+          {t("tabs.leaderboard")}
+        </Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Content value="main">
+        {user && (
+          <VStack align="flex-start" gap={4} mb={4}>
+            <HStack justifyContent="space-between" w="full" gap={4}>
+              <UserCardUserName user={user} />
+              <UserCardStatus lastLog={userLastLog || undefined} />
+            </HStack>
+
+            <UserCardStat
+              totalTimeSec={allUsersTotalTimeSec[user.id] || 0}
+              ranking={userRank}
+              flexDir="row"
+              justifyContent="space-around"
+              w="full"
+            />
+
+            <UserClockInOutButton
+              handleClick={async () => {
+                "use server";
+                if (isClockedin) {
+                  await clockOut(user.id);
+                } else {
+                  await clockIn(user.id);
+                }
+
+                revalidatePath("/");
+              }}
+              isClockedin={isClockedin}
+            />
+          </VStack>
+        )}
+
+        <CurrentlyInPane currentlyInLogs={currentlyInLogs} isAdmin={isAdmin} />
+      </Tabs.Content>
+      <Tabs.Content value="leaderboard">
+        <Heading as="h2" size="xl" mb={4}>
+          <LeaderboardTitle />
+        </Heading>
+        <LeaderboardTable rankings={rankings} />
+      </Tabs.Content>
+    </Tabs.Root>
+  </>);
+}
+
+async function CurrentlyInPane(props: {
+  currentlyInLogs: { id: string, user: string, inTime: Date }[];
+  isAdmin?: boolean;
+}) {
+  const { currentlyInLogs, isAdmin } = props;
+  const t = await getTranslations('HomePage');
+
+  return (
+    <Pagination.Root count={currentlyInLogs.length} pageSize={8} defaultPage={1}>
+      <Heading as="h2" size="xl" mb={4}>{t("headings.currentlyIn")}</Heading>
+
+      {currentlyInLogs.length > 0
+        ? <CurrentlyInTable
+          items={currentlyInLogs}
+          handleClockout={async (id: string) => {
+            "use server";
+            await adminClockOut(id);
+            revalidatePath("/");
+          }}
+          handleLock={async (id: string) => {
+            "use server";
+            await adminLockLog(id);
+            revalidatePath("/");
+          }}
+          handleRemove={async (id: string) => {
+            "use server";
+            await deleteTimeLog(id);
+            revalidatePath("/");
+          }}
+          showAdminActions={isAdmin}
+        />
+        : <>
+          <EmptyState.Root>
+            <EmptyState.Content>
+              <EmptyState.Indicator>
+                <LuBuilding />
+              </EmptyState.Indicator>
+              <VStack textAlign="center">
+                <EmptyState.Title>{t("emptyStates.noCurrentlyInUsers.title")}</EmptyState.Title>
+                <EmptyState.Description>
+                  {t("emptyStates.noCurrentlyInUsers.description")}
+                </EmptyState.Description>
+              </VStack>
+            </EmptyState.Content>
+          </EmptyState.Root>
+        </>}
+    </Pagination.Root>
   );
 }

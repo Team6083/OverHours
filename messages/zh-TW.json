@@ -29,12 +29,14 @@
       "totalTime": "總時數",
       "ranking": "排名",
       "status": {
-        "clockedIn": "簽到中",
-        "clockedOut": "已簽退",
         "noLogsYet": "尚無紀錄",
-        "lastIn": "於 {time}",
-        "lastOut": "上次簽退 {time}"
+        "lastIn": "已於 {time} 簽到",
+        "lastOut": "已簽退，上次簽退於 {time}"
       }
+    },
+    "tabs": {
+      "home": "主畫面",
+      "leaderboard": "排行榜"
     }
   },
   "LogsPage": {

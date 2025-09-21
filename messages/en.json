@@ -29,12 +29,14 @@
       "totalTime": "Total Time",
       "ranking": "Ranking",
       "status": {
-        "clockedIn": "Clocked-In",
-        "clockedOut": "Clocked-Out",
         "noLogsYet": "No Logs Yet",
-        "lastIn": "Since {time}",
+        "lastIn": "Clocked-in since {time}",
         "lastOut": "Last clocked-out at {time}"
       }
+    },
+    "tabs": {
+      "home": "Home",
+      "leaderboard": "Leaderboard"
     }
   },
   "LogsPage": {
