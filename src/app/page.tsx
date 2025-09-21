@@ -6,7 +6,7 @@ import { LuBuilding } from "react-icons/lu";
 import { auth, Role } from "@/auth";
 import LeaderboardCard from "@/components/LeaderboardCard";
 import { adminClockOut, adminLockLog, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserCurrentLogDTO } from "@/lib/data/timelog-dto";
-import { getAllUserNames } from "@/lib/data/user-dto";
+import { getAllUserNames, getUserDTO } from "@/lib/data/user-dto";
 import CurrentlyInTable from "./CurrentlyInTable";
 import UserCard from "./UserCard";
 
@@ -28,10 +28,11 @@ export default async function Home() {
     .map(([id, duration]) => ({ id, name: userNameMap[id], duration }));
 
   // Get Current User Info
-  const user = session?.user && session.user.id ? {
-    id: session.user.id,
-    name: session.user.name || undefined,
-    image: session.user.image || undefined,
+  const userDTO = session?.user && session.user.id ? await getUserDTO(session.user.id) : undefined;
+  const user = userDTO ? {
+    id: userDTO.id,
+    name: userDTO.name,
+    image: session?.user.image || undefined,
   } : undefined;
 
   const userCurrentLog = userId && await getUserCurrentLogDTO(userId);
