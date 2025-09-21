@@ -7,3 +7,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+
+secrets:
+  sentry-auth-token:
+    environment: "SENTRY_AUTH_TOKEN"

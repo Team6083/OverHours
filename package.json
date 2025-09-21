@@ -12,6 +12,7 @@
     "@chakra-ui/react": "^3.26.0",
     "@emotion/react": "^11.14.0",
     "@prisma/client": "^6.16.0",
+    "@sentry/nextjs": "^10.12.0",
     "next": "15.5.2",
     "next-auth": "^5.0.0-beta.28",
     "next-intl": "^4.3.9",
