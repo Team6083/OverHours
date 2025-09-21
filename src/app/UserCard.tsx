@@ -22,7 +22,7 @@ export default async function UserCard(props: {
     <Card.Root w="full" size="sm">
       <Card.Body>
         <HStack w="full" justify="flex-end">
-          <UserCardStatus />
+          <UserCardStatus lastLog={lastLog} />
         </HStack>
         <VStack textAlign="center" gap={4}>
           <UserCardUserName user={user} />
