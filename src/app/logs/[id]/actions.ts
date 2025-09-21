@@ -8,6 +8,7 @@ import { createTimeLog, updateTimeLog } from "@/lib/data/timelog-dto";
 const schema = z
   .object({
     id: z.string().optional(),
+    tzOffset: z.coerce.number(),
     user: z.string().nonempty(),
     status: z.enum(["CURRENTLY_IN", "DONE", "LOCKED"]).nonoptional(),
     clockInTime: z.iso.datetime({ local: true }).nonempty(),
@@ -30,7 +31,7 @@ const schema = z
 
 export type LogFormState = {
   issues?: z.ZodError["issues"];
-  prevValues?: z.infer<typeof schema>
+  prevValues?: Omit<z.infer<typeof schema>, "tzOffset">;
 }
 
 export async function formSubmit(state: LogFormState, formData: FormData): Promise<LogFormState> {
@@ -39,20 +40,27 @@ export async function formSubmit(state: LogFormState, formData: FormData): Promi
   try {
     const parsed: z.infer<typeof schema> = schema.parse(formDataObj);
 
+    const formTzOffset = parsed.tzOffset;
+    const localTzOffset = new Date().getTimezoneOffset();
+    const tzOffset = formTzOffset - localTzOffset;
+
+    const inTime = new Date(new Date(parsed.clockInTime).getTime() + tzOffset * 60 * 1000);
+    const outTime = parsed.clockOutTime ? new Date(new Date(parsed.clockOutTime).getTime() + tzOffset * 60 * 1000) : undefined;
+
     if (parsed.id) {
       await updateTimeLog(parsed.id, {
         userId: parsed.user,
         status: parsed.status,
-        inTime: new Date(parsed.clockInTime),
-        outTime: parsed.clockOutTime ? new Date(parsed.clockOutTime) : undefined,
+        inTime: inTime,
+        outTime: outTime,
         notes: parsed.notes || null,
       });
     } else {
       await createTimeLog({
         userId: parsed.user,
         status: parsed.status,
-        inTime: new Date(parsed.clockInTime),
-        outTime: parsed.clockOutTime ? new Date(parsed.clockOutTime) : undefined,
+        inTime: inTime,
+        outTime: outTime,
         notes: parsed.notes || null,
       });
     }

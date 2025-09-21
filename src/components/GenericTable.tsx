@@ -216,8 +216,10 @@ function StatText(props: ComponentProps<typeof Text>) {
   const t = useTranslations("GenericTable");
   const { count, pageRange } = usePaginationContext();
 
+  const start = count === 0 ? 0 : pageRange.start + 1;
+
   return <Text {...props}>
-    {t("showingEntries", { start: pageRange.start + 1, end: pageRange.end, count })}
+    {t("showingEntries", { start, end: pageRange.end, count })}
   </Text>;
 }
 

@@ -30,6 +30,8 @@ export default function LogForm(props: {
   const { isNew, timeLog, userOptions } = props;
   const t = useTranslations("LogEditPage.form");
 
+  const tzOffset = new Date().getTimezoneOffset();
+
   const { contains } = useFilter({ sensitivity: "base" });
 
   const { collection, filter } = useListCollection({
@@ -42,8 +44,8 @@ export default function LogForm(props: {
       id: timeLog.id,
       user: timeLog.userId,
       status: timeLog.status,
-      clockInTime: timeLog.inTime.toISOString().slice(0, 19),
-      clockOutTime: timeLog.outTime ? timeLog.outTime.toISOString().slice(0, 19) : undefined,
+      clockInTime: new Date(timeLog.inTime.getTime() - tzOffset * 60 * 1000).toISOString().slice(0, 19),
+      clockOutTime: timeLog.outTime ? new Date(timeLog.outTime.getTime() - tzOffset * 60 * 1000).toISOString().slice(0, 19) : undefined,
       notes: timeLog.notes || undefined,
     } : undefined
   });
@@ -74,6 +76,8 @@ export default function LogForm(props: {
       </Stack>
 
       {timeLog && <input type="hidden" name="id" value={timeLog.id} />}
+
+      <input type="hidden" name="tzOffset" value={tzOffset} />
 
       <Fieldset.Content>
         <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
