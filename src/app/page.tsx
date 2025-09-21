@@ -5,7 +5,7 @@ import { LuBuilding } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
 import LeaderboardCard from "@/components/LeaderboardCard";
-import { adminClockOut, adminLockLog, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserCurrentLogDTO } from "@/lib/data/timelog-dto";
+import { adminClockOut, adminLockLog, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO } from "@/lib/data/timelog-dto";
 import { getAllUserNames, getUserDTO } from "@/lib/data/user-dto";
 import CurrentlyInTable from "./CurrentlyInTable";
 import UserCard from "./UserCard";
@@ -35,7 +35,7 @@ export default async function Home() {
     image: session?.user.image || undefined,
   } : undefined;
 
-  const userCurrentLog = userId && await getUserCurrentLogDTO(userId);
+  const userLastLog = userId && await getUserLastLogDTO(userId);
   const userRank = rankings.findIndex(r => r.id === userId) + 1;
 
   // Get Currently In Logs
@@ -61,7 +61,7 @@ export default async function Home() {
           {user && (
             <UserCard
               user={user}
-              isClockedin={!!userCurrentLog}
+              lastLog={userLastLog || undefined}
               totalTimeSec={allUsersTotalTimeSec[user.id] || 0}
               ranking={userRank}
             />

@@ -1,7 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
 
-const supportedLocales = ["en", "zh"];
+const supportedLocales = ["en", "zh-TW"];
 
 export default getRequestConfig(async () => {
   let locale: string = "en";

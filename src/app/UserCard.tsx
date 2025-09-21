@@ -1,20 +1,27 @@
 import { revalidatePath } from "next/cache";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { Card, VStack, HStack, Avatar, Stack, DataList, Badge, Text } from "@chakra-ui/react";
 
 import RankingBadge from "@/components/RankingBadge";
-import { clockIn, clockOut } from "@/lib/data/timelog-dto";
+import { clockIn, clockOut, TimeLogDTO } from "@/lib/data/timelog-dto";
 import { formatDuration } from "@/lib/util";
 import UserClockInOutButton from "./ClockInOutButton";
-import { getTranslations } from "next-intl/server";
 
 export default async function UserCard(props: {
   user: { id: string, name?: string, image?: string },
-  isClockedin?: boolean,
+  lastLog?: TimeLogDTO,
   totalTimeSec?: number,
   ranking?: number,
 }) {
-  const { user, totalTimeSec, ranking, isClockedin } = props;
+  const { user, lastLog, totalTimeSec, ranking } = props;
   const t = await getTranslations("HomePage.userCard");
+  const format = await getFormatter();
+
+  const now = new Date();
+  const lastLogTime = lastLog?.status === "CURRENTLY_IN" ? lastLog.inTime : lastLog?.outTime;
+  const lastLogTimeStr = lastLogTime ? format.relativeTime(lastLogTime, now) : undefined;
+
+  const isClockedin = lastLog?.status === "CURRENTLY_IN";
 
   return (
     <Card.Root w="full" size="sm">
@@ -50,6 +57,22 @@ export default async function UserCard(props: {
               <DataList.ItemValue>{ranking ? <RankingBadge ranking={ranking} /> : <Badge colorPalette="red">N/A</Badge>}</DataList.ItemValue>
             </DataList.Item>
           </DataList.Root>
+
+          <HStack>
+            {isClockedin
+              ? <Badge colorPalette="green">{t("status.clockedIn")}</Badge>
+              : <Badge colorPalette="orange">{t("status.clockedOut")}</Badge>
+            }
+
+            <Text fontSize="xs" color="fg.muted">
+              {lastLog
+                ? (lastLogTimeStr && (lastLog.status === "CURRENTLY_IN" ?
+                  t("status.lastIn", { time: lastLogTimeStr }) :
+                  t("status.lastOut", { time: lastLogTimeStr })))
+                : t("status.noLogsYet")
+              }
+            </Text>
+          </HStack>
         </VStack>
       </Card.Body>
       <Card.Footer>

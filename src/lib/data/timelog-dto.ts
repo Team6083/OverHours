@@ -124,14 +124,14 @@ export async function getAllUsersTotalTimeSec(): Promise<{ [userId: string]: num
   return {};
 }
 
-export async function getUserCurrentLogDTO(userId: string): Promise<TimeLogDTO | null> {
+export async function getUserLastLogDTO(userId: string): Promise<TimeLogDTO | null> {
   const session = await auth();
   if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
     return null;
   }
 
   const lastLog = await prisma.timeLog.findFirst({
-    where: { userId, status: "CurrentlyIn" },
+    where: { userId },
     orderBy: { inTime: "desc" },
   });
 

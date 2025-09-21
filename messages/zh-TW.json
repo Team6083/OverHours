@@ -27,7 +27,14 @@
     },
     "userCard": {
       "totalTime": "總時數",
-      "ranking": "排名"
+      "ranking": "排名",
+      "status": {
+        "clockedIn": "簽到中",
+        "clockedOut": "已簽退",
+        "noLogsYet": "尚無紀錄",
+        "lastIn": "於 {time}",
+        "lastOut": "上次簽退 {time}"
+      }
     }
   },
   "LogsPage": {
