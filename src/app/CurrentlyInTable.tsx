@@ -1,8 +1,8 @@
 "use client";
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ButtonGroup, Center, ClientOnly, CloseButton, IconButton, Input, InputGroup, Pagination, Table, useFilter } from "@chakra-ui/react";
-import { LuChevronLeft, LuChevronRight, LuDoorOpen, LuLock, LuTrash2 } from "react-icons/lu";
+import { ButtonGroup, Center, ClientOnly, CloseButton, Icon, IconButton, Input, InputGroup, Pagination, Table, useFilter } from "@chakra-ui/react";
+import { LuArrowUp10, LuChevronLeft, LuChevronRight, LuDoorOpen, LuLock, LuTrash2 } from "react-icons/lu";
 
 import { Tooltip } from "@/components/ui/tooltip";
 
@@ -48,7 +48,7 @@ export default function CurrentlyInTable(props: {
     <InputGroup endElement={endElement}>
       <Input
         ref={inputRef}
-        size="sm"
+        size="xs"
         mb={2}
         placeholder="Search..."
         value={searchText}
@@ -60,7 +60,7 @@ export default function CurrentlyInTable(props: {
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader>{t("header.user")}</Table.ColumnHeader>
-            <Table.ColumnHeader>{t("header.inTime")}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t("header.inTime")} <Icon><LuArrowUp10 /></Icon></Table.ColumnHeader>
             <Table.ColumnHeader hidden={!showAdminActions}>{t("header.actions")}</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>

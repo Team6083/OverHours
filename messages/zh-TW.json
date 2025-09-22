@@ -126,5 +126,8 @@
     "entriesPerPage": "個項目 / 頁",
     "selectedCount": "已選擇 {count} 項",
     "showingEntries": "顯示第 {start} 至 {end} 項，共 {count} 項"
+  },
+  "LastUpdatedText": {
+    "lastUpdated": "最後更新 {timeString}"
   }
 }

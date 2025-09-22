@@ -126,5 +126,8 @@
     "entriesPerPage": "entries per page",
     "selectedCount": "{count} selected",
     "showingEntries": "Showing {start} to {end} of {count} entries"
+  },
+  "LastUpdatedText": {
+    "lastUpdated": "Last updated {timeString}"
   }
 }

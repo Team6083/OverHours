@@ -1,19 +1,24 @@
 import { ComponentProps } from "react";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { Badge, Button, Card, CloseButton, Dialog, EmptyState, GridItem, Heading, HStack, Icon, IconButton, Portal, SimpleGrid, Tabs, Text, VStack } from "@chakra-ui/react";
+import { Badge, Button, Card, CloseButton, Dialog, EmptyState, GridItem, Heading, HStack, Icon, IconButton, Portal, Separator, SimpleGrid, Tabs, Text, VStack } from "@chakra-ui/react";
 import { LuBuilding, LuChevronsRight, LuHouse, LuTrophy, LuUserPlus } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
+import LastUpdatedText from "@/components/LastUpdatedText";
 import LeaderboardTable from "@/components/LeaderboardTable";
-import { adminClockOut, adminLockLog, clockIn, clockOut, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO } from "@/lib/data/timelog-dto";
+import { getTeamsForUser } from "@/lib/data/team-dto";
+import {
+  clockIn, clockOut,
+  adminClockOut, adminLockLog, deleteTimeLog,
+  getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO,
+} from "@/lib/data/timelog-dto";
 import { getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import CurrentlyInTable from "./CurrentlyInTable";
-import UserCard, { UserCardStat, UserCardStatus, UserCardUserName } from "./UserCard";
 import UserClockInOutButton from "./ClockInOutButton";
-import { getTeamsForUser } from "@/lib/data/team-dto";
 import ClockUserInCombobox from "./ClockUserInCombobox";
 import PageUpdateButton from "./PageUpdateButton";
+import UserCard, { UserCardStat, UserCardStatus, UserCardUserName } from "./UserCard";
 
 export default async function Home() {
   const t = await getTranslations("HomePage");
@@ -85,6 +90,7 @@ export default async function Home() {
       </GridItem>
     </SimpleGrid>
 
+    {/* For mobile devices */}
     <Tabs.Root defaultValue="main" hideFrom="sm">
       <Tabs.List>
         <Tabs.Trigger value="main">
@@ -97,9 +103,9 @@ export default async function Home() {
         </Tabs.Trigger>
       </Tabs.List>
       <Tabs.Content value="main">
-        {user && (
+        {user && (<>
           <VStack align="flex-start" gap={4} mb={4}>
-            <HStack justifyContent="space-between" w="full" gap={4}>
+            <HStack justifyContent="space-between" w="full" gapX={4}>
               <UserCardUserName user={user} />
               <UserCardStatus lastLog={userLastLog || undefined} />
             </HStack>
@@ -126,9 +132,14 @@ export default async function Home() {
               isClockedin={isClockedin}
             />
           </VStack>
-        )}
+          <Separator mb={4} />
+        </>)}
 
-        <CurrentlyInPane currentlyInLogs={currentlyInLogs} canClockInUsers={canClockInUsers} isAdmin={isAdmin} />
+        <CurrentlyInPane
+          currentlyInLogs={currentlyInLogs}
+          canClockInUsers={canClockInUsers}
+          isAdmin={isAdmin}
+        />
       </Tabs.Content>
       <Tabs.Content value="leaderboard">
         <LeaderboardTable rankings={rankings} />
@@ -161,6 +172,8 @@ async function CurrentlyInPane(props: {
         <IconButton size="xs" variant="ghost" hideFrom="md"><LuUserPlus /></IconButton>
       </>}
     </HStack>
+
+    <LastUpdatedText date={(() => new Date())()} />
 
     {
       currentlyInLogs.length > 0
