@@ -1,24 +1,23 @@
-"use client";
 import { ComponentProps } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { getTranslations } from "next-intl/server";
 
 import { Box, Flex, HStack, Button, Heading, Icon, Avatar, Menu, Portal, MenuSelectionDetails } from "@chakra-ui/react";
 import { LuLogIn, LuLogOut, LuLogs, LuUsers } from "react-icons/lu";
 
-import { Role } from "@/auth";
+import { auth, Role, signIn, signOut } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
 
-export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "children">) {
+export default async function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "children">) {
   const { ...boxProps } = props;
-  const t = useTranslations("AppNav");
+  const t = await getTranslations("AppNav");
 
-  const { data: session } = useSession();
+  const session = await auth();
 
-  const handleUserAvatarMenuSelect = ({ value }: MenuSelectionDetails) => {
+  const handleUserAvatarMenuSelect = async ({ value }: MenuSelectionDetails) => {
+    "use server";
     if (value === "signout") {
-      signOut();
+      await signOut();
     }
   }
 
@@ -81,7 +80,10 @@ export default function AppNav(props: {} & Omit<ComponentProps<typeof Box>, "chi
                 </Menu.Positioner>
               </Portal>
             </Menu.Root>
-            : <Button size="sm" onClick={() => signIn("keycloak")}>
+            : <Button size="sm" onClick={async () => {
+              "use server";
+              await signIn("keycloak");
+            }}>
               {t("nav.signIn")}
               <Icon><LuLogIn /></Icon>
             </Button>
