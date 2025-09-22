@@ -1,10 +1,11 @@
+import { ComponentProps } from "react";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { Badge, EmptyState, GridItem, Heading, HStack, IconButton, SimpleGrid, Tabs, VStack } from "@chakra-ui/react";
-import { LuBuilding, LuHouse, LuTrophy, LuUserPlus } from "react-icons/lu";
+import { Badge, Button, Card, CloseButton, Dialog, EmptyState, GridItem, Heading, HStack, Icon, IconButton, Portal, SimpleGrid, Tabs, Text, VStack } from "@chakra-ui/react";
+import { LuBuilding, LuChevronsRight, LuHouse, LuTrophy, LuUserPlus } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
-import LeaderboardCard, { LeaderboardTable, LeaderboardTitle } from "@/components/LeaderboardCard";
+import LeaderboardTable from "@/components/LeaderboardTable";
 import { adminClockOut, adminLockLog, clockIn, clockOut, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO } from "@/lib/data/timelog-dto";
 import { getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import CurrentlyInTable from "./CurrentlyInTable";
@@ -130,9 +131,6 @@ export default async function Home() {
         <CurrentlyInPane currentlyInLogs={currentlyInLogs} canClockInUsers={canClockInUsers} isAdmin={isAdmin} />
       </Tabs.Content>
       <Tabs.Content value="leaderboard">
-        <Heading as="h2" size="xl" mb={4}>
-          <LeaderboardTitle />
-        </Heading>
         <LeaderboardTable rankings={rankings} />
       </Tabs.Content>
     </Tabs.Root>
@@ -202,4 +200,51 @@ async function CurrentlyInPane(props: {
         </>
     }
   </>);
+}
+
+
+async function LeaderboardCard(props: {
+  rankings: { id: string, name: string, duration: number }[]
+} & ComponentProps<typeof Card.Root>) {
+  const { rankings, ...cardRootProps } = props;
+  const t = await getTranslations("HomePage.leaderboardCard");
+
+  return (
+    <Dialog.Root>
+      <Card.Root {...cardRootProps}>
+        <Card.Header>
+          <Card.Title>{t("title")}</Card.Title>
+        </Card.Header>
+        <Card.Body>
+          <LeaderboardTable rankings={rankings} limits={5} />
+        </Card.Body>
+        <Card.Footer>
+          <Text fontSize="sm" color="gray.500">{t("footerText")}</Text>
+          <Dialog.Trigger asChild>
+            <Button size="xs" mt={2}>
+              {t("viewMore")}
+              <Icon><LuChevronsRight /></Icon>
+            </Button>
+          </Dialog.Trigger>
+        </Card.Footer>
+      </Card.Root>
+
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>{t("viewMoreDialog.title")}</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              <LeaderboardTable rankings={rankings} />
+            </Dialog.Body>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton size="sm" />
+            </Dialog.CloseTrigger>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
+  );
 }

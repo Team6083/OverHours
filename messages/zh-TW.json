@@ -34,6 +34,14 @@
         "lastOut": "已簽退，上次簽退於 {time}"
       }
     },
+    "leaderboardCard": {
+      "title": "排行榜",
+      "footerText": "按總簽到時數排名的前 5 名使用者。",
+      "viewMore": "查看完整排行榜",
+      "viewMoreDialog": {
+        "title": "完整排行榜"
+      }
+    },
     "tabs": {
       "home": "主畫面",
       "leaderboard": "排行榜"
@@ -107,15 +115,12 @@
       "signOut": "登出"
     }
   },
-  "LeaderboardCard": {
-    "title": "排行榜",
+  "LeaderboardTable": {
     "columns": {
       "ranking": "排名",
       "user": "使用者",
       "totalTime": "總時數"
-    },
-    "footerText": "按總簽到時數排名的前 5 名使用者。",
-    "viewMore": "查看完整排行榜"
+    }
   },
   "GenericTable": {
     "entriesPerPage": "個項目 / 頁",

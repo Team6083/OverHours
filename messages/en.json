@@ -34,6 +34,14 @@
         "lastOut": "Last clocked-out at {time}"
       }
     },
+    "leaderboardCard": {
+      "title": "Leaderboard",
+      "footerText": "Top 5 users by total hours clocked-in.",
+      "viewMore": "View Full Leaderboard",
+      "viewMoreDialog": {
+        "title": "Full Leaderboard"
+      }
+    },
     "tabs": {
       "home": "Home",
       "leaderboard": "Leaderboard"
@@ -107,15 +115,12 @@
       "signOut": "Sign-Out"
     }
   },
-  "LeaderboardCard": {
-    "title": "Leaderboard",
+  "LeaderboardTable": {
     "columns": {
       "ranking": "Ranking",
       "user": "User",
       "totalTime": "Total Time"
-    },
-    "footerText": "Top 5 users by total hours clocked-in.",
-    "viewMore": "View Full Leaderboard"
+    }
   },
   "GenericTable": {
     "entriesPerPage": "entries per page",
