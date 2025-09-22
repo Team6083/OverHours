@@ -1,6 +1,6 @@
 import { ComponentProps, useMemo, useState } from "react";
-import { createListCollection, Stack, usePaginationContext, HStack, Select, Portal, Table, Checkbox, ButtonGroup, Pagination, IconButton, ActionBar, Text } from "@chakra-ui/react";
-import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { createListCollection, Stack, usePaginationContext, HStack, Select, Portal, Table, Checkbox, ButtonGroup, Pagination, IconButton, ActionBar, Text, Collapsible, Box } from "@chakra-ui/react";
+import { LuChevronLeft, LuChevronRight, LuChevronsDown } from "react-icons/lu";
 import { useTranslations } from "next-intl";
 
 const itemsPerPage = createListCollection({
@@ -60,45 +60,57 @@ export default function GenericTable<T>(props: {
   const indeterminate = hasSelection && selection.length < tableData.length;
 
   return <Stack gap={4} {...stackProps}>
-    <HStack px={2}>
-      {/* Entries per page select */}
-      <HStack>
-        <Select.Root
-          collection={itemsPerPage}
-          size="xs"
-          minW="60px"
-          w="60px"
-          value={[pageSize.toString()]}
-          onValueChange={({ value }) => setPageSize(parseInt(value[0], 10))}
-        >
-          <Select.HiddenSelect />
-          <Select.Control>
-            <Select.Trigger>
-              <Select.ValueText placeholder="Select framework" />
-            </Select.Trigger>
-            <Select.IndicatorGroup>
-              <Select.Indicator />
-            </Select.IndicatorGroup>
-          </Select.Control>
-          <Portal>
-            <Select.Positioner>
-              <Select.Content>
-                {itemsPerPage.items.map((item) => (
-                  <Select.Item item={item} key={item.value}>
-                    {item.label}
-                    <Select.ItemIndicator />
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select.Positioner>
-          </Portal>
-        </Select.Root>
-        <Text fontSize="sm" fontWeight="medium" minW="fit-content">
-          {genericTableTranslate("entriesPerPage")}
-        </Text>
+    <Collapsible.Root>
+      <HStack px={2} justifyContent="space-between">
+        {/* Entries per page select */}
+        <HStack>
+          <Select.Root
+            collection={itemsPerPage}
+            size="xs"
+            minW="60px"
+            w="60px"
+            value={[pageSize.toString()]}
+            onValueChange={({ value }) => setPageSize(parseInt(value[0], 10))}
+          >
+            <Select.HiddenSelect />
+            <Select.Control>
+              <Select.Trigger>
+                <Select.ValueText placeholder="Select framework" />
+              </Select.Trigger>
+              <Select.IndicatorGroup>
+                <Select.Indicator />
+              </Select.IndicatorGroup>
+            </Select.Control>
+            <Portal>
+              <Select.Positioner>
+                <Select.Content>
+                  {itemsPerPage.items.map((item) => (
+                    <Select.Item item={item} key={item.value}>
+                      {item.label}
+                      <Select.ItemIndicator />
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Positioner>
+            </Portal>
+          </Select.Root>
+          <Text fontSize="sm" fontWeight="medium" minW="fit-content">
+            {genericTableTranslate("entriesPerPage")}
+          </Text>
+        </HStack>
+
+        <Box hideBelow="md">
+          {topRightElement}
+        </Box>
+
+        <Collapsible.Trigger hideFrom="md" asChild>
+          <IconButton size="xs" variant="ghost"><LuChevronsDown /></IconButton>
+        </Collapsible.Trigger>
       </HStack>
-      {topRightElement}
-    </HStack>
+      <Collapsible.Content hideFrom="md" mt={4}>
+        {topRightElement}
+      </Collapsible.Content>
+    </Collapsible.Root>
 
     <Table.ScrollArea>
       <Table.Root>

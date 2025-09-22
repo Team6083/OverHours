@@ -1,6 +1,7 @@
 "use client";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ButtonGroup, Center, ClientOnly, IconButton, Pagination, Table } from "@chakra-ui/react";
+import { ButtonGroup, Center, ClientOnly, CloseButton, IconButton, Input, InputGroup, Pagination, Table, useFilter } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight, LuDoorOpen, LuLock, LuTrash2 } from "react-icons/lu";
 
 import { Tooltip } from "@/components/ui/tooltip";
@@ -26,8 +27,35 @@ export default function CurrentlyInTable(props: {
   } = props;
   const t = useTranslations("HomePage.currentlyInTable");
 
+  const [searchText, setSearchText] = useState("");
+
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const endElement = searchText ? (
+    <CloseButton
+      size="xs"
+      onClick={() => {
+        setSearchText("");
+        inputRef.current?.focus();
+      }}
+      me="-2" mt="-2"
+    />
+  ) : undefined
+
+  const { contains } = useFilter({});
+  const filteredItems = items.filter(item => contains(item.user.toLowerCase(), searchText.toLowerCase()));
+
   return <>
-    <Pagination.Root count={items.length} pageSize={8} defaultPage={1}>
+    <InputGroup endElement={endElement}>
+      <Input
+        ref={inputRef}
+        size="sm"
+        mb={2}
+        placeholder="Search..."
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+      />
+    </InputGroup>
+    <Pagination.Root count={filteredItems.length} pageSize={8} defaultPage={1}>
       <Table.Root size="md" interactive>
         <Table.Header>
           <Table.Row>
@@ -40,7 +68,7 @@ export default function CurrentlyInTable(props: {
           {({ page, pageSize }) => {
             const startIndex = (page - 1) * pageSize;
             const endIndex = startIndex + pageSize;
-            const currentItems = items.slice(startIndex, endIndex);
+            const currentItems = filteredItems.slice(startIndex, endIndex);
 
             return (
               <Table.Body>
