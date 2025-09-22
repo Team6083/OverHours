@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { getFormatter, getTranslations } from "next-intl/server";
-import { Card, VStack, HStack, Avatar, Stack, DataList, Badge, Text, Status } from "@chakra-ui/react";
+import { Card, VStack, HStack, Avatar, Stack, DataList, Badge, Text, Status, Tag } from "@chakra-ui/react";
 
 import RankingBadge from "@/components/RankingBadge";
 import { clockIn, clockOut, TimeLogDTO } from "@/lib/data/timelog-dto";
@@ -8,8 +8,15 @@ import { formatDuration } from "@/lib/util";
 import UserClockInOutButton from "./ClockInOutButton";
 import { ComponentProps } from "react";
 
+type UserCardUser = {
+  id: string,
+  name?: string,
+  image?: string,
+  teams: { id: string, name: string }[],
+};
+
 export default async function UserCard(props: {
-  user: { id: string, name?: string, image?: string },
+  user: UserCardUser,
   lastLog?: TimeLogDTO,
   totalTimeSec?: number,
   ranking?: number,
@@ -21,7 +28,7 @@ export default async function UserCard(props: {
   return (
     <Card.Root w="full" size="sm">
       <Card.Body>
-        <HStack w="full" justify="flex-end">
+        <HStack w="full" justify="flex-end" mb={2}>
           <UserCardStatus lastLog={lastLog} />
         </HStack>
         <VStack textAlign="center" gap={4}>
@@ -75,29 +82,29 @@ export async function UserCardStatus(props: { lastLog?: TimeLogDTO, }) {
 }
 
 export function UserCardUserName(props: {
-  user: { id: string, name?: string, image?: string },
+  user: UserCardUser,
 }) {
   const { user } = props;
 
+  const hasTeams = user.teams && user.teams.length > 0;
+
   return (
     <HStack gap={4}>
-      <Avatar.Root size={{ base: "sm", md: "lg" }}>
+      <Avatar.Root size={hasTeams ? { base: "sm", md: "xl" } : "xs"}>
         <Avatar.Fallback name={user.name} />
         <Avatar.Image src={user.image} />
       </Avatar.Root>
       <Stack gap={1}>
         <Text fontWeight="medium" fontSize="lg">{user.name}</Text>
-        {/* <HStack gap={1} justify="center" align="center" flexWrap="wrap">
-                  <Tag.Root colorPalette="blue" variant="surface">
-                    <Tag.Label>FRC - 6083</Tag.Label>
-                  </Tag.Root>
-                  <Tag.Root colorPalette="orange" variant="surface">
-                    <Tag.Label>FTC - Arctic</Tag.Label>
-                  </Tag.Root>
-                  <Tag.Root colorPalette="green" variant="surface">
-                    <Tag.Label>FLL</Tag.Label>
-                  </Tag.Root>
-                </HStack> */}
+        {hasTeams && (
+          <HStack gap={1} justify="center" align="center" flexWrap="wrap">
+            {user.teams.map((team) => (
+              <Tag.Root key={team.id} variant="surface">
+                <Tag.Label>{team.name}</Tag.Label>
+              </Tag.Root>
+            ))}
+          </HStack>
+        )}
       </Stack>
     </HStack>
   );

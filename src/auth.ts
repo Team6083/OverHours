@@ -1,5 +1,5 @@
 
-import NextAuth, { DefaultSession } from "next-auth";
+import NextAuth, { DefaultSession, Profile } from "next-auth";
 import Keycloak from "next-auth/providers/keycloak";
 
 import prisma from "./lib/prisma";
@@ -15,6 +15,23 @@ declare module "next-auth" {
       role: Role;
     } & DefaultSession["user"];
   }
+}
+
+function getNameFromProfile(profile: Profile): string | undefined {
+  const familyName = profile?.family_name;
+  const givenName = profile?.given_name;
+
+  if (familyName && givenName) {
+    // Check if family name contains Chinese characters
+    const chineseRegex = /[\u4e00-\u9fff]/;
+    if (chineseRegex.test(familyName)) {
+      return `${familyName}${givenName}`;
+    } else {
+      return `${givenName} ${familyName}`;
+    }
+  }
+
+  return profile.name || undefined;
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -36,22 +53,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (trigger === 'signIn') {
         if (account?.provider === 'keycloak' && user.email) {
           const userProps = {
-            name: (() => {
-              const familyName = profile?.family_name;
-              const givenName = profile?.given_name;
-
-              if (familyName && givenName) {
-                // Check if family name contains Chinese characters
-                const chineseRegex = /[\u4e00-\u9fff]/;
-                if (chineseRegex.test(familyName)) {
-                  return `${familyName}${givenName}`;
-                } else {
-                  return `${givenName} ${familyName}`;
-                }
-              }
-
-              return user.name || `kc-${account.providerAccountId}`;
-            })(),
+            name: (profile && getNameFromProfile(profile)) || user.name || user.email,
+            image: profile?.picture || user.image || undefined,
           };
 
           const dbUser = await prisma.user.upsert({
@@ -64,7 +67,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
             update: userProps,
           });
-          token.id = dbUser.id;
+          token.userId = dbUser.id;
 
           if (profile && Array.isArray(profile.roles)) {
             const roles = profile.roles;
@@ -79,8 +82,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     session({ session, token }) {
-      if ('id' in token && typeof token.id === 'string') {
-        session.user.id = token.id.toString();
+      if ('userId' in token && typeof token.userId === 'string') {
+        session.user.id = token.userId;
 
         if ('role' in token && typeof token.role === 'string' && token.role === 'admin') {
           session.user.role = Role.ADMIN;

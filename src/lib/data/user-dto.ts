@@ -9,6 +9,7 @@ export type UserDTO = {
 
   email: string;
   name: string;
+  image?: string;
 
   createdAt: Date;
   updatedAt: Date;

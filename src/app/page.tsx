@@ -1,15 +1,17 @@
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { EmptyState, GridItem, Heading, HStack, Pagination, SimpleGrid, Tabs, VStack } from "@chakra-ui/react";
+import { Badge, EmptyState, GridItem, Heading, HStack, Pagination, SimpleGrid, Tabs, VStack } from "@chakra-ui/react";
 import { LuBuilding, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
 import LeaderboardCard, { LeaderboardTable, LeaderboardTitle } from "@/components/LeaderboardCard";
 import { adminClockOut, adminLockLog, clockIn, clockOut, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO } from "@/lib/data/timelog-dto";
-import { getAllUserNames, getUserDTO } from "@/lib/data/user-dto";
+import { getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import CurrentlyInTable from "./CurrentlyInTable";
 import UserCard, { UserCardStat, UserCardStatus, UserCardUserName } from "./UserCard";
 import UserClockInOutButton from "./ClockInOutButton";
+import { getTeamsForUser } from "@/lib/data/team-dto";
+import ClockUserInCombobox from "./ClockUserInCombobox";
 
 export default async function Home() {
   const t = await getTranslations("HomePage");
@@ -30,10 +32,13 @@ export default async function Home() {
 
   // Get Current User Info
   const userDTO = session?.user && session.user.id ? await getUserDTO(session.user.id) : undefined;
+  const userTeams = userId ? await getTeamsForUser(userId) : undefined;
   const user = userDTO ? {
     id: userDTO.id,
     name: userDTO.name,
     image: session?.user.image || undefined,
+    teams: userTeams ? userTeams.map(team => ({ id: team.id, name: team.name })) : [],
+    // teams: [{ id: "1", name: "Example Team" }, {id: "2", name: "FRC - 6083"}], // --- IGNORE ---
   } : undefined;
 
   const userLastLog = userId && await getUserLastLogDTO(userId);
@@ -45,6 +50,10 @@ export default async function Home() {
     user: userNameMap[log.userId] || log.userId,
     inTime: log.inTime,
   }));
+
+  // Get all users for admin clock-in
+  const allUsers = isAdmin ? await getAllUserDTOs() : undefined;
+  const canClockInUsers = allUsers ? allUsers.filter(user => !currentlyInLogs.find(log => log.user === (user.name || user.id))) : [];
 
   const isClockedin = userLastLog ? userLastLog.status === "CURRENTLY_IN" : undefined;
 
@@ -70,7 +79,7 @@ export default async function Home() {
 
       {/* Right column */}
       <GridItem colSpan={{ base: 1, md: 3 }}>
-        <CurrentlyInPane currentlyInLogs={currentlyInLogs} isAdmin={isAdmin} />
+        <CurrentlyInPane currentlyInLogs={currentlyInLogs} canClockInUsers={canClockInUsers} isAdmin={isAdmin} />
       </GridItem>
     </SimpleGrid>
 
@@ -117,7 +126,7 @@ export default async function Home() {
           </VStack>
         )}
 
-        <CurrentlyInPane currentlyInLogs={currentlyInLogs} isAdmin={isAdmin} />
+        <CurrentlyInPane currentlyInLogs={currentlyInLogs} canClockInUsers={canClockInUsers} isAdmin={isAdmin} />
       </Tabs.Content>
       <Tabs.Content value="leaderboard">
         <Heading as="h2" size="xl" mb={4}>
@@ -131,14 +140,21 @@ export default async function Home() {
 
 async function CurrentlyInPane(props: {
   currentlyInLogs: { id: string, user: string, inTime: Date }[];
+  canClockInUsers?: UserDTO[];
   isAdmin?: boolean;
 }) {
-  const { currentlyInLogs, isAdmin } = props;
+  const { currentlyInLogs, canClockInUsers, isAdmin } = props;
   const t = await getTranslations('HomePage');
 
   return (
     <Pagination.Root count={currentlyInLogs.length} pageSize={8} defaultPage={1}>
-      <Heading as="h2" size="xl" mb={4}>{t("headings.currentlyIn")}</Heading>
+      <HStack mb={4} justify="space-between">
+        <HStack>
+          <Heading as="h2" size="xl">{t("headings.currentlyIn")}</Heading>
+          <Badge colorPalette="blue" size="md">{currentlyInLogs.length}</Badge>
+        </HStack>
+        {isAdmin && canClockInUsers && <ClockUserInCombobox users={canClockInUsers} />}
+      </HStack>
 
       {currentlyInLogs.length > 0
         ? <CurrentlyInTable

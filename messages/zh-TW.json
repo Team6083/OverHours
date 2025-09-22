@@ -37,6 +37,10 @@
     "tabs": {
       "home": "主畫面",
       "leaderboard": "排行榜"
+    },
+    "clockUserInCombobox": {
+      "searchUserToClockIn": "搜尋使用者以簽到...",
+      "noUsersFound": "找不到使用者"
     }
   },
   "LogsPage": {

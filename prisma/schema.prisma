@@ -13,8 +13,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  email String @unique
+  email String  @unique
   name  String
+  image String?
+
+  teams   Team[]   @relation(fields: [teamIds], references: [id])
+  teamIds String[] @default([]) @db.ObjectId
 
   timeLogs TimeLog[]
 }
@@ -37,4 +41,15 @@ model TimeLog {
   inTime  DateTime
   outTime DateTime?
   notes   String?
+}
+
+model Team {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name String
+
+  users   User[]   @relation(fields: [userIds], references: [id])
+  userIds String[] @default([]) @db.ObjectId
 }

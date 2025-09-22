@@ -37,6 +37,10 @@
     "tabs": {
       "home": "Home",
       "leaderboard": "Leaderboard"
+    },
+    "clockUserInCombobox": {
+      "searchUserToClockIn": "Search user to clock-in...",
+      "noUsersFound": "No users found"
     }
   },
   "LogsPage": {
