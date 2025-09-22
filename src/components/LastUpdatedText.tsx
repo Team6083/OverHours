@@ -6,7 +6,9 @@ import { useFormatter, useTranslations } from "use-intl";
 import { Tooltip } from "./ui/tooltip";
 
 export default function LastUpdatedText({ date }: { date: Date }) {
-  const now = useNow({ updateInterval: 10000 });
+  const nextIntlNow = useNow({ updateInterval: 10000 });
+  const now = date > nextIntlNow ? date : nextIntlNow; // Because useNow might be slightly behind
+
   const t = useTranslations("LastUpdatedText");
   const formatter = useFormatter();
 
