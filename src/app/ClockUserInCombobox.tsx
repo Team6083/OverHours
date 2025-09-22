@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { ComponentProps, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Group, Combobox, Portal, Button, useFilter, useListCollection } from "@chakra-ui/react";
 
@@ -8,8 +8,8 @@ import { handleAdminClockIn } from "./actions";
 
 export default function ClockUserInCombobox(props: {
   users: UserDTO[],
-}) {
-  const { users } = props;
+} & Omit<ComponentProps<typeof Combobox.Root>, "children" | "collection" | "onInputValueChange" | "value" | "onValueChange">) {
+  const { users, ...comboboxRootProps } = props;
   const t = useTranslations("HomePage");
 
   const { contains, startsWith } = useFilter({ sensitivity: "base" });
@@ -41,7 +41,7 @@ export default function ClockUserInCombobox(props: {
 
   return (
     <Combobox.Root
-      size="xs" maxW="xs" w="full"
+      {...comboboxRootProps}
       collection={collection}
       onInputValueChange={(e) => filter(e.inputValue)}
       value={value}

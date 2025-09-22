@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { Badge, EmptyState, GridItem, Heading, HStack, Pagination, SimpleGrid, Tabs, VStack } from "@chakra-ui/react";
-import { LuBuilding, LuHouse, LuTrophy } from "react-icons/lu";
+import { Badge, EmptyState, GridItem, Heading, HStack, IconButton, SimpleGrid, Tabs, VStack } from "@chakra-ui/react";
+import { LuBuilding, LuHouse, LuTrophy, LuUserPlus } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
 import LeaderboardCard, { LeaderboardTable, LeaderboardTitle } from "@/components/LeaderboardCard";
@@ -12,6 +12,7 @@ import UserCard, { UserCardStat, UserCardStatus, UserCardUserName } from "./User
 import UserClockInOutButton from "./ClockInOutButton";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import ClockUserInCombobox from "./ClockUserInCombobox";
+import PageUpdateButton from "./PageUpdateButton";
 
 export default async function Home() {
   const t = await getTranslations("HomePage");
@@ -146,17 +147,25 @@ async function CurrentlyInPane(props: {
   const { currentlyInLogs, canClockInUsers, isAdmin } = props;
   const t = await getTranslations('HomePage');
 
-  return (
-    <Pagination.Root count={currentlyInLogs.length} pageSize={8} defaultPage={1}>
-      <HStack mb={4} justify="space-between">
-        <HStack>
-          <Heading as="h2" size="xl">{t("headings.currentlyIn")}</Heading>
-          <Badge colorPalette="blue" size="md">{currentlyInLogs.length}</Badge>
-        </HStack>
-        {isAdmin && canClockInUsers && <ClockUserInCombobox users={canClockInUsers} />}
+  return (<>
+    <HStack mb={4} justify="space-between">
+      <HStack>
+        <Heading as="h2" size="xl">{t("headings.currentlyIn")}</Heading>
+        <Badge colorPalette="blue" size="md">{currentlyInLogs.length}</Badge>
+        <PageUpdateButton />
       </HStack>
+      {isAdmin && canClockInUsers && <>
+        <ClockUserInCombobox
+          size="xs" maxW="3xs" w="full"
+          hideBelow="md"
+          users={canClockInUsers}
+        />
+        <IconButton size="xs" variant="ghost" hideFrom="md"><LuUserPlus /></IconButton>
+      </>}
+    </HStack>
 
-      {currentlyInLogs.length > 0
+    {
+      currentlyInLogs.length > 0
         ? <CurrentlyInTable
           items={currentlyInLogs}
           handleClockout={async (id: string) => {
@@ -190,7 +199,7 @@ async function CurrentlyInPane(props: {
               </VStack>
             </EmptyState.Content>
           </EmptyState.Root>
-        </>}
-    </Pagination.Root>
-  );
+        </>
+    }
+  </>);
 }
