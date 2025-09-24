@@ -1,6 +1,6 @@
 import "server-only";
 import { auth, Role } from "@/auth";
-import { TimeLog } from "@/generated/prisma";
+import { Prisma, TimeLog } from "@/generated/prisma";
 import prisma from "../prisma";
 
 export type TimeLogDTO = {
@@ -62,7 +62,16 @@ export async function getAllCurrentlyInTimelogDTOs(): Promise<TimeLogDTO[]> {
   return timeLogs.map(prismaTimeLogToDTO);
 }
 
-export async function getAllTimelogDTOs(userId?: string): Promise<TimeLogDTO[]> {
+export type GetAllTimelogDTOsOptions = {
+  userId: string;
+  startTime: Date;
+  endTime: Date;
+  status: TimeLogDTO["status"]
+}
+
+export async function getAllTimelogDTOs(opts?: Partial<GetAllTimelogDTOsOptions>): Promise<TimeLogDTO[]> {
+  const { userId, startTime, endTime, status } = opts || {};
+
   const session = await auth();
 
   if (!session) {
@@ -73,8 +82,41 @@ export async function getAllTimelogDTOs(userId?: string): Promise<TimeLogDTO[]> 
     return [];
   }
 
+  const where: Prisma.TimeLogWhereInput = {};
+
+  if (userId) {
+    where.userId = userId;
+  }
+
+  if (startTime || endTime) {
+    where.OR = [
+      {
+        inTime: {
+          gte: startTime,
+          lt: endTime,
+        },
+      },
+      {
+        outTime: {
+          gte: startTime,
+          lt: endTime,
+        },
+      },
+    ];
+  }
+
+  if (status) {
+    if (status === "CURRENTLY_IN") {
+      where.status = "CurrentlyIn";
+    } else if (status === "DONE") {
+      where.status = "Done";
+    } else if (status === "LOCKED") {
+      where.status = "Locked";
+    }
+  }
+
   const timeLogs = await prisma.timeLog.findMany({
-    where: userId ? { userId } : {},
+    where,
     orderBy: { inTime: "desc" },
   });
 

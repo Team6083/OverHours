@@ -1,8 +1,8 @@
 "use client";
-
 import { useNow } from "next-intl";
-import { ClientOnly, Text } from "@chakra-ui/react";
 import { useFormatter, useTranslations } from "use-intl";
+import { ClientOnly, Text } from "@chakra-ui/react";
+
 import { Tooltip } from "./ui/tooltip";
 
 export default function LastUpdatedText({ date }: { date: Date }) {
