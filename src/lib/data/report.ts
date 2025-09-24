@@ -1,7 +1,10 @@
 "use server";
 import "server-only";
 
-import { getAllTimelogDTOs, TimeLogDTO } from "./timelog-dto";
+import { auth, Role } from "@/auth";
+import { TimeLog } from "@/generated/prisma";
+import prisma from "@/lib/prisma";
+import { TimeLogDTO } from "./timelog-dto";
 
 type HeadCountOptions = {
   bucketSize: number;
@@ -9,7 +12,7 @@ type HeadCountOptions = {
   maxTime: Date;
 }
 
-function headcount(logs: Pick<TimeLogDTO, "inTime" | "outTime" | "userId">[], options?: Partial<HeadCountOptions>): number[] {
+function headcount(logs: Pick<TimeLog | TimeLogDTO, "inTime" | "outTime" | "userId">[], options?: Partial<HeadCountOptions>): number[] {
   const {
     bucketSize = 10 * 60 * 1000, // 10 minutes in ms
   } = options || {};
@@ -61,20 +64,43 @@ function headcount(logs: Pick<TimeLogDTO, "inTime" | "outTime" | "userId">[], op
 }
 
 export type DailyReportData = {
-  headcountHeatMap: number[][];
-  maxHeadcount: number;
-  users: string[];
+  headcountHeatMap: {
+    data: number[][];
+    maxHeadcount: number;
+  };
+  userDuration: { duration: number, userId?: string }[];
   durationStat: {
     total: number;
-    max: { userId: string, value: number } | null;
-    min: { userId: string, value: number } | null
-  }
+    max: { value: number, userId?: string };
+    min: { value: number, userId?: string };
+  };
 }
 
 export async function getDailyReportData(dateRange: [Date, Date]): Promise<DailyReportData | null> {
-  const logs = await getAllTimelogDTOs({
-    startTime: dateRange[0],
-    endTime: dateRange[1],
+  const session = await auth();
+  if (!session) {
+    return null;
+  }
+
+  const isAdmin = session.user.role === Role.ADMIN;
+
+  const logs = await prisma.timeLog.findMany({
+    where: {
+      OR: [
+        {
+          inTime: {
+            gte: dateRange[0],
+            lte: dateRange[1],
+          }
+        },
+        {
+          outTime: {
+            gte: dateRange[0],
+            lte: dateRange[1],
+          }
+        },
+      ]
+    },
   });
 
   if (logs.length === 0) {
@@ -82,9 +108,8 @@ export async function getDailyReportData(dateRange: [Date, Date]): Promise<Daily
   }
 
   const headcountResult = headcount(logs, { minTime: dateRange[0], maxTime: dateRange[1] });
-  const maxHeadcount = Math.max(...headcountResult);
 
-  const headcountHeatMap = Array.from({ length: 6 }, (_, row) =>
+  const headcountData = Array.from({ length: 6 }, (_, row) =>
     Array.from({ length: 24 }, (_, col) => {
       const index = row + col * 6;
       return index < headcountResult.length ? headcountResult[index] : 0;
@@ -99,21 +124,27 @@ export async function getDailyReportData(dateRange: [Date, Date]): Promise<Daily
 
   const durationStat = Object.entries(durationPerUser).reduce((acc, [userId, duration]) => {
     acc.total += duration;
-    if (!acc.max || duration > acc.max.value) {
-      acc.max = { userId, value: duration };
+    if (duration > acc.max.value) {
+      acc.max = { value: duration, userId: isAdmin ? userId : undefined };
     }
 
-    if (acc.min === null || duration < acc.min.value) {
-      acc.min = { userId, value: duration };
+    if (duration < acc.min.value) {
+      acc.min = { value: duration, userId: isAdmin ? userId : undefined };
     }
 
     return acc;
-  }, { total: 0, max: null, min: null } as DailyReportData['durationStat']);
+  }, {
+    total: 0,
+    max: { value: 0, userId: undefined },
+    min: { value: Infinity, userId: undefined }
+  } as DailyReportData['durationStat']);
 
   return {
-    headcountHeatMap,
-    maxHeadcount,
-    users: Array.from(new Set(logs.map(l => l.userId))),
+    headcountHeatMap: {
+      data: headcountData,
+      maxHeadcount: Math.max(...headcountResult),
+    },
+    userDuration: Object.entries(durationPerUser).map(([userId, duration]) => ({ duration, userId: isAdmin ? userId : undefined })),
     durationStat,
   };
 }
