@@ -2,8 +2,8 @@ import { ComponentProps } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
-import { Box, Flex, HStack, Button, Heading, Icon, Avatar, Menu, Portal, MenuSelectionDetails } from "@chakra-ui/react";
-import { LuLogIn, LuLogOut, LuLogs, LuUsers } from "react-icons/lu";
+import { Box, Flex, HStack, Button, Heading, Icon, Avatar, Menu, Portal, MenuSelectionDetails, CloseButton, Drawer, IconButton, Stack, Separator } from "@chakra-ui/react";
+import { LuChartNoAxesCombined, LuLogIn, LuLogOut, LuLogs, LuMenu, LuUsers } from "react-icons/lu";
 
 import { auth, Role, signIn, signOut } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
@@ -21,6 +21,12 @@ export default async function AppNav(props: {} & Omit<ComponentProps<typeof Box>
     }
   }
 
+  const links = [
+    { href: "/logs", label: t("nav.logs"), icon: LuLogs, roles: [Role.USER, Role.ADMIN] },
+    { href: "/report", label: t("nav.reports"), icon: LuChartNoAxesCombined, roles: [Role.ADMIN] },
+    { href: "/admin/users", label: t("nav.users"), icon: LuUsers, roles: [Role.ADMIN] },
+  ]
+
   return (
     <Box as="nav" {...boxProps}>
       {/* Main Navigation */}
@@ -37,32 +43,32 @@ export default async function AppNav(props: {} & Omit<ComponentProps<typeof Box>
           </Heading>
         </HStack>
 
-        {/* Desktop Nav Links */}
         <HStack>
-          {session && (
-            <Link href="/logs" passHref>
-              <Button size="sm" variant="ghost">
-                <LuLogs />
-                {t("nav.logs")}
-              </Button>
-            </Link>
-          )}
 
-          {session && session.user.role === Role.ADMIN && (
-            <Link href="/admin/users" passHref>
-              <Button size="sm" variant="ghost">
-                <LuUsers />
-                {t("nav.users")}
-              </Button>
-            </Link>
-          )}
+          {/* Desktop Nav Links */}
+          <HStack hideBelow="sm">
+            {links.map((link) => {
+              if (link.roles.length > 0 && session?.user.role && !link.roles.includes(session.user.role)) {
+                return null;
+              }
 
-          <ColorModeButton hideBelow="md" />
+              return (
+                <Link key={link.href} href={link.href} passHref>
+                  <Button size="sm" variant="ghost">
+                    <link.icon />
+                    {link.label}
+                  </Button>
+                </Link>
+              );
+            })}
+
+            <ColorModeButton />
+          </HStack>
 
           {session?.user
             ? <Menu.Root onSelect={handleUserAvatarMenuSelect}>
               <Menu.Trigger asChild>
-                <Box cursor="pointer">
+                <Box cursor="pointer" mx={2}>
                   <Avatar.Root size="sm" cursor="pointer">
                     <Avatar.Fallback name={session.user.name || undefined} />
                     <Avatar.Image src={session.user.image || undefined} />
@@ -88,6 +94,46 @@ export default async function AppNav(props: {} & Omit<ComponentProps<typeof Box>
               <Icon><LuLogIn /></Icon>
             </Button>
           }
+
+          {/* Mobile Nav Drawer */}
+          <Drawer.Root size="xs" placement="start">
+            <Drawer.Trigger asChild>
+              <IconButton hideFrom="sm" size="sm" variant="outline"><LuMenu /></IconButton>
+            </Drawer.Trigger>
+            <Portal>
+              <Drawer.Backdrop />
+              <Drawer.Positioner>
+                <Drawer.Content maxW="3xs">
+                  <Drawer.Header>
+                    <Drawer.Title>Menu</Drawer.Title>
+                  </Drawer.Header>
+                  <Separator mx={2} />
+                  <Drawer.Body>
+                    <Stack gap={2}>
+                      {links.map((link) => {
+                        if (link.roles.length > 0 && session?.user.role && !link.roles.includes(session.user.role)) {
+                          return null;
+                        }
+
+                        return (
+                          <Link key={link.href} href={link.href} passHref>
+                            <Button size="sm" variant="ghost">
+                              <link.icon />
+                              {link.label}
+                            </Button>
+                          </Link>
+                        );
+                      })}
+                    </Stack>
+                  </Drawer.Body>
+                  <Drawer.CloseTrigger asChild>
+                    <CloseButton size="sm" />
+                  </Drawer.CloseTrigger>
+                </Drawer.Content>
+              </Drawer.Positioner>
+            </Portal>
+          </Drawer.Root>
+
         </HStack>
       </Flex>
     </Box>

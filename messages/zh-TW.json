@@ -110,6 +110,7 @@
   "AppNav": {
     "nav": {
       "logs": "紀錄",
+      "reports": "報告",
       "users": "使用者",
       "signIn": "登入",
       "signOut": "登出"

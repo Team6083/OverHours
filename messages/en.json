@@ -110,6 +110,7 @@
   "AppNav": {
     "nav": {
       "logs": "Logs",
+      "reports": "Reports",
       "users": "Users",
       "signIn": "Sign-In",
       "signOut": "Sign-Out"
