@@ -7,6 +7,36 @@
       "clockIn": "Clock-In",
       "clockOut": "Clock-Out"
     },
+    "userClockToggleButton": {
+      "errors": {
+        "alreadyClockedIn": {
+          "title": "Already Clocked-In",
+          "description": "You are already clocked-in."
+        },
+        "notClockedIn": {
+          "title": "Already Clocked-Out",
+          "description": "You are already clocked-out."
+        },
+        "timeLogTooShort": {
+          "title": "Time Log Too Short",
+          "description": "You must be clocked-in for at least {minDuration} before clocking out."
+        },
+        "genericError": {
+          "title": "Error",
+          "description": "An unexpected error occurred. Please try again."
+        }
+      },
+      "messages": {
+        "clockedIn": {
+          "title": "Clocked-In",
+          "description": "You have successfully clocked-in."
+        },
+        "clockedOut": {
+          "title": "Clocked-Out",
+          "description": "You have successfully clocked-out."
+        }
+      }
+    },
     "currentlyInTable": {
       "header": {
         "user": "User",

@@ -17,6 +17,7 @@ import { ColorModeButton } from "@/components/ui/color-mode";
 import { Provider } from "@/components/ui/provider"
 import AppVersionBadge from "@/components/AppVersionBadge";
 import DrawerNavLink from "./_components/DrawerNavLink";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,6 +62,7 @@ export default function RootLayout({
                   </Stack>
                 </Container>
               </footer>
+              <Toaster />
             </SessionProvider>
           </Provider>
         </NextIntlClientProvider>

@@ -7,6 +7,36 @@
       "clockIn": "簽到",
       "clockOut": "簽退"
     },
+    "userClockToggleButton": {
+      "errors": {
+      "alreadyClockedIn": {
+        "title": "無法簽到",
+        "description": "已經簽到，無法再次簽到。"
+      },
+      "notClockedIn": {
+        "title": "無法簽退",
+        "description": "已經簽退，無法再次簽退。"
+      },
+      "timeLogTooShort": {
+        "title": "操作無效",
+        "description": "簽到時長過短，紀錄已被刪除。至少需簽到 {minDuration} 後才能進行有效簽退。"
+      },
+      "genericError": {
+        "title": "發生錯誤",
+        "description": "執行操作時發生未知錯誤，請稍後再試。"
+      }
+      },
+      "messages": {
+      "clockedIn": {
+        "title": "簽到成功",
+        "description": "已成功簽到。"
+      },
+      "clockedOut": {
+        "title": "簽退成功",
+        "description": "已成功簽退。"
+      }
+      }
+    },
     "currentlyInTable": {
       "header": {
         "user": "使用者",

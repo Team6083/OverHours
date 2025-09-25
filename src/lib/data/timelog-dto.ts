@@ -220,10 +220,24 @@ export async function clockIn(userId: string): Promise<TimeLogDTO> {
   return prismaTimeLogToDTO(newTimeLog);
 }
 
+export async function getTimeLogMinDurationSec(): Promise<number> {
+  const envVar = process.env.OVERHOURS_TIMELOG_MIN_DURATION_SEC;
+  const minDurationSec = envVar ? parseInt(envVar, 10) : 0;
+
+  return isNaN(minDurationSec) ? 0 : minDurationSec;
+}
+
 export class NotClockedInError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "NotClockedInError";
+  }
+}
+
+export class TimeLogTooShortError extends Error {
+  constructor(message: string, public minDurationSec: number) {
+    super(message);
+    this.name = "TimeLogTooShortError";
   }
 }
 
@@ -245,11 +259,25 @@ export async function clockOut(userId: string, notes?: string): Promise<TimeLogD
     throw new NotClockedInError("No currently in time log found for user");
   }
 
+  const now = new Date();
+
+  const minDurationSec = await getTimeLogMinDurationSec();
+  if ((now.getTime() - existingTimeLog.inTime.getTime()) / 1000 < minDurationSec) {
+    await prisma.timeLog.delete({
+      where: { id: existingTimeLog.id },
+    });
+
+    throw new TimeLogTooShortError(
+      `Time log duration is less than the minimum of ${minDurationSec} seconds and has been deleted`,
+      minDurationSec
+    );
+  }
+
   const updatedTimeLog = await prisma.timeLog.update({
     where: { id: existingTimeLog.id },
     data: {
       status: "Done",
-      outTime: new Date(),
+      outTime: now,
       notes: notes || existingTimeLog.notes,
     },
   });
