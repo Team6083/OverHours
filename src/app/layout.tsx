@@ -15,9 +15,9 @@ import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers } fro
 import { auth, Role, signIn, signOut } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
 import { Provider } from "@/components/ui/provider"
+import { Toaster } from "@/components/ui/toaster";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import DrawerNavLink from "./_components/DrawerNavLink";
-import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -105,29 +105,29 @@ async function NavBar(props: {
           <Box as="span" fontSize="xs" fontWeight="normal" hideFrom="md">CMS Robotics</Box>
         </Stack>
 
-        <HStack>
+        <Suspense>
+          <HStack>
 
-          {/* Desktop Nav Links */}
-          <HStack hideBelow="sm">
-            {links.map((link) => {
-              if (link.roles.length > 0 && (!session?.user.role || !link.roles.includes(session.user.role))) {
-                return null;
-              }
+            {/* Desktop Nav Links */}
+            <HStack hideBelow="sm">
+              {links.map((link) => {
+                if (link.roles.length > 0 && (!session?.user.role || !link.roles.includes(session.user.role))) {
+                  return null;
+                }
 
-              return (
-                <Link key={link.href} href={link.href} passHref>
-                  <Button size="sm" variant="ghost">
-                    <link.icon />
-                    {link.label}
-                  </Button>
-                </Link>
-              );
-            })}
+                return (
+                  <Link key={link.href} href={link.href} passHref>
+                    <Button size="sm" variant="ghost">
+                      <link.icon />
+                      {link.label}
+                    </Button>
+                  </Link>
+                );
+              })}
 
-            <ColorModeButton />
-          </HStack>
+              <ColorModeButton />
+            </HStack>
 
-          <Suspense>
             {session?.user
               ? <Menu.Root onSelect={handleUserAvatarMenuSelect}>
                 <Menu.Trigger asChild>
@@ -197,9 +197,9 @@ async function NavBar(props: {
                 </Drawer.Positioner>
               </Portal>
             </Drawer.Root>
-          </Suspense>
 
-        </HStack>
+          </HStack>
+        </Suspense>
       </Flex>
     </Box>
   );
