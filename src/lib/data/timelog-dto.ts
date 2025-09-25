@@ -14,7 +14,7 @@ export type TimeLogDTO = {
 
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
 function prismaTimeLogToDTO(timeLog: TimeLog): TimeLogDTO {
   let status: TimeLogDTO["status"];
@@ -184,6 +184,13 @@ export async function getUserLastLogDTO(userId: string): Promise<TimeLogDTO | nu
   return prismaTimeLogToDTO(lastLog);
 }
 
+export class AlreadyClockedInError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AlreadyClockedInError";
+  }
+}
+
 export async function clockIn(userId: string): Promise<TimeLogDTO> {
   const session = await auth();
   if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
@@ -199,7 +206,7 @@ export async function clockIn(userId: string): Promise<TimeLogDTO> {
   });
 
   if (existingTimeLog) {
-    throw new Error("User already has a currently in time log");
+    throw new AlreadyClockedInError("User already has a currently in time log");
   }
 
   const newTimeLog = await prisma.timeLog.create({
@@ -211,6 +218,13 @@ export async function clockIn(userId: string): Promise<TimeLogDTO> {
   });
 
   return prismaTimeLogToDTO(newTimeLog);
+}
+
+export class NotClockedInError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NotClockedInError";
+  }
 }
 
 export async function clockOut(userId: string, notes?: string): Promise<TimeLogDTO> {
@@ -228,7 +242,7 @@ export async function clockOut(userId: string, notes?: string): Promise<TimeLogD
   });
 
   if (!existingTimeLog) {
-    throw new Error("No currently in time log found for user");
+    throw new NotClockedInError("No currently in time log found for user");
   }
 
   const updatedTimeLog = await prisma.timeLog.update({

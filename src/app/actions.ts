@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 
-import { clockIn, clockOut } from "@/lib/data/timelog-dto";
+import { AlreadyClockedInError, clockIn, clockOut, NotClockedInError } from "@/lib/data/timelog-dto";
 
 export async function handleAdminClockIn(userId: string) {
   await clockIn(userId);
@@ -13,10 +13,24 @@ export async function updatePage() {
 }
 
 export async function handleUserClockToggleClick(userId: string, isClockedIn: boolean) {
-  if (isClockedIn) {
-    await clockOut(userId);
-  } else {
-    await clockIn(userId);
+  try {
+    if (isClockedIn) {
+      await clockOut(userId);
+    } else {
+      await clockIn(userId);
+    }
+  } catch (error) {
+    if (error instanceof AlreadyClockedInError || error instanceof NotClockedInError) {
+      return {
+        error: {
+          code: error.name,
+          message: error.message
+        }
+      };
+    } else {
+      throw error; // Re-throw unexpected errors
+    }
+  } finally {
+    revalidatePath("/");
   }
-  revalidatePath("/");
 }
