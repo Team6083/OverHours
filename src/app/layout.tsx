@@ -1,12 +1,21 @@
+import { ComponentProps, Suspense } from "react";
+
 import type { Metadata } from "next";
-import { NextIntlClientProvider } from "next-intl";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { NextIntlClientProvider } from "next-intl";
+import { getTranslations } from "next-intl/server";
+
 import { SessionProvider } from "next-auth/react";
 
-import { Badge, Box, ClientOnly, Container, Link, Stack, Text } from "@chakra-ui/react";
+import { Avatar, Box, Button, CloseButton, Container, Drawer, Flex, Heading, HStack, Icon, IconButton, Menu, MenuSelectionDetails, Portal, Separator, Stack, Text } from "@chakra-ui/react";
+import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers } from "react-icons/lu";
 
+import { auth, Role, signIn, signOut } from "@/auth";
+import { ColorModeButton } from "@/components/ui/color-mode";
 import { Provider } from "@/components/ui/provider"
-import AppNav from "./AppNav";
+import AppVersionBadge from "@/components/AppVersionBadge";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,27 +44,19 @@ export default function RootLayout({
           <Provider> {/* Chakra-UI provider */}
             <SessionProvider> {/* Auth.js provider, for useSession() hook */}
               <Container maxWidth="5xl" fluid p={4} my={2}>
-                <Box mb={4}>
-                  <AppNav />
-                </Box>
+                <NavBar mb={4} />
                 {children}
               </Container>
               <footer>
-                <Container maxWidth="5xl" fluid mb={8} textAlign={{ base: "center", md: undefined }}>
-                  <Stack flexDir={{ base: "column", md: "row" }} justifyContent="space-between">
-                    <Text as="span" fontSize="xs" color="fg.muted" textAlign={{ base: undefined, md: "left" }}>
+                <Container maxWidth="5xl" fluid mb={8} textAlign={{ smDown: "center" }}>
+                  <Stack flexDir={{ base: "column", sm: "row" }} justifyContent="space-between">
+                    <Text as="span" fontSize="xs" color="fg.muted" textAlign={{ sm: "left" }}>
                       © 2025 CMS Robotics 協同機器人團隊
                       <br />
                       Made with ❤️ and way too many commits{" "}
                       <Text as="span" whiteSpace="nowrap">(fueled by ☕️)</Text>
                     </Text>
-                    <Text as="span" fontSize="xs" color="fg.muted" textAlign={{ base: undefined, md: "right" }}>
-                      <VersionInfo />
-                      <br />
-                      Powered by <Link href="https://nextjs.org/">Next.js</Link>
-                      {" and "}
-                      <Link href="https://chakra-ui.com/">Chakra UI</Link>
-                    </Text>
+                    <FooterTechInfo hideBelow="sm" textAlign={{sm: "right" }} />
                   </Stack>
                 </Container>
               </footer>
@@ -67,19 +68,150 @@ export default function RootLayout({
   );
 }
 
-function VersionInfo() {
-  if (process.env.NEXT_PUBLIC_VERSION) {
-    return <Badge size="xs" colorPalette="green">{process.env.NEXT_PUBLIC_VERSION}</Badge>;
+async function NavBar(props: {
+
+} & Omit<ComponentProps<typeof Box>, "children">) {
+  const { ...boxProps } = props;
+  const t = await getTranslations("AppNav");
+
+  const session = await auth();
+
+  const handleUserAvatarMenuSelect = async ({ value }: MenuSelectionDetails) => {
+    "use server";
+    if (value === "signout") {
+      await signOut();
+    }
   }
 
-  if (process.env.NEXT_PUBLIC_COMMIT_SHA) {
-    const buildDate = process.env.NEXT_PUBLIC_BUILD_DATE ? new Date(process.env.NEXT_PUBLIC_BUILD_DATE) : null;
+  const links = [
+    { href: "/logs", label: t("nav.logs"), icon: LuLogs, roles: [Role.USER, Role.ADMIN] },
+    { href: "/report", label: t("nav.reports"), icon: LuChartNoAxesCombined, roles: [Role.ADMIN] },
+    { href: "/admin/users", label: t("nav.users"), icon: LuUsers, roles: [Role.ADMIN] },
+  ];
 
-    return <Badge size="xs" colorPalette="orange">
-      Commit: {process.env.NEXT_PUBLIC_COMMIT_SHA.substring(0, 7)}
-      {buildDate ? <Text as="span">{" "}(Build at <ClientOnly>{buildDate.toLocaleString()}</ClientOnly>)</Text> : null}
-    </Badge>;
-  }
+  return (
+    <Box as="nav" {...boxProps}>
+      {/* Main Navigation */}
+      <Flex align="center" justify="space-between">
+        {/* Logo and Brand */}
+        <Stack gap={0}>
+          <Heading as="h1" size="xl" display="flex" alignItems="center">
+            <Link href="/">OverHours</Link>
+            <Box as="span" fontSize="md" ml={2} fontWeight="normal" hideBelow="md">CMS Robotics</Box>
+          </Heading>
+          <Box as="span" fontSize="xs" fontWeight="normal" hideFrom="md">CMS Robotics</Box>
+        </Stack>
 
-  return <Badge size="xs" colorPalette="red">Development Build</Badge>;
+        <HStack>
+
+          {/* Desktop Nav Links */}
+          <HStack hideBelow="sm">
+            {links.map((link) => {
+              if (link.roles.length > 0 && session?.user.role && !link.roles.includes(session.user.role)) {
+                return null;
+              }
+
+              return (
+                <Link key={link.href} href={link.href} passHref>
+                  <Button size="sm" variant="ghost">
+                    <link.icon />
+                    {link.label}
+                  </Button>
+                </Link>
+              );
+            })}
+
+            <ColorModeButton />
+          </HStack>
+
+          <Suspense fallback={<Button size="sm" loading />}>
+            {session?.user
+              ? <Menu.Root onSelect={handleUserAvatarMenuSelect}>
+                <Menu.Trigger asChild>
+                  <Box cursor="pointer" mx={2}>
+                    <Avatar.Root size="sm" cursor="pointer">
+                      <Avatar.Fallback name={session.user.name || undefined} />
+                      <Avatar.Image src={session.user.image || undefined} />
+                    </Avatar.Root>
+                  </Box>
+                </Menu.Trigger>
+                <Portal>
+                  <Menu.Positioner>
+                    <Menu.Content>
+                      <Menu.Item value="signout">
+                        <LuLogOut />
+                        {t("nav.signOut")}
+                      </Menu.Item>
+                    </Menu.Content>
+                  </Menu.Positioner>
+                </Portal>
+              </Menu.Root>
+              : <Button size="sm" onClick={async () => {
+                "use server";
+                await signIn("keycloak");
+              }}>
+                {t("nav.signIn")}
+                <Icon><LuLogIn /></Icon>
+              </Button>
+            }
+          </Suspense>
+
+          {/* Mobile Nav Drawer */}
+          <Drawer.Root size="xs" placement="start">
+            <Drawer.Trigger asChild>
+              <IconButton hideFrom="sm" size="sm" variant="outline"><LuMenu /></IconButton>
+            </Drawer.Trigger>
+            <Portal>
+              <Drawer.Backdrop />
+              <Drawer.Positioner>
+                <Drawer.Content maxW="3xs">
+                  <Drawer.Header>
+                    <Drawer.Title>{t("menu")}</Drawer.Title>
+                  </Drawer.Header>
+                  <Drawer.Body>
+                    <Separator mb={4} />
+                    <Stack gap={2}>
+                      {links.map((link) => {
+                        if (link.roles.length > 0 && session?.user.role && !link.roles.includes(session.user.role)) {
+                          return null;
+                        }
+
+                        return (
+                          <Link key={link.href} href={link.href} passHref>
+                            <Button size="sm" variant="ghost">
+                              <link.icon />
+                              {link.label}
+                            </Button>
+                          </Link>
+                        );
+                      })}
+                    </Stack>
+                  </Drawer.Body>
+                  <Drawer.Footer>
+                    <FooterTechInfo />
+                  </Drawer.Footer>
+                  <Drawer.CloseTrigger asChild>
+                    <CloseButton size="sm" />
+                  </Drawer.CloseTrigger>
+                </Drawer.Content>
+              </Drawer.Positioner>
+            </Portal>
+          </Drawer.Root>
+
+        </HStack>
+      </Flex>
+    </Box>
+  );
+}
+
+function FooterTechInfo(props: ComponentProps<typeof Text>) {
+  return (
+    <Text as="span" fontSize="xs" color="fg.muted" {...props}>
+      <AppVersionBadge />
+      <br />
+      Powered by <Link href="https://nextjs.org/">Next.js</Link>
+      {" and "}
+      <Link href="https://chakra-ui.com/">Chakra UI</Link>
+    </Text>
+  );
 }

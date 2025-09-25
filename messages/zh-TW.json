@@ -17,6 +17,7 @@
       "header": {
         "user": "使用者",
         "inTime": "簽到時間",
+        "duration": "時長",
         "actions": "操作"
       },
       "actions": {
@@ -31,7 +32,8 @@
       "status": {
         "noLogsYet": "尚無紀錄",
         "lastIn": "已於 {time} 簽到",
-        "lastOut": "已簽退，上次簽退於 {time}"
+        "lastOut": "已於 {time} 簽退",
+        "lastLock": "已於 {time} 簽退（紀錄被鎖定）"
       }
     },
     "leaderboardCard": {
@@ -117,7 +119,8 @@
       "users": "使用者",
       "signIn": "登入",
       "signOut": "登出"
-    }
+    },
+    "menu": "主選單"
   },
   "LeaderboardTable": {
     "columns": {

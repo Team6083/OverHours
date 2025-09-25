@@ -1,31 +1,39 @@
-import { ComponentProps } from "react";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { Badge, Button, Card, CloseButton, Dialog, EmptyState, GridItem, Heading, HStack, Icon, Portal, Separator, SimpleGrid, Tabs, Text, VStack } from "@chakra-ui/react";
-import { LuBuilding, LuChevronsRight, LuHouse, LuTrophy } from "react-icons/lu";
+
+import { Button, Card, Center, CloseButton, Dialog, GridItem, Heading, HStack, Icon, Portal, Separator, SimpleGrid, Tabs, Text, VStack } from "@chakra-ui/react";
+import { LuChevronsRight, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import { getTeamsForUser } from "@/lib/data/team-dto";
-import {
-  clockIn, clockOut,
-  adminClockOut, adminLockLog, deleteTimeLog,
-  getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO,
-} from "@/lib/data/timelog-dto";
+import { adminClockOut, adminLockLog, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO } from "@/lib/data/timelog-dto";
 import { getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
-import CurrentlyInTable from "./CurrentlyInTable";
-import UserClockInOutButton from "./ClockInOutButton";
-import ClockUserInPopover from "./ClockUserInPopover";
-import PageUpdateButton from "./PageUpdateButton";
-import UserCard, { UserCardStat, UserCardStatus, UserCardUserName } from "./UserCard";
+import ClockUserInPopover from "./_components/ClockUserInPopover";
+import PageUpdateButton from "./_components/PageUpdateButton";
+import UserStatus from "./_components/UserStatus";
+import UserDisplay from "./_components/UserDisplay";
+import UserStat from "./_components/UserStat";
+import UserClockToggleButton from "./_components/UserClockToggleButton";
+import { CurrentlyClockedInCountBadge, CurrentlyClockedInPaginationControls, CurrentlyClockedInProvider, CurrentlyClockedInSearchInput, CurrentlyClockedInTable } from "./_components/CurrentlyClockedIn";
+
+type UserInfo = {
+  id: string;
+  name: string;
+  image?: string;
+  teams: { id: string; name: string }[];
+
+  lastLog?: TimeLogDTO;
+  totalTimeSec: number;
+  ranking?: number;
+}
 
 export default async function Home() {
   const t = await getTranslations("HomePage");
 
   const session = await auth();
   const isAdmin = session?.user.role === Role.ADMIN;
-  const userId = session?.user.id;
 
   // Get All User Names
   const allUserNames = await getAllUserNames();
@@ -38,18 +46,29 @@ export default async function Home() {
     .map(([id, duration]) => ({ id, name: userNameMap[id], duration }));
 
   // Get Current User Info
-  const userDTO = session?.user && session.user.id ? await getUserDTO(session.user.id) : undefined;
-  const userTeams = userId ? await getTeamsForUser(userId) : undefined;
-  const user = userDTO ? {
-    id: userDTO.id,
-    name: userDTO.name,
-    image: session?.user.image || undefined,
-    teams: userTeams ? userTeams.map(team => ({ id: team.id, name: team.name })) : [],
-    // teams: [{ id: "1", name: "Example Team" }, {id: "2", name: "FRC - 6083"}], // --- IGNORE ---
-  } : undefined;
+  let userInfo: UserInfo | undefined = undefined;
+  if (session?.user.id) {
+    const userId = session.user.id;
+    const user = await getUserDTO(userId);
 
-  const userLastLog = userId && await getUserLastLogDTO(userId);
-  const userRank = rankings.findIndex(r => r.id === userId) + 1;
+    if (user) {
+      const userTeams = await getTeamsForUser(userId);
+      const userLastLog = await getUserLastLogDTO(userId);
+      const rankingIndex = rankings.findIndex(r => r.id === userId);
+
+      userInfo = {
+        id: user.id,
+        name: user.name,
+        image: user.image || undefined,
+        teams: userTeams ? userTeams.map(team => ({ id: team.id, name: team.name })) : [],
+        // teams: [{ id: "1", name: "Example Team" }, {id: "2", name: "FRC - 6083"}], // --- IGNORE ---
+
+        lastLog: userLastLog || undefined,
+        totalTimeSec: allUsersTotalTimeSec[user.id] || 0,
+        ranking: rankingIndex >= 0 ? rankingIndex + 1 : undefined,
+      }
+    }
+  }
 
   // Get Currently In Logs
   const currentlyInLogs = (await getAllCurrentlyInTimelogDTOs()).map(log => ({
@@ -62,195 +81,185 @@ export default async function Home() {
   const allUsers = isAdmin ? await getAllUserDTOs() : undefined;
   const canClockInUsers = allUsers ? allUsers.filter(user => !currentlyInLogs.find(log => log.user === (user.name || user.id))) : [];
 
-  const isClockedin = userLastLog ? userLastLog.status === "CURRENTLY_IN" : undefined;
-
   return (<>
-    <SimpleGrid columns={{ base: 1, md: 5 }} gapX={8} gapY={4} hideBelow="sm">
-      {/* Left column */}
-      <GridItem colSpan={{ base: 1, md: 2 }}>
-        <VStack gap={4}>
-          {/* User card */}
-          {user && (
-            <UserCard
-              user={user}
-              lastLog={userLastLog || undefined}
-              totalTimeSec={allUsersTotalTimeSec[user.id] || 0}
-              ranking={userRank}
-            />
-          )}
+    <CurrentlyClockedInProvider
+      logs={currentlyInLogs}
+      handleClockout={async (id: string) => {
+        "use server";
+        await adminClockOut(id);
+        revalidatePath("/");
+      }}
+      handleLock={async (id: string) => {
+        "use server";
+        await adminLockLog(id);
+        revalidatePath("/");
+      }}
+      handleRemove={async (id: string) => {
+        "use server";
+        await deleteTimeLog(id);
+        revalidatePath("/");
+      }}
+    >
 
-          {/* Stats card */}
-          <LeaderboardCard rankings={rankings} w="full" size="sm" />
-        </VStack>
-      </GridItem>
+      {/* For large screens */}
+      <SimpleGrid columns={{ base: 1, md: 5 }} gapX={8} gapY={4} hideBelow="md">
 
-      {/* Right column */}
-      <GridItem colSpan={{ base: 1, md: 3 }}>
-        <CurrentlyInPane currentlyInLogs={currentlyInLogs} canClockInUsers={canClockInUsers} isAdmin={isAdmin} />
-      </GridItem>
-    </SimpleGrid>
+        {/* Left column */}
+        <GridItem colSpan={{ base: 1, md: 2 }}>
+          <VStack gap={4}>
 
-    {/* For mobile devices */}
-    <Tabs.Root defaultValue="main" hideFrom="sm">
-      <Tabs.List>
-        <Tabs.Trigger value="main">
-          <LuHouse />
-          {t("tabs.home")}
-        </Tabs.Trigger>
-        <Tabs.Trigger value="leaderboard">
-          <LuTrophy />
-          {t("tabs.leaderboard")}
-        </Tabs.Trigger>
-      </Tabs.List>
-      <Tabs.Content value="main">
-        {user && (<>
-          <VStack align="flex-start" gap={4} mb={4}>
-            <HStack justifyContent="space-between" w="full" gapX={4}>
-              <UserCardUserName user={user} />
-              <UserCardStatus lastLog={userLastLog || undefined} />
-            </HStack>
+            {/* User Info Card */}
+            {userInfo && (
+              <Card.Root w="full" size="sm">
+                <Card.Body>
 
-            <UserCardStat
-              totalTimeSec={allUsersTotalTimeSec[user.id] || 0}
-              ranking={userRank}
-              flexDir="row"
-              justifyContent="space-around"
-              w="full"
-            />
+                  <HStack w="full" justify="flex-end" mb={2}>
+                    <UserStatus lastLog={userInfo.lastLog} />
+                  </HStack>
 
-            <UserClockInOutButton
-              handleClick={async () => {
-                "use server";
-                if (isClockedin) {
-                  await clockOut(user.id);
-                } else {
-                  await clockIn(user.id);
-                }
+                  <VStack textAlign="center" gap={4}>
+                    <UserDisplay user={userInfo} />
 
-                revalidatePath("/");
-              }}
-              isClockedin={isClockedin}
-            />
+                    <UserStat
+                      totalTimeSec={userInfo.totalTimeSec}
+                      ranking={userInfo.ranking}
+                      orientation="horizontal"
+                      gap={2}
+                    />
+                  </VStack>
+
+                </Card.Body>
+                <Card.Footer>
+                  <UserClockToggleButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
+                </Card.Footer>
+              </Card.Root>
+            )}
+
+            {/* Leaderboard Card */}
+            <Dialog.Root>
+              <Card.Root w="full" size="sm">
+                <Card.Header>
+                  <Card.Title>{t("leaderboardCard.title")}</Card.Title>
+                </Card.Header>
+                <Card.Body>
+                  <LeaderboardTable rankings={rankings} limits={5} />
+                </Card.Body>
+                <Card.Footer>
+                  <Text fontSize="sm" color="gray.500">{t("leaderboardCard.footerText")}</Text>
+                  <Dialog.Trigger asChild>
+                    <Button size="xs" mt={2}>
+                      {t("leaderboardCard.viewMore")}
+                      <Icon><LuChevronsRight /></Icon>
+                    </Button>
+                  </Dialog.Trigger>
+                </Card.Footer>
+              </Card.Root>
+
+              <Portal>
+                <Dialog.Backdrop />
+                <Dialog.Positioner>
+                  <Dialog.Content>
+                    <Dialog.Header>
+                      <Dialog.Title>{t("leaderboardCard.viewMoreDialog.title")}</Dialog.Title>
+                    </Dialog.Header>
+                    <Dialog.Body>
+                      <LeaderboardTable rankings={rankings} />
+                    </Dialog.Body>
+                    <Dialog.CloseTrigger asChild>
+                      <CloseButton size="sm" />
+                    </Dialog.CloseTrigger>
+                  </Dialog.Content>
+                </Dialog.Positioner>
+              </Portal>
+            </Dialog.Root>
+
           </VStack>
-          <Separator mb={4} />
-        </>)}
+        </GridItem>
 
-        <CurrentlyInPane
-          currentlyInLogs={currentlyInLogs}
-          canClockInUsers={canClockInUsers}
-          isAdmin={isAdmin}
-        />
-      </Tabs.Content>
-      <Tabs.Content value="leaderboard">
-        <LeaderboardTable rankings={rankings} />
-      </Tabs.Content>
-    </Tabs.Root>
+        {/* Right column */}
+        <GridItem colSpan={{ base: 1, md: 3 }}>
+          {/* Currently Clocked In Users */}
+          <CurrentlyClockedIn isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
+        </GridItem>
+      </SimpleGrid>
+
+      {/* For small screens */}
+      <Tabs.Root defaultValue="main" hideFrom="md">
+
+        <Tabs.List>
+          <Tabs.Trigger value="main">
+            <LuHouse />
+            {t("tabs.home")}
+          </Tabs.Trigger>
+          <Tabs.Trigger value="leaderboard">
+            <LuTrophy />
+            {t("tabs.leaderboard")}
+          </Tabs.Trigger>
+        </Tabs.List>
+
+        <Tabs.Content value="main">
+          {userInfo && (<>
+            <VStack align="flex-start" gap={4} mb={4}>
+              <HStack justifyContent="space-between" w="full" gapX={4}>
+                <UserDisplay user={userInfo} />
+                <UserStatus lastLog={userInfo.lastLog || undefined} />
+              </HStack>
+
+              <UserStat
+                totalTimeSec={userInfo.totalTimeSec}
+                ranking={userInfo.ranking}
+                flexDir="row"
+                justifyContent="space-around"
+                w="full"
+              />
+
+              <UserClockToggleButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
+            </VStack>
+            <Separator mb={4} />
+          </>)}
+
+          <CurrentlyClockedIn isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
+        </Tabs.Content>
+
+        <Tabs.Content value="leaderboard">
+          <LeaderboardTable rankings={rankings} />
+        </Tabs.Content>
+
+      </Tabs.Root>
+
+    </CurrentlyClockedInProvider>
   </>);
 }
 
-async function CurrentlyInPane(props: {
-  currentlyInLogs: { id: string, user: string, inTime: Date }[];
-  canClockInUsers: UserDTO[];
+async function CurrentlyClockedIn(props: {
   isAdmin?: boolean;
+  canClockInUsers?: UserDTO[];
 }) {
-  const { currentlyInLogs, canClockInUsers, isAdmin } = props;
-  const t = await getTranslations('HomePage');
+  const { isAdmin, canClockInUsers } = props;
+  const t = await getTranslations("HomePage");
 
   return (<>
     <HStack mb={4} justify="space-between">
       <HStack>
         <Heading as="h2" size="xl">{t("headings.currentlyIn")}</Heading>
-        <Badge colorPalette="blue" size="md">{currentlyInLogs.length}</Badge>
+        <CurrentlyClockedInCountBadge />
         <PageUpdateButton />
       </HStack>
-      {isAdmin && canClockInUsers && <ClockUserInPopover buttonProps={{ size: "xs", variant: "ghost" }} users={canClockInUsers} />}
+
+      {isAdmin && canClockInUsers && <ClockUserInPopover
+        buttonProps={{ size: "xs", variant: "ghost" }}
+        users={canClockInUsers}
+      />}
     </HStack>
 
-    <LastUpdatedText date={(() => new Date())()} />
+    <HStack mb={2} w="full" justifyContent="end">
+      <LastUpdatedText fontSize="xs" color="fg.muted" date={(() => new Date())()} />
+    </HStack>
 
-    {
-      currentlyInLogs.length > 0
-        ? <CurrentlyInTable
-          items={currentlyInLogs}
-          handleClockout={async (id: string) => {
-            "use server";
-            await adminClockOut(id);
-            revalidatePath("/");
-          }}
-          handleLock={async (id: string) => {
-            "use server";
-            await adminLockLog(id);
-            revalidatePath("/");
-          }}
-          handleRemove={async (id: string) => {
-            "use server";
-            await deleteTimeLog(id);
-            revalidatePath("/");
-          }}
-          showAdminActions={isAdmin}
-        />
-        : <>
-          <EmptyState.Root>
-            <EmptyState.Content>
-              <EmptyState.Indicator>
-                <LuBuilding />
-              </EmptyState.Indicator>
-              <VStack textAlign="center">
-                <EmptyState.Title>{t("emptyStates.noCurrentlyInUsers.title")}</EmptyState.Title>
-                <EmptyState.Description>
-                  {t("emptyStates.noCurrentlyInUsers.description")}
-                </EmptyState.Description>
-              </VStack>
-            </EmptyState.Content>
-          </EmptyState.Root>
-        </>
-    }
+    <CurrentlyClockedInSearchInput mb={2} placeholder={"Search..."} />
+    <CurrentlyClockedInTable showAdminActions={isAdmin} />
+    <Center mt={4}>
+      <CurrentlyClockedInPaginationControls />
+    </Center>
   </>);
-}
-
-
-async function LeaderboardCard(props: {
-  rankings: { id: string, name: string, duration: number }[]
-} & ComponentProps<typeof Card.Root>) {
-  const { rankings, ...cardRootProps } = props;
-  const t = await getTranslations("HomePage.leaderboardCard");
-
-  return (
-    <Dialog.Root>
-      <Card.Root {...cardRootProps}>
-        <Card.Header>
-          <Card.Title>{t("title")}</Card.Title>
-        </Card.Header>
-        <Card.Body>
-          <LeaderboardTable rankings={rankings} limits={5} />
-        </Card.Body>
-        <Card.Footer>
-          <Text fontSize="sm" color="gray.500">{t("footerText")}</Text>
-          <Dialog.Trigger asChild>
-            <Button size="xs" mt={2}>
-              {t("viewMore")}
-              <Icon><LuChevronsRight /></Icon>
-            </Button>
-          </Dialog.Trigger>
-        </Card.Footer>
-      </Card.Root>
-
-      <Portal>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content>
-            <Dialog.Header>
-              <Dialog.Title>{t("viewMoreDialog.title")}</Dialog.Title>
-            </Dialog.Header>
-            <Dialog.Body>
-              <LeaderboardTable rankings={rankings} />
-            </Dialog.Body>
-            <Dialog.CloseTrigger asChild>
-              <CloseButton size="sm" />
-            </Dialog.CloseTrigger>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Portal>
-    </Dialog.Root>
-  );
 }

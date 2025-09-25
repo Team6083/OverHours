@@ -32,7 +32,7 @@ export default function ReportMenu() {
       value={[pathname.split("/")[2] || ""]}
       onSelect={(value) => router.push(`/report/${value.value}`)}
     >
-      <Listbox.Content border="none" p={0}>
+      <Listbox.Content bg="transparent" border="none" p={0}>
         <Listbox.Item item={collection.at(0)}>
           <Listbox.ItemText>Overview</Listbox.ItemText>
         </Listbox.Item>

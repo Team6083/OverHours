@@ -1,3 +1,4 @@
+import { ComponentProps, JSX, JSXElementConstructor } from "react";
 
 export function formatDuration(durationSec: number): string {
   const days = Math.floor(durationSec / 86400);
@@ -27,3 +28,7 @@ export function maskName(name: string): string {
     return name[0] + "*".repeat(length - 2) + name[length - 1];
   }
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ComponentPropsWithoutChildren<T extends keyof JSX.IntrinsicElements | JSXElementConstructor<any>>
+  = Omit<ComponentProps<T>, 'children'>;

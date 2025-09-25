@@ -7,7 +7,7 @@ import { LuArrowDown01, LuArrowUp10, LuLock, LuTimer, LuPen, LuTrash2, LuArrowDo
 
 import { Tooltip } from "@/components/ui/tooltip";
 import GenericTable, { Column } from "@/components/GenericTable";
-import GenericClipboard from "@/components/ObjIdClipboard";
+import GenericClipboard from "@/components/Clipboard";
 import TimeLogStatusBadge from "@/components/TimeLogStatusBadge";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { handleDeleteLogs } from "./actions";

@@ -17,6 +17,7 @@
       "header": {
         "user": "User",
         "inTime": "Clocked-in Time",
+        "duration": "Duration",
         "actions": "Actions"
       },
       "actions": {
@@ -31,7 +32,8 @@
       "status": {
         "noLogsYet": "No Logs Yet",
         "lastIn": "Clocked-in since {time}",
-        "lastOut": "Last clocked-out at {time}"
+        "lastOut": "Last clocked-out at {time}",
+        "lastLock": "Last clocked-out at {time} (Log locked)"
       }
     },
     "leaderboardCard": {
@@ -117,7 +119,8 @@
       "users": "Users",
       "signIn": "Sign-In",
       "signOut": "Sign-Out"
-    }
+    },
+    "menu": "Menu"
   },
   "LeaderboardTable": {
     "columns": {

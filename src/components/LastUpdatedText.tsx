@@ -1,11 +1,15 @@
 "use client";
-import { useNow } from "next-intl";
-import { useFormatter, useTranslations } from "use-intl";
+import { useFormatter, useNow, useTranslations } from "use-intl";
 import { ClientOnly, Text } from "@chakra-ui/react";
 
-import { Tooltip } from "./ui/tooltip";
+import { Tooltip } from "@/components/ui/tooltip";
+import { ComponentPropsWithoutChildren } from "@/lib/util";
 
-export default function LastUpdatedText({ date }: { date: Date }) {
+export default function LastUpdatedText(props: {
+  date: Date
+} & ComponentPropsWithoutChildren<typeof Text>) {
+  const { date, ...textProps } = props;
+
   const nextIntlNow = useNow({ updateInterval: 10000 });
   const now = date > nextIntlNow ? date : nextIntlNow; // Because useNow might be slightly behind
 
@@ -15,7 +19,7 @@ export default function LastUpdatedText({ date }: { date: Date }) {
   return (
     <ClientOnly>
       <Tooltip content={date.toLocaleString()}>
-        <Text mb={2} textAlign="right" fontSize="xs" color="fg.muted">
+        <Text {...textProps}>
           {t("lastUpdated", { timeString: formatter.relativeTime(date, now) })}
         </Text>
       </Tooltip>

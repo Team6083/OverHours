@@ -1,7 +1,7 @@
 import { Heading, DataList, HStack, ButtonGroup, Button, Icon, Text, Badge } from "@chakra-ui/react";
 import { LuTrash2 } from "react-icons/lu";
 
-import GenericClipboard from "@/components/ObjIdClipboard";
+import GenericClipboard from "@/components/Clipboard";
 import TimeLogStatusBadge from "@/components/TimeLogStatusBadge";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { formatDuration } from "@/lib/util";

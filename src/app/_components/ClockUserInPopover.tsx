@@ -1,11 +1,11 @@
 "use client";
-import { ComponentProps, useMemo, useState } from "react";
+import { ComponentProps, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Group, Combobox, Button, useFilter, useListCollection, usePopoverContext, Icon, IconButton, Popover, Portal, useBreakpointValue, Text } from "@chakra-ui/react";
+import { Group, Combobox, Button, useFilter, useListCollection, usePopoverContext, Icon, IconButton, Popover, Portal, Text, Box } from "@chakra-ui/react";
+import { LuUserPlus } from "react-icons/lu";
 
 import { UserDTO } from "@/lib/data/user-dto";
-import { handleAdminClockIn } from "./actions";
-import { LuUserPlus } from "react-icons/lu";
+import { handleAdminClockIn } from "../actions";
 
 export default function ClockUserInPopover(props: {
   users: UserDTO[],
@@ -14,17 +14,15 @@ export default function ClockUserInPopover(props: {
   const { users, buttonProps, ...popoverRootProps } = props;
   const t = useTranslations("HomePage");
 
-  const isMobile = useBreakpointValue({ base: true, sm: false });
-
   return (
     <Popover.Root {...popoverRootProps}>
       <Popover.Trigger asChild>
-        {isMobile
-          ? <IconButton {...buttonProps}><LuUserPlus /></IconButton>
-          : <Button {...buttonProps}>
+        <Box>
+          <IconButton {...buttonProps} hideFrom="sm"><LuUserPlus /></IconButton>
+          <Button {...buttonProps} hideBelow="sm">
             <Icon><LuUserPlus /></Icon> {t("clockUserInPopover.clockUserIn")}
           </Button>
-        }
+        </Box>
       </Popover.Trigger>
       <Portal>
         <Popover.Positioner>
@@ -52,10 +50,14 @@ function ClockUserInCombobox(props: {
 
   const { contains, startsWith } = useFilter({ sensitivity: "base" });
 
-  const initialItems = useMemo(() => users.map((user) => ({ label: user.name || user.id, value: user.id, user })), [users]);
+  const selectItems = useMemo(() => users.map((user) => ({
+    label: user.name || user.id,
+    value: user.id,
+    user
+  })), [users]);
 
-  const { collection, filter } = useListCollection({
-    initialItems,
+  const { collection, filter, set } = useListCollection({
+    initialItems: selectItems,
     filter: (itemText, filterText, item) => {
       if (contains(itemText, filterText)) return true;
       if (contains(item.user.name, filterText)) return true;
@@ -63,6 +65,10 @@ function ClockUserInCombobox(props: {
       return false;
     },
   });
+
+  useEffect(() => {
+    set(selectItems);
+  }, [set, selectItems]);
 
   const [value, setValue] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
