@@ -3,12 +3,6 @@
     "headings": {
       "currentlyIn": "Currently Clocked-in Users"
     },
-    "emptyStates": {
-      "noCurrentlyInUsers": {
-        "title": "No Users Right Now 🤪",
-        "description": "There are currently no users clocked-in. You can clock-in yourself by clicking the \"Clock-in\" button on the left."
-      }
-    },
     "buttons": {
       "clockIn": "Clock-In",
       "clockOut": "Clock-Out"
@@ -24,6 +18,16 @@
         "forceClockOut": "Force Clock-Out",
         "lockUser": "Lock Log",
         "removeLog": "Remove Log"
+      },
+      "emptyStates": {
+        "noCurrentlyInUsers": {
+          "title": "No Users Right Now 🤪",
+          "description": "There are currently no users clocked-in. You can clock-in yourself by clicking the \"Clock-in\" button on the left."
+        },
+        "noSearchResults": {
+          "title": "No Users Found",
+          "description": "We couldn't find any users matching your search. Try adjusting your search criteria."
+        }
       }
     },
     "userCard": {

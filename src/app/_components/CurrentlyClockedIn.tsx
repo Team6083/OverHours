@@ -1,16 +1,18 @@
 "use client";
-import { createContext, useContext, useRef, useState } from "react";
-import { useNow, useTranslations } from "next-intl";
+import React, { createContext, useContext, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
-  Badge, ButtonGroup, ClientOnly, CloseButton, EmptyState, Icon, IconButton, Input, InputGroup, Pagination, Table,
-  useFilter,
-  VStack
+  Badge, ButtonGroup, CloseButton, EmptyState, Icon, IconButton, Input, InputGroup,
+  Menu, Pagination, Portal, Spinner, Stack, Table, useFilter, usePaginationContext, VStack
 } from "@chakra-ui/react";
-import { LuArrowUp10, LuBuilding, LuChevronLeft, LuChevronRight, LuDoorOpen, LuLock, LuTrash2 } from "react-icons/lu";
+import {
+  LuArrowUp10, LuBuilding, LuChevronLeft, LuChevronRight, LuDoorOpen,
+  LuEllipsisVertical, LuLock, LuSearchSlash, LuTrash2,
+} from "react-icons/lu";
 
-import { ComponentPropsWithoutChildren, formatDuration } from "@/lib/util";
 import { Tooltip } from "@/components/ui/tooltip";
+import { ComponentPropsWithoutChildren } from "@/lib/util";
 
 type CurrentlyClockedInTimeLog = {
   id: string;
@@ -25,7 +27,7 @@ export interface CurrentlyClockedInContext {
   searchText: string;
   setSearchText: (text: string) => void;
 
-  handleAction: (action: "clockout" | "lock" | "remove", id: string) => Promise<void>;
+  handleAction: (action: "clockOut" | "lock" | "remove", id: string) => Promise<void>;
 }
 
 const currentlyClockedInContext = createContext<CurrentlyClockedInContext | undefined>(undefined);
@@ -44,9 +46,9 @@ export function CurrentlyClockedInProvider(props: {
   const [searchText, setSearchText] = useState("");
   const filteredLogs = logs.filter(log => filter.contains(log.user, searchText));
 
-  const handleAction = async (action: "clockout" | "lock" | "remove", id: string) => {
+  const handleAction = async (action: "clockOut" | "lock" | "remove", id: string) => {
     let f: ((userId: string) => Promise<void>) | undefined;
-    if (action === "clockout") f = handleClockout;
+    if (action === "clockOut") f = handleClockout;
     else if (action === "lock") f = handleLock;
     else if (action === "remove") f = handleRemove;
 
@@ -124,21 +126,38 @@ export function CurrentlyClockedInTable(props: {
   const { showAdminActions, ...tableRootProps } = props;
   const t = useTranslations("HomePage.currentlyInTable");
 
-  const intlNow = useNow({ updateInterval: 10000 });
-  const now = Math.max(intlNow.getTime(), Date.now());
-
   const { filteredLogs, handleAction: ctxHandleAction } = useCurrentlyClockedInContext();
 
-  const [actionPending, setActionPending] = useState(false);
-  const handleAction = async (action: "clockout" | "lock" | "remove", id: string) => {
-    if (actionPending) return;
-    setActionPending(true);
+  const [pendingAction, setActionPending] = useState<string | null>(null);
+  const handleAction = async (action: "clockOut" | "lock" | "remove", id: string) => {
+    if (pendingAction) return;
+    setActionPending(action);
     try {
       await ctxHandleAction(action, id);
     } finally {
-      setActionPending(false);
+      setActionPending(null);
     }
   }
+
+  if (filteredLogs.length === 0) {
+    return (
+      <EmptyState.Root size="sm">
+        <EmptyState.Content>
+          <EmptyState.Indicator>
+            <LuSearchSlash />
+          </EmptyState.Indicator>
+          <VStack textAlign="center">
+            <EmptyState.Title>{t("emptyStates.noSearchResults.title")}</EmptyState.Title>
+            <EmptyState.Description>{t("emptyStates.noSearchResults.description")}</EmptyState.Description>
+          </VStack>
+        </EmptyState.Content>
+      </EmptyState.Root>
+    );
+  }
+
+  const clockOutPending = pendingAction === "clockOut";
+  const lockPending = pendingAction === "lock";
+  const removePending = pendingAction === "remove";
 
   return (
     <Table.Root size="md" interactive {...tableRootProps}>
@@ -146,10 +165,14 @@ export function CurrentlyClockedInTable(props: {
         <Table.Row>
           <Table.ColumnHeader>{t("header.user")}</Table.ColumnHeader>
           <Table.ColumnHeader>{t("header.inTime")} <Icon><LuArrowUp10 /></Icon></Table.ColumnHeader>
-          <Table.ColumnHeader>{t("header.duration")}</Table.ColumnHeader>
-          <Table.ColumnHeader hidden={!showAdminActions}>{t("header.actions")}</Table.ColumnHeader>
+          {/* <Table.ColumnHeader>{t("header.duration")}</Table.ColumnHeader> */}
+          {showAdminActions && <>
+            <Table.ColumnHeader hideBelow="sm" >{t("header.actions")}</Table.ColumnHeader>
+            <Table.ColumnHeader hideFrom="sm" />
+          </>}
         </Table.Row>
       </Table.Header>
+
       <Pagination.Context>
         {({ page, pageSize }) => {
           const startIndex = (page - 1) * pageSize;
@@ -159,30 +182,29 @@ export function CurrentlyClockedInTable(props: {
           return (
             <Table.Body>
               {currentItems.map((item) => {
-                const duration = Math.floor((now - item.inTime.getTime()) / 1000);
-
                 return (
                   <Table.Row key={item.id}>
                     <Table.Cell>{item.user}</Table.Cell>
 
                     <Table.Cell>
-                      <ClientOnly>{item.inTime.toLocaleString()}</ClientOnly>
+                      {item.inTime.toLocaleString()}
                     </Table.Cell>
 
-                    <Table.Cell>
+                    {/* <Table.Cell>
                       <ClientOnly>
                         {formatDuration(duration)}
                       </ClientOnly>
-                    </Table.Cell>
+                    </Table.Cell> */}
 
-                    {showAdminActions ? (
-                      <Table.Cell>
+                    {showAdminActions ? (<>
+                      <Table.Cell hideBelow="sm">
                         <ButtonGroup variant="ghost" size="xs" gap={0}>
                           <Tooltip content={t("actions.forceClockOut")}>
                             <IconButton
                               colorPalette="blue"
-                              loading={actionPending}
-                              onClick={() => handleAction("clockout", item.id)}
+                              loading={clockOutPending}
+                              disabled={!!pendingAction && !clockOutPending}
+                              onClick={() => handleAction("clockOut", item.id)}
                             >
                               <LuDoorOpen />
                             </IconButton>
@@ -191,7 +213,8 @@ export function CurrentlyClockedInTable(props: {
                           <Tooltip content={t("actions.lockUser")}>
                             <IconButton
                               colorPalette="orange"
-                              loading={actionPending}
+                              loading={lockPending}
+                              disabled={!!pendingAction && !lockPending}
                               onClick={() => handleAction("lock", item.id)}
                             >
                               <LuLock />
@@ -201,7 +224,8 @@ export function CurrentlyClockedInTable(props: {
                           <Tooltip content={t("actions.removeLog")}>
                             <IconButton
                               colorPalette="red"
-                              loading={actionPending}
+                              loading={removePending}
+                              disabled={!!pendingAction && !removePending}
                               onClick={() => handleAction("remove", item.id)}
                             >
                               <LuTrash2 />
@@ -209,7 +233,32 @@ export function CurrentlyClockedInTable(props: {
                           </Tooltip>
                         </ButtonGroup>
                       </Table.Cell>
-                    ) : null}
+
+                      <Table.Cell hideFrom="sm">
+                        <Menu.Root onSelect={({ value }) => handleAction(value as "clockOut" | "lock" | "remove", item.id)}>
+                          <Menu.Trigger asChild>
+                            <IconButton variant="ghost" size="xs">
+                              <Icon><LuEllipsisVertical /></Icon>
+                            </IconButton>
+                          </Menu.Trigger>
+                          <Portal>
+                            <Menu.Positioner>
+                              <Menu.Content>
+                                <Menu.Item value="clockOut" disabled={!!pendingAction}>
+                                  <LuDoorOpen /> {t("actions.forceClockOut")} {clockOutPending ? <Spinner size="xs" ms={2} /> : null}
+                                </Menu.Item>
+                                <Menu.Item value="lock" disabled={!!pendingAction} color="fg.warning" _hover={{ bg: "bg.warning", color: "fg.warning" }}>
+                                  <LuLock /> {t("actions.lockUser")} {lockPending ? <Spinner size="xs" ms={2} /> : null}
+                                </Menu.Item>
+                                <Menu.Item value="remove" disabled={!!pendingAction} color="fg.error" _hover={{ bg: "bg.error", color: "fg.error" }}>
+                                  <LuTrash2 /> {t("actions.removeLog")} {removePending ? <Spinner size="xs" ms={2} /> : null}
+                                </Menu.Item>
+                              </Menu.Content>
+                            </Menu.Positioner>
+                          </Portal>
+                        </Menu.Root>
+                      </Table.Cell>
+                    </>) : null}
                   </Table.Row>
                 );
               })}
@@ -217,23 +266,39 @@ export function CurrentlyClockedInTable(props: {
           );
         }}
       </Pagination.Context>
-    </Table.Root>
+    </Table.Root >
+  );
+}
+
+export function CurrentlyClockedInContent(props: {
+  children: React.ReactNode
+} & ComponentPropsWithoutChildren<typeof Stack>) {
+  const { children, ...stackProps } = props;
+
+  const { logs } = useCurrentlyClockedInContext();
+
+  return (
+    <VStack hidden={logs.length === 0} {...stackProps}>
+      {children}
+    </VStack>
   );
 }
 
 export function CurrentlyClockedInNoData(props: ComponentPropsWithoutChildren<typeof EmptyState.Root>) {
-  const t = useTranslations("HomePage");
+  const t = useTranslations("HomePage.currentlyInTable.emptyStates.noCurrentlyInUsers");
+
+  const { logs } = useCurrentlyClockedInContext();
 
   return (
-    <EmptyState.Root {...props}>
+    <EmptyState.Root hidden={logs.length !== 0} {...props}>
       <EmptyState.Content>
         <EmptyState.Indicator>
           <LuBuilding />
         </EmptyState.Indicator>
         <VStack textAlign="center">
-          <EmptyState.Title>{t("emptyStates.noCurrentlyInUsers.title")}</EmptyState.Title>
+          <EmptyState.Title>{t("title")}</EmptyState.Title>
           <EmptyState.Description>
-            {t("emptyStates.noCurrentlyInUsers.description")}
+            {t("description")}
           </EmptyState.Description>
         </VStack>
       </EmptyState.Content>
@@ -241,11 +306,16 @@ export function CurrentlyClockedInNoData(props: ComponentPropsWithoutChildren<ty
   );
 }
 
-export function CurrentlyClockedInPaginationControls(props: ComponentPropsWithoutChildren<typeof ButtonGroup>) {
-  const { variant = "ghost" } = props;
+export function CurrentlyClockedInPaginationControls(props: {
+  hideWhenZeroCount?: boolean;
+} & ComponentPropsWithoutChildren<typeof ButtonGroup>) {
+  const { hideWhenZeroCount, ...buttonGroupProps } = props;
+  const { variant = "ghost" } = buttonGroupProps;
+
+  const { count } = usePaginationContext();
 
   return (
-    <ButtonGroup size="xs" wrap="wrap" {...props} variant={variant}>
+    <ButtonGroup hidden={count === 0 && hideWhenZeroCount} size="xs" wrap="wrap" {...buttonGroupProps} variant={variant}>
       <Pagination.PrevTrigger asChild>
         <IconButton>
           <LuChevronLeft />

@@ -15,7 +15,8 @@ export default function UserStatus(props: {
 
   const t = useTranslations("HomePage.userCard");
   const format = useFormatter();
-  const now = useNow({ updateInterval: 10000 }); // Update every 10 seconds
+  const intlNow = useNow({ updateInterval: 10000 }); // Update every 10 seconds
+  const now = intlNow.getTime() > Date.now() ? intlNow.getTime() : Date.now();
 
   let statusText: string;
   let statusColor: ComponentProps<typeof Status.Root>["colorPalette"];

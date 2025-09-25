@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 
-import { Button, Card, Center, CloseButton, Dialog, GridItem, Heading, HStack, Icon, Portal, Separator, SimpleGrid, Tabs, Text, VStack } from "@chakra-ui/react";
+import { Button, Card, ClientOnly, CloseButton, Dialog, GridItem, Heading, HStack, Icon, Portal, Separator, SimpleGrid, Spinner, Tabs, Text, VStack } from "@chakra-ui/react";
 import { LuChevronsRight, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
@@ -16,7 +16,7 @@ import UserStatus from "./_components/UserStatus";
 import UserDisplay from "./_components/UserDisplay";
 import UserStat from "./_components/UserStat";
 import UserClockToggleButton from "./_components/UserClockToggleButton";
-import { CurrentlyClockedInCountBadge, CurrentlyClockedInPaginationControls, CurrentlyClockedInProvider, CurrentlyClockedInSearchInput, CurrentlyClockedInTable } from "./_components/CurrentlyClockedIn";
+import { CurrentlyClockedInContent, CurrentlyClockedInCountBadge, CurrentlyClockedInNoData, CurrentlyClockedInPaginationControls, CurrentlyClockedInProvider, CurrentlyClockedInSearchInput, CurrentlyClockedInTable } from "./_components/CurrentlyClockedIn";
 
 type UserInfo = {
   id: string;
@@ -256,10 +256,17 @@ async function CurrentlyClockedIn(props: {
       <LastUpdatedText fontSize="xs" color="fg.muted" date={(() => new Date())()} />
     </HStack>
 
-    <CurrentlyClockedInSearchInput mb={2} placeholder={"Search..."} />
-    <CurrentlyClockedInTable showAdminActions={isAdmin} />
-    <Center mt={4}>
-      <CurrentlyClockedInPaginationControls />
-    </Center>
+
+    <CurrentlyClockedInContent>
+      <ClientOnly fallback={<Spinner size="lg" />}>
+        <CurrentlyClockedInSearchInput mb={2} placeholder={"Search..."} />
+
+        <CurrentlyClockedInTable size="sm" showAdminActions={isAdmin} />
+
+        <CurrentlyClockedInPaginationControls hideWhenZeroCount />
+      </ClientOnly>
+    </CurrentlyClockedInContent>
+
+    <CurrentlyClockedInNoData />
   </>);
 }

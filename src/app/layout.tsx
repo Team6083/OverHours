@@ -16,6 +16,7 @@ import { auth, Role, signIn, signOut } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
 import { Provider } from "@/components/ui/provider"
 import AppVersionBadge from "@/components/AppVersionBadge";
+import DrawerNavLink from "./_components/DrawerNavLink";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,7 +57,7 @@ export default function RootLayout({
                       Made with ❤️ and way too many commits{" "}
                       <Text as="span" whiteSpace="nowrap">(fueled by ☕️)</Text>
                     </Text>
-                    <FooterTechInfo hideBelow="sm" textAlign={{sm: "right" }} />
+                    <FooterTechInfo hideBelow="sm" textAlign={{ sm: "right" }} />
                   </Stack>
                 </Container>
               </footer>
@@ -176,14 +177,12 @@ async function NavBar(props: {
                           return null;
                         }
 
-                        return (
-                          <Link key={link.href} href={link.href} passHref>
-                            <Button size="sm" variant="ghost">
-                              <link.icon />
-                              {link.label}
-                            </Button>
-                          </Link>
-                        );
+                        return <DrawerNavLink
+                          key={link.href}
+                          href={link.href}
+                          label={link.label}
+                          icon={<link.icon />}
+                        />;
                       })}
                     </Stack>
                   </Drawer.Body>
