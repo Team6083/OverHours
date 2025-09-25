@@ -7,7 +7,7 @@ export default async function LogsPage() {
   const session = await auth();
   const isAdmin = session?.user.role === Role.ADMIN;
 
-  const logs = await getAllTimelogDTOs(isAdmin ? undefined : session?.user.id);
+  const logs = await getAllTimelogDTOs(isAdmin ? undefined : { userId: session?.user.id });
   const userInfo = Object.fromEntries((await getAllUserNames()).map((user) => [user.id, { name: user.name }]));
 
   return <>
