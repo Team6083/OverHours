@@ -19,7 +19,7 @@
         },
         "timeLogTooShort": {
           "title": "Time Log Too Short",
-          "description": "You must be clocked-in for at least {minDuration} before clocking out."
+          "description": "You must be clocked-in for at least {minDuration} to log your time."
         },
         "genericError": {
           "title": "Error",

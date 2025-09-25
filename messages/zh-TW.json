@@ -19,7 +19,7 @@
       },
       "timeLogTooShort": {
         "title": "操作無效",
-        "description": "簽到時長過短，紀錄已被刪除。至少需簽到 {minDuration} 後才能進行有效簽退。"
+        "description": "簽到時長過短，紀錄已被刪除。至少需簽到 {minDuration} 後才能進行有效紀錄。"
       },
       "genericError": {
         "title": "發生錯誤",
