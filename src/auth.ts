@@ -1,5 +1,6 @@
 
 import NextAuth, { DefaultSession, Profile } from "next-auth";
+import { DefaultJWT } from "next-auth/jwt";
 import Keycloak from "next-auth/providers/keycloak";
 
 import prisma from "./lib/prisma";
@@ -14,6 +15,13 @@ declare module "next-auth" {
     user: {
       role: Role;
     } & DefaultSession["user"];
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT extends DefaultJWT {
+    userId: string;
+    role: string;
   }
 }
 
@@ -81,7 +89,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       return token;
     },
-    session({ session, token }) {
+    session({ session, token, trigger }) {
+      if (trigger === "update") {
+        console.log({ session, token });
+      }
+
       if ('userId' in token && typeof token.userId === 'string') {
         session.user.id = token.userId;
 

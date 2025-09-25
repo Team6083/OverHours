@@ -1,4 +1,4 @@
-import { ComponentProps } from "react";
+import { ComponentProps, Suspense } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
@@ -65,35 +65,37 @@ export default async function AppNav(props: {} & Omit<ComponentProps<typeof Box>
             <ColorModeButton />
           </HStack>
 
-          {session?.user
-            ? <Menu.Root onSelect={handleUserAvatarMenuSelect}>
-              <Menu.Trigger asChild>
-                <Box cursor="pointer" mx={2}>
-                  <Avatar.Root size="sm" cursor="pointer">
-                    <Avatar.Fallback name={session.user.name || undefined} />
-                    <Avatar.Image src={session.user.image || undefined} />
-                  </Avatar.Root>
-                </Box>
-              </Menu.Trigger>
-              <Portal>
-                <Menu.Positioner>
-                  <Menu.Content>
-                    <Menu.Item value="signout">
-                      <LuLogOut />
-                      {t("nav.signOut")}
-                    </Menu.Item>
-                  </Menu.Content>
-                </Menu.Positioner>
-              </Portal>
-            </Menu.Root>
-            : <Button size="sm" onClick={async () => {
-              "use server";
-              await signIn("keycloak");
-            }}>
-              {t("nav.signIn")}
-              <Icon><LuLogIn /></Icon>
-            </Button>
-          }
+          <Suspense fallback={<Button size="sm" loading />}>
+            {session?.user
+              ? <Menu.Root onSelect={handleUserAvatarMenuSelect}>
+                <Menu.Trigger asChild>
+                  <Box cursor="pointer" mx={2}>
+                    <Avatar.Root size="sm" cursor="pointer">
+                      <Avatar.Fallback name={session.user.name || undefined} />
+                      <Avatar.Image src={session.user.image || undefined} />
+                    </Avatar.Root>
+                  </Box>
+                </Menu.Trigger>
+                <Portal>
+                  <Menu.Positioner>
+                    <Menu.Content>
+                      <Menu.Item value="signout">
+                        <LuLogOut />
+                        {t("nav.signOut")}
+                      </Menu.Item>
+                    </Menu.Content>
+                  </Menu.Positioner>
+                </Portal>
+              </Menu.Root>
+              : <Button size="sm" onClick={async () => {
+                "use server";
+                await signIn("keycloak");
+              }}>
+                {t("nav.signIn")}
+                <Icon><LuLogIn /></Icon>
+              </Button>
+            }
+          </Suspense>
 
           {/* Mobile Nav Drawer */}
           <Drawer.Root size="xs" placement="start">
