@@ -22,7 +22,8 @@
       "emptyStates": {
         "noCurrentlyInUsers": {
           "title": "現在沒人 🧐",
-          "description": "目前沒有使用者簽到中。您可以點擊左側的「簽到」按鈕自行簽到。"
+          "description": "目前沒有使用者簽到中。",
+          "description2": "您可以點擊左側的「簽到」按鈕自行簽到。"
         },
         "noSearchResults": {
           "title": "找不到使用者",

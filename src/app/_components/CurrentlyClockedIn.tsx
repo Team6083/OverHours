@@ -165,7 +165,6 @@ export function CurrentlyClockedInTable(props: {
         <Table.Row>
           <Table.ColumnHeader>{t("header.user")}</Table.ColumnHeader>
           <Table.ColumnHeader>{t("header.inTime")} <Icon><LuArrowUp10 /></Icon></Table.ColumnHeader>
-          {/* <Table.ColumnHeader>{t("header.duration")}</Table.ColumnHeader> */}
           {showAdminActions && <>
             <Table.ColumnHeader hideBelow="sm" >{t("header.actions")}</Table.ColumnHeader>
             <Table.ColumnHeader hideFrom="sm" />
@@ -189,12 +188,6 @@ export function CurrentlyClockedInTable(props: {
                     <Table.Cell>
                       {item.inTime.toLocaleString()}
                     </Table.Cell>
-
-                    {/* <Table.Cell>
-                      <ClientOnly>
-                        {formatDuration(duration)}
-                      </ClientOnly>
-                    </Table.Cell> */}
 
                     {showAdminActions ? (<>
                       <Table.Cell hideBelow="sm">
@@ -284,13 +277,16 @@ export function CurrentlyClockedInContent(props: {
   );
 }
 
-export function CurrentlyClockedInNoData(props: ComponentPropsWithoutChildren<typeof EmptyState.Root>) {
+export function CurrentlyClockedInNoData(props: {
+  hasUser?: boolean;
+} & ComponentPropsWithoutChildren<typeof EmptyState.Root>) {
+  const { hasUser, ...emptyStateRootProps } = props;
   const t = useTranslations("HomePage.currentlyInTable.emptyStates.noCurrentlyInUsers");
 
   const { logs } = useCurrentlyClockedInContext();
 
   return (
-    <EmptyState.Root hidden={logs.length !== 0} {...props}>
+    <EmptyState.Root hidden={logs.length !== 0} {...emptyStateRootProps}>
       <EmptyState.Content>
         <EmptyState.Indicator>
           <LuBuilding />
@@ -298,7 +294,8 @@ export function CurrentlyClockedInNoData(props: ComponentPropsWithoutChildren<ty
         <VStack textAlign="center">
           <EmptyState.Title>{t("title")}</EmptyState.Title>
           <EmptyState.Description>
-            {t("description")}
+            {t("description")} <br />
+            {hasUser ? t("description2") : null}
           </EmptyState.Description>
         </VStack>
       </EmptyState.Content>

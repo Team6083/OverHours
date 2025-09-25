@@ -179,7 +179,7 @@ export default async function Home() {
         {/* Right column */}
         <GridItem colSpan={{ base: 1, md: 3 }}>
           {/* Currently Clocked In Users */}
-          <CurrentlyClockedIn isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
+          <CurrentlyClockedIn hasUser={!!userInfo} isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
         </GridItem>
       </SimpleGrid>
 
@@ -218,7 +218,7 @@ export default async function Home() {
             <Separator mb={4} />
           </>)}
 
-          <CurrentlyClockedIn isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
+          <CurrentlyClockedIn hasUser={!!userInfo} isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
         </Tabs.Content>
 
         <Tabs.Content value="leaderboard">
@@ -232,10 +232,11 @@ export default async function Home() {
 }
 
 async function CurrentlyClockedIn(props: {
+  hasUser?: boolean;
   isAdmin?: boolean;
   canClockInUsers?: UserDTO[];
 }) {
-  const { isAdmin, canClockInUsers } = props;
+  const { hasUser, isAdmin, canClockInUsers } = props;
   const t = await getTranslations("HomePage");
 
   return (<>
@@ -261,12 +262,12 @@ async function CurrentlyClockedIn(props: {
       <ClientOnly fallback={<Spinner size="lg" />}>
         <CurrentlyClockedInSearchInput mb={2} placeholder={"Search..."} />
 
-        <CurrentlyClockedInTable size="sm" showAdminActions={isAdmin} />
+        <CurrentlyClockedInTable showAdminActions={isAdmin} />
 
         <CurrentlyClockedInPaginationControls hideWhenZeroCount />
       </ClientOnly>
     </CurrentlyClockedInContent>
 
-    <CurrentlyClockedInNoData />
+    <CurrentlyClockedInNoData hasUser={hasUser} />
   </>);
 }

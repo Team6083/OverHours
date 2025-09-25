@@ -17,7 +17,7 @@ export default function DeleteTimeLogConfirm(props: {
   return <>
     <Heading as="h2" size="md" mb={4}>Confirm Deletion</Heading>
 
-    <DataList.Root orientation="horizontal" mb={4}>
+    <DataList.Root mb={4}>
 
       <DataList.Item>
         <DataList.ItemLabel>TimeLog ID</DataList.ItemLabel>
@@ -26,7 +26,7 @@ export default function DeleteTimeLogConfirm(props: {
 
       <DataList.Item>
         <DataList.ItemLabel>User</DataList.ItemLabel>
-        <DataList.ItemValue>
+        <DataList.ItemValue flexWrap="wrap" gapY={2}>
           {userName && <Badge mr={2} colorPalette="blue">{userName}</Badge>}
           <GenericClipboard color="fg.muted" value={timeLog.userId} />
         </DataList.ItemValue>
