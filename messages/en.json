@@ -46,9 +46,11 @@
       "home": "Home",
       "leaderboard": "Leaderboard"
     },
-    "clockUserInCombobox": {
+    "clockUserInPopover": {
       "searchUserToClockIn": "Search user to clock-in...",
-      "noUsersFound": "No users found"
+      "noUsersFound": "No users found",
+      "clockUserIn": "Clock User In",
+      "noUsersToClockIn": "No users available to clock in"
     }
   },
   "LogsPage": {

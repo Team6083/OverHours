@@ -46,9 +46,11 @@
       "home": "主畫面",
       "leaderboard": "排行榜"
     },
-    "clockUserInCombobox": {
+    "clockUserInPopover": {
       "searchUserToClockIn": "搜尋使用者以簽到...",
-      "noUsersFound": "找不到使用者"
+      "noUsersFound": "找不到使用者",
+      "clockUserIn": "幫其他使用者簽到",
+      "noUsersToClockIn": "沒有可簽到的使用者"
     }
   },
   "LogsPage": {

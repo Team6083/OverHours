@@ -1,8 +1,8 @@
 import { ComponentProps } from "react";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { Badge, Button, Card, CloseButton, Dialog, EmptyState, GridItem, Heading, HStack, Icon, IconButton, Portal, Separator, SimpleGrid, Tabs, Text, VStack } from "@chakra-ui/react";
-import { LuBuilding, LuChevronsRight, LuHouse, LuTrophy, LuUserPlus } from "react-icons/lu";
+import { Badge, Button, Card, CloseButton, Dialog, EmptyState, GridItem, Heading, HStack, Icon, Portal, Separator, SimpleGrid, Tabs, Text, VStack } from "@chakra-ui/react";
+import { LuBuilding, LuChevronsRight, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
@@ -16,7 +16,7 @@ import {
 import { getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import CurrentlyInTable from "./CurrentlyInTable";
 import UserClockInOutButton from "./ClockInOutButton";
-import ClockUserInCombobox from "./ClockUserInCombobox";
+import ClockUserInPopover from "./ClockUserInPopover";
 import PageUpdateButton from "./PageUpdateButton";
 import UserCard, { UserCardStat, UserCardStatus, UserCardUserName } from "./UserCard";
 
@@ -150,7 +150,7 @@ export default async function Home() {
 
 async function CurrentlyInPane(props: {
   currentlyInLogs: { id: string, user: string, inTime: Date }[];
-  canClockInUsers?: UserDTO[];
+  canClockInUsers: UserDTO[];
   isAdmin?: boolean;
 }) {
   const { currentlyInLogs, canClockInUsers, isAdmin } = props;
@@ -163,14 +163,7 @@ async function CurrentlyInPane(props: {
         <Badge colorPalette="blue" size="md">{currentlyInLogs.length}</Badge>
         <PageUpdateButton />
       </HStack>
-      {isAdmin && canClockInUsers && <>
-        <ClockUserInCombobox
-          size="xs" maxW="3xs" w="full"
-          hideBelow="md"
-          users={canClockInUsers}
-        />
-        <IconButton size="xs" variant="ghost" hideFrom="md"><LuUserPlus /></IconButton>
-      </>}
+      {isAdmin && canClockInUsers && <ClockUserInPopover buttonProps={{ size: "xs", variant: "ghost" }} users={canClockInUsers} />}
     </HStack>
 
     <LastUpdatedText date={(() => new Date())()} />
