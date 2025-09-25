@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Button, Card, ClientOnly, CloseButton, Dialog, GridItem, Heading, HStack, Icon, Portal, Separator, SimpleGrid, Spinner, Tabs, Text, VStack } from "@chakra-ui/react";
@@ -8,7 +9,7 @@ import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import { getTeamsForUser } from "@/lib/data/team-dto";
-import { adminClockOut, adminLockLog, deleteTimeLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO } from "@/lib/data/timelog-dto";
+import { adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO } from "@/lib/data/timelog-dto";
 import { getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import ClockUserInPopover from "./_components/ClockUserInPopover";
 import PageUpdateButton from "./_components/PageUpdateButton";
@@ -96,8 +97,7 @@ export default async function Home() {
       }}
       handleRemove={async (id: string) => {
         "use server";
-        await deleteTimeLog(id);
-        revalidatePath("/");
+        redirect(`/logs/${id}/delete?returnTo=/`);
       }}
     >
 
