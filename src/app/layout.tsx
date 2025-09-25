@@ -127,7 +127,7 @@ async function NavBar(props: {
             <ColorModeButton />
           </HStack>
 
-          <Suspense fallback={<Button size="sm" loading />}>
+          <Suspense>
             {session?.user
               ? <Menu.Root onSelect={handleUserAvatarMenuSelect}>
                 <Menu.Trigger asChild>
@@ -157,47 +157,47 @@ async function NavBar(props: {
                 <Icon><LuLogIn /></Icon>
               </Button>
             }
+
+            {/* Mobile Nav Drawer */}
+            <Drawer.Root size="xs" placement="start">
+              <Drawer.Trigger asChild>
+                <IconButton hideFrom="sm" size="sm" variant="outline"><LuMenu /></IconButton>
+              </Drawer.Trigger>
+              <Portal>
+                <Drawer.Backdrop />
+                <Drawer.Positioner>
+                  <Drawer.Content maxW="3xs">
+                    <Drawer.Header>
+                      <Drawer.Title>{t("menu")}</Drawer.Title>
+                    </Drawer.Header>
+                    <Drawer.Body>
+                      <Separator mb={4} />
+                      <Stack gap={2}>
+                        {links.map((link) => {
+                          if (link.roles.length > 0 && session?.user.role && !link.roles.includes(session.user.role)) {
+                            return null;
+                          }
+
+                          return <DrawerNavLink
+                            key={link.href}
+                            href={link.href}
+                            label={link.label}
+                            icon={<link.icon />}
+                          />;
+                        })}
+                      </Stack>
+                    </Drawer.Body>
+                    <Drawer.Footer>
+                      <FooterTechInfo />
+                    </Drawer.Footer>
+                    <Drawer.CloseTrigger asChild>
+                      <CloseButton size="sm" />
+                    </Drawer.CloseTrigger>
+                  </Drawer.Content>
+                </Drawer.Positioner>
+              </Portal>
+            </Drawer.Root>
           </Suspense>
-
-          {/* Mobile Nav Drawer */}
-          <Drawer.Root size="xs" placement="start">
-            <Drawer.Trigger asChild>
-              <IconButton hideFrom="sm" size="sm" variant="outline"><LuMenu /></IconButton>
-            </Drawer.Trigger>
-            <Portal>
-              <Drawer.Backdrop />
-              <Drawer.Positioner>
-                <Drawer.Content maxW="3xs">
-                  <Drawer.Header>
-                    <Drawer.Title>{t("menu")}</Drawer.Title>
-                  </Drawer.Header>
-                  <Drawer.Body>
-                    <Separator mb={4} />
-                    <Stack gap={2}>
-                      {links.map((link) => {
-                        if (link.roles.length > 0 && session?.user.role && !link.roles.includes(session.user.role)) {
-                          return null;
-                        }
-
-                        return <DrawerNavLink
-                          key={link.href}
-                          href={link.href}
-                          label={link.label}
-                          icon={<link.icon />}
-                        />;
-                      })}
-                    </Stack>
-                  </Drawer.Body>
-                  <Drawer.Footer>
-                    <FooterTechInfo />
-                  </Drawer.Footer>
-                  <Drawer.CloseTrigger asChild>
-                    <CloseButton size="sm" />
-                  </Drawer.CloseTrigger>
-                </Drawer.Content>
-              </Drawer.Positioner>
-            </Portal>
-          </Drawer.Root>
 
         </HStack>
       </Flex>
