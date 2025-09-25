@@ -2,7 +2,7 @@
 import { ComponentProps, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Group, Combobox, Button, useFilter, useListCollection, usePopoverContext, Icon, IconButton, Popover, Portal, Text, Box } from "@chakra-ui/react";
-import { LuUserPlus } from "react-icons/lu";
+import { LuSmilePlus } from "react-icons/lu";
 
 import { UserDTO } from "@/lib/data/user-dto";
 import { handleAdminClockIn } from "../actions";
@@ -18,9 +18,9 @@ export default function ClockUserInPopover(props: {
     <Popover.Root {...popoverRootProps}>
       <Popover.Trigger asChild>
         <Box>
-          <IconButton {...buttonProps} hideFrom="sm"><LuUserPlus /></IconButton>
+          <IconButton {...buttonProps} hideFrom="sm"><LuSmilePlus /></IconButton>
           <Button {...buttonProps} hideBelow="sm">
-            <Icon><LuUserPlus /></Icon> {t("clockUserInPopover.clockUserIn")}
+            <Icon><LuSmilePlus /></Icon> {t("clockUserInPopover.clockUserIn")}
           </Button>
         </Box>
       </Popover.Trigger>
