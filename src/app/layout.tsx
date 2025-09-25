@@ -110,7 +110,7 @@ async function NavBar(props: {
           {/* Desktop Nav Links */}
           <HStack hideBelow="sm">
             {links.map((link) => {
-              if (link.roles.length > 0 && session?.user.role && !link.roles.includes(session.user.role)) {
+              if (link.roles.length > 0 && (!session?.user.role || !link.roles.includes(session.user.role))) {
                 return null;
               }
 
@@ -174,7 +174,7 @@ async function NavBar(props: {
                       <Separator mb={4} />
                       <Stack gap={2}>
                         {links.map((link) => {
-                          if (link.roles.length > 0 && session?.user.role && !link.roles.includes(session.user.role)) {
+                          if (link.roles.length > 0 && (!session?.user.role || !link.roles.includes(session.user.role))) {
                             return null;
                           }
 
