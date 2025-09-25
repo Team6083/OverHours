@@ -36,12 +36,11 @@ const columns: Column<TableData>[] = [
     renderCell: (row) => row.displayName,
   },
   {
-    dataKey: "time",
+    dataKey: "timeIn",
     sortable: true,
-    headerColSpan: 2,
     renderHeader: (sort, t) => {
       return <>
-        {t ? t("table.columns.inOutTime") : "In/Out Time"}
+        {t ? t("table.columns.inTime") : "In Time"}
         {sort && (
           sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
             : <Icon ml={1}><LuArrowUp10 /></Icon>
@@ -52,6 +51,16 @@ const columns: Column<TableData>[] = [
   },
   {
     dataKey: "timeOut",
+    sortable: true,
+    renderHeader: (sort, t) => {
+      return <>
+        {t ? t("table.columns.outTime") : "Out Time"}
+        {sort && (
+          sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
+            : <Icon ml={1}><LuArrowUp10 /></Icon>
+        )}
+      </>;
+    },
     renderCell: (row, t) => {
       return <ClientOnly fallback={<SkeletonText noOfLines={1} />}>
         {row.outTime ? (
@@ -111,26 +120,18 @@ const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1] | null) 
   if (!sortBy) return 0;
   const [key, order] = sortBy;
 
-  if (key === "time") {
-    // Sort by inTime first, then outTime
-    if (a.inTime.getTime() !== b.inTime.getTime()) {
-      return (a.inTime.getTime() < b.inTime.getTime() ? -1 : 1) * order;
-    }
-
-    if (a.outTime && b.outTime) {
-      return (a.outTime.getTime() < b.outTime.getTime() ? -1 : 1) * order;
-    }
-    if (a.outTime && !b.outTime) return 1 * order; // a is "greater" if it has outTime
-    if (!a.outTime && b.outTime) return -1 * order; // b is "greater" if it has outTime
-    return 0;
-  }
-
   let aValue: string | number = "";
   let bValue: string | number = "";
 
   if (key === "user") {
     aValue = a.displayName;
     bValue = b.displayName;
+  } else if (key === "timeIn") {
+    aValue = a.inTime.getTime();
+    bValue = b.inTime.getTime();
+  } else if (key === "timeOut") {
+    aValue = a.outTime ? a.outTime.getTime() : Infinity;
+    bValue = b.outTime ? b.outTime.getTime() : Infinity;
   } else if (key === "duration") {
     aValue = a.outTime ? a.outTime.getTime() - a.inTime.getTime() : 0;
     bValue = b.outTime ? b.outTime.getTime() - b.inTime.getTime() : 0;
@@ -199,7 +200,7 @@ export default function LogsTable(props: {
       columns={showAdminActions ? [...columns, actionsColumn] : columns}
       items={filteredData}
       keyFn={(item) => item.id}
-      defaultSortBy={["time", -1]}
+      defaultSortBy={["timeOut", -1]}
       sortingFn={sortingFn}
       checkboxOptions={{
         show: showAdminActions,

@@ -55,7 +55,8 @@
     "table": {
       "columns": {
         "user": "使用者",
-        "inOutTime": "簽到 / 簽退時間",
+        "inTime": "簽到時間",
+        "outTime": "簽退時間",
         "duration": "時長",
         "actions": "操作"
       }

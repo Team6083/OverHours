@@ -55,7 +55,8 @@
     "table": {
       "columns": {
         "user": "User",
-        "inOutTime": "Clocked-in / out Time",
+        "inTime": "Clocked-in Time",
+        "outTime": "Clock-out Time",
         "duration": "Duration",
         "actions": "Actions"
       }
