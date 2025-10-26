@@ -20,6 +20,7 @@ export function prismaUserToDTO(user: User): UserDTO {
     id: user.id,
     email: user.email,
     name: user.name,
+    image: user.image || undefined,
     createdAt: new Date(user.createdAt),
     updatedAt: new Date(user.updatedAt),
   };
