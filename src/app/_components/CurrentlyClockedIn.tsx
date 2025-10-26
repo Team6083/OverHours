@@ -3,7 +3,8 @@ import React, { createContext, useContext, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import {
-  Badge, ButtonGroup, CloseButton, EmptyState, Icon, IconButton, Input, InputGroup,
+  Avatar,
+  Badge, ButtonGroup, CloseButton, EmptyState, HStack, Icon, IconButton, Input, InputGroup,
   Menu, Pagination, Portal, Spinner, Stack, Table, useFilter, usePaginationContext, VStack
 } from "@chakra-ui/react";
 import {
@@ -16,7 +17,11 @@ import { ComponentPropsWithoutChildren } from "@/lib/util";
 
 type CurrentlyClockedInTimeLog = {
   id: string;
-  user: string;
+  user: {
+    id: string;
+    name?: string;
+    image?: string;
+  };
   inTime: Date;
 };
 
@@ -44,7 +49,7 @@ export function CurrentlyClockedInProvider(props: {
 
   const filter = useFilter({ sensitivity: "base" });
   const [searchText, setSearchText] = useState("");
-  const filteredLogs = logs.filter(log => filter.contains(log.user, searchText));
+  const filteredLogs = logs.filter(log => log.user.name && filter.contains(log.user.name, searchText));
 
   const handleAction = async (action: "clockOut" | "lock" | "remove", id: string) => {
     let f: ((userId: string) => Promise<void>) | undefined;
@@ -121,9 +126,10 @@ export function CurrentlyClockedInSearchInput(props: ComponentPropsWithoutChildr
 }
 
 export function CurrentlyClockedInTable(props: {
+  showUserAvatar?: boolean,
   showAdminActions?: boolean,
 } & ComponentPropsWithoutChildren<typeof Table.Root>) {
-  const { showAdminActions, ...tableRootProps } = props;
+  const { showAdminActions, showUserAvatar, ...tableRootProps } = props;
   const t = useTranslations("HomePage.currentlyInTable");
 
   const { filteredLogs, handleAction: ctxHandleAction } = useCurrentlyClockedInContext();
@@ -183,7 +189,17 @@ export function CurrentlyClockedInTable(props: {
               {currentItems.map((item) => {
                 return (
                   <Table.Row key={item.id}>
-                    <Table.Cell>{item.user}</Table.Cell>
+                    <Table.Cell>
+                      {showUserAvatar ?
+                        <HStack>
+                          <Avatar.Root size="2xs">
+                            <Avatar.Fallback name={item.user.name || ""} />
+                            <Avatar.Image src={item.user.image} />
+                          </Avatar.Root>
+                          {item.user.name || item.user.id}
+                        </HStack>
+                        : `${item.user.name || item.user.id}`}
+                    </Table.Cell>
 
                     <Table.Cell>
                       {item.inTime.toLocaleString()}

@@ -94,7 +94,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const userProps = {
           name: (profile && getNameFromProfile(profile)) || user.name || user.email,
-          image: profile?.picture || user.image || undefined,
+          image: profile?.picture || user.image || null,
         };
 
         const dbUser = await prisma.user.upsert({

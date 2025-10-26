@@ -65,6 +65,19 @@ export async function getAllUserNames(): Promise<{ id: string; name: string }[]>
   return users.map(user => ({ id: user.id, name: !session ? maskName(user.name) : user.name }));
 }
 
+export async function getAllUserAvatars(): Promise<{ id: string; image?: string }[]> {
+  const session = await auth();
+  if (!session) {
+    return [];
+  }
+
+  const users = await prisma.user.findMany({
+    select: { id: true, image: true },
+  });
+
+  return users.map(user => ({ id: user.id, image: user.image || undefined }));
+}
+
 export async function createUser(data: {
   email: string;
   name: string;

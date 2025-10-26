@@ -10,7 +10,7 @@ import LastUpdatedText from "@/components/LastUpdatedText";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import { adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO } from "@/lib/data/timelog-dto";
-import { getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
+import { getAllUserAvatars, getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import ClockUserInPopover from "./_components/ClockUserInPopover";
 import PageUpdateButton from "./_components/PageUpdateButton";
 import UserStatus from "./_components/UserStatus";
@@ -39,6 +39,10 @@ export default async function Home() {
   // Get All User Names
   const allUserNames = await getAllUserNames();
   const userNameMap = Object.fromEntries(allUserNames.map(user => [user.id, user.name]));
+  
+  // Get All User Avatars
+  const allUserAvatars = await getAllUserAvatars();
+  const userAvatarMap = Object.fromEntries(allUserAvatars.map(user => [user.id, user.image]));
 
   // Get All Users Total Time
   const allUsersTotalTimeSec = await getAllUsersTotalTimeSec();
@@ -74,13 +78,17 @@ export default async function Home() {
   // Get Currently In Logs
   const currentlyInLogs = (await getAllCurrentlyInTimelogDTOs()).map(log => ({
     id: log.id,
-    user: userNameMap[log.userId] || log.userId,
+    user: {
+      id: log.userId,
+      name: userNameMap[log.userId],
+      image: userAvatarMap[log.userId],
+    },
     inTime: log.inTime,
   }));
 
   // Get all users for admin clock-in
   const allUsers = isAdmin ? await getAllUserDTOs() : undefined;
-  const canClockInUsers = allUsers ? allUsers.filter(user => !currentlyInLogs.find(log => log.user === (user.name || user.id))) : [];
+  const canClockInUsers = allUsers ? allUsers.filter(user => !currentlyInLogs.find(log => log.user.id === user.id)) : [];
 
   return (<>
     <CurrentlyClockedInProvider
@@ -262,7 +270,7 @@ async function CurrentlyClockedIn(props: {
       <ClientOnly fallback={<Spinner size="lg" />}>
         <CurrentlyClockedInSearchInput mb={2} placeholder={"Search..."} />
 
-        <CurrentlyClockedInTable showAdminActions={isAdmin} />
+        <CurrentlyClockedInTable showAdminActions={isAdmin} showUserAvatar={hasUser} />
 
         <CurrentlyClockedInPaginationControls hideWhenZeroCount />
       </ClientOnly>
