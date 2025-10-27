@@ -7,8 +7,8 @@ import memoize from "memoize";
 import prisma from "./lib/prisma";
 
 export enum Role {
-  ADMIN,
-  USER,
+  ADMIN = "admin",
+  USER = "user",
 }
 
 declare module "next-auth" {
