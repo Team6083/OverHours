@@ -1,15 +1,21 @@
+import { Suspense } from "react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
-import { Button, Card, ClientOnly, CloseButton, Dialog, GridItem, Heading, HStack, Icon, Portal, Separator, SimpleGrid, Spinner, Tabs, Text, VStack } from "@chakra-ui/react";
+import {
+  Button, Card, ClientOnly, CloseButton, Dialog, GridItem, Heading, HStack, Icon, Portal, Separator, SimpleGrid,
+  Spinner, Tabs, Text, VStack
+} from "@chakra-ui/react";
 import { LuChevronsRight, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import { getTeamsForUser } from "@/lib/data/team-dto";
-import { adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO } from "@/lib/data/timelog-dto";
+import {
+  adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
+} from "@/lib/data/timelog-dto";
 import { getAllUserAvatars, getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import ClockUserInPopover from "./_components/ClockUserInPopover";
 import PageUpdateButton from "./_components/PageUpdateButton";
@@ -17,7 +23,12 @@ import UserStatus from "./_components/UserStatus";
 import UserDisplay from "./_components/UserDisplay";
 import UserStat from "./_components/UserStat";
 import UserClockToggleButton from "./_components/UserClockToggleButton";
-import { CurrentlyClockedInContent, CurrentlyClockedInCountBadge, CurrentlyClockedInNoData, CurrentlyClockedInPaginationControls, CurrentlyClockedInProvider, CurrentlyClockedInSearchInput, CurrentlyClockedInTable } from "./_components/CurrentlyClockedIn";
+import {
+  CurrentlyClockedInContent, CurrentlyClockedInCountBadge, CurrentlyClockedInNoData,
+  CurrentlyClockedInPaginationControls, CurrentlyClockedInProvider, CurrentlyClockedInSearchInput,
+  CurrentlyClockedInTable
+} from "./_components/CurrentlyClockedIn";
+import HomePageSkeleton from "./home-skeleton";
 
 type UserInfo = {
   id: string;
@@ -39,7 +50,7 @@ export default async function Home() {
   // Get All User Names
   const allUserNames = await getAllUserNames();
   const userNameMap = Object.fromEntries(allUserNames.map(user => [user.id, user.name]));
-  
+
   // Get All User Avatars
   const allUserAvatars = await getAllUserAvatars();
   const userAvatarMap = Object.fromEntries(allUserAvatars.map(user => [user.id, user.image]));
@@ -90,7 +101,7 @@ export default async function Home() {
   const allUsers = isAdmin ? await getAllUserDTOs() : undefined;
   const canClockInUsers = allUsers ? allUsers.filter(user => !currentlyInLogs.find(log => log.user.id === user.id)) : [];
 
-  return (<>
+  return (<Suspense fallback={<HomePageSkeleton />}>
     <CurrentlyClockedInProvider
       logs={currentlyInLogs}
       handleClockout={async (id: string) => {
@@ -236,7 +247,7 @@ export default async function Home() {
       </Tabs.Root>
 
     </CurrentlyClockedInProvider>
-  </>);
+  </Suspense>);
 }
 
 async function CurrentlyClockedIn(props: {
