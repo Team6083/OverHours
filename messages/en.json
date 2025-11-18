@@ -106,6 +106,9 @@
     "status": {
       "currentlyIn": "Currently In",
       "locked": "Locked"
+    },
+    "placeholders": {
+      "filterUsers": "Filter users..."
     }
   },
   "LogEditPage": {

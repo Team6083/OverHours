@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog, HStack, Portal, Stack, ClientOnly, SkeletonText, Pagination, Switch } from "@chakra-ui/react";
+import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog, HStack, Portal, Stack, ClientOnly, SkeletonText, Pagination, Switch, Combobox, useListCollection, useFilter } from "@chakra-ui/react";
 import { LuArrowDown01, LuArrowUp10, LuLock, LuTimer, LuPen, LuTrash2, LuArrowDownAZ, LuArrowUpZA, LuClipboardPlus } from "react-icons/lu";
 
 import { Tooltip } from "@/components/ui/tooltip";
@@ -179,21 +179,66 @@ export default function LogsTable(props: {
 
   const [finishedOnly, setFinishedOnly] = useState(true);
 
-  const topRightElement = showAdminActions && <HStack flexWrap="wrap" justifyContent="space-around" w="full">
-    <Button size="sm" variant="ghost" asChild>
-      <Link href="/logs/new">
-        <Icon><LuClipboardPlus /></Icon>
-        {t("buttons.createLog")}
-      </Link>
-    </Button>
-    <Switch.Root size="sm" checked={finishedOnly} onCheckedChange={(e) => setFinishedOnly(e.checked)}>
-      <Switch.HiddenInput />
-      <Switch.Control />
-      <Switch.Label>Finished Only</Switch.Label>
-    </Switch.Root>
+  const { contains } = useFilter({ sensitivity: "base" });
+  const { collection: userFilterCollection, filter } = useListCollection({
+    initialItems: Object.entries(userInfo).map(([id, user]) => ({ value: id, label: user.name })),
+    filter: contains,
+  });
+
+  const [userFilterSelected, setUserFilterSelected] = useState<string | null>(null);
+
+  const topRightElement = showAdminActions && <HStack flexWrap="wrap" w="full">
+    <Combobox.Root
+      collection={userFilterCollection}
+      onInputValueChange={(e) => filter(e.inputValue)}
+      width={{ base: "full", md: "200px" }}
+      size="xs"
+      value={userFilterSelected ? [userFilterSelected] : []}
+      onValueChange={(e) => e.value ? setUserFilterSelected(e.value[0]) : setUserFilterSelected(null)}
+    >
+      <Combobox.Control>
+        <Combobox.Input placeholder={t("placeholders.filterUsers")} />
+        <Combobox.IndicatorGroup>
+          <Combobox.ClearTrigger />
+          <Combobox.Trigger />
+        </Combobox.IndicatorGroup>
+      </Combobox.Control>
+      <Portal>
+        <Combobox.Positioner>
+          <Combobox.Content>
+            <Combobox.Empty>No items found</Combobox.Empty>
+            {userFilterCollection.items.map((item) => (
+              <Combobox.Item item={item} key={item.value}>
+                {item.label}
+                <Combobox.ItemIndicator />
+              </Combobox.Item>
+            ))}
+          </Combobox.Content>
+        </Combobox.Positioner>
+      </Portal>
+    </Combobox.Root>
+
+    <HStack justifyContent="space-around">
+      <Button size="sm" variant="ghost" asChild>
+        <Link href="/logs/new">
+          <Icon><LuClipboardPlus /></Icon>
+          {t("buttons.createLog")}
+        </Link>
+      </Button>
+
+      <Switch.Root size="sm" checked={finishedOnly} onCheckedChange={(e) => setFinishedOnly(e.checked)}>
+        <Switch.HiddenInput />
+        <Switch.Control />
+        <Switch.Label>Finished Only</Switch.Label>
+      </Switch.Root>
+    </HStack>
   </HStack>
 
-  const filteredData = finishedOnly ? data.filter(log => log.outTime) : data;
+  const filteredData = (finishedOnly || userFilterSelected) ? data.filter(log => {
+    if (finishedOnly && !log.outTime) return false;
+    if (userFilterSelected && log.userId !== userFilterSelected) return false;
+    return true;
+  }) : data;
 
   return <Pagination.Root count={filteredData.length} defaultPageSize={10} defaultPage={1}>
     <GenericTable<TableData>
