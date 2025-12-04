@@ -45,7 +45,7 @@ export async function getTimelogDTO(id: string): Promise<TimeLogDTO | null> {
     where: { id },
   });
 
-  const session = await auth();
+  const session = await getAuthSession();
   if (!timeLog || (timeLog.userId !== session?.user.id && session?.user.role !== Role.ADMIN)) {
     return null;
   }
@@ -72,7 +72,7 @@ export type GetAllTimelogDTOsOptions = {
 export async function getAllTimelogDTOs(opts?: Partial<GetAllTimelogDTOsOptions>): Promise<TimeLogDTO[]> {
   const { userId, startTime, endTime, status } = opts || {};
 
-  const session = await auth();
+  const session = await getAuthSession();
 
   if (!session) {
     return [];
@@ -167,7 +167,7 @@ export async function getAllUsersTotalTimeSec(): Promise<{ [userId: string]: num
 }
 
 export async function getUserLastLogDTO(userId: string): Promise<TimeLogDTO | null> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
     return null;
   }
@@ -192,7 +192,7 @@ export class AlreadyClockedInError extends Error {
 }
 
 export async function clockIn(userId: string): Promise<TimeLogDTO> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
@@ -242,7 +242,7 @@ export class TimeLogTooShortError extends Error {
 }
 
 export async function clockOut(userId: string, notes?: string): Promise<TimeLogDTO> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
@@ -286,7 +286,7 @@ export async function clockOut(userId: string, notes?: string): Promise<TimeLogD
 }
 
 export async function adminClockOut(timeLogId: string, notes?: string): Promise<TimeLogDTO> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
@@ -317,7 +317,7 @@ export async function adminClockOut(timeLogId: string, notes?: string): Promise<
 }
 
 export async function adminLockLog(timeLogId: string, notes?: string): Promise<TimeLogDTO> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
@@ -354,7 +354,7 @@ export async function createTimeLog(data: {
   outTime?: Date;
   notes: string | null;
 }): Promise<TimeLogDTO> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
@@ -394,7 +394,7 @@ export async function updateTimeLog(timeLogId: string, data: {
   outTime?: Date;
   notes: string | null;
 }): Promise<TimeLogDTO> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
@@ -429,7 +429,7 @@ export async function updateTimeLog(timeLogId: string, data: {
 }
 
 export async function deleteTimeLog(timeLogId: string): Promise<TimeLogDTO> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
@@ -442,7 +442,7 @@ export async function deleteTimeLog(timeLogId: string): Promise<TimeLogDTO> {
 }
 
 export async function deleteTimeLogs(timeLogIds: string[]) {
-  const session = await auth();
+  const session = await getAuthSession();
   if (session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }

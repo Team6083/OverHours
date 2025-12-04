@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { LuChevronsRight, LuHouse, LuTrophy } from "react-icons/lu";
 
-import { auth, Role } from "@/auth";
+import { auth, getAuthSession, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import { getTeamsForUser } from "@/lib/data/team-dto";
@@ -44,7 +44,7 @@ type UserInfo = {
 export default async function Home() {
   const t = await getTranslations("HomePage");
 
-  const session = await auth();
+  const session = await getAuthSession();
   const isAdmin = session?.user.role === Role.ADMIN;
 
   // Get All User Names

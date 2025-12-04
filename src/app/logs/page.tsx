@@ -4,7 +4,7 @@ import { getAllUserNames } from "@/lib/data/user-dto";
 import LogsTable from "./LogsTable";
 
 export default async function LogsPage() {
-  const session = await auth();
+  const session = await getAuthSession();
   const isAdmin = session?.user.role === Role.ADMIN;
 
   const logs = await getAllTimelogDTOs(isAdmin ? undefined : { userId: session?.user.id });

@@ -27,7 +27,7 @@ export function prismaUserToDTO(user: User): UserDTO {
 }
 
 export async function getUserDTO(id: string): Promise<UserDTO | null> {
-  const session = await auth();
+  const session = await getAuthSession();
 
   if (!session || (session.user.id !== id && session.user.role !== Role.ADMIN)) {
     return null;
@@ -45,7 +45,7 @@ export async function getUserDTO(id: string): Promise<UserDTO | null> {
 }
 
 export async function getAllUserDTOs(): Promise<UserDTO[]> {
-  const session = await auth();
+  const session = await getAuthSession();
 
   if (!session || session.user.role !== Role.ADMIN) {
     return [];
@@ -57,7 +57,7 @@ export async function getAllUserDTOs(): Promise<UserDTO[]> {
 }
 
 export async function getAllUserNames(): Promise<{ id: string; name: string }[]> {
-  const session = await auth();
+  const session = await getAuthSession();
 
   const users = await prisma.user.findMany({
     select: { id: true, name: true },
@@ -67,7 +67,7 @@ export async function getAllUserNames(): Promise<{ id: string; name: string }[]>
 }
 
 export async function getAllUserAvatars(): Promise<{ id: string; image?: string }[]> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (!session) {
     return [];
   }
@@ -83,7 +83,7 @@ export async function createUser(data: {
   email: string;
   name: string;
 }): Promise<UserDTO> {
-  const session = await auth();
+  const session = await getAuthSession();
 
   if (!session) {
     throw new Error("Unauthorized");
@@ -107,7 +107,7 @@ export async function updateUser(id: string, data: {
   email: string;
   name: string;
 }): Promise<UserDTO | null> {
-  const session = await auth();
+  const session = await getAuthSession();
 
   if (!session) {
     throw new Error("Unauthorized");
@@ -133,7 +133,7 @@ export async function updateUser(id: string, data: {
 }
 
 export async function deleteUser(id: string): Promise<UserDTO> {
-  const session = await auth();
+  const session = await getAuthSession();
 
   if (!session) {
     throw new Error("Unauthorized");
@@ -151,7 +151,7 @@ export async function deleteUser(id: string): Promise<UserDTO> {
 }
 
 export async function deleteUsers(ids: string[]) {
-  const session = await auth();
+  const session = await getAuthSession();
 
   if (!session) {
     throw new Error("Unauthorized");

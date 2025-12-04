@@ -2,10 +2,10 @@ import Link from "next/link";
 import { Button, ButtonGroup, EmptyState, VStack } from "@chakra-ui/react";
 import { LuShieldAlert } from "react-icons/lu";
 
-import { auth, Role, signIn } from "@/auth";
+import { getAuthSession, Role, signIn } from "@/auth";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  const session = await getAuthSession();
 
   if (!session || session.user.role !== Role.ADMIN) {
     return (

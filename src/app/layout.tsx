@@ -1,6 +1,7 @@
 import { ComponentProps, Suspense } from "react";
 
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 
@@ -12,7 +13,7 @@ import { SessionProvider } from "next-auth/react";
 import { Avatar, Box, Button, CloseButton, Container, Drawer, Flex, Heading, HStack, Icon, IconButton, Menu, MenuSelectionDetails, Portal, Separator, Stack, Text } from "@chakra-ui/react";
 import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers } from "react-icons/lu";
 
-import { auth, Role, signIn, signOut } from "@/auth";
+import { auth, getAuthSession, Role } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
 import { Provider } from "@/components/ui/provider"
 import { Toaster } from "@/components/ui/toaster";
@@ -77,12 +78,14 @@ async function NavBar(props: {
   const { ...boxProps } = props;
   const t = await getTranslations("AppNav");
 
-  const session = await auth();
+  const session = await getAuthSession();
 
   const handleUserAvatarMenuSelect = async ({ value }: MenuSelectionDetails) => {
     "use server";
     if (value === "signout") {
-      await signOut();
+      await auth.api.signOut({
+        headers: await headers(),
+      });
     }
   }
 
@@ -151,7 +154,11 @@ async function NavBar(props: {
               </Menu.Root>
               : <Button size="sm" onClick={async () => {
                 "use server";
-                await signIn("keycloak");
+                await auth.api.signInSocial({
+                  body: {
+                    provider: "keycloak",
+                  },
+                })
               }}>
                 {t("nav.signIn")}
                 <Icon><LuLogIn /></Icon>

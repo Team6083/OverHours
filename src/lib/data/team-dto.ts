@@ -33,7 +33,7 @@ export async function getAllTeamDTOs(): Promise<TeamDTO[]> {
 }
 
 export async function getTeamsForUser(userId: string): Promise<TeamDTO[] | undefined> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (!session || (session.user.id !== userId && session.user.role !== Role.ADMIN)) {
     return undefined;
   }
@@ -51,7 +51,7 @@ export async function getTeamsForUser(userId: string): Promise<TeamDTO[] | undef
 }
 
 export async function createTeam(name: string): Promise<TeamDTO> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (!session || session.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
@@ -64,7 +64,7 @@ export async function createTeam(name: string): Promise<TeamDTO> {
 }
 
 export async function updateTeam(id: string, data: { name: string }): Promise<TeamDTO | null> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (!session || session.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
@@ -80,7 +80,7 @@ export async function updateTeam(id: string, data: { name: string }): Promise<Te
 }
 
 export async function deleteTeam(id: string) {
-  const session = await auth();
+  const session = await getAuthSession();
   if (!session || session.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }

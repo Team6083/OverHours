@@ -77,7 +77,7 @@ export type DailyReportData = {
 }
 
 export async function getDailyReportData(dateRange: [Date, Date]): Promise<DailyReportData | null> {
-  const session = await auth();
+  const session = await getAuthSession();
   if (!session) {
     return null;
   }
