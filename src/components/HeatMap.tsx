@@ -7,7 +7,7 @@ import { Tooltip } from "./ui/tooltip";
 function calculateColor(value: number): string {
   if (value === 0) return "bg.muted";
 
-  const clampedValue = Math.min(Math.max(value, 0), 1);
+  const clampedValue = 1 - Math.min(Math.max(value, 0), 1);
 
   const greenValue = Math.round(clampedValue * 7 + 2) * 100; // Scale 0-1 to 200-900
 
