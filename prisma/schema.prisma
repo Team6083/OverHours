@@ -48,6 +48,10 @@ model Team {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  parentTeam   Team?   @relation("TeamToSubTeams", fields: [parentTeamId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  parentTeamId String? @db.ObjectId
+  subTeams     Team[]  @relation("TeamToSubTeams")
+
   name String
 
   users   User[]   @relation(fields: [userIds], references: [id])

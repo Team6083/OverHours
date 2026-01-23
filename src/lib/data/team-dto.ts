@@ -5,12 +5,19 @@ import prisma from "../prisma";
 export type TeamDTO = {
   id: string;
   name: string;
+  parentTeamId?: string;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export function prismaTeamToDTO(team: Team): TeamDTO {
   return {
     id: team.id,
     name: team.name,
+    parentTeamId: team.parentTeamId ?? undefined,
+    createdAt: team.createdAt,
+    updatedAt: team.updatedAt,
   };
 }
 
@@ -50,14 +57,19 @@ export async function getTeamsForUser(userId: string): Promise<TeamDTO[] | undef
   return user.teams.map(prismaTeamToDTO);
 }
 
-export async function createTeam(name: string): Promise<TeamDTO> {
+export async function createTeam(name: string, parentTeamId?: string): Promise<TeamDTO> {
   const session = await auth();
   if (!session || session.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
 
   const team = await prisma.team.create({
-    data: { name },
+    data: {
+      name,
+      parentTeam: {
+        connect: parentTeamId ? { id: parentTeamId } : undefined,
+      }
+    },
   });
 
   return prismaTeamToDTO(team);
@@ -88,4 +100,22 @@ export async function deleteTeam(id: string) {
   return prisma.team.delete({
     where: { id },
   });
+}
+
+export async function deleteTeams(ids: string[]) {
+  const session = await auth();
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  if (session.user.role !== Role.ADMIN) {
+    throw new Error("Forbidden");
+  }
+
+  const payload = await prisma.team.deleteMany({
+    where: { id: { in: ids } },
+  });
+
+  return payload;
 }
