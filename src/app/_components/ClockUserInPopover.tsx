@@ -84,7 +84,7 @@ function ClockUserInCombobox(props: {
       setValue([]);
       popoverCtx.setOpen(false);
     }
-  }
+  };
 
   return (
     <Combobox.Root

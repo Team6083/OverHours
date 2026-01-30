@@ -52,7 +52,7 @@ function headcount(logs: Pick<TimeLog | TimeLogDTO, "inTime" | "outTime" | "user
         currentlyInUsers.delete(events[idx].user);
       }
 
-      bucketUsers = bucketUsers.union(currentlyInUsers)
+      bucketUsers = bucketUsers.union(currentlyInUsers);
 
       idx++;
     }

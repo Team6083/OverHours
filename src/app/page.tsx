@@ -82,7 +82,7 @@ export default async function Home() {
         lastLog: userLastLog || undefined,
         totalTimeSec: allUsersTotalTimeSec[user.id] || 0,
         ranking: rankingIndex >= 0 ? rankingIndex + 1 : undefined,
-      }
+      };
     }
   }
 

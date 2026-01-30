@@ -232,7 +232,7 @@ export default function LogsTable(props: {
         <Switch.Label>Finished Only</Switch.Label>
       </Switch.Root>
     </HStack>
-  </HStack>
+  </HStack>;
 
   const filteredData = (finishedOnly || userFilterSelected) ? data.filter(log => {
     if (finishedOnly && !log.outTime) return false;

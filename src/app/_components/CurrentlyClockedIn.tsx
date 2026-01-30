@@ -143,7 +143,7 @@ export function CurrentlyClockedInTable(props: {
     } finally {
       setActionPending(null);
     }
-  }
+  };
 
   if (filteredLogs.length === 0) {
     return (
