@@ -19,11 +19,11 @@ function headcount(logs: Pick<TimeLog | TimeLogDTO, "inTime" | "outTime" | "user
 
   type Event = { time: number, user: string, type: "in" | "out" };
   const events: Event[] = logs
-    .map((l) => {
-      const evts: Event[] = [];
-      evts.push({ time: l.inTime.getTime(), user: l.userId, type: "in" });
-      evts.push({ time: l.outTime?.getTime() ?? Date.now(), user: l.userId, type: "out" });
-      return evts;
+    .map((log) => {
+      const userEvents: Event[] = [];
+      userEvents.push({ time: log.inTime.getTime(), user: log.userId, type: "in" });
+      userEvents.push({ time: log.outTime?.getTime() ?? Date.now(), user: log.userId, type: "out" });
+      return userEvents;
     })
     .flat();
 
@@ -41,20 +41,20 @@ function headcount(logs: Pick<TimeLog | TimeLogDTO, "inTime" | "outTime" | "user
 
   const result: number[] = [];
 
-  let idx = 0;
-  for (let t = bucketStart; t <= maxTime; t += bucketSize) {
+  let eventIndex = 0;
+  for (let bucketTime = bucketStart; bucketTime <= maxTime; bucketTime += bucketSize) {
     let bucketUsers = new Set(currentlyInUsers);
 
-    while (idx < events.length && events[idx].time < t + bucketSize) {
-      if (events[idx].type === "in") {
-        currentlyInUsers.add(events[idx].user);
+    while (eventIndex < events.length && events[eventIndex].time < bucketTime + bucketSize) {
+      if (events[eventIndex].type === "in") {
+        currentlyInUsers.add(events[eventIndex].user);
       } else {
-        currentlyInUsers.delete(events[idx].user);
+        currentlyInUsers.delete(events[eventIndex].user);
       }
 
       bucketUsers = bucketUsers.union(currentlyInUsers);
 
-      idx++;
+      eventIndex++;
     }
 
     result.push(bucketUsers.size);
@@ -118,9 +118,10 @@ export async function getDailyReportData(dateRange: [Date, Date]): Promise<Daily
 
   const headcountResult = headcount(processedLogs, { minTime: dateRange[0], maxTime: dateRange[1] });
 
-  const headcountData = Array.from({ length: 6 }, (_, row) =>
+  const ROWS_PER_COLUMN = 6;
+  const headcountData = Array.from({ length: ROWS_PER_COLUMN }, (_, row) =>
     Array.from({ length: 24 }, (_, col) => {
-      const index = row + col * 6;
+      const index = row + col * ROWS_PER_COLUMN;
       return index < headcountResult.length ? headcountResult[index] : 0;
     })
   );
