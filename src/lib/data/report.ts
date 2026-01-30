@@ -12,6 +12,8 @@ type HeadCountOptions = {
   maxTime: Date;
 }
 
+const ROWS_PER_COLUMN = 6;
+
 function headcount(logs: Pick<TimeLog | TimeLogDTO, "inTime" | "outTime" | "userId">[], options?: Partial<HeadCountOptions>): number[] {
   const {
     bucketSize = 10 * 60 * 1000, // 10 minutes in ms
@@ -118,7 +120,6 @@ export async function getDailyReportData(dateRange: [Date, Date]): Promise<Daily
 
   const headcountResult = headcount(processedLogs, { minTime: dateRange[0], maxTime: dateRange[1] });
 
-  const ROWS_PER_COLUMN = 6;
   const headcountData = Array.from({ length: ROWS_PER_COLUMN }, (_, row) =>
     Array.from({ length: 24 }, (_, col) => {
       const index = row + col * ROWS_PER_COLUMN;
