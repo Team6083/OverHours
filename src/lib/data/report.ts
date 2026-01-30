@@ -107,7 +107,16 @@ export async function getDailyReportData(dateRange: [Date, Date]): Promise<Daily
     return null;
   }
 
-  const headcountResult = headcount(logs, { minTime: dateRange[0], maxTime: dateRange[1] });
+  const processedLogs = logs.map(log => {
+    if (log.status === "Locked") return {
+      ...log,
+      outTime: log.inTime,
+    };
+
+    return log;
+  });
+
+  const headcountResult = headcount(processedLogs, { minTime: dateRange[0], maxTime: dateRange[1] });
 
   const headcountData = Array.from({ length: 6 }, (_, row) =>
     Array.from({ length: 24 }, (_, col) => {
@@ -116,7 +125,7 @@ export async function getDailyReportData(dateRange: [Date, Date]): Promise<Daily
     })
   );
 
-  const durationPerUser = logs.reduce((acc, log) => {
+  const durationPerUser = processedLogs.reduce((acc, log) => {
     const duration = (log.outTime?.getTime() ?? Date.now()) - log.inTime.getTime();
     acc[log.userId] = (acc[log.userId] || 0) + duration;
     return acc;

@@ -15,8 +15,12 @@ export default function StatValueTextDuration(props: {
     <Stat.ValueText alignItems="baseline">
       {hours > 0 && <>{`${hours} `}<Stat.ValueUnit>hr</Stat.ValueUnit></>}
       {minutes > 0 && <>{`${minutes} `}<Stat.ValueUnit>min</Stat.ValueUnit></>}
-      {seconds > 0 && showSeconds && <>{`${seconds} `}<Stat.ValueUnit>sec</Stat.ValueUnit></>}
-      {hours === 0 && minutes === 0 && seconds === 0 && <>Less than 1 sec</>}
+      {showSeconds ? <>
+        {seconds > 0 && <>{`${seconds} `}<Stat.ValueUnit>sec</Stat.ValueUnit></>}
+        {hours === 0 && minutes === 0 && seconds === 0 && <>{"<"} 1 sec</>}
+      </> : <>
+        {hours === 0 && minutes === 0 && <>{"<"} 1 min</>}
+      </>}
     </Stat.ValueText>
   );
 }
