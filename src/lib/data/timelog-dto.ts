@@ -153,16 +153,8 @@ export async function getAllUsersTotalTimeSec(opts?: {
     // Use MongoDB extended JSON format for dates in aggregateRaw
     matchStage["$expr"] = {
       $and: [
-        {
-          $expr: {
-            $lt: ["$inTime", { $dateFromString: { dateString: end.toISOString() } }]
-          }
-        },
-        {
-          $expr: {
-            $gte: ["$outTime", { $dateFromString: { dateString: start.toISOString() } }]
-          }
-        }
+        { $lt: ["$inTime", { $dateFromString: { dateString: end.toISOString() } }] },
+        { $gte: ["$outTime", { $dateFromString: { dateString: start.toISOString() } }] },
       ]
     };
   } else if (startDate) {

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useTranslations } from "next-intl";
 import { NativeSelectRoot, NativeSelectField } from "@chakra-ui/react";
 
@@ -24,7 +24,7 @@ export default function StatRangeSelector(props: {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     setSelectedId(id);
     if (!id) return;

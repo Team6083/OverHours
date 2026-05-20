@@ -114,7 +114,7 @@ export async function updateStatRange(id: string, data: {
   startDate: Date;
   endDate: Date;
   status: StatRangeDTO["status"];
-}): Promise<StatRangeDTO | null> {
+}): Promise<StatRangeDTO> {
   const session = await auth();
 
   if (!session) {
@@ -134,10 +134,6 @@ export async function updateStatRange(id: string, data: {
       status: data.status === "ACTIVE" ? "Active" : "Archived",
     },
   });
-
-  if (!statRange) {
-    return null;
-  }
 
   return prismaStatRangeToDTO(statRange);
 }

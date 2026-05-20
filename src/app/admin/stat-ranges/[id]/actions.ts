@@ -14,8 +14,8 @@ const schema = z
     endDate: z.iso.date(),
     status: z.enum(["ACTIVE", "ARCHIVED"]),
   })
-  .refine((data) => new Date(data.endDate) > new Date(data.startDate), {
-    message: "End date must be after start date",
+  .refine((data) => new Date(data.endDate) >= new Date(data.startDate), {
+    message: "End date must be on or after start date",
     path: ["endDate"],
   });
 

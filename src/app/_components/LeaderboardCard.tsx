@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
-  Button, Card, CloseButton, Dialog, HStack, Icon, Portal, Text, VStack, Spinner, Center
+  Button, Card, CloseButton, Dialog, HStack, Icon, Portal, Text, Spinner, Center
 } from "@chakra-ui/react";
 import { LuChevronsRight } from "react-icons/lu";
 
