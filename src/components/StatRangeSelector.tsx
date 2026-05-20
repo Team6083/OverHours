@@ -8,8 +8,9 @@ import { getActiveStatRanges } from "./actions";
 
 export default function StatRangeSelector(props: {
   onSelectAction?: (startDate: Date, endDate: Date) => void;
+  onClearAction?: () => void;
 }) {
-  const { onSelectAction } = props;
+  const { onSelectAction, onClearAction } = props;
   const t = useTranslations("StatRangeSelector");
 
   const [statRanges, setStatRanges] = useState<StatRangeDTO[]>([]);
@@ -27,8 +28,10 @@ export default function StatRangeSelector(props: {
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     setSelectedId(id);
-    if (!id) return;
-
+    if (!id) {
+      onClearAction?.();
+      return;
+    }
     const selectedRange = statRanges.find(range => range.id === id);
     if (selectedRange && onSelectAction) {
       onSelectAction(selectedRange.startDate, selectedRange.endDate);
@@ -46,7 +49,7 @@ export default function StatRangeSelector(props: {
         value={selectedId}
         onChange={handleChange}
       >
-        <option value="">{loading ? t("loading") : t("placeholder")}</option>
+        <option value="">{loading ? t("loading") : t("all")}</option>
         {statRanges.map((range) => (
           <option key={range.id} value={range.id}>
             {range.name}

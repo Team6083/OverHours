@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button, HStack, VStack, Spinner, Center, Heading, Popover, IconButton, Icon, Portal } from "@chakra-ui/react";
+import { HStack, VStack, Spinner, Center, Heading, Popover, IconButton, Icon, Portal } from "@chakra-ui/react";
 import { LuCalendarRange } from "react-icons/lu";
 
 import LeaderboardTable from "@/components/LeaderboardTable";
@@ -16,12 +16,9 @@ export default function LeaderboardWithFilter(props: {
 
   const [rankings, setRankings] = useState(initialRankings);
   const [loading, setLoading] = useState(false);
-  const [selectedRange, setSelectedRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [selectorKey, setSelectorKey] = useState(0);
 
   const handleStatRangeSelect = async (startDate: Date, endDate: Date) => {
-    setSelectedRange({ startDate, endDate });
     setPopoverOpen(false);
     setLoading(true);
     try {
@@ -33,8 +30,7 @@ export default function LeaderboardWithFilter(props: {
   };
 
   const handleClearRange = async () => {
-    setSelectedRange(null);
-    setSelectorKey(k => k + 1);
+    setPopoverOpen(false);
     setLoading(true);
     try {
       const newRankings = await getLeaderboardRankings();
@@ -48,30 +44,26 @@ export default function LeaderboardWithFilter(props: {
     <VStack align="stretch" gap={3}>
       <HStack justify="space-between" align="center">
         <Heading as="h3" size="lg">{t("title")}</Heading>
-        <HStack gap={2}>
-          <Popover.Root open={popoverOpen} onOpenChange={(e) => setPopoverOpen(e.open)}>
-            <Popover.Trigger asChild>
-              <IconButton size="sm" variant="ghost" aria-label="Select date range">
-                <Icon><LuCalendarRange /></Icon>
-              </IconButton>
-            </Popover.Trigger>
-            <Portal>
-              <Popover.Positioner>
-                <Popover.Content>
-                  <Popover.Arrow />
-                  <Popover.Body>
-                    <StatRangeSelector key={selectorKey} onSelectAction={handleStatRangeSelect} />
-                  </Popover.Body>
-                </Popover.Content>
-              </Popover.Positioner>
-            </Portal>
-          </Popover.Root>
-          {selectedRange && (
-            <Button size="xs" variant="ghost" onClick={handleClearRange}>
-              {t("clearFilter")}
-            </Button>
-          )}
-        </HStack>
+        <Popover.Root open={popoverOpen} onOpenChange={(e) => setPopoverOpen(e.open)}>
+          <Popover.Trigger asChild>
+            <IconButton size="sm" variant="ghost" aria-label="Select date range">
+              <Icon><LuCalendarRange /></Icon>
+            </IconButton>
+          </Popover.Trigger>
+          <Portal>
+            <Popover.Positioner>
+              <Popover.Content>
+                <Popover.Arrow />
+                <Popover.Body>
+                  <StatRangeSelector
+                    onSelectAction={handleStatRangeSelect}
+                    onClearAction={handleClearRange}
+                  />
+                </Popover.Body>
+              </Popover.Content>
+            </Popover.Positioner>
+          </Portal>
+        </Popover.Root>
       </HStack>
       {loading ? (
         <Center py={8}>

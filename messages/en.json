@@ -75,15 +75,13 @@
       "title": "Leaderboard",
       "footerText": "Top 5 users by total hours clocked-in.",
       "viewMore": "View Full Leaderboard",
-      "clearFilter": "Clear",
       "showingRange": "Showing: {start} - {end}",
       "viewMoreDialog": {
         "title": "Full Leaderboard"
       }
     },
     "leaderboardWithFilter": {
-      "title": "Leaderboard",
-      "clearFilter": "Clear"
+      "title": "Leaderboard"
     },
     "tabs": {
       "home": "Home",
@@ -184,7 +182,7 @@
   },
   "StatRangeSelector": {
     "label": "Stat Range",
-    "placeholder": "Select a stat range",
+    "all": "All",
     "loading": "Loading..."
   }
 }

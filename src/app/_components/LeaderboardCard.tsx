@@ -19,7 +19,6 @@ export default function LeaderboardCard(props: {
   const [rankings, setRankings] = useState(initialRankings);
   const [loading, setLoading] = useState(false);
   const [selectedRange, setSelectedRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
-  const [selectorKey, setSelectorKey] = useState(0);
 
   const handleStatRangeSelect = async (startDate: Date, endDate: Date) => {
     setSelectedRange({ startDate, endDate });
@@ -34,7 +33,6 @@ export default function LeaderboardCard(props: {
 
   const handleClearRange = async () => {
     setSelectedRange(null);
-    setSelectorKey(k => k + 1);
     setLoading(true);
     try {
       const newRankings = await getLeaderboardRankings();
@@ -50,14 +48,10 @@ export default function LeaderboardCard(props: {
         <Card.Header>
           <HStack justify="space-between" w="full">
             <Card.Title>{t("title")}</Card.Title>
-            <HStack gap={2}>
-              <StatRangeSelector key={selectorKey} onSelectAction={handleStatRangeSelect} />
-              {selectedRange && (
-                <Button size="xs" variant="ghost" onClick={handleClearRange}>
-                  {t("clearFilter")}
-                </Button>
-              )}
-            </HStack>
+            <StatRangeSelector
+              onSelectAction={handleStatRangeSelect}
+              onClearAction={handleClearRange}
+            />
           </HStack>
         </Card.Header>
         <Card.Body>
