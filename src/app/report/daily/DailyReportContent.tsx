@@ -5,6 +5,7 @@ import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
 import Heatmap from "@/components/HeatMap";
 import StatValueTextDuration from "@/components/StatValueTextDuration";
+import StatRangeSelector from "@/components/StatRangeSelector";
 import { DailyReportData, getDailyReportData } from "@/lib/data/report";
 
 export default function DailyReportContent(props: {
@@ -34,6 +35,12 @@ export default function DailyReportContent(props: {
 
   const handleDateInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = new Date(e.target.value);
+    newDate.setHours(0, 0, 0, 0);
+    setStart(newDate);
+  }
+
+  const handleStatRangeSelect = (startDate: Date, endDate: Date) => {
+    const newDate = new Date(startDate);
     newDate.setHours(0, 0, 0, 0);
     setStart(newDate);
   }
@@ -82,7 +89,8 @@ export default function DailyReportContent(props: {
   return (<>
     <HStack justify="space-between" mb={4}>
       <Heading as="h2" size="2xl">Daily Report</Heading>
-      <HStack>
+      <HStack gap={3}>
+        <StatRangeSelector onSelectAction={handleStatRangeSelect} />
         <ButtonGroup size="sm" variant="ghost" gap={1}>
           <IconButton aria-label="Previous Day" onClick={handlePreviousDay}><LuArrowLeft /></IconButton>
           <Input type="date" size="xs" value={dateInputValue} onChange={handleDateInputOnChange} />

@@ -11,7 +11,8 @@ import { LuChevronsRight, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
-import LeaderboardTable from "@/components/LeaderboardTable";
+import LeaderboardCard from "./_components/LeaderboardCard";
+import LeaderboardWithFilter from "./_components/LeaderboardWithFilter";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import {
   adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
@@ -155,42 +156,7 @@ export default async function Home() {
             )}
 
             {/* Leaderboard Card */}
-            <Dialog.Root>
-              <Card.Root w="full" size="sm">
-                <Card.Header>
-                  <Card.Title>{t("leaderboardCard.title")}</Card.Title>
-                </Card.Header>
-                <Card.Body>
-                  <LeaderboardTable rankings={rankings} limits={5} />
-                </Card.Body>
-                <Card.Footer>
-                  <Text fontSize="sm" color="gray.500">{t("leaderboardCard.footerText")}</Text>
-                  <Dialog.Trigger asChild>
-                    <Button size="xs" mt={2}>
-                      {t("leaderboardCard.viewMore")}
-                      <Icon><LuChevronsRight /></Icon>
-                    </Button>
-                  </Dialog.Trigger>
-                </Card.Footer>
-              </Card.Root>
-
-              <Portal>
-                <Dialog.Backdrop />
-                <Dialog.Positioner>
-                  <Dialog.Content>
-                    <Dialog.Header>
-                      <Dialog.Title>{t("leaderboardCard.viewMoreDialog.title")}</Dialog.Title>
-                    </Dialog.Header>
-                    <Dialog.Body>
-                      <LeaderboardTable rankings={rankings} />
-                    </Dialog.Body>
-                    <Dialog.CloseTrigger asChild>
-                      <CloseButton size="sm" />
-                    </Dialog.CloseTrigger>
-                  </Dialog.Content>
-                </Dialog.Positioner>
-              </Portal>
-            </Dialog.Root>
+            <LeaderboardCard initialRankings={rankings} />
 
           </VStack>
         </GridItem>
@@ -241,7 +207,7 @@ export default async function Home() {
         </Tabs.Content>
 
         <Tabs.Content value="leaderboard">
-          <LeaderboardTable rankings={rankings} />
+          <LeaderboardWithFilter initialRankings={rankings} />
         </Tabs.Content>
 
       </Tabs.Root>
