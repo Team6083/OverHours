@@ -182,7 +182,6 @@
   },
   "StatRangeSelector": {
     "label": "統計範圍",
-    "all": "全部",
-    "loading": "載入中..."
+    "all": "全部"
   }
 }

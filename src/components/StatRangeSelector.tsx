@@ -45,7 +45,7 @@ export default function StatRangeSelector(props: {
     }
   };
 
-  if (error || (!loading && statRanges.length === 0)) {
+  if (loading || error || statRanges.length === 0) {
     return null;
   }
 
@@ -57,12 +57,11 @@ export default function StatRangeSelector(props: {
       minW="44"
       value={[selectedId]}
       onValueChange={handleValueChange}
-      disabled={loading}
     >
       <Select.HiddenSelect />
       <Select.Control>
         <Select.Trigger>
-          <Select.ValueText placeholder={loading ? t("loading") : t("all")} />
+          <Select.ValueText placeholder={t("all")} />
         </Select.Trigger>
         <Select.IndicatorGroup>
           <Select.Indicator />

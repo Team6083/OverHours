@@ -182,7 +182,6 @@
   },
   "StatRangeSelector": {
     "label": "Stat Range",
-    "all": "All",
-    "loading": "Loading..."
+    "all": "All"
   }
 }
