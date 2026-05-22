@@ -130,13 +130,52 @@ export type UserClockStatus = {
   totalTimeSec: number;
 }
 
-export async function getAllUsersTotalTimeSec(): Promise<{ [userId: string]: number }> {
+export async function getAllUsersTotalTimeSec(opts?: {
+  startDate?: Date;
+  endDate?: Date;
+}): Promise<{ [userId: string]: number }> {
+  const { startDate, endDate } = opts || {};
+
+  const matchStage: any = {
+    status: "Done",
+  };
+
+  // Add date range filter if provided
+  // A time log overlaps with the date range if:
+  // - It starts before the range ends AND ends after the range starts
+  if (startDate && endDate) {
+    // Convert to Date objects if they're strings (from client serialization)
+    const start = new Date(startDate);
+    // Add one day to endDate to make it inclusive (since endDate is typically start of day)
+    const end = new Date(endDate);
+    end.setDate(end.getDate() + 1); // Move to start of next day to include all of endDate
+
+    // Use MongoDB extended JSON format for dates in aggregateRaw
+    matchStage["$expr"] = {
+      $and: [
+        { $lt: ["$inTime", { $dateFromString: { dateString: end.toISOString() } }] },
+        { $gte: ["$outTime", { $dateFromString: { dateString: start.toISOString() } }] },
+      ]
+    };
+  } else if (startDate) {
+    const start = new Date(startDate);
+
+    matchStage["$expr"] = {
+      $gte: ["$outTime", { $dateFromString: { dateString: start.toISOString() } }]
+    };
+  } else if (endDate) {
+    const end = new Date(endDate);
+    end.setDate(end.getDate() + 1); // Make it inclusive
+
+    matchStage["$expr"] = {
+      $lt: ["$inTime", { $dateFromString: { dateString: end.toISOString() } }]
+    };
+  }
+
   const result = await prisma.timeLog.aggregateRaw({
     pipeline: [
       {
-        $match: {
-          status: "Done",
-        }
+        $match: matchStage,
       },
       {
         $addFields: {

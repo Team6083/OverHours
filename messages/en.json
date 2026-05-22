@@ -75,9 +75,13 @@
       "title": "Leaderboard",
       "footerText": "Top 5 users by total hours clocked-in.",
       "viewMore": "View Full Leaderboard",
+      "showingRange": "Showing: {start} - {end}",
       "viewMoreDialog": {
         "title": "Full Leaderboard"
       }
+    },
+    "leaderboardWithFilter": {
+      "title": "Leaderboard"
     },
     "tabs": {
       "home": "Home",
@@ -155,6 +159,7 @@
       "logs": "Logs",
       "reports": "Reports",
       "users": "Users",
+      "statRanges": "Stat Ranges",
       "signIn": "Sign-In",
       "signOut": "Sign-Out"
     },
@@ -174,5 +179,9 @@
   },
   "LastUpdatedText": {
     "lastUpdated": "Last updated {timeString}"
+  },
+  "StatRangeSelector": {
+    "label": "Stat Range",
+    "all": "All"
   }
 }

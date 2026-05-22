@@ -53,3 +53,19 @@ model Team {
   users   User[]   @relation(fields: [userIds], references: [id])
   userIds String[] @default([]) @db.ObjectId
 }
+
+enum StatRangeStatus {
+  Active
+  Archived
+}
+
+model StatRange {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  status    StatRangeStatus @default(Active)
+}

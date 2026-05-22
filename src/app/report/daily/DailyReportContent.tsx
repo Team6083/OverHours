@@ -82,7 +82,7 @@ export default function DailyReportContent(props: {
   return (<>
     <HStack justify="space-between" mb={4}>
       <Heading as="h2" size="2xl">Daily Report</Heading>
-      <HStack>
+      <HStack gap={3}>
         <ButtonGroup size="sm" variant="ghost" gap={1}>
           <IconButton aria-label="Previous Day" onClick={handlePreviousDay}><LuArrowLeft /></IconButton>
           <Input type="date" size="xs" value={dateInputValue} onChange={handleDateInputOnChange} />

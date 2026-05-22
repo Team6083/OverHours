@@ -75,9 +75,13 @@
       "title": "排行榜",
       "footerText": "按總簽到時數排名的前 5 名使用者。",
       "viewMore": "查看完整排行榜",
+      "showingRange": "顯示：{start} - {end}",
       "viewMoreDialog": {
         "title": "完整排行榜"
       }
+    },
+    "leaderboardWithFilter": {
+      "title": "排行榜"
     },
     "tabs": {
       "home": "主畫面",
@@ -155,6 +159,7 @@
       "logs": "紀錄",
       "reports": "報告",
       "users": "使用者",
+      "statRanges": "統計範圍",
       "signIn": "登入",
       "signOut": "登出"
     },
@@ -174,5 +179,9 @@
   },
   "LastUpdatedText": {
     "lastUpdated": "最後更新 {timeString}"
+  },
+  "StatRangeSelector": {
+    "label": "統計範圍",
+    "all": "全部"
   }
 }

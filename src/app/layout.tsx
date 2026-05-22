@@ -10,7 +10,7 @@ import { getTranslations } from "next-intl/server";
 import { SessionProvider } from "next-auth/react";
 
 import { Avatar, Box, Button, CloseButton, Container, Drawer, Flex, Heading, HStack, Icon, IconButton, Menu, MenuSelectionDetails, Portal, Separator, Stack, Text } from "@chakra-ui/react";
-import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers } from "react-icons/lu";
+import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange } from "react-icons/lu";
 
 import { auth, Role, signIn, signOut } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
@@ -90,6 +90,7 @@ async function NavBar(props: {
     { href: "/logs", label: t("nav.logs"), icon: LuLogs, roles: [Role.USER, Role.ADMIN] },
     { href: "/report", label: t("nav.reports"), icon: LuChartNoAxesCombined, roles: [Role.ADMIN] },
     { href: "/admin/users", label: t("nav.users"), icon: LuUsers, roles: [Role.ADMIN] },
+    { href: "/admin/stat-ranges", label: t("nav.statRanges"), icon: LuCalendarRange, roles: [Role.ADMIN] },
   ];
 
   return (

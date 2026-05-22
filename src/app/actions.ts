@@ -1,7 +1,8 @@
 "use server";
 import { revalidatePath } from "next/cache";
 
-import { AlreadyClockedInError, clockIn, clockOut, NotClockedInError, TimeLogTooShortError } from "@/lib/data/timelog-dto";
+import { AlreadyClockedInError, clockIn, clockOut, NotClockedInError, TimeLogTooShortError, getAllUsersTotalTimeSec } from "@/lib/data/timelog-dto";
+import { getAllUserNames } from "@/lib/data/user-dto";
 
 export async function handleAdminClockIn(userId: string) {
   await clockIn(userId);
@@ -47,4 +48,23 @@ export async function userClockToggle(userId: string, isClockedIn: boolean): Pro
   } finally {
     revalidatePath("/");
   }
+}
+
+export async function getLeaderboardRankings(opts?: {
+  startDate?: Date;
+  endDate?: Date;
+}): Promise<{ id: string; name: string; duration: number }[]> {
+  // Get All User Names
+  const allUserNames = await getAllUserNames();
+  const userNameMap = Object.fromEntries(allUserNames.map(user => [user.id, user.name]));
+
+  // Get All Users Total Time with optional date range
+  const allUsersTotalTimeSec = await getAllUsersTotalTimeSec(opts);
+  
+  // Create rankings sorted by duration
+  const rankings = Object.entries(allUsersTotalTimeSec)
+    .sort((a, b) => b[1] - a[1])
+    .map(([id, duration]) => ({ id, name: userNameMap[id], duration }));
+
+  return rankings;
 }
