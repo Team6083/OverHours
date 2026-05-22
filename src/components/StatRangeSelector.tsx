@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { NativeSelectRoot, NativeSelectField } from "@chakra-ui/react";
+import { createListCollection, Select, Portal } from "@chakra-ui/react";
 
 import { StatRangeDTO } from "@/lib/data/statrange-dto";
 import { getActiveStatRanges } from "./actions";
@@ -25,8 +25,15 @@ export default function StatRangeSelector(props: {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const id = e.target.value;
+  const collection = useMemo(() => createListCollection({
+    items: [
+      { label: t("all"), value: "" },
+      ...statRanges.map(range => ({ label: range.name, value: range.id })),
+    ],
+  }), [statRanges, t]);
+
+  const handleValueChange = ({ value }: { value: string[] }) => {
+    const id = value[0] ?? "";
     setSelectedId(id);
     if (!id) {
       onClearAction?.();
@@ -43,19 +50,36 @@ export default function StatRangeSelector(props: {
   }
 
   return (
-    <NativeSelectRoot size="xs" w="auto" minW="32" disabled={loading}>
-      <NativeSelectField
-        aria-label={t("label")}
-        value={selectedId}
-        onChange={handleChange}
-      >
-        <option value="">{loading ? t("loading") : t("all")}</option>
-        {statRanges.map((range) => (
-          <option key={range.id} value={range.id}>
-            {range.name}
-          </option>
-        ))}
-      </NativeSelectField>
-    </NativeSelectRoot>
+    <Select.Root
+      collection={collection}
+      size="xs"
+      w="auto"
+      minW="44"
+      value={[selectedId]}
+      onValueChange={handleValueChange}
+      disabled={loading}
+    >
+      <Select.HiddenSelect />
+      <Select.Control>
+        <Select.Trigger>
+          <Select.ValueText placeholder={loading ? t("loading") : t("all")} />
+        </Select.Trigger>
+        <Select.IndicatorGroup>
+          <Select.Indicator />
+        </Select.IndicatorGroup>
+      </Select.Control>
+      <Portal>
+        <Select.Positioner>
+          <Select.Content>
+            {collection.items.map(item => (
+              <Select.Item item={item} key={item.value}>
+                {item.label}
+                <Select.ItemIndicator />
+              </Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Positioner>
+      </Portal>
+    </Select.Root>
   );
 }
