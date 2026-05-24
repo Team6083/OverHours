@@ -1,9 +1,9 @@
-import { Container, Heading } from "@chakra-ui/react";
+import { getAllUserNames } from "@/lib/data/user-dto";
+import ReportOverviewContent from "./ReportOverviewContent";
 
-export default function ReportPage() {
-  return (
-    <Container>
-      <Heading as="h2" size="2xl" mb={4}>Overview</Heading>
-    </Container>
-  );
+export default async function ReportPage() {
+  const userNames = await getAllUserNames();
+  const userNameDict = Object.fromEntries(userNames.map(({ id, name }) => [id, name]));
+
+  return <ReportOverviewContent userNameDict={userNameDict} />;
 }

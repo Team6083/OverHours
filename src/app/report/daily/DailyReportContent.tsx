@@ -67,12 +67,13 @@ export default function DailyReportContent(props: {
   // Prepare heatmap data
   const heatmapData = useMemo(() => {
     if (!reportData) return [];
-
-    return reportData.headcountHeatMap.data
-      .map(row => row.map(value => ({
-        value: value / Math.max(reportData.headcountHeatMap.maxHeadcount, 15),
-        label: value.toString(),
-      })));
+    const maxHc = Math.max(reportData.headcountHeatMap.maxHeadcount, 15);
+    return reportData.headcountHeatMap.data.map((row, rowIdx) =>
+      row.map((value, colIdx) => {
+        const timeStr = `${colIdx}:${String(rowIdx * 10).padStart(2, "0")}`;
+        return { value: value / maxHc, label: value > 0 ? `${timeStr} — ${value} people` : timeStr };
+      })
+    );
   }, [reportData]);
 
   // Prepare stats
@@ -96,7 +97,7 @@ export default function DailyReportContent(props: {
       reportData ? <>
         <HStack align="start" gap={4} mb={8}>
           <Stat.Root>
-            <Stat.Label>User Count</Stat.Label>
+            <Stat.Label>Active Users</Stat.Label>
             <Stat.ValueText>{reportData?.userDuration.length}</Stat.ValueText>
             {/* <Stat.HelpText>+5% from last day</Stat.HelpText> */}
           </Stat.Root>
@@ -108,7 +109,7 @@ export default function DailyReportContent(props: {
 
           <Stat.Root>
             <Stat.Label>Shortest Duration</Stat.Label>
-            {reportData.durationStat.min ? <>
+            {reportData.durationStat.min.value > 0 ? <>
               <StatValueTextDuration durationMs={reportData.durationStat.min.value} />
               {reportData.durationStat.min.userId && (
                 <Stat.HelpText>
@@ -122,7 +123,7 @@ export default function DailyReportContent(props: {
 
           <Stat.Root>
             <Stat.Label>Longest Duration</Stat.Label>
-            {reportData.durationStat.max ? <>
+            {reportData.durationStat.max.value > 0 ? <>
               <StatValueTextDuration durationMs={reportData.durationStat.max.value} />
               {reportData.durationStat.max.userId && (
                 <Stat.HelpText>
@@ -133,9 +134,17 @@ export default function DailyReportContent(props: {
               )}
             </> : <Stat.ValueText>N/A</Stat.ValueText>}
           </Stat.Root>
+
+          {reportData.lockedCount > 0 && (
+            <Stat.Root>
+              <Stat.Label>Locked Logs</Stat.Label>
+              <Stat.ValueText>{reportData.lockedCount}</Stat.ValueText>
+              <Stat.HelpText>started today, locked</Stat.HelpText>
+            </Stat.Root>
+          )}
         </HStack>
 
-        <Heading as="h3">Headcount Heat Map</Heading>
+        <Heading as="h3" size="md" mb={3}>Headcount Heatmap</Heading>
 
         {heatmapData ? <Heatmap
           rows={6}
@@ -143,7 +152,7 @@ export default function DailyReportContent(props: {
           gridData={heatmapData}
           headerProps={{ fontSize: "2xs", color: "fg.muted", fontWeight: "medium" }}
           rowHeaders={Array.from({ length: 6 }, (_, i) => `${i * 10}`)}
-          columnHeaders={Array.from({ length: 24 }, (_, i) => `${i}`)}
+          columnHeaders={Array.from({ length: 24 }, (_, i) => (i % 3 === 0 ? `${i}` : ""))}
           cellProps={{ rounded: "xs" }}
         /> : <Center>No data</Center>}
 

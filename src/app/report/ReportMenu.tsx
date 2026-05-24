@@ -11,6 +11,12 @@ const reports = {
       { label: "Weekly", value: "weekly" },
     ],
   },
+  user: {
+    label: "User",
+    items: [
+      { label: "Per User", value: "user" },
+    ],
+  },
 }
 export default function ReportMenu() {
   const pathname = usePathname();
