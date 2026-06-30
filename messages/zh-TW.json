@@ -112,7 +112,8 @@
       "locked": "鎖定"
     },
     "placeholders": {
-      "filterUsers": "篩選使用者..."
+      "filterUsers": "篩選使用者...",
+      "noUsersFound": "找不到使用者"
     }
   },
   "LogEditPage": {

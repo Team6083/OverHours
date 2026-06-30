@@ -2,11 +2,12 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   Box, HStack, Stat, Heading, Center, Spinner, IconButton,
-  Table, Portal, Select, createListCollection, SegmentGroup, Text,
+  Table, SegmentGroup, Text,
 } from "@chakra-ui/react";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
 import StatRangeSelector from "@/components/StatRangeSelector";
+import UserCombobox from "@/components/UserCombobox";
 import StatValueTextDuration from "@/components/StatValueTextDuration";
 import Heatmap from "@/components/HeatMap";
 import { getUserReportData, UserReportData } from "@/lib/data/report";
@@ -55,10 +56,6 @@ export default function UserReportContent({
   const [heatmapView, setHeatmapView] = useState<"day" | "session">("day");
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
   const [groupBy, setGroupBy] = useState<GroupBy>("day");
-
-  const userCollection = useMemo(() => createListCollection({
-    items: users.map(u => ({ label: u.name, value: u.id })),
-  }), [users]);
 
   const handleRefresh = useCallback(() => {
     if (!selectedUserId) return;
@@ -205,36 +202,15 @@ export default function UserReportContent({
       <HStack justify="space-between" mb={4} flexWrap="wrap" gap={2}>
         <Heading as="h2" size="2xl">User Report</Heading>
         <HStack gap={2} flexWrap="wrap">
-          <Select.Root
-            collection={userCollection}
+          <UserCombobox
+            users={users}
+            value={selectedUserId}
+            onValueChange={setSelectedUserId}
+            placeholder="Select user"
             size="xs"
-            w="auto"
-            minW="44"
-            value={selectedUserId ? [selectedUserId] : []}
-            onValueChange={({ value }) => setSelectedUserId(value[0] ?? "")}
-          >
-            <Select.HiddenSelect />
-            <Select.Control>
-              <Select.Trigger>
-                <Select.ValueText placeholder="Select user" />
-              </Select.Trigger>
-              <Select.IndicatorGroup>
-                <Select.Indicator />
-              </Select.IndicatorGroup>
-            </Select.Control>
-            <Portal>
-              <Select.Positioner>
-                <Select.Content>
-                  {userCollection.items.map(item => (
-                    <Select.Item item={item} key={item.value}>
-                      {item.label}
-                      <Select.ItemIndicator />
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Portal>
-          </Select.Root>
+            width="auto"
+            minWidth="44"
+          />
 
           <StatRangeSelector
             onSelectAction={(start, end) => setDateRange([start, end])}

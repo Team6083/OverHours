@@ -112,7 +112,8 @@
       "locked": "Locked"
     },
     "placeholders": {
-      "filterUsers": "Filter users..."
+      "filterUsers": "Filter users...",
+      "noUsersFound": "No users found"
     }
   },
   "LogEditPage": {
