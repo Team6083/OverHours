@@ -209,6 +209,7 @@ export default function UserReportContent({
             placeholder="Select user"
             size="xs"
             width="auto"
+            minWidth="44"
           />
 
           <StatRangeSelector

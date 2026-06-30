@@ -8,8 +8,10 @@ interface UserComboboxProps {
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
+  emptyText?: string;
   size?: "xs" | "sm" | "md";
   width?: string | object;
+  minWidth?: string;
 }
 
 export default function UserCombobox({
@@ -17,8 +19,10 @@ export default function UserCombobox({
   value,
   onValueChange,
   placeholder = "Select user",
+  emptyText = "No users found",
   size = "xs",
   width,
+  minWidth,
 }: UserComboboxProps) {
   const { contains } = useFilter({ sensitivity: "base" });
 
@@ -44,6 +48,7 @@ export default function UserCombobox({
       onValueChange={(e) => onValueChange(e.value[0] ?? "")}
       size={size}
       width={width}
+      minWidth={minWidth}
     >
       <Combobox.Control>
         <Combobox.Input placeholder={placeholder} />
@@ -55,7 +60,7 @@ export default function UserCombobox({
       <Portal>
         <Combobox.Positioner>
           <Combobox.Content>
-            <Combobox.Empty>No users found</Combobox.Empty>
+            <Combobox.Empty>{emptyText}</Combobox.Empty>
             {collection.items.map((item) => (
               <Combobox.Item item={item} key={item.value}>
                 {item.label}

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog, HStack, Portal, Stack, ClientOnly, SkeletonText, Pagination, Switch } from "@chakra-ui/react";
@@ -181,12 +181,18 @@ export default function LogsTable(props: {
   const [finishedOnly, setFinishedOnly] = useState(true);
   const [userFilterSelected, setUserFilterSelected] = useState<string | null>(null);
 
+  const userComboboxUsers = useMemo(
+    () => Object.entries(userInfo).map(([id, user]) => ({ id, name: user.name })),
+    [userInfo]
+  );
+
   const topRightElement = showAdminActions && <HStack flexWrap="wrap" w="full">
     <UserCombobox
-      users={Object.entries(userInfo).map(([id, user]) => ({ id, name: user.name }))}
+      users={userComboboxUsers}
       value={userFilterSelected ?? ""}
       onValueChange={(v) => setUserFilterSelected(v || null)}
       placeholder={t("placeholders.filterUsers")}
+      emptyText={t("placeholders.noUsersFound")}
       size="xs"
       width={{ base: "full", md: "200px" }}
     />
