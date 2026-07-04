@@ -491,4 +491,137 @@ export async function deleteTimeLogs(timeLogIds: string[]) {
   });
 
   return payload;
-} 
+}
+
+// The functions below are for the API-key authenticated Admin API
+// (see src/lib/admin-api-auth.ts). They intentionally skip the NextAuth
+// session/role checks above, since the route handlers calling them already
+// gate access via the admin API key.
+
+function toPrismaTimeLogStatus(status: TimeLogDTO["status"]): "CurrentlyIn" | "Done" | "Locked" {
+  if (status === "CURRENTLY_IN") return "CurrentlyIn";
+  if (status === "DONE") return "Done";
+  return "Locked";
+}
+
+export type AdminGetAllTimeLogsOptions = {
+  userId: string;
+  startTime: Date;
+  endTime: Date;
+  status: TimeLogDTO["status"];
+}
+
+export async function adminGetAllTimeLogs(opts?: Partial<AdminGetAllTimeLogsOptions>): Promise<TimeLogDTO[]> {
+  const { userId, startTime, endTime, status } = opts || {};
+
+  const where: Prisma.TimeLogWhereInput = {};
+
+  if (userId) {
+    where.userId = userId;
+  }
+
+  if (startTime || endTime) {
+    where.OR = [
+      {
+        inTime: {
+          gte: startTime,
+          lt: endTime,
+        },
+      },
+      {
+        outTime: {
+          gte: startTime,
+          lt: endTime,
+        },
+      },
+    ];
+  }
+
+  if (status) {
+    where.status = toPrismaTimeLogStatus(status);
+  }
+
+  const timeLogs = await prisma.timeLog.findMany({
+    where,
+    orderBy: { inTime: "desc" },
+  });
+
+  return timeLogs.map(prismaTimeLogToDTO);
+}
+
+export async function adminGetTimeLog(id: string): Promise<TimeLogDTO | null> {
+  const timeLog = await prisma.timeLog.findUnique({
+    where: { id },
+  });
+
+  return timeLog ? prismaTimeLogToDTO(timeLog) : null;
+}
+
+export async function adminCreateTimeLog(data: {
+  userId: string;
+  status: TimeLogDTO["status"];
+  inTime: Date;
+  outTime?: Date;
+  notes?: string | null;
+}): Promise<TimeLogDTO> {
+  const status = toPrismaTimeLogStatus(data.status);
+
+  if (data.status !== "CURRENTLY_IN" && !data.outTime) {
+    throw new Error("Out time is required for DONE or LOCKED status");
+  }
+
+  if (data.outTime && data.outTime <= data.inTime) {
+    throw new Error("Out time must be after in time");
+  }
+
+  const result = await prisma.timeLog.create({
+    data: {
+      userId: data.userId,
+      status,
+      inTime: data.inTime,
+      outTime: data.outTime,
+      notes: data.notes,
+    },
+  });
+
+  return prismaTimeLogToDTO(result);
+}
+
+export async function adminUpdateTimeLog(timeLogId: string, data: {
+  userId: string;
+  status: TimeLogDTO["status"];
+  inTime: Date;
+  outTime?: Date;
+  notes?: string | null;
+}): Promise<TimeLogDTO> {
+  const status = toPrismaTimeLogStatus(data.status);
+
+  if (data.status !== "CURRENTLY_IN" && !data.outTime) {
+    throw new Error("Out time is required for DONE or LOCKED status");
+  }
+
+  if (data.outTime && data.outTime <= data.inTime) {
+    throw new Error("Out time must be after in time");
+  }
+
+  const result = await prisma.timeLog.update({
+    where: { id: timeLogId },
+    data: {
+      userId: data.userId,
+      status,
+      inTime: data.inTime,
+      outTime: data.outTime,
+      notes: data.notes,
+    },
+  });
+
+  return prismaTimeLogToDTO(result);
+}
+
+export async function adminDeleteTimeLog(timeLogId: string): Promise<TimeLogDTO> {
+  const timeLog = await prisma.timeLog.delete({
+    where: { id: timeLogId },
+  });
+
+  return prismaTimeLogToDTO(timeLog);
+}

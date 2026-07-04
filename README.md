@@ -20,6 +20,24 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Admin API
+
+An API-key authenticated REST API is available for managing users and time logs from
+external systems. Set `ADMIN_API_KEY` in the environment, then send it as a Bearer token:
+
+```bash
+curl -H "Authorization: Bearer $ADMIN_API_KEY" http://localhost:3000/api/admin/users
+```
+
+Endpoints:
+
+- `GET /api/admin/users` / `POST /api/admin/users`
+- `GET /api/admin/users/{id}` / `PUT /api/admin/users/{id}` / `DELETE /api/admin/users/{id}`
+- `GET /api/admin/timelogs` / `POST /api/admin/timelogs`
+- `GET /api/admin/timelogs/{id}` / `PUT /api/admin/timelogs/{id}` / `DELETE /api/admin/timelogs/{id}`
+
+The full OpenAPI 3.0 schema is available at [`/openapi/admin-api.json`](public/openapi/admin-api.json).
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
