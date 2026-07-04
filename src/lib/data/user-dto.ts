@@ -167,3 +167,61 @@ export async function deleteUsers(ids: string[]) {
 
   return payload;
 }
+
+// The functions below are for the API-key authenticated Admin API
+// (see src/lib/admin-api-auth.ts). They intentionally skip the NextAuth
+// session/role checks above, since the route handlers calling them already
+// gate access via the admin API key.
+
+export async function adminGetAllUsers(opts?: { email?: string }): Promise<UserDTO[]> {
+  const users = await prisma.user.findMany({
+    where: opts?.email ? { email: { contains: opts.email, mode: "insensitive" } } : undefined,
+  });
+
+  return users.map(prismaUserToDTO);
+}
+
+export async function adminGetUser(id: string): Promise<UserDTO | null> {
+  const user = await prisma.user.findUnique({
+    where: { id },
+  });
+
+  return user ? prismaUserToDTO(user) : null;
+}
+
+export async function adminCreateUser(data: {
+  email: string;
+  name: string;
+}): Promise<UserDTO> {
+  const user = await prisma.user.create({
+    data: {
+      email: data.email,
+      name: data.name,
+    },
+  });
+
+  return prismaUserToDTO(user);
+}
+
+export async function adminUpdateUser(id: string, data: {
+  email: string;
+  name: string;
+}): Promise<UserDTO> {
+  const user = await prisma.user.update({
+    where: { id },
+    data: {
+      email: data.email,
+      name: data.name,
+    },
+  });
+
+  return prismaUserToDTO(user);
+}
+
+export async function adminDeleteUser(id: string): Promise<UserDTO> {
+  const user = await prisma.user.delete({
+    where: { id },
+  });
+
+  return prismaUserToDTO(user);
+}
