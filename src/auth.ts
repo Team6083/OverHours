@@ -30,6 +30,12 @@ declare module "next-auth/jwt" {
   }
 }
 
+function getRolesFromAccessToken(accessToken: string): string[] {
+  const payload = JSON.parse(Buffer.from(accessToken.split(".")[1], "base64url").toString());
+
+  return Array.isArray(payload?.realm_access?.roles) ? payload.realm_access.roles : [];
+}
+
 function getNameFromProfile(profile: Profile): string | undefined {
   const familyName = profile?.family_name;
   const givenName = profile?.given_name;
@@ -109,14 +115,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
         token.userId = dbUser.id;
 
-        if (profile && Array.isArray(profile.roles)) {
-          const roles = profile.roles;
-
-          if (roles.includes('admin')) {
-            token.role = "admin";
-          }
-        }
-
         token.accessToken = account.access_token;
         token.accessTokenExpiresAt = account.expires_at;
         token.refreshToken = account.refresh_token;
@@ -142,9 +140,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           console.error("Error refreshing access_token", error);
-          return null;
         }
       }
+
+      token.role = getRolesFromAccessToken(token.accessToken).includes("admin") ? "admin" : "user";
 
       return token;
     },
