@@ -3,11 +3,12 @@ import * as z from "zod";
 
 import { verifyAdminApiKey } from "@/lib/admin-api-auth";
 import { adminCreateTimeLog, adminGetAllTimeLogs } from "@/lib/data/timelog-dto";
+import { objectIdSchema } from "@/lib/objectid";
 
 const statusSchema = z.enum(["CURRENTLY_IN", "DONE", "LOCKED"]);
 
 const createSchema = z.object({
-  userId: z.string().trim().nonempty(),
+  userId: objectIdSchema,
   status: statusSchema,
   inTime: z.iso.datetime().transform(v => new Date(v)),
   outTime: z.iso.datetime().transform(v => new Date(v)).optional(),
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
   const querySchema = z.object({
-    userId: z.string().trim().nonempty().optional(),
+    userId: objectIdSchema.optional(),
     status: statusSchema.optional(),
     startTime: z.iso.datetime().transform(v => new Date(v)).optional(),
     endTime: z.iso.datetime().transform(v => new Date(v)).optional(),

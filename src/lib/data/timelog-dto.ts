@@ -610,8 +610,8 @@ export async function adminUpdateTimeLog(timeLogId: string, data: {
       userId: data.userId,
       status,
       inTime: data.inTime,
-      outTime: data.outTime,
-      notes: data.notes,
+      outTime: data.outTime ?? null,
+      notes: data.notes ?? null,
     },
   });
 

@@ -3,9 +3,10 @@ import * as z from "zod";
 
 import { verifyAdminApiKey } from "@/lib/admin-api-auth";
 import { adminDeleteTimeLog, adminGetTimeLog, adminUpdateTimeLog } from "@/lib/data/timelog-dto";
+import { objectIdSchema } from "@/lib/objectid";
 
 const updateSchema = z.object({
-  userId: z.string().trim().nonempty(),
+  userId: objectIdSchema,
   status: z.enum(["CURRENTLY_IN", "DONE", "LOCKED"]),
   inTime: z.iso.datetime().transform(v => new Date(v)),
   outTime: z.iso.datetime().transform(v => new Date(v)).optional(),
@@ -21,11 +22,19 @@ function isKnownValidationError(e: unknown): e is Error {
   );
 }
 
+function invalidIdResponse() {
+  return NextResponse.json({ error: "Invalid id format" }, { status: 400 });
+}
+
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
   const { id } = await params;
+  if (!objectIdSchema.safeParse(id).success) {
+    return invalidIdResponse();
+  }
+
   const timeLog = await adminGetTimeLog(id);
 
   if (!timeLog) {
@@ -40,6 +49,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!objectIdSchema.safeParse(id).success) {
+    return invalidIdResponse();
+  }
 
   let body: unknown;
   try {
@@ -62,8 +74,14 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: e.message }, { status: 400 });
     }
 
-    if (e instanceof Error && "code" in e && (e as { code: string }).code === "P2025") {
-      return NextResponse.json({ error: "Time log not found" }, { status: 404 });
+    if (e instanceof Error && "code" in e) {
+      const code = (e as { code: string }).code;
+      if (code === "P2025") {
+        return NextResponse.json({ error: "Time log not found" }, { status: 404 });
+      }
+      if (code === "P2023") {
+        return invalidIdResponse();
+      }
     }
 
     throw e;
@@ -75,13 +93,22 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!objectIdSchema.safeParse(id).success) {
+    return invalidIdResponse();
+  }
 
   try {
     const timeLog = await adminDeleteTimeLog(id);
     return NextResponse.json({ data: timeLog });
   } catch (e) {
-    if (e instanceof Error && "code" in e && (e as { code: string }).code === "P2025") {
-      return NextResponse.json({ error: "Time log not found" }, { status: 404 });
+    if (e instanceof Error && "code" in e) {
+      const code = (e as { code: string }).code;
+      if (code === "P2025") {
+        return NextResponse.json({ error: "Time log not found" }, { status: 404 });
+      }
+      if (code === "P2023") {
+        return invalidIdResponse();
+      }
     }
 
     throw e;
