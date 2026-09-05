@@ -21,8 +21,6 @@ export default withSentryConfig(nextConfigWithIntl, {
   // Only print logs for uploading source maps in CI
   // Set to `true` to suppress logs
   silent: !process.env.CI,
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
   // Pass the auth token
   authToken: process.env.SENTRY_AUTH_TOKEN,
   // Upload a larger set of source maps for prettier stack traces (increases build time)
@@ -30,9 +28,17 @@ export default withSentryConfig(nextConfigWithIntl, {
 
   tunnelRoute: true,
 
-  reactComponentAnnotation: {
-    enabled: true,
+  // NOTE: these webpack-specific options are not supported when building with
+  // Turbopack (as this project does) — they're kept here for when webpack is
+  // used (e.g. a future/fallback build), but currently are no-ops.
+  webpack: {
+    // Automatically tree-shake Sentry logger statements to reduce bundle size
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    reactComponentAnnotation: {
+      enabled: true,
+    },
+    automaticVercelMonitors: true,
   },
-
-  automaticVercelMonitors: true,
 });
