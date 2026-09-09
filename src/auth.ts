@@ -24,11 +24,30 @@ declare module "next-auth/jwt" {
     userId: string;
     role: string;
 
-    idToken?: string;
     accessToken: string;
     accessTokenExpiresAt: number;
     refreshToken?: string;
   }
+}
+
+// Dot-separated path into the access token payload where the roles array lives, e.g.
+// "realm_access.roles" for a realm role, or "resource_access.<client-id>.roles" for a client role.
+const ROLES_CLAIM_PATH = process.env.AUTH_KEYCLOAK_ROLES_CLAIM || "realm_access.roles";
+
+function getClaimByPath(payload: unknown, path: string): unknown {
+  return path.split(".").reduce<unknown>((value, key) => {
+    if (value && typeof value === "object" && key in value) {
+      return (value as Record<string, unknown>)[key];
+    }
+    return undefined;
+  }, payload);
+}
+
+function getRolesFromAccessToken(accessToken: string): string[] {
+  const payload = JSON.parse(Buffer.from(accessToken.split(".")[1], "base64url").toString());
+
+  const roles = getClaimByPath(payload, ROLES_CLAIM_PATH);
+  return Array.isArray(roles) ? roles : [];
 }
 
 function getNameFromProfile(profile: Profile): string | undefined {
@@ -110,41 +129,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
         token.userId = dbUser.id;
 
-        if (profile && Array.isArray(profile.roles)) {
-          const roles = profile.roles;
-
-          if (roles.includes('admin')) {
-            token.role = "admin";
-          }
-        }
-
-        token.idToken = account.id_token;
         token.accessToken = account.access_token;
         token.accessTokenExpiresAt = account.expires_at;
         token.refreshToken = account.refresh_token;
-
-        return token;
       }
 
-      if (token.accessTokenExpiresAt && Date.now() < token.accessTokenExpiresAt * 1000) {
-        return token;
+      if (token.accessTokenExpiresAt && Date.now() / 1000 > token.accessTokenExpiresAt) {
+        // Access token has expired
+
+        if (!token.refreshToken) {
+          return null;
+        }
+
+        // Refresh the access token
+        try {
+          const tokensOrError = await refreshAccessToken(token.refreshToken);
+
+          token.accessToken = tokensOrError.access_token;
+          token.accessTokenExpiresAt = Math.floor(Date.now() / 1000 + tokensOrError.expires_in);
+          token.refreshToken = tokensOrError.refresh_token || token.refreshToken;
+        } catch (error) {
+          if (typeof error === 'object' && error !== null && 'error' in error && error.error === 'invalid_grant') {
+            return null;
+          }
+
+          console.error("Error refreshing access_token", error);
+        }
       }
 
-      if (!token.refreshToken) {
-        return null;
-      }
-
-      // Refresh the access token
-      try {
-        const tokensOrError = await refreshAccessToken(token.refreshToken);
-
-        token.accessToken = tokensOrError.access_token;
-        token.accessTokenExpiresAt = Math.floor(Date.now() / 1000 + tokensOrError.expires_in);
-        token.refreshToken = tokensOrError.refresh_token || token.refreshToken;
-        if (tokensOrError.id_token) token.idToken = tokensOrError.id_token;
-      } catch {
-        return null;
-      }
+      token.role = getRolesFromAccessToken(token.accessToken).includes("admin") ? "admin" : "user";
 
       return token;
     },
@@ -159,19 +172,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
       return session;
-    },
-    redirect({ url, baseUrl }) {
-      const issuer = process.env.AUTH_KEYCLOAK_ISSUER;
-      if (issuer && url.startsWith(`${issuer}/protocol/openid-connect/logout`)) {
-        return url;
-      }
-      if (url.startsWith('/')) return `${baseUrl}${url}`;
-      try {
-        if (new URL(url).origin === baseUrl) return url;
-      } catch {
-        // ignore invalid URL, fall through to baseUrl
-      }
-      return baseUrl;
     },
   },
 });
