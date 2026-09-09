@@ -30,10 +30,24 @@ declare module "next-auth/jwt" {
   }
 }
 
+// Dot-separated path into the access token payload where the roles array lives, e.g.
+// "realm_access.roles" for a realm role, or "resource_access.<client-id>.roles" for a client role.
+const ROLES_CLAIM_PATH = process.env.AUTH_KEYCLOAK_ROLES_CLAIM || "realm_access.roles";
+
+function getClaimByPath(payload: unknown, path: string): unknown {
+  return path.split(".").reduce<unknown>((value, key) => {
+    if (value && typeof value === "object" && key in value) {
+      return (value as Record<string, unknown>)[key];
+    }
+    return undefined;
+  }, payload);
+}
+
 function getRolesFromAccessToken(accessToken: string): string[] {
   const payload = JSON.parse(Buffer.from(accessToken.split(".")[1], "base64url").toString());
 
-  return Array.isArray(payload?.realm_access?.roles) ? payload.realm_access.roles : [];
+  const roles = getClaimByPath(payload, ROLES_CLAIM_PATH);
+  return Array.isArray(roles) ? roles : [];
 }
 
 function getNameFromProfile(profile: Profile): string | undefined {
