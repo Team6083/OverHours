@@ -33,7 +33,14 @@ declare module "next-auth/jwt" {
 function getRolesFromAccessToken(accessToken: string): string[] {
   const payload = JSON.parse(Buffer.from(accessToken.split(".")[1], "base64url").toString());
 
-  return Array.isArray(payload?.realm_access?.roles) ? payload.realm_access.roles : [];
+  const realmRoles = Array.isArray(payload?.realm_access?.roles) ? payload.realm_access.roles : [];
+
+  const clientId = process.env.AUTH_KEYCLOAK_ID;
+  const clientRoles = clientId && Array.isArray(payload?.resource_access?.[clientId]?.roles)
+    ? payload.resource_access[clientId].roles
+    : [];
+
+  return [...realmRoles, ...clientRoles];
 }
 
 function getNameFromProfile(profile: Profile): string | undefined {
