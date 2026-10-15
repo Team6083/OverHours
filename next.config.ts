@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 import createNextIntlPlugin from 'next-intl/plugin';
 
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -36,9 +36,10 @@ export default withSentryConfig(nextConfigWithIntl, {
     treeshake: {
       removeDebugLogging: true,
     },
-    reactComponentAnnotation: {
-      enabled: true,
-    },
     automaticVercelMonitors: true,
+  },
+
+  reactComponentAnnotation: {
+    enabled: true,
   },
 });
