@@ -28,9 +28,11 @@ export default withSentryConfig(nextConfigWithIntl, {
 
   tunnelRoute: true,
 
-  // NOTE: these webpack-specific options are not supported when building with
+  // NOTE: the options under `webpack` are not supported when building with
   // Turbopack (as this project does) — they're kept here for when webpack is
   // used (e.g. a future/fallback build), but currently are no-ops.
+  // `reactComponentAnnotation` below is top-level, so it applies to both bundlers
+  // (adds `data-sentry-*` attributes to React elements).
   webpack: {
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     treeshake: {
