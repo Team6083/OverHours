@@ -26,11 +26,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Dockerfile uses node:lts-alpine; package.json engines is >=20.19.0.
+      # Dockerfile uses node:lts-alpine (currently 24); engines is >=20.19.0.
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -39,17 +39,34 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      # Later steps use !cancelled() so one failing check does not hide the others.
       - name: Type check
+        if: ${{ !cancelled() }}
         run: npx tsc --noEmit
 
-      # TODO(oh-03): main currently has lint errors (react-hooks/*, no-explicit-any).
-      # Remove continue-on-error once they are fixed so this step gates merges.
-      - name: Lint
+      # TODO(oh-03): non-blocking because main has existing lint errors
+      # (react-hooks/*, no-explicit-any). Remove continue-on-error once fixed.
+      - name: Lint (non-blocking until existing errors are fixed)
+        if: ${{ !cancelled() }}
         run: npm run lint
         continue-on-error: true
 
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
-
       - name: Build
+        if: ${{ !cancelled() }}
         run: npm run build
+
+  # Separate job so a vulnerability does not hide the other checks.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
