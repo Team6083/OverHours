@@ -11,11 +11,15 @@ const ERRORS: Record<string, { title: string; description: string }> = {
     title: "Email not verified",
     description: "Your email address must be verified before you can sign in.",
   },
+  VerificationUnavailable: {
+    title: "Sign-in unavailable",
+    description: "Your sign-in could not be verified right now. Please try again in a moment.",
+  },
 };
 
 export default async function AuthErrorPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
-  const { title, description } = (error && ERRORS[error]) || {
+  const { title, description } = (error && Object.hasOwn(ERRORS, error) && ERRORS[error]) || {
     title: "Sign-in failed",
     description: "Something went wrong while signing you in.",
   };

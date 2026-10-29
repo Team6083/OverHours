@@ -34,6 +34,15 @@ client's `resource_access.<client>.roles`.
 | --------------- | ------- | ------- |
 | `ADMIN_ROLES`   | `admin` | Users with any of these roles are admins. Unset or blank falls back to the realm role `admin`. |
 | `ALLOWED_ROLES` | unset   | If set, users with none of these roles (and who are not admins) are refused with a "No access" page. If unset, every authenticated user is allowed. Admins are always allowed. |
+| `AUTH_KEYCLOAK_ALGORITHMS` | `RS256` | Accepted access token signature algorithms (comma-separated). |
+| `AUTH_KEYCLOAK_ROLES_CLAIM` | unset | Legacy. When set, roles are read ONLY from this dot-separated claim path (plain role names, e.g. `resource_access.overhours.roles`), replacing the realm + client lookup above. |
+
+If Keycloak cannot be reached to verify a token (JWKS fetch failure), the user keeps their previous role and
+verification is retried on the next request; only an invalid token (bad signature, `iss`, `exp`, `azp`) drops roles.
+
+Not verified against a real Keycloak: the sign-out cookie lookup picks the secure or plain Auth.js cookie name from
+`AUTH_URL` or `x-forwarded-proto`; if neither is set correctly behind a proxy, sign-out still clears the local session
+but falls back to `client_id` instead of `id_token_hint`.
 
 Signing out also ends the Keycloak SSO session (redirect to the realm's `end_session` endpoint with
 `id_token_hint` and `post_logout_redirect_uri`). The app origin (`AUTH_URL`, or the request origin) must be

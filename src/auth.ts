@@ -38,13 +38,43 @@ declare module "next-auth/jwt" {
   }
 }
 
-// Optional legacy setting: dot-separated path into the access token payload of an extra roles array.
-// Roles found there are treated as plain role names in addition to realm and client roles.
+// Optional legacy setting: dot-separated path into the access token payload of the roles array.
+// When set it REPLACES the default realm + client role lookup (as before ADMIN_ROLES existed).
 const LEGACY_ROLES_CLAIM_PATH = process.env.AUTH_KEYCLOAK_ROLES_CLAIM || undefined;
+
+// Accepted access token signature algorithms (Keycloak realms default to RS256).
+const TOKEN_ALGORITHMS = parseRoleList(process.env.AUTH_KEYCLOAK_ALGORITHMS).length > 0
+  ? parseRoleList(process.env.AUTH_KEYCLOAK_ALGORITHMS)
+  : ["RS256"];
+
+const CLOCK_TOLERANCE_SEC = 10;
 
 const keycloakIssuer = () => process.env.AUTH_KEYCLOAK_ISSUER!;
 
 let jwks: ReturnType<typeof createRemoteJWKSet> | undefined;
+
+class InvalidAccessTokenError extends Error {
+  code = "ACCESS_TOKEN_AZP_MISMATCH";
+}
+
+// jose errors meaning the token itself is bad. Anything else (JWKS fetch failure or timeout, network
+// errors) is treated as transient: it says nothing about the token.
+const INVALID_TOKEN_ERROR_CODES = new Set([
+  "ACCESS_TOKEN_AZP_MISMATCH",
+  "ERR_JWT_CLAIM_VALIDATION_FAILED",
+  "ERR_JWT_EXPIRED",
+  "ERR_JOSE_ALG_NOT_ALLOWED",
+  "ERR_JOSE_NOT_SUPPORTED",
+  "ERR_JWS_INVALID",
+  "ERR_JWT_INVALID",
+  "ERR_JWS_SIGNATURE_VERIFICATION_FAILED",
+  "ERR_JWKS_NO_MATCHING_KEY",
+  "ERR_JWKS_MULTIPLE_MATCHING_KEYS",
+]);
+
+// Only the error code/name is logged: error objects can carry token claims (email, sub).
+const describeError = (error: unknown) =>
+  (error as { code?: string } | null)?.code ?? (error as Error | null)?.name ?? "unknown";
 
 /**
  * Verifies the access token (signature via the issuer's JWKS, `iss`, `exp`, and `azp` equal to our
@@ -53,29 +83,47 @@ let jwks: ReturnType<typeof createRemoteJWKSet> | undefined;
 async function getVerifiedRoles(accessToken: string): Promise<string[]> {
   jwks ??= createRemoteJWKSet(new URL(`${keycloakIssuer()}/protocol/openid-connect/certs`));
 
-  const { payload } = await jwtVerify(accessToken, jwks, { issuer: keycloakIssuer() });
+  const { payload } = await jwtVerify(accessToken, jwks, {
+    issuer: keycloakIssuer(),
+    algorithms: TOKEN_ALGORITHMS,
+    clockTolerance: CLOCK_TOLERANCE_SEC,
+  });
   if (payload.azp !== process.env.AUTH_KEYCLOAK_ID) {
-    throw new Error("Access token was not issued to this client (azp mismatch)");
+    throw new InvalidAccessTokenError("Access token was not issued to this client (azp mismatch)");
   }
 
   return extractRoles(payload, LEGACY_ROLES_CLAIM_PATH);
 }
 
-/** Resolves the app role and whether the user may use the app at all. Fails closed on verification errors. */
-async function resolveAccess(accessToken: string): Promise<{ role: Role; allowed: boolean }> {
+let warnedEmptyAdminRoles = false;
+
+/**
+ * Resolves the app role and whether the user may use the app at all.
+ * An invalid token fails closed (no roles). Returns null when verification could not be performed
+ * (e.g. Keycloak unreachable), in which case callers must keep the previous state and retry later.
+ */
+async function resolveAccess(accessToken: string): Promise<{ role: Role; allowed: boolean } | null> {
   let roles: string[];
   try {
     roles = await getVerifiedRoles(accessToken);
   } catch (error) {
-    console.error("Failed to verify access token, treating user as having no roles", error);
-    roles = [];
+    const code = describeError(error);
+    if (INVALID_TOKEN_ERROR_CODES.has(code)) {
+      console.error(`Access token rejected (${code}), treating user as having no roles`);
+      roles = [];
+    } else {
+      console.error(`Could not verify access token (${code}), keeping previous roles`);
+      return null;
+    }
   }
 
-  const { isAdmin, allowed } = evaluateAccess(
-    roles,
-    parseAdminRoles(process.env.ADMIN_ROLES),
-    parseRoleList(process.env.ALLOWED_ROLES),
-  );
+  const adminRoles = parseAdminRoles(process.env.ADMIN_ROLES);
+  if (!warnedEmptyAdminRoles && process.env.ADMIN_ROLES && parseRoleList(process.env.ADMIN_ROLES).length === 0) {
+    warnedEmptyAdminRoles = true;
+    console.warn(`ADMIN_ROLES is set but contains no roles, falling back to "${adminRoles.join(",")}"`);
+  }
+
+  const { isAdmin, allowed } = evaluateAccess(roles, adminRoles, parseRoleList(process.env.ALLOWED_ROLES));
   return { role: isAdmin ? Role.ADMIN : Role.USER, allowed };
 }
 
@@ -123,7 +171,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return '/auth/error?error=EmailNotVerified';
       }
 
-      if (!account.access_token || !(await resolveAccess(account.access_token)).allowed) {
+      if (!account.access_token) {
+        return '/auth/error?error=MissingRole';
+      }
+
+      const access = await resolveAccess(account.access_token);
+      if (!access) {
+        return '/auth/error?error=VerificationUnavailable';
+      }
+      if (!access.allowed) {
         return '/auth/error?error=MissingRole';
       }
 
@@ -186,6 +242,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.accessTokenExpiresAt = Math.floor(Date.now() / 1000 + tokensOrError.expires_in);
           token.refreshToken = tokensOrError.refresh_token || token.refreshToken;
           token.idToken = tokensOrError.id_token || token.idToken;
+          token.rolesVerified = false;
           accessTokenChanged = true;
         } catch (error) {
           if (typeof error === 'object' && error !== null && 'error' in error && error.error === 'invalid_grant') {
@@ -199,14 +256,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Roles only change with the access token, so verify and re-derive them only when it is new
       // (sign-in, refresh) or the session predates verified roles.
       if (accessTokenChanged) {
-        const { role, allowed } = await resolveAccess(token.accessToken);
-        if (!allowed) {
-          // Lost the role required by ALLOWED_ROLES: end the session.
-          return null;
-        }
+        const access = await resolveAccess(token.accessToken);
+        if (access) {
+          if (!access.allowed) {
+            // Lost the role required by ALLOWED_ROLES: end the session.
+            return null;
+          }
 
-        token.role = role;
-        token.rolesVerified = true;
+          token.role = access.role;
+          token.rolesVerified = true;
+        } else {
+          // Verification unavailable: keep the previous role (least privilege if there is none) and
+          // leave rolesVerified false so the next callback retries.
+          token.role ??= Role.USER;
+        }
       }
 
       return token;

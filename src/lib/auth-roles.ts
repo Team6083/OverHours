@@ -35,9 +35,14 @@ function toStringArray(value: unknown): string[] {
 /**
  * Union of realm roles (`realm_access.roles`) and client roles
  * (`resource_access.<client>.roles`, returned as `client:role`).
- * `extraClaimPath` is the legacy AUTH_KEYCLOAK_ROLES_CLAIM setting; roles found there count as plain names.
+ * If `claimPath` (the legacy AUTH_KEYCLOAK_ROLES_CLAIM setting) is given, only the plain role names at
+ * that path are returned instead.
  */
-export function extractRoles(payload: unknown, extraClaimPath?: string): string[] {
+export function extractRoles(payload: unknown, claimPath?: string): string[] {
+  if (claimPath) {
+    return toStringArray(getClaimByPath(payload, claimPath));
+  }
+
   const roles = new Set<string>(toStringArray(getClaimByPath(payload, "realm_access.roles")));
 
   const resourceAccess = getClaimByPath(payload, "resource_access");
@@ -46,12 +51,6 @@ export function extractRoles(payload: unknown, extraClaimPath?: string): string[
       for (const role of toStringArray((access as { roles?: unknown } | null)?.roles)) {
         roles.add(`${client}:${role}`);
       }
-    }
-  }
-
-  if (extraClaimPath) {
-    for (const role of toStringArray(getClaimByPath(payload, extraClaimPath))) {
-      roles.add(role);
     }
   }
 
