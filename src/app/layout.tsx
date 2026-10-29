@@ -17,6 +17,7 @@ import { ColorModeButton } from "@/components/ui/color-mode";
 import { Provider } from "@/components/ui/provider"
 import { Toaster } from "@/components/ui/toaster";
 import AppVersionBadge from "@/components/AppVersionBadge";
+import { getOrgName } from "@/lib/config";
 import DrawerNavLink from "./_components/DrawerNavLink";
 
 const geistSans = Geist({
@@ -29,16 +30,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "OverHours",
-  description: "Time and Attendance System for CMS Robotics Team",
-};
+export function generateMetadata(): Metadata {
+  const orgName = getOrgName();
+  return {
+    title: "OverHours",
+    description: orgName ? `Time and Attendance System for ${orgName}` : "Time and Attendance System",
+  };
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const orgName = getOrgName();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
@@ -46,15 +52,14 @@ export default function RootLayout({
           <Provider> {/* Chakra-UI provider */}
             <SessionProvider> {/* Auth.js provider, for useSession() hook */}
               <Container maxWidth="5xl" fluid p={4} my={2}>
-                <NavBar mb={4} />
+                <NavBar mb={4} orgName={orgName} />
                 {children}
               </Container>
               <footer>
                 <Container maxWidth="5xl" fluid mb={8} textAlign={{ smDown: "center" }}>
                   <Stack flexDir={{ base: "column", sm: "row" }} justifyContent="space-between">
                     <Text as="span" fontSize="xs" color="fg.muted" textAlign={{ sm: "left" }}>
-                      © 2025 CMS Robotics 協同機器人團隊
-                      <br />
+                      {orgName && <>© 2025 {orgName}<br /></>}
                       Made with ❤️ and way too many commits{" "}
                       <Text as="span" whiteSpace="nowrap">(fueled by ☕️)</Text>
                     </Text>
@@ -72,9 +77,9 @@ export default function RootLayout({
 }
 
 async function NavBar(props: {
-
+  orgName: string;
 } & Omit<ComponentProps<typeof Box>, "children">) {
-  const { ...boxProps } = props;
+  const { orgName, ...boxProps } = props;
   const t = await getTranslations("AppNav");
 
   const session = await auth();
@@ -101,9 +106,9 @@ async function NavBar(props: {
         <Stack gap={0}>
           <Heading as="h1" size="xl" display="flex" alignItems="center">
             <Link href="/">OverHours</Link>
-            <Box as="span" fontSize="md" ml={2} fontWeight="normal" hideBelow="md">CMS Robotics</Box>
+            {orgName && <Box as="span" fontSize="md" ml={2} fontWeight="normal" hideBelow="md">{orgName}</Box>}
           </Heading>
-          <Box as="span" fontSize="xs" fontWeight="normal" hideFrom="md">CMS Robotics</Box>
+          {orgName && <Box as="span" fontSize="xs" fontWeight="normal" hideFrom="md">{orgName}</Box>}
         </Stack>
 
         <Suspense>
