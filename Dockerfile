@@ -1,6 +1,6 @@
 # syntax=docker.io/docker/dockerfile:1
 
-FROM node:lts-alpine AS base
+FROM node:26-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -78,15 +78,20 @@ ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Run as a numeric, non-root UID:GID (65532) so Kubernetes `runAsNonRoot` can verify it.
+RUN addgroup -S -g 65532 nodejs && adduser -S -u 65532 -G nodejs nextjs
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# App files stay root-owned (read-only for the runtime user)
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-USER nextjs
+# Next.js writes its runtime cache (image optimization, fetch cache) to .next/cache;
+# this is the only directory the runtime user needs to write to
+RUN mkdir -p .next/cache && chown 65532:65532 .next/cache
+
+USER 65532:65532
 
 EXPOSE 3000
 
