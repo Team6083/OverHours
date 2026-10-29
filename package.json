@@ -16,7 +16,7 @@
     "@emotion/react": "^11.14.0",
     "@prisma/client": "^6.16.0",
     "@sentry/nextjs": "^11.8.0",
-    "memoize": "^10.2.0",
+    "memoize": "^11.0.0",
     "next": "^16.3.8",
     "next-auth": "^5.0.0-beta.32",
     "next-intl": "^4.9.2",
