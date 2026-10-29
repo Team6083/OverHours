@@ -68,5 +68,9 @@ jobs:
         with:
           node-version: 24
 
+      # peer/optional are omitted because the prisma CLI chain (deepmerge-ts via
+      # @prisma/config) enters the tree only as @prisma/client's optional peer and
+      # is build-time only (Dockerfile builder stage), not shipped. The Prisma 7
+      # upgrade that removes it is tracked separately.
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        run: npm audit --omit=dev --omit=peer --omit=optional --audit-level=high
