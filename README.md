@@ -52,3 +52,16 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Health checks
+
+| Endpoint | Purpose | Behaviour |
+| --- | --- | --- |
+| `GET /api/healthz` | Liveness | Always `200 {"status":"ok"}` while the process runs. No dependency checks. |
+| `GET /api/readyz` | Readiness | `200 {"status":"ok"}` when MongoDB answers a ping within 2 seconds; otherwise `503` (`{"status":"unavailable"}`, or `{"status":"shutting_down"}` after SIGTERM). |
+
+Both endpoints are unauthenticated, return JSON without internal details and are sent with `Cache-Control: no-store`.
+
+On Kubernetes, use `/api/healthz` for the liveness probe and `/api/readyz` for the readiness probe.
+
+On `SIGTERM`, `/api/readyz` starts returning `503` immediately. Next.js's standalone server then stops accepting new connections, lets in-flight requests finish and exits.
