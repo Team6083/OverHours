@@ -2,7 +2,7 @@
 import Link from "next/link";
 
 import { Button, ButtonGroup, Clipboard, Icon, IconButton, Link as ChakraLink, CloseButton, Dialog, Portal, Text, HStack, Badge } from "@chakra-ui/react";
-import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuPen, LuTrash2, LuUserPlus } from "react-icons/lu";
+import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuMerge, LuPen, LuTrash2, LuUserPlus } from "react-icons/lu";
 
 import GenericTable, { Column } from "@/components/GenericTable";
 import { UserDTO } from "@/lib/data/user-dto";
@@ -134,6 +134,13 @@ export default function UsersTable(props: {
         <Dialog.Root size="lg">
 
           <ButtonGroup size="xs" variant="outline">
+            <Button disabled={selection.length < 2} asChild={selection.length >= 2}>
+              {selection.length >= 2
+                ? <Link href={`/admin/users/merge?ids=${selection.join(",")}`}>
+                  <Icon><LuMerge /></Icon> Merge selected
+                </Link>
+                : <><Icon><LuMerge /></Icon> Merge selected</>}
+            </Button>
             <Dialog.Trigger asChild>
               <Button colorPalette="red">
                 <Icon><LuTrash2 /></Icon> Delete selected
