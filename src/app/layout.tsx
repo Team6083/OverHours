@@ -1,6 +1,7 @@
 import { ComponentProps, Suspense } from "react";
 
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 
@@ -41,18 +42,20 @@ export function generateMetadata(): Metadata {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const orgName = getOrgName();
+  // Set by src/proxy.ts; next-themes' inline script needs it to run under the CSP.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <NextIntlClientProvider>
-          <Provider> {/* Chakra-UI provider */}
+          <Provider nonce={nonce}> {/* Chakra-UI provider */}
             <SessionProvider> {/* Auth.js provider, for useSession() hook */}
               <Container maxWidth="5xl" fluid p={4} my={2}>
                 <NavBar mb={4} orgName={orgName} />

@@ -58,6 +58,7 @@ Variables are read at runtime unless noted otherwise.
 | `NEXT_PUBLIC_VERSION` | No | Version shown in the footer badge. Inlined at build time. |
 | `NEXT_PUBLIC_COMMIT_SHA` | No | Commit shown in the footer badge when no version is set. Inlined at build time. |
 | `NEXT_PUBLIC_BUILD_DATE` | No | Build date shown next to the commit. Inlined at build time. |
+| `CSP_REPORT_ONLY` | No | Set to `true` to send the CSP as `Content-Security-Policy-Report-Only` (violations are logged in the browser console, nothing is blocked). See [Security headers](#security-headers). |
 
 `AUTH_SECRET` and `AUTH_TRUST_HOST` are Auth.js settings; see the
 [Auth.js deployment guide](https://authjs.dev/getting-started/deployment) for details.
@@ -106,6 +107,29 @@ anyone out) that does the same without needing a session: it clears any Auth.js 
 Keycloak session with `client_id` instead of `id_token_hint`, so Keycloak shows its logout confirmation page. This
 lets a refused user switch accounts instead of being silently signed in again. It lands on the app origin, which
 is not auto-redirected to sign-in for anonymous users, so no additional redirect URI needs registering.
+
+## Security headers
+
+Every response carries (set in `next.config.ts`, so API routes, static assets, error pages and the health endpoints included):
+
+| Header | Value |
+| --- | --- |
+| `X-App-Version` | `NEXT_PUBLIC_VERSION` (the git tag, e.g. `v2.1.0`) |
+| `X-App-Commit` | `NEXT_PUBLIC_COMMIT_SHA` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `X-Frame-Options` | `DENY` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
+
+`X-App-*` values are fixed at build time from the Docker build args; a header whose value was not set (local development) is omitted. HSTS is not set by the app; set it at the edge.
+
+HTML responses also get a per-request `Content-Security-Policy` with a fresh nonce, built in `src/lib/csp.ts` and set by `src/proxy.ts` (pages are rendered dynamically, which nonces require). Scripts are limited to `'self'`, the nonce and the Cloudflare beacon host; `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'none'`, `form-action` allows `'self'` and the Keycloak origin from `AUTH_KEYCLOAK_ISSUER`. `'unsafe-eval'` is added outside production only and `upgrade-insecure-requests` in production only (so a production build served over plain `http://` needs `CSP_REPORT_ONLY=true`). Notes:
+
+- `'strict-dynamic'` is deliberately not used: it makes browsers ignore host sources, which would block the script Cloudflare injects (it has no nonce).
+- Cloudflare Web Analytics: `https://static.cloudflareinsights.com` is allowed in `script-src` and `https://cloudflareinsights.com` in `connect-src` (constants at the top of `src/lib/csp.ts`). Any other inline script Cloudflare injects (for example Rocket Loader) cannot carry our nonce and is blocked.
+- `style-src` allows `'unsafe-inline'`: Chakra UI/emotion inject `<style>` tags and inline style attributes that cannot be nonced cleanly.
+- `img-src` allows `https:` because user avatars come from the Keycloak `picture` claim. Sentry uses the same-origin tunnel route, so it needs no extra host.
+- To roll out or debug, set `CSP_REPORT_ONLY=true`: the same policy is sent as `Content-Security-Policy-Report-Only`, which does not block anything.
 
 ## Health checks
 
