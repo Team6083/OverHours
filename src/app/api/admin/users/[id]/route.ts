@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 
+import { apiError, withApiErrors } from "@/lib/api-error";
 import { verifyAdminApiKey } from "@/lib/admin-api-auth";
 import { adminDeleteUser, adminGetUser, adminUpdateUser } from "@/lib/data/user-dto";
 import { objectIdSchema } from "@/lib/objectid";
@@ -13,10 +14,10 @@ const updateSchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> };
 
 function invalidIdResponse() {
-  return NextResponse.json({ error: "Invalid id format" }, { status: 400 });
+  return apiError("invalid_request", "Invalid id format");
 }
 
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export const GET = withApiErrors(async (req: NextRequest, { params }: RouteParams) => {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
@@ -28,13 +29,13 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const user = await adminGetUser(id);
 
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return apiError("not_found", "User not found");
   }
 
   return NextResponse.json({ data: user });
-}
+});
 
-export async function PUT(req: NextRequest, { params }: RouteParams) {
+export const PUT = withApiErrors(async (req: NextRequest, { params }: RouteParams) => {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
@@ -47,7 +48,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return apiError("invalid_request", "Invalid JSON body");
   }
 
   try {
@@ -57,16 +58,16 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ data: user });
   } catch (e) {
     if (e instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation failed", issues: e.issues }, { status: 400 });
+      return apiError("invalid_request", "Validation failed", e.issues);
     }
 
     if (e instanceof Error && "code" in e) {
       const code = (e as { code: string }).code;
       if (code === "P2025") {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
+        return apiError("not_found", "User not found");
       }
       if (code === "P2002") {
-        return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
+        return apiError("conflict", "A user with this email already exists");
       }
       if (code === "P2023") {
         return invalidIdResponse();
@@ -75,9 +76,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     throw e;
   }
-}
+});
 
-export async function DELETE(req: NextRequest, { params }: RouteParams) {
+export const DELETE = withApiErrors(async (req: NextRequest, { params }: RouteParams) => {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
@@ -93,7 +94,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     if (e instanceof Error && "code" in e) {
       const code = (e as { code: string }).code;
       if (code === "P2025") {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
+        return apiError("not_found", "User not found");
       }
       if (code === "P2023") {
         return invalidIdResponse();
@@ -102,4 +103,4 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     throw e;
   }
-}
+});

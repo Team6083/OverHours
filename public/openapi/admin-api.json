@@ -50,6 +50,7 @@
             }
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       },
@@ -82,6 +83,7 @@
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       }
@@ -113,8 +115,10 @@
               }
             }
           },
+          "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       },
@@ -148,6 +152,7 @@
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       },
@@ -169,8 +174,10 @@
               }
             }
           },
+          "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       }
@@ -227,6 +234,7 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       },
@@ -258,6 +266,7 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       }
@@ -289,8 +298,10 @@
               }
             }
           },
+          "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       },
@@ -323,6 +334,7 @@
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       },
@@ -344,8 +356,10 @@
               }
             }
           },
+          "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       }
@@ -438,11 +452,29 @@
       },
       "Error": {
         "type": "object",
+        "description": "Standard error envelope returned for every non-2xx response",
         "properties": {
-          "error": { "type": "string" },
-          "issues": {
-            "type": "array",
-            "items": { "type": "object" }
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Stable machine-readable error code (lowercase snake_case)",
+                "enum": [
+                  "invalid_request",
+                  "unauthenticated",
+                  "not_found",
+                  "conflict",
+                  "internal_error",
+                  "service_unavailable"
+                ]
+              },
+              "message": { "type": "string", "description": "Human-readable description" },
+              "details": {
+                "description": "Optional extra data, e.g. the list of validation issues for invalid_request"
+              }
+            },
+            "required": ["code", "message"]
           }
         },
         "required": ["error"]
@@ -453,7 +485,8 @@
         "description": "Missing or invalid Bearer API key",
         "content": {
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/Error" }
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": { "code": "unauthenticated", "message": "Unauthorized" } }
           }
         }
       },
@@ -461,7 +494,8 @@
         "description": "Resource not found",
         "content": {
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/Error" }
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": { "code": "not_found", "message": "User not found" } }
           }
         }
       },
@@ -469,15 +503,35 @@
         "description": "Resource conflict (e.g. duplicate email)",
         "content": {
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/Error" }
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": { "code": "conflict", "message": "A user with this email already exists" } }
           }
         }
       },
       "ValidationError": {
-        "description": "Request validation failed",
+        "description": "Invalid request: validation failure, malformed id or JSON body, or inconsistent times. `error.details` is only present for schema validation failures.",
         "content": {
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/Error" }
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "examples": {
+              "validation": {
+                "summary": "Schema validation failure (details present)",
+                "value": { "error": { "code": "invalid_request", "message": "Validation failed", "details": [{ "code": "invalid_format", "path": ["email"], "message": "Invalid email address" }] } }
+              },
+              "simple": {
+                "summary": "Other bad requests (details omitted), e.g. malformed id, invalid JSON, or out time before in time",
+                "value": { "error": { "code": "invalid_request", "message": "Invalid id format" } }
+              }
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Unexpected server error (no internal details are exposed)",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": { "code": "internal_error", "message": "An unexpected error occurred" } }
           }
         }
       },
@@ -485,7 +539,8 @@
         "description": "Admin API is not configured (ADMIN_API_KEY not set)",
         "content": {
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/Error" }
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": { "code": "service_unavailable", "message": "Admin API is not configured" } }
           }
         }
       }

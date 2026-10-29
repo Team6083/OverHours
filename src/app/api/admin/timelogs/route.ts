@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 
+import { apiError, withApiErrors } from "@/lib/api-error";
 import { verifyAdminApiKey } from "@/lib/admin-api-auth";
 import { adminCreateTimeLog, adminGetAllTimeLogs } from "@/lib/data/timelog-dto";
 import { objectIdSchema } from "@/lib/objectid";
@@ -15,7 +16,7 @@ const createSchema = z.object({
   notes: z.string().trim().nonempty().optional(),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = withApiErrors(async (req: NextRequest) => {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
@@ -41,14 +42,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ data: timeLogs });
   } catch (e) {
     if (e instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation failed", issues: e.issues }, { status: 400 });
+      return apiError("invalid_request", "Validation failed", e.issues);
     }
 
     throw e;
   }
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withApiErrors(async (req: NextRequest) => {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return apiError("invalid_request", "Invalid JSON body");
   }
 
   try {
@@ -66,16 +67,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: timeLog }, { status: 201 });
   } catch (e) {
     if (e instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation failed", issues: e.issues }, { status: 400 });
+      return apiError("invalid_request", "Validation failed", e.issues);
     }
 
     if (e instanceof Error && (
       e.message === "Out time is required for DONE or LOCKED status"
       || e.message === "Out time must be after in time"
     )) {
-      return NextResponse.json({ error: e.message }, { status: 400 });
+      return apiError("invalid_request", e.message);
     }
 
     throw e;
   }
-}
+});
