@@ -8,6 +8,8 @@ import {
   parseVerifyGraceSec,
 } from "./auth-errors";
 
+// Deliberate change-detector: this literal list must match INVALID_TOKEN_ERROR_CODES exactly, so adding
+// (or removing) a code in auth-errors.ts requires updating this list on purpose.
 const INVALID_CODES = [
   "ACCESS_TOKEN_AZP_MISMATCH",
   "ERR_JWT_CLAIM_VALIDATION_FAILED",

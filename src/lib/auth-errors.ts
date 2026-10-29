@@ -3,7 +3,7 @@
 
 // jose errors meaning the token itself is bad. Anything else (JWKS fetch failure or timeout, network
 // errors) is treated as transient: it says nothing about the token.
-export const INVALID_TOKEN_ERROR_CODES = new Set([
+export const INVALID_TOKEN_ERROR_CODES: ReadonlySet<string> = new Set([
   "ACCESS_TOKEN_AZP_MISMATCH",
   "ERR_JWT_CLAIM_VALIDATION_FAILED",
   "ERR_JWT_EXPIRED",
@@ -16,7 +16,7 @@ export const INVALID_TOKEN_ERROR_CODES = new Set([
   "ERR_JWKS_MULTIPLE_MATCHING_KEYS",
 ]);
 
-export const KNOWN_TRANSIENT_ERROR_CODES = [
+export const KNOWN_TRANSIENT_ERROR_CODES: readonly string[] = [
   "ERR_JWKS_TIMEOUT",
   "ERR_JOSE_GENERIC",
   "ERR_JWKS_INVALID",
