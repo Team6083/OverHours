@@ -1,10 +1,14 @@
 
 import NextAuth, { DefaultSession, Profile } from "next-auth";
-import { DefaultJWT } from "next-auth/jwt";
+import { DefaultJWT, getToken } from "next-auth/jwt";
 import Keycloak from "next-auth/providers/keycloak";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import memoize from "memoize";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import prisma from "./lib/prisma";
+import { evaluateAccess, extractRoles, parseAdminRoles, parseRoleList } from "./lib/auth-roles";
 
 export enum Role {
   ADMIN = "admin",
@@ -23,31 +27,56 @@ declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     userId: string;
     role: string;
+    // Whether `role` was derived from a signature-verified access token (false for sessions issued
+    // before roles were verified, which get re-evaluated on their next use).
+    rolesVerified?: boolean;
 
     accessToken: string;
     accessTokenExpiresAt: number;
     refreshToken?: string;
+    idToken?: string;
   }
 }
 
-// Dot-separated path into the access token payload where the roles array lives, e.g.
-// "realm_access.roles" for a realm role, or "resource_access.<client-id>.roles" for a client role.
-const ROLES_CLAIM_PATH = process.env.AUTH_KEYCLOAK_ROLES_CLAIM || "realm_access.roles";
+// Optional legacy setting: dot-separated path into the access token payload of an extra roles array.
+// Roles found there are treated as plain role names in addition to realm and client roles.
+const LEGACY_ROLES_CLAIM_PATH = process.env.AUTH_KEYCLOAK_ROLES_CLAIM || undefined;
 
-function getClaimByPath(payload: unknown, path: string): unknown {
-  return path.split(".").reduce<unknown>((value, key) => {
-    if (value && typeof value === "object" && key in value) {
-      return (value as Record<string, unknown>)[key];
-    }
-    return undefined;
-  }, payload);
+const keycloakIssuer = () => process.env.AUTH_KEYCLOAK_ISSUER!;
+
+let jwks: ReturnType<typeof createRemoteJWKSet> | undefined;
+
+/**
+ * Verifies the access token (signature via the issuer's JWKS, `iss`, `exp`, and `azp` equal to our
+ * client id) and returns the user's roles. Throws if verification fails.
+ */
+async function getVerifiedRoles(accessToken: string): Promise<string[]> {
+  jwks ??= createRemoteJWKSet(new URL(`${keycloakIssuer()}/protocol/openid-connect/certs`));
+
+  const { payload } = await jwtVerify(accessToken, jwks, { issuer: keycloakIssuer() });
+  if (payload.azp !== process.env.AUTH_KEYCLOAK_ID) {
+    throw new Error("Access token was not issued to this client (azp mismatch)");
+  }
+
+  return extractRoles(payload, LEGACY_ROLES_CLAIM_PATH);
 }
 
-function getRolesFromAccessToken(accessToken: string): string[] {
-  const payload = JSON.parse(Buffer.from(accessToken.split(".")[1], "base64url").toString());
+/** Resolves the app role and whether the user may use the app at all. Fails closed on verification errors. */
+async function resolveAccess(accessToken: string): Promise<{ role: Role; allowed: boolean }> {
+  let roles: string[];
+  try {
+    roles = await getVerifiedRoles(accessToken);
+  } catch (error) {
+    console.error("Failed to verify access token, treating user as having no roles", error);
+    roles = [];
+  }
 
-  const roles = getClaimByPath(payload, ROLES_CLAIM_PATH);
-  return Array.isArray(roles) ? roles : [];
+  const { isAdmin, allowed } = evaluateAccess(
+    roles,
+    parseAdminRoles(process.env.ADMIN_ROLES),
+    parseRoleList(process.env.ALLOWED_ROLES),
+  );
+  return { role: isAdmin ? Role.ADMIN : Role.USER, allowed };
 }
 
 function getNameFromProfile(profile: Profile): string | undefined {
@@ -89,12 +118,16 @@ const refreshAccessToken = memoize(async (refreshToken: string) => {
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [Keycloak],
   callbacks: {
-    signIn: ({ account, profile }) => {
-      if (account?.provider === 'keycloak' && profile?.email_verified) {
-        return true;
+    signIn: async ({ account, profile }) => {
+      if (account?.provider !== 'keycloak' || !profile?.email_verified) {
+        return '/auth/error?error=EmailNotVerified';
       }
 
-      return '/auth/error?error=EmailNotVerified';
+      if (!account.access_token || !(await resolveAccess(account.access_token)).allowed) {
+        return '/auth/error?error=MissingRole';
+      }
+
+      return true;
     },
     async jwt({
       token, user, account, profile, trigger,
@@ -132,7 +165,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.accessToken = account.access_token;
         token.accessTokenExpiresAt = account.expires_at;
         token.refreshToken = account.refresh_token;
+        token.idToken = account.id_token;
+        token.rolesVerified = false;
       }
+
+      let accessTokenChanged = !token.rolesVerified;
 
       if (token.accessTokenExpiresAt && Date.now() / 1000 > token.accessTokenExpiresAt) {
         // Access token has expired
@@ -148,6 +185,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.accessToken = tokensOrError.access_token;
           token.accessTokenExpiresAt = Math.floor(Date.now() / 1000 + tokensOrError.expires_in);
           token.refreshToken = tokensOrError.refresh_token || token.refreshToken;
+          token.idToken = tokensOrError.id_token || token.idToken;
+          accessTokenChanged = true;
         } catch (error) {
           if (typeof error === 'object' && error !== null && 'error' in error && error.error === 'invalid_grant') {
             return null;
@@ -157,7 +196,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
-      token.role = getRolesFromAccessToken(token.accessToken).includes("admin") ? "admin" : "user";
+      // Roles only change with the access token, so verify and re-derive them only when it is new
+      // (sign-in, refresh) or the session predates verified roles.
+      if (accessTokenChanged) {
+        const { role, allowed } = await resolveAccess(token.accessToken);
+        if (!allowed) {
+          // Lost the role required by ALLOWED_ROLES: end the session.
+          return null;
+        }
+
+        token.role = role;
+        token.rolesVerified = true;
+      }
 
       return token;
     },
@@ -175,3 +225,40 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
 });
+
+/**
+ * Signs out of Auth.js and then ends the Keycloak SSO session by redirecting to Keycloak's
+ * end_session endpoint, which sends the browser back to the app afterwards.
+ * Requires the app origin to be a valid post logout redirect URI of the Keycloak client.
+ */
+export async function signOutAndEndKeycloakSession(): Promise<never> {
+  const requestHeaders = await headers();
+  const forwardedProto = requestHeaders.get("x-forwarded-proto")?.split(",")[0];
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const origin = process.env.AUTH_URL
+    ? new URL(process.env.AUTH_URL).origin
+    : `${forwardedProto ?? "http"}://${host}`;
+
+  // The session cookie is named (and used as the JWT salt) differently depending on whether it is secure.
+  const secureCookie = origin.startsWith("https:");
+  const salt = secureCookie ? "__Secure-authjs.session-token" : "authjs.session-token";
+  const token = await getToken({
+    req: { headers: requestHeaders },
+    secret: process.env.AUTH_SECRET,
+    secureCookie,
+    salt,
+  });
+
+  await signOut({ redirect: false });
+
+  const logoutUrl = new URL(`${keycloakIssuer()}/protocol/openid-connect/logout`);
+  logoutUrl.searchParams.set("post_logout_redirect_uri", origin);
+  if (typeof token?.idToken === "string") {
+    logoutUrl.searchParams.set("id_token_hint", token.idToken);
+  } else {
+    // No id token (e.g. session from before it was stored): Keycloak accepts client_id instead.
+    logoutUrl.searchParams.set("client_id", process.env.AUTH_KEYCLOAK_ID!);
+  }
+
+  redirect(logoutUrl.toString());
+}

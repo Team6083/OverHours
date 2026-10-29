@@ -20,6 +20,25 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Auth configuration
+
+Sign-in uses Keycloak via Auth.js (`AUTH_KEYCLOAK_ID`, `AUTH_KEYCLOAK_SECRET`, `AUTH_KEYCLOAK_ISSUER`).
+Roles are read from the Keycloak access token, which is verified (signature via the issuer's JWKS, `iss`,
+`exp`, and `azp` equal to `AUTH_KEYCLOAK_ID`) before any role is trusted.
+
+Role settings are comma-separated lists. Realm roles are written as-is (`admin`) and client roles as
+`client:role` (`overhours:manager`); a user's roles are the union of `realm_access.roles` and every
+client's `resource_access.<client>.roles`.
+
+| Variable        | Default | Meaning |
+| --------------- | ------- | ------- |
+| `ADMIN_ROLES`   | `admin` | Users with any of these roles are admins. Unset or blank falls back to the realm role `admin`. |
+| `ALLOWED_ROLES` | unset   | If set, users with none of these roles (and who are not admins) are refused with a "No access" page. If unset, every authenticated user is allowed. Admins are always allowed. |
+
+Signing out also ends the Keycloak SSO session (redirect to the realm's `end_session` endpoint with
+`id_token_hint` and `post_logout_redirect_uri`). The app origin (`AUTH_URL`, or the request origin) must be
+listed in the Keycloak client's "Valid post logout redirect URIs".
+
 ## Admin API
 
 An API-key authenticated REST API is available for managing users and time logs from
