@@ -1,5 +1,6 @@
 import "server-only";
 import { auth, Role } from "@/auth";
+import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
 
 export type MergeUserSummary = {
@@ -36,6 +37,16 @@ type LogRange = { id: string; userId: string; inTime: Date; outTime: Date | null
 
 // A log without an outTime (CurrentlyIn) is treated as lasting until now.
 // Touching ranges (one ends exactly when the other starts) do not overlap.
+// A zero-length log is a single instant, which conflicts when it falls inside
+// another range (start inclusive, end exclusive) or at the same instant.
+type Range = { start: number; end: number };
+
+function overlaps(a: Range, b: Range): boolean {
+  if (a.start === a.end) return b.start <= a.start && (a.start < b.end || b.start === b.end);
+  if (b.start === b.end) return a.start <= b.start && b.start < a.end;
+  return a.start < b.end && b.start < a.end;
+}
+
 function findConflicts(logs: LogRange[]): { conflicts: MergeConflict[]; count: number } {
   const now = Date.now();
   const ranges = logs
@@ -54,11 +65,11 @@ function findConflicts(logs: LogRange[]): { conflicts: MergeConflict[]; count: n
   let active: typeof ranges = [];
 
   for (const cur of ranges) {
-    active = active.filter(r => r.end > cur.start);
+    active = active.filter(r => r.end >= cur.start);
 
     for (const prev of active) {
       if (prev.log.userId === cur.log.userId) continue;
-      if (!(prev.start < cur.end && cur.start < prev.end)) continue;
+      if (!overlaps(prev, cur)) continue;
 
       count++;
       if (conflicts.length < MAX_REPORTED_CONFLICTS) {
@@ -86,8 +97,16 @@ async function requireAdmin() {
   return session;
 }
 
+function areValidIds(ids: string[]) {
+  return ids.every(id => objectIdSchema.safeParse(id).success);
+}
+
 export async function getMergePreview(ids: string[]): Promise<MergePreview | null> {
   await requireAdmin();
+
+  if (!areValidIds(ids)) {
+    return null;
+  }
 
   const users = await prisma.user.findMany({
     where: { id: { in: ids } },
@@ -129,6 +148,10 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
   const ids = Array.from(new Set(userIds));
   if (ids.length < 2) {
     throw new MergeUsersError("Select at least two users to merge.");
+  }
+
+  if (!areValidIds(ids)) {
+    throw new MergeUsersError("Some of the selected users no longer exist.");
   }
 
   if (!ids.includes(targetId)) {
