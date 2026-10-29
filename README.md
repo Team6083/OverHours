@@ -14,7 +14,7 @@ An API-key authenticated Admin API allows external systems to manage users and t
 
 ## Local development
 
-Requirements: Node.js 20.19 or newer and a MongoDB instance.
+Requirements: a Node.js version matching the `engines` field in `package.json`, and a MongoDB instance.
 
 1. Install dependencies: `npm install`
 2. Create a `.env` file (it is git-ignored) with at least the required variables listed
@@ -30,8 +30,9 @@ Requirements: Node.js 20.19 or newer and a MongoDB instance.
 
 `docker-compose.yaml` only builds and runs the application image (`app`, port 3000, `NODE_ENV=production`).
 It does not include a database yet, so MongoDB must be provided separately and `DATABASE_URL` pointed at
-it. The Sentry auth token is passed to the image build as the `sentry-auth-token` build secret, taken from
-the `SENTRY_AUTH_TOKEN` environment variable.
+it. The `Dockerfile` reads the Sentry auth token from a `sentry-auth-token` build secret (for example
+`docker build --secret id=sentry-auth-token,env=SENTRY_AUTH_TOKEN .`). `docker-compose.yaml` declares that
+secret but does not wire it into the `app` build, so builds through compose do not upload source maps.
 
 ## Environment variables
 
@@ -44,6 +45,9 @@ Variables are read at runtime unless noted otherwise.
 | `AUTH_KEYCLOAK_ID` | Yes | Keycloak client ID. |
 | `AUTH_KEYCLOAK_SECRET` | Yes | Keycloak client secret. |
 | `AUTH_KEYCLOAK_ROLES_CLAIM` | No | Dot-separated path of the roles array in the access token. Default: `realm_access.roles`. |
+| `AUTH_SECRET` | Yes (production) | Secret Auth.js uses to sign and encrypt session cookies. Read by Auth.js itself, not by this repository's code. |
+| `AUTH_URL` | No | Canonical public URL of the app. Auth.js variable; may be needed behind a reverse proxy. |
+| `AUTH_TRUST_HOST` | No | Set to `true` to let Auth.js trust the `Host` header. Auth.js variable; often needed behind a reverse proxy. |
 | `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*`. Admin API requests are rejected when it is unset. |
 | `ORG_NAME` | No | Name of the organisation running this instance. Shown in the header, footer and page description. When unset, no organisation text is shown. |
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
@@ -54,18 +58,21 @@ Variables are read at runtime unless noted otherwise.
 | `NEXT_PUBLIC_COMMIT_SHA` | No | Commit shown in the footer badge when no version is set. Inlined at build time. |
 | `NEXT_PUBLIC_BUILD_DATE` | No | Build date shown next to the commit. Inlined at build time. |
 
-Auth.js itself also reads its own `AUTH_*` variables (for example `AUTH_SECRET`), which are not
-referenced in this repository's code.
+The `AUTH_SECRET`, `AUTH_URL` and `AUTH_TRUST_HOST` rows are consumed by Auth.js directly; see the
+[Auth.js deployment guide](https://authjs.dev/getting-started/deployment) for details.
 
 <!-- Auth configuration: see PR #88; re-add after merge -->
 
 ## Build and run
 
 ```bash
-npm run build   # next build
-npm start       # next start
+npm run build   # next build (standalone output in .next/standalone)
 npm run lint    # eslint
 ```
+
+The build uses `output: "standalone"`, so the production server is started with `node server.js` from
+the standalone output (the `Dockerfile` copies `public` and `.next/static` into it first). For local work
+use `npm run dev`; running the container image is the supported way to run a production build.
 
 ## Admin API
 

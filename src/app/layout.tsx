@@ -30,6 +30,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// ORG_NAME is read at request time, so never prerender at build time.
+export const dynamic = "force-dynamic";
+
 export function generateMetadata(): Metadata {
   const orgName = getOrgName();
   return {
@@ -59,7 +62,7 @@ export default function RootLayout({
                 <Container maxWidth="5xl" fluid mb={8} textAlign={{ smDown: "center" }}>
                   <Stack flexDir={{ base: "column", sm: "row" }} justifyContent="space-between">
                     <Text as="span" fontSize="xs" color="fg.muted" textAlign={{ sm: "left" }}>
-                      {orgName && <>© 2025 {orgName}<br /></>}
+                      {orgName && <>© {new Date().getFullYear()} {orgName}<br /></>}
                       Made with ❤️ and way too many commits{" "}
                       <Text as="span" whiteSpace="nowrap">(fueled by ☕️)</Text>
                     </Text>
