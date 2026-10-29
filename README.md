@@ -121,7 +121,7 @@ Every response carries (set in `next.config.ts`, so API routes, static assets, e
 | `X-Frame-Options` | `DENY` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
 
-`X-App-*` values are fixed at build time from the Docker build args; a header whose value was not set (local development) is omitted. HSTS is not set by the app; set it at the edge.
+`X-App-*` values are fixed at build time from the Docker build args and intentionally disclose the build (version and commit) on every response, as the team standard requires; a header whose value was not set (local development) is omitted. HSTS is not set by the app; set it at the edge.
 
 HTML responses also get a per-request `Content-Security-Policy` with a fresh nonce, built in `src/lib/csp.ts` and set by `src/proxy.ts` (pages are rendered dynamically, which nonces require). Scripts are limited to `'self'`, the nonce and the Cloudflare beacon host; `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'none'`, `form-action` allows `'self'` and the Keycloak origin from `AUTH_KEYCLOAK_ISSUER`. `'unsafe-eval'` is added outside production only and `upgrade-insecure-requests` in production only (so a production build served over plain `http://` needs `CSP_REPORT_ONLY=true`). Notes:
 
@@ -129,7 +129,7 @@ HTML responses also get a per-request `Content-Security-Policy` with a fresh non
 - Cloudflare Web Analytics: `https://static.cloudflareinsights.com` is allowed in `script-src` and `https://cloudflareinsights.com` in `connect-src` (constants at the top of `src/lib/csp.ts`). Any other inline script Cloudflare injects (for example Rocket Loader) cannot carry our nonce and is blocked.
 - `style-src` allows `'unsafe-inline'`: Chakra UI/emotion inject `<style>` tags and inline style attributes that cannot be nonced cleanly.
 - `img-src` allows `https:` because user avatars come from the Keycloak `picture` claim. Sentry uses the same-origin tunnel route, so it needs no extra host.
-- To roll out or debug, set `CSP_REPORT_ONLY=true`: the same policy is sent as `Content-Security-Policy-Report-Only`, which does not block anything.
+- To roll out or debug, set `CSP_REPORT_ONLY=true`: the same policy is sent as `Content-Security-Policy-Report-Only`, which does not block anything. The value must be exactly the string `true` (`TRUE` or `1` enforce the policy). `docker-compose.yaml` sets it because it serves the production build over plain `http://localhost`.
 
 ## Health checks
 

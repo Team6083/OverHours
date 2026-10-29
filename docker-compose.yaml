@@ -7,6 +7,8 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      # Plain http://localhost: the CSP's upgrade-insecure-requests would break the app, so report only.
+      - CSP_REPORT_ONLY=true
 
 secrets:
   sentry-auth-token:

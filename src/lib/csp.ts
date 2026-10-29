@@ -15,12 +15,19 @@ function originOf(url: string | undefined): string | undefined {
 }
 
 export function generateNonce(): string {
-  return Buffer.from(crypto.randomUUID()).toString("base64");
+  return Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("base64");
 }
+
+let warnedAboutKeycloakOrigin = false;
 
 export function buildCsp(options: { nonce: string; keycloakIssuer?: string; production: boolean }): string {
   const { nonce, keycloakIssuer, production } = options;
   const keycloakOrigin = originOf(keycloakIssuer);
+  if (!keycloakOrigin && !warnedAboutKeycloakOrigin) {
+    warnedAboutKeycloakOrigin = true;
+    // Fixed message on purpose: never print the env value.
+    console.warn("AUTH_KEYCLOAK_ISSUER is unset or invalid: CSP form-action falls back to 'self'; sign-in redirects may be blocked");
+  }
 
   // No 'strict-dynamic': it makes CSP3 browsers ignore host sources, which would block the (non-nonced)
   // script Cloudflare injects. Next.js scripts are same-origin or carry the nonce, so they run either way.
