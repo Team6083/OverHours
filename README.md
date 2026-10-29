@@ -87,3 +87,16 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Health checks
+
+| Endpoint | Purpose | Behaviour |
+| --- | --- | --- |
+| `GET /api/healthz` | Liveness | Always `200 {"status":"ok"}` while the process runs. No dependency checks. |
+| `GET /api/readyz` | Readiness | `200 {"status":"ok"}` when MongoDB answers a ping within 800 ms; otherwise `503` (`{"status":"unavailable"}`, or `{"status":"shutting_down"}` after SIGTERM). |
+
+Both endpoints are unauthenticated, return JSON without internal details and are sent with `Cache-Control: no-store`. The MongoDB check is shared between concurrent requests and its result is cached for 2 seconds per process. The 800 ms ping timeout is deliberately below the Kubernetes default probe `timeoutSeconds` of 1.
+
+On Kubernetes, use `/api/healthz` for the liveness probe and `/api/readyz` for the readiness probe.
+
+On `SIGTERM`, Next.js's standalone server stops accepting new connections, lets in-flight requests finish and exits (code 143). Readiness probes therefore mostly fail by connection refusal, and `/api/readyz` only reports `shutting_down` on connections that are still open during the drain. Add a `preStop` sleep of a few seconds so the pod is removed from the Service endpoints before it stops accepting connections, and set `terminationGracePeriodSeconds` longer than that sleep plus your longest request. If `NEXT_MANUAL_SIG_HANDLE` is set, the shutdown flag is not installed and `/api/readyz` never reports `shutting_down`.
