@@ -73,6 +73,17 @@ The build uses `output: "standalone"`, so the production server is started with 
 the standalone output (the `Dockerfile` copies `public` and `.next/static` into it first). For local work
 use `npm run dev`; running the container image is the supported way to run a production build.
 
+## Testing
+
+```bash
+npm test   # vitest run
+```
+
+Unit tests use [Vitest](https://vitest.dev) and live next to the code as `src/**/*.test.ts` (configured in
+`vitest.config.mts`). They cover pure logic only (no database or Keycloak needed), for example the role
+parsing in `src/lib/auth-roles.ts` and the token error classification in `src/lib/auth-errors.ts`.
+CI runs `npm test` in the `check` job.
+
 ## Auth configuration
 
 Sign-in uses Keycloak via Auth.js (`AUTH_KEYCLOAK_ID`, `AUTH_KEYCLOAK_SECRET`, `AUTH_KEYCLOAK_ISSUER`).

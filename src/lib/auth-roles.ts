@@ -16,7 +16,7 @@ export function parseRoleList(value: string | undefined): string[] {
 /** ADMIN_ROLES, falling back to the legacy hard-coded "admin" realm role when unset or blank. */
 export function parseAdminRoles(value: string | undefined): string[] {
   const roles = parseRoleList(value);
-  return roles.length > 0 ? roles : DEFAULT_ADMIN_ROLES;
+  return roles.length > 0 ? roles : [...DEFAULT_ADMIN_ROLES];
 }
 
 function getClaimByPath(payload: unknown, path: string): unknown {
