@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Placeholder only: prisma generate and next build never connect to the DB.
+  DATABASE_URL: mongodb://placeholder/db
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Dockerfile uses node:lts-alpine (currently 24); engines is >=20.19.0.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      # Later steps use !cancelled() so one failing check does not hide the others.
+      - name: Type check
+        if: ${{ !cancelled() }}
+        run: npx tsc --noEmit
+
+      # TODO(oh-03): non-blocking because main has existing lint errors
+      # (react-hooks/*, no-explicit-any). Remove continue-on-error once fixed.
+      - name: Lint (non-blocking until existing errors are fixed)
+        if: ${{ !cancelled() }}
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build
+        if: ${{ !cancelled() }}
+        run: npm run build
+
+  # Separate job so a vulnerability does not hide the other checks.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # peer/optional are omitted because the prisma CLI chain (deepmerge-ts via
+      # @prisma/config) enters the tree only as @prisma/client's optional peer and
+      # is build-time only (Dockerfile builder stage), not shipped. The Prisma 7
+      # upgrade that removes it is tracked separately.
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --omit=peer --omit=optional --audit-level=high
