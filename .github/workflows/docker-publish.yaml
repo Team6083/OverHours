@@ -32,6 +32,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      # Fail early on tags that match `v*.*.*` but are not valid semver, so we
+      # never push/sign an image that carries only `latest`.
+      - name: Validate version tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if ! [[ "${REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag '${REF_NAME}' is not a valid vX.Y.Z[-prerelease] version tag"
+            exit 1
+          fi
+
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
@@ -64,15 +76,15 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}
           # Disable the implicit `latest` (flavor default is latest=auto);
-          # it is applied explicitly below, on version tags only.
+          # it is applied explicitly below, on stable version tags only.
           flavor: |
             latest=false
           tags: |
             type=ref,event=branch
-            type=sha,format=short,prefix=sha-,enable=${{ github.ref_type == 'branch' && github.ref == 'refs/heads/main' }}
+            type=sha,format=short,prefix=sha-,enable=${{ github.ref == 'refs/heads/main' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
             type=ref,event=pr
 
       # Build and push Docker image with Buildx (don't push on PR)
