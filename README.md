@@ -141,6 +141,16 @@ The full OpenAPI 3.0 schema is available at [`/openapi/admin-api.json`](public/o
 ## Deployment
 
 The application is published as a container image: `ghcr.io/team6083/overhours` (based on `node:26-alpine`).
+
+Image tags:
+
+| Trigger | Tags |
+| --- | --- |
+| Push to `main` | `main`, `sha-<7 chars>` |
+| Release tag `vX.Y.Z` | `X.Y.Z` (no leading `v`), `X.Y`, `latest` |
+
+Pin deployments to `X.Y.Z` (or the commit `sha-` tag); `latest` and `X.Y` are moving tags. Releases up to
+`v2.0.10` were tagged with the leading `v` (e.g. `v2.0.10`) and remain available. Pre-release tags (`vX.Y.Z-rc.1`) get the full version tag but no `X.Y` tag.
 Provide the environment variables above at runtime; the container listens on port 3000 and runs as the
 non-root user `65532:65532`. App files are root-owned and read-only for that user; the only directory
 the Dockerfile makes writable is `.next/cache` (Next.js runtime cache).
