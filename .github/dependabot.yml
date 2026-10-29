@@ -33,3 +33,7 @@ updates:
     groups:
       docker-minor-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # Only track LTS (even) Node majors; odd majors are never promoted to LTS
+      - dependency-name: "node"
+        versions: ["27.x", "29.x", "31.x"]

@@ -81,13 +81,15 @@ ENV NODE_ENV=production
 # Run as a numeric, non-root UID:GID (65532) so Kubernetes `runAsNonRoot` can verify it.
 RUN addgroup -S -g 65532 nodejs && adduser -S -u 65532 -G nodejs nextjs
 
-# Next.js writes its runtime cache (image optimization, fetch cache) to .next/cache
-RUN mkdir -p .next/cache && chown -R 65532:65532 /app
-
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=65532:65532 /app/.next/standalone ./
-COPY --from=builder --chown=65532:65532 /app/.next/static ./.next/static
+# App files stay root-owned (read-only for the runtime user)
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+# Next.js writes its runtime cache (image optimization, fetch cache) to .next/cache;
+# this is the only directory the runtime user needs to write to
+RUN mkdir -p .next/cache && chown 65532:65532 .next/cache
 
 USER 65532:65532
 
