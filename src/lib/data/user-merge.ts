@@ -42,8 +42,11 @@ type LogRange = { id: string; userId: string; inTime: Date; outTime: Date | null
 type Range = { start: number; end: number };
 
 function overlaps(a: Range, b: Range): boolean {
-  if (a.start === a.end) return b.start <= a.start && (a.start < b.end || b.start === b.end);
-  if (b.start === b.end) return a.start <= b.start && b.start < a.end;
+  const aIsInstant = a.start === a.end;
+  const bIsInstant = b.start === b.end;
+  if (aIsInstant && bIsInstant) return a.start === b.start;
+  if (aIsInstant) return b.start <= a.start && a.start < b.end;
+  if (bIsInstant) return a.start <= b.start && b.start < a.end;
   return a.start < b.end && b.start < a.end;
 }
 
