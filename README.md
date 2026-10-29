@@ -34,11 +34,12 @@ client's `resource_access.<client>.roles`.
 | --------------- | ------- | ------- |
 | `ADMIN_ROLES`   | `admin` | Users with any of these roles are admins. Unset or blank falls back to the realm role `admin`. |
 | `ALLOWED_ROLES` | unset   | If set, users with none of these roles (and who are not admins) are refused with a "No access" page. If unset, every authenticated user is allowed. Admins are always allowed. |
-| `AUTH_KEYCLOAK_ALGORITHMS` | `RS256` | Accepted access token signature algorithms (comma-separated). |
+| `AUTH_KEYCLOAK_ALGORITHMS` | `RS256` | Accepted access token signature algorithms (comma-separated, asymmetric only: RS*/PS*/ES*/EdDSA; anything else fails at startup). |
+| `AUTH_KEYCLOAK_VERIFY_GRACE_SEC` | `900` | How long a session keeps its previous role while token verification keeps failing transiently. |
 | `AUTH_KEYCLOAK_ROLES_CLAIM` | unset | Legacy. When set, roles are read ONLY from this dot-separated claim path (plain role names, e.g. `resource_access.overhours.roles`), replacing the realm + client lookup above. |
 
 If Keycloak cannot be reached to verify a token (JWKS fetch failure), the user keeps their previous role and
-verification is retried on the next request; only an invalid token (bad signature, `iss`, `exp`, `azp`) drops roles.
+verification is retried (at most every 30s per server process); only an invalid token (bad signature, `iss`, `exp`, `azp`) drops roles at once. If verification keeps failing for longer than `AUTH_KEYCLOAK_VERIFY_GRACE_SEC`, it is treated as invalid too (roles dropped, `ALLOWED_ROLES` enforced).
 
 Not verified against a real Keycloak: the sign-out cookie lookup picks the secure or plain Auth.js cookie name from
 `AUTH_URL` or `x-forwarded-proto`; if neither is set correctly behind a proxy, sign-out still clears the local session

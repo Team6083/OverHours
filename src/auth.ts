@@ -30,6 +30,8 @@ declare module "next-auth/jwt" {
     // Whether `role` was derived from a signature-verified access token (false for sessions issued
     // before roles were verified, which get re-evaluated on their next use).
     rolesVerified?: boolean;
+    // Unix seconds of the first transient verification failure since the last success.
+    verifyFailedSince?: number;
 
     accessToken: string;
     accessTokenExpiresAt: number;
@@ -42,10 +44,32 @@ declare module "next-auth/jwt" {
 // When set it REPLACES the default realm + client role lookup (as before ADMIN_ROLES existed).
 const LEGACY_ROLES_CLAIM_PATH = process.env.AUTH_KEYCLOAK_ROLES_CLAIM || undefined;
 
-// Accepted access token signature algorithms (Keycloak realms default to RS256).
-const TOKEN_ALGORITHMS = parseRoleList(process.env.AUTH_KEYCLOAK_ALGORITHMS).length > 0
-  ? parseRoleList(process.env.AUTH_KEYCLOAK_ALGORITHMS)
-  : ["RS256"];
+// Accepted access token signature algorithms (Keycloak realms default to RS256). Asymmetric only.
+const ASYMMETRIC_ALGORITHM = /^(RS|PS|ES)(256|384|512)$|^EdDSA$/;
+const TOKEN_ALGORITHMS = (() => {
+  const algorithms = parseRoleList(process.env.AUTH_KEYCLOAK_ALGORITHMS);
+  const invalid = algorithms.filter((alg) => !ASYMMETRIC_ALGORITHM.test(alg));
+  if (invalid.length > 0) {
+    throw new Error(
+      `AUTH_KEYCLOAK_ALGORITHMS contains unsupported algorithm(s): ${invalid.join(", ")}. ` +
+      "Only asymmetric algorithms (RS*, PS*, ES*, EdDSA) are allowed.",
+    );
+  }
+  return algorithms.length > 0 ? algorithms : ["RS256"];
+})();
+
+// Fail loudly once at startup if ADMIN_ROLES is set but unusable (it then falls back to the default).
+if (process.env.ADMIN_ROLES && parseRoleList(process.env.ADMIN_ROLES).length === 0) {
+  console.warn(`ADMIN_ROLES is set but contains no roles, falling back to "${parseAdminRoles(undefined).join(",")}"`);
+}
+
+// After a transient verification failure, skip verification for this long (per process) so every
+// request does not wait on the JWKS endpoint.
+const VERIFY_RETRY_BACKOFF_MS = 30 * 1000;
+// How long a session may keep its previous role while verification keeps failing transiently; after
+// that the failure is treated like an invalid token (roles dropped, ALLOWED_ROLES enforced).
+const VERIFY_GRACE_SEC = Number(process.env.AUTH_KEYCLOAK_VERIFY_GRACE_SEC) || 15 * 60;
+let verifyBackoffUntil = 0;
 
 const CLOCK_TOLERANCE_SEC = 10;
 
@@ -73,8 +97,11 @@ const INVALID_TOKEN_ERROR_CODES = new Set([
 ]);
 
 // Only the error code/name is logged: error objects can carry token claims (email, sub).
-const describeError = (error: unknown) =>
-  (error as { code?: string } | null)?.code ?? (error as Error | null)?.name ?? "unknown";
+const describeError = (error: unknown) => {
+  const { code, error: oauthError, name } = (error ?? {}) as { code?: unknown; error?: unknown; name?: unknown };
+  // `error` is the OAuth error code in a token endpoint error response body.
+  return [code, oauthError, name].find((v): v is string => typeof v === "string") ?? "unknown";
+};
 
 /**
  * Verifies the access token (signature via the issuer's JWKS, `iss`, `exp`, and `azp` equal to our
@@ -95,7 +122,14 @@ async function getVerifiedRoles(accessToken: string): Promise<string[]> {
   return extractRoles(payload, LEGACY_ROLES_CLAIM_PATH);
 }
 
-let warnedEmptyAdminRoles = false;
+function accessFromRoles(roles: string[]): { role: Role; allowed: boolean } {
+  const { isAdmin, allowed } = evaluateAccess(
+    roles,
+    parseAdminRoles(process.env.ADMIN_ROLES),
+    parseRoleList(process.env.ALLOWED_ROLES),
+  );
+  return { role: isAdmin ? Role.ADMIN : Role.USER, allowed };
+}
 
 /**
  * Resolves the app role and whether the user may use the app at all.
@@ -103,28 +137,23 @@ let warnedEmptyAdminRoles = false;
  * (e.g. Keycloak unreachable), in which case callers must keep the previous state and retry later.
  */
 async function resolveAccess(accessToken: string): Promise<{ role: Role; allowed: boolean } | null> {
-  let roles: string[];
+  if (Date.now() < verifyBackoffUntil) {
+    return null;
+  }
+
   try {
-    roles = await getVerifiedRoles(accessToken);
+    return accessFromRoles(await getVerifiedRoles(accessToken));
   } catch (error) {
     const code = describeError(error);
     if (INVALID_TOKEN_ERROR_CODES.has(code)) {
       console.error(`Access token rejected (${code}), treating user as having no roles`);
-      roles = [];
-    } else {
-      console.error(`Could not verify access token (${code}), keeping previous roles`);
-      return null;
+      return accessFromRoles([]);
     }
-  }
 
-  const adminRoles = parseAdminRoles(process.env.ADMIN_ROLES);
-  if (!warnedEmptyAdminRoles && process.env.ADMIN_ROLES && parseRoleList(process.env.ADMIN_ROLES).length === 0) {
-    warnedEmptyAdminRoles = true;
-    console.warn(`ADMIN_ROLES is set but contains no roles, falling back to "${adminRoles.join(",")}"`);
+    verifyBackoffUntil = Date.now() + VERIFY_RETRY_BACKOFF_MS;
+    console.error(`Could not verify access token (${code}), keeping previous roles`);
+    return null;
   }
-
-  const { isAdmin, allowed } = evaluateAccess(roles, adminRoles, parseRoleList(process.env.ALLOWED_ROLES));
-  return { role: isAdmin ? Role.ADMIN : Role.USER, allowed };
 }
 
 function getNameFromProfile(profile: Profile): string | undefined {
@@ -249,14 +278,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return null;
           }
 
-          console.error("Error refreshing access_token", error);
+          console.error("Error refreshing access_token", describeError(error));
         }
       }
 
       // Roles only change with the access token, so verify and re-derive them only when it is new
       // (sign-in, refresh) or the session predates verified roles.
       if (accessTokenChanged) {
-        const access = await resolveAccess(token.accessToken);
+        let access = await resolveAccess(token.accessToken);
+        if (!access) {
+          const nowSec = Math.floor(Date.now() / 1000);
+          token.verifyFailedSince ??= nowSec;
+          if (nowSec - token.verifyFailedSince > VERIFY_GRACE_SEC) {
+            // Unverifiable for too long: stop trusting the previous role.
+            access = accessFromRoles([]);
+          }
+        }
+
         if (access) {
           if (!access.allowed) {
             // Lost the role required by ALLOWED_ROLES: end the session.
@@ -265,6 +303,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           token.role = access.role;
           token.rolesVerified = true;
+          delete token.verifyFailedSince;
         } else {
           // Verification unavailable: keep the previous role (least privilege if there is none) and
           // leave rolesVerified false so the next callback retries.
