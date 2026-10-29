@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { NextRequest, NextResponse } from "next/server";
 
 export type ApiErrorCode =
@@ -27,14 +28,19 @@ export function apiError(code: ApiErrorCode, message: string, details?: unknown)
 
 /**
  * Turns anything a handler throws into a generic 500. The real error is never
- * returned to the client; only its name and (allow-listed) Prisma code are logged.
+ * returned to the client; only its name, (allow-listed) Prisma code and the request method/path are logged.
  */
-export function internalError(e: unknown) {
+export function internalError(e: unknown, req?: NextRequest) {
   const name = e instanceof Error ? e.name : typeof e;
   const rawCode = e instanceof Error && "code" in e ? (e as { code: unknown }).code : undefined;
   const code = typeof rawCode === "string" && /^P\d{4}$/.test(rawCode) ? rawCode : undefined;
 
-  console.error("Unhandled error in Admin API", { name, code });
+  console.error("Unhandled error in Admin API", {
+    method: req?.method,
+    path: req?.nextUrl.pathname,
+    name,
+    code,
+  });
 
   return apiError("internal_error", "An unexpected error occurred");
 }
@@ -47,7 +53,9 @@ export function withApiErrors<A extends unknown[]>(
     try {
       return await handler(req, ...args);
     } catch (e) {
-      return internalError(e);
+      // Let Next control-flow errors (redirect, notFound, dynamic usage, ...) pass through.
+      unstable_rethrow(e);
+      return internalError(e, req);
     }
   };
 }

@@ -115,6 +115,7 @@
               }
             }
           },
+          "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "500": { "$ref": "#/components/responses/InternalError" },
@@ -173,6 +174,7 @@
               }
             }
           },
+          "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "500": { "$ref": "#/components/responses/InternalError" },
@@ -296,6 +298,7 @@
               }
             }
           },
+          "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "500": { "$ref": "#/components/responses/InternalError" },
@@ -353,6 +356,7 @@
               }
             }
           },
+          "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "500": { "$ref": "#/components/responses/InternalError" },
@@ -505,11 +509,20 @@
         }
       },
       "ValidationError": {
-        "description": "Request validation failed",
+        "description": "Invalid request: validation failure, malformed id or JSON body, or inconsistent times. `error.details` is only present for schema validation failures.",
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/Error" },
-            "example": { "error": { "code": "invalid_request", "message": "Validation failed", "details": [{ "code": "invalid_format", "path": ["email"], "message": "Invalid email address" }] } }
+            "examples": {
+              "validation": {
+                "summary": "Schema validation failure (details present)",
+                "value": { "error": { "code": "invalid_request", "message": "Validation failed", "details": [{ "code": "invalid_format", "path": ["email"], "message": "Invalid email address" }] } }
+              },
+              "simple": {
+                "summary": "Other bad requests (details omitted), e.g. malformed id, invalid JSON, or out time before in time",
+                "value": { "error": { "code": "invalid_request", "message": "Invalid id format" } }
+              }
+            }
           }
         }
       },
