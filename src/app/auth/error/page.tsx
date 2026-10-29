@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Button, ButtonGroup, EmptyState, VStack } from "@chakra-ui/react";
 import { LuShieldAlert } from "react-icons/lu";
 
+import { signOutAndEndKeycloakSession } from "@/auth";
+
 const ERRORS: Record<string, { title: string; description: string }> = {
   MissingRole: {
     title: "No access",
@@ -35,6 +37,13 @@ export default async function AuthErrorPage({ searchParams }: { searchParams: Pr
           <EmptyState.Description>{description}</EmptyState.Description>
         </VStack>
         <ButtonGroup>
+          {/* Ends the Keycloak SSO session too; otherwise signing in again silently returns here. */}
+          <form action={async () => {
+            "use server";
+            await signOutAndEndKeycloakSession();
+          }}>
+            <Button type="submit">Sign out</Button>
+          </form>
           <Button variant="outline" asChild><Link href="/">Back to Home</Link></Button>
         </ButtonGroup>
       </EmptyState.Content>

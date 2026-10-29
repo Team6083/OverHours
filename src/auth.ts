@@ -357,9 +357,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 });
 
 /**
- * Signs out of Auth.js and then ends the Keycloak SSO session by redirecting to Keycloak's
- * end_session endpoint, which sends the browser back to the app afterwards.
+ * Signs out of Auth.js (clearing the session cookie if there is one) and then ends the Keycloak SSO
+ * session by redirecting to Keycloak's end_session endpoint, which sends the browser back to the app.
+ * Also works when no Auth.js session exists, e.g. from the error page after a refused sign-in.
  * Requires the app origin to be a valid post logout redirect URI of the Keycloak client.
+ * Must only be called from a POST (server action) so that links cannot log users out.
  */
 export async function signOutAndEndKeycloakSession(): Promise<never> {
   const requestHeaders = await headers();
@@ -386,7 +388,8 @@ export async function signOutAndEndKeycloakSession(): Promise<never> {
   if (typeof token?.idToken === "string") {
     logoutUrl.searchParams.set("id_token_hint", token.idToken);
   } else {
-    // No id token (e.g. session from before it was stored): Keycloak accepts client_id instead.
+    // No session or id token (e.g. sign-in was refused so no session exists, or the session predates
+    // id token storage): Keycloak accepts client_id instead and asks the user to confirm the logout.
     logoutUrl.searchParams.set("client_id", process.env.AUTH_KEYCLOAK_ID!);
   }
 

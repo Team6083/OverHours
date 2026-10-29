@@ -49,6 +49,12 @@ Signing out also ends the Keycloak SSO session (redirect to the realm's `end_ses
 `id_token_hint` and `post_logout_redirect_uri`). The app origin (`AUTH_URL`, or the request origin) must be
 listed in the Keycloak client's "Valid post logout redirect URIs".
 
+The "No access" / sign-in error page also has a "Sign out" button (a POST server action, so a link cannot log
+anyone out) that does the same without needing a session: it clears any Auth.js session cookie and ends the
+Keycloak session with `client_id` instead of `id_token_hint`, so Keycloak shows its logout confirmation page. This
+lets a refused user switch accounts instead of being silently signed in again. It lands on the app origin, which
+is not auto-redirected to sign-in for anonymous users, so no additional redirect URI needs registering.
+
 ## Admin API
 
 An API-key authenticated REST API is available for managing users and time logs from
