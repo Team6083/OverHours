@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 
+import { apiError, withApiErrors } from "@/lib/api-error";
 import { verifyAdminApiKey } from "@/lib/admin-api-auth";
 import { adminCreateUser, adminGetAllUsers } from "@/lib/data/user-dto";
 
@@ -9,7 +10,7 @@ const createSchema = z.object({
   name: z.string().trim().nonempty(),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = withApiErrors(async (req: NextRequest) => {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
@@ -18,9 +19,9 @@ export async function GET(req: NextRequest) {
   const users = await adminGetAllUsers({ email });
 
   return NextResponse.json({ data: users });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withApiErrors(async (req: NextRequest) => {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return apiError("invalid_request", "Invalid JSON body");
   }
 
   try {
@@ -38,13 +39,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: user }, { status: 201 });
   } catch (e) {
     if (e instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation failed", issues: e.issues }, { status: 400 });
+      return apiError("invalid_request", "Validation failed", e.issues);
     }
 
     if (e instanceof Error && "code" in e && (e as { code: string }).code === "P2002") {
-      return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
+      return apiError("conflict", "A user with this email already exists");
     }
 
     throw e;
   }
-}
+});

@@ -2,6 +2,8 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 
+import { apiError } from "@/lib/api-error";
+
 function safeCompare(a: string, b: string): boolean {
   const bufA = Buffer.from(a);
   const bufB = Buffer.from(b);
@@ -16,14 +18,14 @@ function safeCompare(a: string, b: string): boolean {
 export function verifyAdminApiKey(req: NextRequest): NextResponse | null {
   const adminApiKey = process.env.ADMIN_API_KEY;
   if (!adminApiKey) {
-    return NextResponse.json({ error: "Admin API is not configured" }, { status: 503 });
+    return apiError("service_unavailable", "Admin API is not configured");
   }
 
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : undefined;
 
   if (!token || !safeCompare(token, adminApiKey)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError("unauthenticated", "Unauthorized");
   }
 
   return null;

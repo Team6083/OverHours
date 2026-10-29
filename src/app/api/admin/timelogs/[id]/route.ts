@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 
+import { apiError, withApiErrors } from "@/lib/api-error";
 import { verifyAdminApiKey } from "@/lib/admin-api-auth";
 import { adminDeleteTimeLog, adminGetTimeLog, adminUpdateTimeLog } from "@/lib/data/timelog-dto";
 import { objectIdSchema } from "@/lib/objectid";
@@ -23,10 +24,10 @@ function isKnownValidationError(e: unknown): e is Error {
 }
 
 function invalidIdResponse() {
-  return NextResponse.json({ error: "Invalid id format" }, { status: 400 });
+  return apiError("invalid_request", "Invalid id format");
 }
 
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export const GET = withApiErrors(async (req: NextRequest, { params }: RouteParams) => {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
@@ -38,13 +39,13 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const timeLog = await adminGetTimeLog(id);
 
   if (!timeLog) {
-    return NextResponse.json({ error: "Time log not found" }, { status: 404 });
+    return apiError("not_found", "Time log not found");
   }
 
   return NextResponse.json({ data: timeLog });
-}
+});
 
-export async function PUT(req: NextRequest, { params }: RouteParams) {
+export const PUT = withApiErrors(async (req: NextRequest, { params }: RouteParams) => {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
@@ -57,7 +58,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return apiError("invalid_request", "Invalid JSON body");
   }
 
   try {
@@ -67,17 +68,17 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ data: timeLog });
   } catch (e) {
     if (e instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation failed", issues: e.issues }, { status: 400 });
+      return apiError("invalid_request", "Validation failed", e.issues);
     }
 
     if (isKnownValidationError(e)) {
-      return NextResponse.json({ error: e.message }, { status: 400 });
+      return apiError("invalid_request", e.message);
     }
 
     if (e instanceof Error && "code" in e) {
       const code = (e as { code: string }).code;
       if (code === "P2025") {
-        return NextResponse.json({ error: "Time log not found" }, { status: 404 });
+        return apiError("not_found", "Time log not found");
       }
       if (code === "P2023") {
         return invalidIdResponse();
@@ -86,9 +87,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     throw e;
   }
-}
+});
 
-export async function DELETE(req: NextRequest, { params }: RouteParams) {
+export const DELETE = withApiErrors(async (req: NextRequest, { params }: RouteParams) => {
   const authError = verifyAdminApiKey(req);
   if (authError) return authError;
 
@@ -104,7 +105,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     if (e instanceof Error && "code" in e) {
       const code = (e as { code: string }).code;
       if (code === "P2025") {
-        return NextResponse.json({ error: "Time log not found" }, { status: 404 });
+        return apiError("not_found", "Time log not found");
       }
       if (code === "P2023") {
         return invalidIdResponse();
@@ -113,4 +114,4 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     throw e;
   }
-}
+});
