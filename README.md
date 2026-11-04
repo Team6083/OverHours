@@ -131,8 +131,8 @@ clocked in when the daily cut-off passes is locked automatically, so no session 
 `23:00`, a session started at 22:30 is locked at 23:00 that day, and one started at 23:30 at 23:00 the next
 day. An automatically locked log's out time is the cut-off it passed.
 
-Locking is checked whenever logs are read or a user clocks in or out, and by a one-minute timer in each
-server process, so no external scheduler is needed. A user who clocks out after the cut-off is told the
+Locking is checked whenever logs are read or a user clocks in or out, so no scheduler or background job is
+needed; the database is updated on the first read after the cut-off. A user who clocks out after the cut-off is told the
 session was locked. Each lock records a reason (`AUTO_TIMEOUT` or `ADMIN`), when it happened and, for locks
 made in the web UI, which admin made it. Logs locked before this was recorded show the reason as unknown.
 

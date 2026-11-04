@@ -55,6 +55,8 @@ function prismaTimeLogToDTO(timeLog: TimeLog): TimeLogDTO {
 }
 
 export async function getTimelogDTO(id: string): Promise<TimeLogDTO | null> {
+  await lockOverdueTimeLogs();
+
   const timeLog = await prisma.timeLog.findUnique({
     where: { id },
   });
@@ -373,6 +375,9 @@ export async function adminClockOut(timeLogId: string, notes?: string): Promise<
     throw new Error("Unauthorized");
   }
 
+  // An overdue session is locked first, so it cannot be closed as Done from a stale page
+  await lockOverdueTimeLogs();
+
   // Find the time log
   const existingTimeLog = await prisma.timeLog.findUnique({
     where: { id: timeLogId },
@@ -403,6 +408,9 @@ export async function adminLockLog(timeLogId: string, notes?: string): Promise<T
   if (session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
+
+  // An overdue session is locked first, so it cannot be closed as Done from a stale page
+  await lockOverdueTimeLogs();
 
   // Find the time log
   const existingTimeLog = await prisma.timeLog.findUnique({
