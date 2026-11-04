@@ -17,6 +17,9 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@chakra-ui/react"
         update-types: ["version-update:semver-major"]
+      # eslint-config-next plugins lack ESLint 10 support; see #112 for when to remove
+      - dependency-name: "eslint"
+        versions: [">=10"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
