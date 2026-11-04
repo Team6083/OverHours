@@ -4,7 +4,7 @@ import "server-only";
 import { auth, Role } from "@/auth";
 import { TimeLog } from "@/generated/prisma";
 import prisma from "@/lib/prisma";
-import { lockOverdueTimeLogs, TimeLogDTO } from "./timelog-dto";
+import { TimeLogDTO } from "./timelog-dto";
 
 type HeadCountOptions = {
   bucketSize: number;
@@ -92,8 +92,6 @@ export async function getOverviewStats(
   const session = await auth();
   if (!session) return null;
 
-  await lockOverdueTimeLogs();
-
   const { startDate, endDate } = opts || {};
 
   // Convert to Date objects in case they arrive as strings from client serialization
@@ -159,8 +157,6 @@ export async function getWeeklyReportData(
 ): Promise<WeeklyReportData | null> {
   const session = await auth();
   if (!session) return null;
-
-  await lockOverdueTimeLogs();
 
   // Convert to Date objects in case they arrive as strings from client serialization
   const start = new Date(weekStart);
@@ -260,8 +256,6 @@ export async function getDailyReportData(dateRange: [Date, Date]): Promise<Daily
   if (!session) {
     return null;
   }
-
-  await lockOverdueTimeLogs();
 
   const isAdmin = session.user.role === Role.ADMIN;
 
@@ -369,8 +363,6 @@ export async function getUserReportData(
 ): Promise<UserReportData | null> {
   const session = await auth();
   if (!session || session.user.role !== Role.ADMIN) return null;
-
-  await lockOverdueTimeLogs();
 
   const { startDate, endDate } = opts || {};
   const start = startDate ? new Date(startDate) : undefined;

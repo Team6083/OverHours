@@ -4,7 +4,7 @@ import * as z from "zod";
 import { apiError, withApiErrors } from "@/lib/api-error";
 import { verifyAdminApiKey } from "@/lib/admin-api-auth";
 import { getTimeZone } from "@/lib/config";
-import { lockedCsvFilename, lockedTimeLogRowsToCsv, queryLockedTimeLogRows } from "@/lib/data/locked-export";
+import { lockedCsvResponse, queryLockedTimeLogRows } from "@/lib/data/locked-export";
 
 const querySchema = z.object({
   startTime: z.iso.datetime().transform(v => new Date(v)).optional(),
@@ -32,14 +32,7 @@ export const GET = withApiErrors(async (req: NextRequest) => {
   const rows = await queryLockedTimeLogRows(range);
 
   if (format === "csv") {
-    const timeZone = getTimeZone();
-    return new NextResponse(lockedTimeLogRowsToCsv(rows, timeZone), {
-      headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${lockedCsvFilename(range, timeZone)}"`,
-        "Cache-Control": "no-store",
-      },
-    });
+    return lockedCsvResponse(rows, range, getTimeZone());
   }
 
   return NextResponse.json({ data: rows });

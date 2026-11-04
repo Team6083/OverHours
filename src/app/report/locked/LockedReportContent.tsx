@@ -8,22 +8,10 @@ import { LuDownload, LuLock, LuRefreshCcw } from "react-icons/lu";
 import type { LockedTimeLogRow } from "@/lib/data/locked-export";
 import { getLockedReportRows } from "./actions";
 
-function toDateInputValue(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-/** Local midnight of a `YYYY-MM-DD` input value. */
-function fromDateInputValue(v: string): Date | undefined {
-  const [y, m, d] = v.split("-").map(Number);
-  if (!y || !m || !d) return undefined;
-  return new Date(y, m - 1, d);
-}
-
-function formatTime(d?: Date): string {
-  return d ? new Date(d).toLocaleString() : "-";
+/** Today as `YYYY-MM-DD` in `timeZone` (en-CA formats dates that way). */
+function todayInZone(timeZone: string): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(new Date());
 }
 
 const REASON_BADGE: Record<LockedTimeLogRow["lockReason"], { label: string; color: string }> = {
@@ -35,45 +23,39 @@ const REASON_BADGE: Record<LockedTimeLogRow["lockReason"], { label: string; colo
 export default function LockedReportContent(props: { autoLockTime?: string; timeZone: string }) {
   const { autoLockTime, timeZone } = props;
 
-  // Default range: the current month up to today
-  const [startStr, setStartStr] = useState(() => {
-    const now = new Date();
-    return toDateInputValue(new Date(now.getFullYear(), now.getMonth(), 1));
-  });
-  const [endStr, setEndStr] = useState(() => toDateInputValue(new Date()));
+  // Dates are whole days in the server's OVERHOURS_TIMEZONE (both inclusive), resolved on the server, so
+  // the filter, the table and the CSV agree whatever the browser's zone. Default: this month up to today.
+  const [startStr, setStartStr] = useState(() => `${todayInZone(timeZone).slice(0, 8)}01`);
+  const [endStr, setEndStr] = useState(() => todayInZone(timeZone));
 
-  // [start, end) bounds on clock-in time; the end date is inclusive in the UI
-  const range = useMemo(() => {
-    const start = fromDateInputValue(startStr);
-    const endDay = fromDateInputValue(endStr);
-    const end = endDay ? new Date(endDay.getFullYear(), endDay.getMonth(), endDay.getDate() + 1) : undefined;
-    return { start, end };
-  }, [startStr, endStr]);
+  const formatTime = useCallback((d?: Date) => (
+    d ? new Date(d).toLocaleString(undefined, { timeZone, hour12: false }) : "-"
+  ), [timeZone]);
 
   const [rows, setRows] = useState<LockedTimeLogRow[] | null>(null);
   // Bumped by the refresh button; loading while the last finished fetch is not for the current request
   const [refreshCount, setRefreshCount] = useState(0);
-  const requestKey = `${range.start?.getTime()}-${range.end?.getTime()}-${refreshCount}`;
+  const requestKey = `${startStr}-${endStr}-${refreshCount}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const loading = loadedKey !== requestKey;
 
   useEffect(() => {
     let cancelled = false;
-    getLockedReportRows(range.start, range.end)
+    getLockedReportRows(startStr || undefined, endStr || undefined)
       .then(result => { if (!cancelled) setRows(result); })
       .catch(() => { if (!cancelled) setRows(null); })
       .finally(() => { if (!cancelled) setLoadedKey(requestKey); });
     return () => { cancelled = true; };
-  }, [range, requestKey]);
+  }, [startStr, endStr, requestKey]);
 
   const handleRefresh = useCallback(() => setRefreshCount(c => c + 1), []);
 
   const exportHref = useMemo(() => {
     const params = new URLSearchParams();
-    if (range.start) params.set("startTime", range.start.toISOString());
-    if (range.end) params.set("endTime", range.end.toISOString());
+    if (startStr) params.set("startDate", startStr);
+    if (endStr) params.set("endDate", endStr);
     return `/report/locked/export?${params}`;
-  }, [range]);
+  }, [startStr, endStr]);
 
   const autoCount = rows?.filter(r => r.lockReason === "AUTO_TIMEOUT").length ?? 0;
   const userCount = rows ? new Set(rows.map(r => r.userId)).size : 0;
@@ -101,7 +83,7 @@ export default function LockedReportContent(props: { autoLockTime?: string; time
       {autoLockTime
         ? `Sessions still clocked in at ${autoLockTime} (${timeZone}) are locked automatically.`
         : "Automatic locking is disabled (OVERHOURS_AUTO_LOCK_TIME is not set)."}
-      {" "}CSV times are in {timeZone}.
+      {" "}Dates and times are in {timeZone}.
     </Text>
 
     {loading && !rows ? <Center><Spinner /></Center> : (

@@ -1,13 +1,12 @@
 "use server";
 import { auth, Role } from "@/auth";
-import { LockedTimeLogRow, queryLockedTimeLogRows } from "@/lib/data/locked-export";
+import { getTimeZone } from "@/lib/config";
+import { dayRangeInZone, LockedTimeLogRow, queryLockedTimeLogRows } from "@/lib/data/locked-export";
 
-export async function getLockedReportRows(startTime?: Date, endTime?: Date): Promise<LockedTimeLogRow[] | null> {
+/** Locked logs clocked in on days `startDate`..`endDate` (`YYYY-MM-DD`, inclusive) in OVERHOURS_TIMEZONE. */
+export async function getLockedReportRows(startDate?: string, endDate?: string): Promise<LockedTimeLogRow[] | null> {
   const session = await auth();
   if (!session || session.user.role !== Role.ADMIN) return null;
 
-  return queryLockedTimeLogRows({
-    startTime: startTime ? new Date(startTime) : undefined,
-    endTime: endTime ? new Date(endTime) : undefined,
-  });
+  return queryLockedTimeLogRows(dayRangeInZone(startDate, endDate, getTimeZone()));
 }

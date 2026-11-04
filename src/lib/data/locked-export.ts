@@ -2,8 +2,7 @@ import "server-only";
 
 import { Prisma } from "@/generated/prisma";
 import prisma from "../prisma";
-import { formatWallTime } from "../zoned-time";
-import { lockOverdueTimeLogs } from "./auto-lock";
+import { formatWallTime, fromWallTime } from "../zoned-time";
 
 export type LockedTimeLogRow = {
   id: string;
@@ -28,14 +27,46 @@ export type LockedTimeLogRange = {
   endTime?: Date;
 };
 
+/** API form of a stored lock reason; undefined for logs locked before reasons were recorded. */
+export function toApiLockReason(reason: "AutoTimeout" | "Admin" | null): "AUTO_TIMEOUT" | "ADMIN" | undefined {
+  if (reason === "AutoTimeout") return "AUTO_TIMEOUT";
+  if (reason === "Admin") return "ADMIN";
+  return undefined;
+}
+
+/**
+ * [start, end) bounds for whole days `YYYY-MM-DD` (both inclusive) in `timeZone`, so a report range means
+ * the same days as the cut-off and the CSV times regardless of the viewer's browser zone.
+ */
+export function dayRangeInZone(startDate: string | undefined, endDate: string | undefined, timeZone: string): LockedTimeLogRange {
+  const day = (v: string, offset: number) => {
+    const [y, m, d] = v.split("-").map(Number);
+    return fromWallTime(y, m, d + offset, 0, 0, timeZone);
+  };
+
+  return {
+    startTime: startDate ? day(startDate, 0) : undefined,
+    endTime: endDate ? day(endDate, 1) : undefined,
+  };
+}
+
+/** CSV download response for locked logs, shared by the report route and the Admin API. */
+export function lockedCsvResponse(rows: LockedTimeLogRow[], range: LockedTimeLogRange, timeZone: string): Response {
+  return new Response(lockedTimeLogRowsToCsv(rows, timeZone), {
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${lockedCsvFilename(range, timeZone)}"`,
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
 /**
  * Locked time logs whose clock-in falls in the range, oldest first, joined with user and locker names.
- * Runs the auto-lock sweep first so overdue sessions are included. No authorization check: callers
+ * No authorization check: callers
  * (admin-only report route, API-key Admin API) must gate access.
  */
 export async function queryLockedTimeLogRows(range: LockedTimeLogRange = {}): Promise<LockedTimeLogRow[]> {
-  await lockOverdueTimeLogs();
-
   const where: Prisma.TimeLogWhereInput = { status: "Locked" };
   if (range.startTime || range.endTime) {
     where.inTime = { gte: range.startTime, lt: range.endTime };
@@ -60,9 +91,7 @@ export async function queryLockedTimeLogRows(range: LockedTimeLogRange = {}): Pr
     userEmail: log.user.email,
     inTime: log.inTime,
     outTime: log.outTime ?? undefined,
-    lockReason: log.lockReason === "AutoTimeout"
-      ? "AUTO_TIMEOUT"
-      : (log.lockReason === "Admin" ? "ADMIN" : "UNKNOWN"),
+    lockReason: toApiLockReason(log.lockReason) ?? "UNKNOWN",
     lockedAt: log.lockedAt ?? undefined,
     lockedById: log.lockedById ?? undefined,
     lockedByName: log.lockedById ? lockerNames.get(log.lockedById) : undefined,

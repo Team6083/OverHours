@@ -15,7 +15,8 @@
   ],
   "tags": [
     { "name": "Users" },
-    { "name": "TimeLogs" }
+    { "name": "TimeLogs" },
+    { "name": "Jobs" }
   ],
   "paths": {
     "/admin/users": {
@@ -275,7 +276,7 @@
       "get": {
         "tags": ["TimeLogs"],
         "summary": "Export locked time logs",
-        "description": "Locked (abnormal clock-out) time logs whose clock-in is in [startTime, endTime), oldest first, with user details. Overdue sessions are locked before the query runs. format=csv returns a UTF-8 CSV (with BOM) whose times are wall-clock times in OVERHOURS_TIMEZONE.",
+        "description": "Locked (abnormal clock-out) time logs whose clock-in is in [startTime, endTime), oldest first, with user details. format=csv returns a UTF-8 CSV (with BOM) whose times are wall-clock times in OVERHOURS_TIMEZONE.",
         "parameters": [
           {
             "name": "startTime",
@@ -315,6 +316,40 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/NotConfigured" }
+        }
+      }
+    },
+    "/admin/jobs/auto-lock": {
+      "post": {
+        "tags": ["Jobs"],
+        "summary": "Lock sessions past the daily cut-off",
+        "description": "Locks every CURRENTLY_IN time log that has passed the daily cut-off (OVERHOURS_AUTO_LOCK_TIME), with outTime set to the cut-off and lockReason AUTO_TIMEOUT. Meant for an external scheduler; idempotent. Does nothing when auto-lock is not configured (enabled: false).",
+        "responses": {
+          "200": {
+            "description": "Sweep result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": { "type": "boolean" },
+                        "lockedCount": { "type": "integer" },
+                        "lockedIds": { "type": "array", "items": { "type": "string" } }
+                      },
+                      "required": ["enabled", "lockedCount", "lockedIds"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/NotConfigured" }

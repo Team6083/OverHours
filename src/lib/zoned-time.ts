@@ -54,7 +54,8 @@ function offsetMs(date: Date, timeZone: string): number {
 
 /**
  * The instant at which the wall clock in `timeZone` shows the given date and time. Day overflow is
- * allowed (`day + 1` past month end rolls over), as with `Date.UTC`.
+ * allowed (`day + 1` past month end rolls over), as with `Date.UTC`. A wall time skipped by a
+ * daylight-saving jump resolves to the instant just after the jump (e.g. 02:30 → 03:30).
  */
 export function fromWallTime(
   year: number, month: number, day: number, hour: number, minute: number, timeZone: string,
@@ -62,7 +63,11 @@ export function fromWallTime(
   const guess = Date.UTC(year, month - 1, day, hour, minute);
   const first = guess - offsetMs(new Date(guess), timeZone);
   const second = guess - offsetMs(new Date(first), timeZone);
-  return new Date(second);
+
+  // `second` is exact unless the wall time does not exist (DST gap); then take the later candidate
+  const w = toWallTime(new Date(second), timeZone);
+  if (w.hour === hour && w.minute === minute) return new Date(second);
+  return new Date(Math.max(first, second));
 }
 
 /** `YYYY-MM-DD HH:mm:ss` in `timeZone`. */
