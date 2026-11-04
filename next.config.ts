@@ -4,11 +4,30 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 import { withSentryConfig } from "@sentry/nextjs/config";
 
+// Evaluated at build time (the Docker build args are exported as env vars there) and baked into the standalone
+// server, so these reflect the image, not the runtime environment. Unset values emit no header.
+const appHeaders = [
+  { key: "X-App-Version", value: process.env.NEXT_PUBLIC_VERSION },
+  { key: "X-App-Commit", value: process.env.NEXT_PUBLIC_COMMIT_SHA },
+].filter((header): header is { key: string; value: string } => Boolean(header.value));
+
+// HSTS is intentionally not set here; it is set at the edge. The CSP is set per request in src/proxy.ts.
+const securityHeaders = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+];
+
 const nextConfig: NextConfig = {
   /* config options here */
   output: "standalone",
   experimental: {
     optimizePackageImports: ["@chakra-ui/react"],
+  },
+  // Applies to every path, including API routes, static assets and the health endpoints that bypass src/proxy.ts.
+  async headers() {
+    return [{ source: "/:path*", headers: [...appHeaders, ...securityHeaders] }];
   },
 };
 
