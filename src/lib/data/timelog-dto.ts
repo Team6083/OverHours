@@ -2,6 +2,9 @@ import "server-only";
 import { auth, Role } from "@/auth";
 import { Prisma, TimeLog } from "@/generated/prisma";
 import prisma from "../prisma";
+import { lockOverdueTimeLogs } from "./auto-lock";
+
+export { lockOverdueTimeLogs };
 
 export type TimeLogDTO = {
   id: string;
@@ -11,6 +14,12 @@ export type TimeLogDTO = {
   inTime: Date;
   outTime?: Date;
   notes?: string;
+
+  /** Why the log was locked; absent on logs locked before this was recorded. */
+  lockReason?: "AUTO_TIMEOUT" | "ADMIN";
+  lockedAt?: Date;
+  /** Admin who locked the log; absent for automatic and Admin API locks. */
+  lockedById?: string;
 
   createdAt: Date;
   updatedAt: Date;
@@ -35,6 +44,11 @@ function prismaTimeLogToDTO(timeLog: TimeLog): TimeLogDTO {
     inTime: timeLog.inTime,
     outTime: timeLog.outTime ?? undefined,
     notes: timeLog.notes || undefined,
+    lockReason: timeLog.lockReason === "AutoTimeout"
+      ? "AUTO_TIMEOUT"
+      : (timeLog.lockReason === "Admin" ? "ADMIN" : undefined),
+    lockedAt: timeLog.lockedAt ?? undefined,
+    lockedById: timeLog.lockedById ?? undefined,
     createdAt: timeLog.createdAt,
     updatedAt: timeLog.updatedAt,
   };
@@ -54,6 +68,8 @@ export async function getTimelogDTO(id: string): Promise<TimeLogDTO | null> {
 }
 
 export async function getAllCurrentlyInTimelogDTOs(): Promise<TimeLogDTO[]> {
+  await lockOverdueTimeLogs();
+
   const timeLogs = await prisma.timeLog.findMany({
     where: { status: "CurrentlyIn" },
     orderBy: { inTime: "desc" },
@@ -81,6 +97,8 @@ export async function getAllTimelogDTOs(opts?: Partial<GetAllTimelogDTOsOptions>
   if (session.user.role !== Role.ADMIN && (!userId || userId !== session.user.id)) {
     return [];
   }
+
+  await lockOverdueTimeLogs();
 
   const where: Prisma.TimeLogWhereInput = {};
 
@@ -211,6 +229,8 @@ export async function getUserLastLogDTO(userId: string): Promise<TimeLogDTO | nu
     return null;
   }
 
+  await lockOverdueTimeLogs();
+
   const lastLog = await prisma.timeLog.findFirst({
     where: { userId },
     orderBy: { inTime: "desc" },
@@ -235,6 +255,8 @@ export async function clockIn(userId: string): Promise<TimeLogDTO> {
   if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
+
+  await lockOverdueTimeLogs();
 
   // Check if user already has a currently in time log
   const existingTimeLog = await prisma.timeLog.findFirst({
@@ -273,6 +295,13 @@ export class NotClockedInError extends Error {
   }
 }
 
+export class AutoLockedError extends Error {
+  constructor(message: string, public cutoff?: Date) {
+    super(message);
+    this.name = "AutoLockedError";
+  }
+}
+
 export class TimeLogTooShortError extends Error {
   constructor(message: string, public minDurationSec: number) {
     super(message);
@@ -286,6 +315,8 @@ export async function clockOut(userId: string, notes?: string): Promise<TimeLogD
     throw new Error("Unauthorized");
   }
 
+  const autoLockedIds = await lockOverdueTimeLogs();
+
   // Find the currently in time log
   const existingTimeLog = await prisma.timeLog.findFirst({
     where: {
@@ -295,6 +326,18 @@ export async function clockOut(userId: string, notes?: string): Promise<TimeLogD
   });
 
   if (!existingTimeLog) {
+    if (autoLockedIds.length > 0) {
+      const justLocked = await prisma.timeLog.findFirst({
+        where: { id: { in: autoLockedIds }, userId },
+      });
+      if (justLocked) {
+        throw new AutoLockedError(
+          "Clock-out came after the daily cut-off; the time log has been locked",
+          justLocked.outTime ?? undefined,
+        );
+      }
+    }
+
     throw new NotClockedInError("No currently in time log found for user");
   }
 
@@ -371,19 +414,42 @@ export async function adminLockLog(timeLogId: string, notes?: string): Promise<T
   }
 
   if (existingTimeLog.status !== "CurrentlyIn") {
-    throw new Error("Only done time logs can be locked");
+    throw new Error("Only currently in time logs can be locked");
   }
 
+  const now = new Date();
   const updatedTimeLog = await prisma.timeLog.update({
     where: { id: existingTimeLog.id },
     data: {
       status: "Locked",
-      outTime: new Date(),
+      outTime: now,
       notes: notes || existingTimeLog.notes,
+      lockReason: "Admin",
+      lockedAt: now,
+      lockedById: session.user.id,
     },
   });
 
   return prismaTimeLogToDTO(updatedTimeLog);
+}
+
+type PrismaTimeLogStatus = "CurrentlyIn" | "Done" | "Locked";
+
+/**
+ * Lock metadata to write when a log's status is set by an admin (form or Admin API): entering Locked
+ * records a manual lock, leaving Locked clears it, and staying Locked keeps the existing values.
+ */
+function lockFieldsForStatusChange(
+  prevStatus: PrismaTimeLogStatus | null,
+  nextStatus: PrismaTimeLogStatus,
+  lockedById: string | null | undefined,
+): { lockReason?: "Admin" | null; lockedAt?: Date | null; lockedById?: string | null } {
+  if (nextStatus === "Locked") {
+    if (prevStatus === "Locked") return {};
+    return { lockReason: "Admin", lockedAt: new Date(), lockedById: lockedById ?? null };
+  }
+
+  return { lockReason: null, lockedAt: null, lockedById: null };
 }
 
 export async function createTimeLog(data: {
@@ -420,6 +486,7 @@ export async function createTimeLog(data: {
       inTime: data.inTime,
       outTime: data.outTime,
       notes: data.notes,
+      ...lockFieldsForStatusChange(null, status, session.user.id),
     }
   });
 
@@ -453,6 +520,8 @@ export async function updateTimeLog(timeLogId: string, data: {
     throw new Error("Out time must be after in time");
   }
 
+  const existing = await prisma.timeLog.findUnique({ where: { id: timeLogId }, select: { status: true } });
+
   const result = await prisma.timeLog.update({
     where: { id: timeLogId },
     data: {
@@ -461,6 +530,7 @@ export async function updateTimeLog(timeLogId: string, data: {
       inTime: data.inTime,
       outTime: data.outTime,
       notes: data.notes,
+      ...lockFieldsForStatusChange(existing?.status ?? null, status, session.user.id),
     }
   });
 
@@ -498,7 +568,7 @@ export async function deleteTimeLogs(timeLogIds: string[]) {
 // session/role checks above, since the route handlers calling them already
 // gate access via the admin API key.
 
-function toPrismaTimeLogStatus(status: TimeLogDTO["status"]): "CurrentlyIn" | "Done" | "Locked" {
+function toPrismaTimeLogStatus(status: TimeLogDTO["status"]): PrismaTimeLogStatus {
   if (status === "CURRENTLY_IN") return "CurrentlyIn";
   if (status === "DONE") return "Done";
   return "Locked";
@@ -513,6 +583,8 @@ export type AdminGetAllTimeLogsOptions = {
 
 export async function adminGetAllTimeLogs(opts?: Partial<AdminGetAllTimeLogsOptions>): Promise<TimeLogDTO[]> {
   const { userId, startTime, endTime, status } = opts || {};
+
+  await lockOverdueTimeLogs();
 
   const where: Prisma.TimeLogWhereInput = {};
 
@@ -550,6 +622,8 @@ export async function adminGetAllTimeLogs(opts?: Partial<AdminGetAllTimeLogsOpti
 }
 
 export async function adminGetTimeLog(id: string): Promise<TimeLogDTO | null> {
+  await lockOverdueTimeLogs();
+
   const timeLog = await prisma.timeLog.findUnique({
     where: { id },
   });
@@ -581,6 +655,7 @@ export async function adminCreateTimeLog(data: {
       inTime: data.inTime,
       outTime: data.outTime,
       notes: data.notes,
+      ...lockFieldsForStatusChange(null, status, null),
     },
   });
 
@@ -604,6 +679,8 @@ export async function adminUpdateTimeLog(timeLogId: string, data: {
     throw new Error("Out time must be after in time");
   }
 
+  const existing = await prisma.timeLog.findUnique({ where: { id: timeLogId }, select: { status: true } });
+
   const result = await prisma.timeLog.update({
     where: { id: timeLogId },
     data: {
@@ -612,6 +689,7 @@ export async function adminUpdateTimeLog(timeLogId: string, data: {
       inTime: data.inTime,
       outTime: data.outTime ?? null,
       notes: data.notes ?? null,
+      ...lockFieldsForStatusChange(existing?.status ?? null, status, null),
     },
   });
 

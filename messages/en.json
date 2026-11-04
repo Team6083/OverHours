@@ -21,6 +21,10 @@
           "title": "Time Log Too Short",
           "description": "You must be clocked-in for at least {minDuration} to log your time."
         },
+        "autoLocked": {
+          "title": "Clock-out too late",
+          "description": "You clocked out after the daily cut-off ({cutoff}). This session has been locked as an abnormal clock-out and does not count toward your hours."
+        },
         "genericError": {
           "title": "Error",
           "description": "An unexpected error occurred. Please try again."

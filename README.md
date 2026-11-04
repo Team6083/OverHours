@@ -52,6 +52,8 @@ Variables are read at runtime unless noted otherwise.
 | `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*`. Admin API requests are rejected when it is unset. |
 | `ORG_NAME` | No | Name of the organisation running this instance. Shown in the header, footer and page description. When unset, no organisation text is shown. |
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
+| `OVERHOURS_AUTO_LOCK_TIME` | No | Daily cut-off as `HH:mm` (in `OVERHOURS_TIMEZONE`). Sessions still clocked in at the cut-off are locked as abnormal clock-outs; see [Auto-lock](#auto-lock). Unset or malformed: no automatic locking. |
+| `OVERHOURS_TIMEZONE` | No | IANA time zone for `OVERHOURS_AUTO_LOCK_TIME` and for times in locked-log CSV exports. Default: `Asia/Taipei`. |
 | `SENTRY_DSN` | No | Sentry DSN for the server and edge runtimes. |
 | `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN for the browser. Inlined at build time. |
 | `SENTRY_AUTH_TOKEN` | No | Sentry auth token used to upload source maps. Build time only; secret. |
@@ -120,6 +122,23 @@ On Kubernetes, use `/api/healthz` for the liveness probe and `/api/readyz` for t
 
 On `SIGTERM`, Next.js's standalone server stops accepting new connections, lets in-flight requests finish and exits (code 143). Readiness probes therefore mostly fail by connection refusal, and `/api/readyz` only reports `shutting_down` on connections that are still open during the drain. Add a `preStop` sleep of a few seconds so the pod is removed from the Service endpoints before it stops accepting connections, and set `terminationGracePeriodSeconds` longer than that sleep plus your longest request. If `NEXT_MANUAL_SIG_HANDLE` is set, the shutdown flag is not installed and `/api/readyz` never reports `shutting_down`.
 
+## Auto-lock
+
+A session that is not clocked out normally is **locked**: it gets status `LOCKED`, does not count toward
+hours, and appears in the Locked Logs report. Admins can lock a session by hand (Lock on the home page,
+or setting the status in the log editor / Admin API). With `OVERHOURS_AUTO_LOCK_TIME` set, a session still
+clocked in when the daily cut-off passes is locked automatically, so no session can span a cut-off: with
+`23:00`, a session started at 22:30 is locked at 23:00 that day, and one started at 23:30 at 23:00 the next
+day. An automatically locked log's out time is the cut-off it passed.
+
+Locking is checked whenever logs are read or a user clocks in or out, and by a one-minute timer in each
+server process, so no external scheduler is needed. A user who clocks out after the cut-off is told the
+session was locked. Each lock records a reason (`AUTO_TIMEOUT` or `ADMIN`), when it happened and, for locks
+made in the web UI, which admin made it. Logs locked before this was recorded show the reason as unknown.
+
+Locked logs can be exported for violation records as CSV from **Report → Locked Logs** (admins), or through
+`GET /api/admin/timelogs/locked` (JSON or `format=csv`).
+
 ## Admin API
 
 An API-key authenticated REST API is available for managing users and time logs from
@@ -134,6 +153,7 @@ Endpoints:
 - `GET /api/admin/users` / `POST /api/admin/users`
 - `GET /api/admin/users/{id}` / `PUT /api/admin/users/{id}` / `DELETE /api/admin/users/{id}`
 - `GET /api/admin/timelogs` / `POST /api/admin/timelogs`
+- `GET /api/admin/timelogs/locked` — locked logs with user details, filtered by clock-in time; `?format=csv` for CSV
 - `GET /api/admin/timelogs/{id}` / `PUT /api/admin/timelogs/{id}` / `DELETE /api/admin/timelogs/{id}`
 
 The full OpenAPI 3.0 schema is available at [`/openapi/admin-api.json`](public/openapi/admin-api.json).

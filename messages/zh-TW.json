@@ -21,6 +21,10 @@
         "title": "操作無效",
         "description": "簽到時長過短，紀錄已被刪除。至少需簽到 {minDuration} 後才能進行有效紀錄。"
       },
+      "autoLocked": {
+        "title": "簽退逾時",
+        "description": "已超過每日截止時間（{cutoff}）才簽退，本次紀錄已被鎖定為未正常簽退，不計入時數。"
+      },
       "genericError": {
         "title": "發生錯誤",
         "description": "執行操作時發生未知錯誤，請稍後再試。"

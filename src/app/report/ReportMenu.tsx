@@ -17,6 +17,12 @@ const reports = {
       { label: "Per User", value: "user" },
     ],
   },
+  compliance: {
+    label: "Compliance",
+    items: [
+      { label: "Locked Logs", value: "locked" },
+    ],
+  },
 }
 export default function ReportMenu() {
   const pathname = usePathname();
