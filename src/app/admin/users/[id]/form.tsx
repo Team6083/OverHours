@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { Fieldset, Stack, Field, Input, Button, DataList } from "@chakra-ui/react";
+import { Checkbox, Fieldset, Stack, Field, Input, Button, DataList, NativeSelect } from "@chakra-ui/react";
+import { useTranslations } from "next-intl";
 
 import { UserDTO } from "@/lib/data/user-dto";
 import { formSubmit } from "./actions";
@@ -11,11 +12,13 @@ export default function UserForm(props: {
   user?: UserDTO;
 }) {
   const { isNew, user } = props;
+  const t = useTranslations("Attendance");
 
   const [state, action, pending] = useActionState(formSubmit, { prevValues: user });
 
   const nameFieldError = state.issues?.filter(issue => issue.path[0] === "name");
   const emailFieldError = state.issues?.filter(issue => issue.path[0] === "email");
+  const slackFieldError = state.issues?.filter(issue => issue.path[0] === "slackUserId");
 
   return <form action={action}>
     <Fieldset.Root size="lg" invalid={!!state.issues?.length}>
@@ -48,6 +51,32 @@ export default function UserForm(props: {
           <Input name="email" type="email" defaultValue={state.prevValues?.email} />
           <Field.ErrorText>{emailFieldError?.map((v) => v.message).join(", ")}</Field.ErrorText>
         </Field.Root>
+
+        <Field.Root invalid={slackFieldError && slackFieldError.length > 0}>
+          <Field.Label>{t("userForm.slackUserId")}</Field.Label>
+          <Input name="slackUserId" defaultValue={state.prevValues?.slackUserId} />
+          <Field.HelperText>{t("userForm.slackUserIdHelp")}</Field.HelperText>
+          <Field.ErrorText>{slackFieldError?.map((v) => v.message).join(", ")}</Field.ErrorText>
+        </Field.Root>
+
+        <Field.Root>
+          <Field.Label>{t("userForm.dutyRole")}</Field.Label>
+          <NativeSelect.Root>
+            <NativeSelect.Field name="dutyRole" defaultValue={state.prevValues?.dutyRole ?? ""}>
+              <option value="">{t("userForm.noDutyRole")}</option>
+              <option value="CE">{t("duty.CE")}</option>
+              <option value="PM">{t("duty.PM")}</option>
+              <option value="MACHINING">{t("duty.MACHINING")}</option>
+            </NativeSelect.Field>
+            <NativeSelect.Indicator />
+          </NativeSelect.Root>
+        </Field.Root>
+
+        <Checkbox.Root name="attendanceExempt" defaultChecked={!!state.prevValues?.attendanceExempt}>
+          <Checkbox.HiddenInput />
+          <Checkbox.Control />
+          <Checkbox.Label>{t("userForm.attendanceExempt")}</Checkbox.Label>
+        </Checkbox.Root>
       </Fieldset.Content>
 
       {user && (

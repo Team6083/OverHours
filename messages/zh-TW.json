@@ -179,6 +179,8 @@
       "reports": "報告",
       "users": "使用者",
       "statRanges": "統計範圍",
+      "attendance": "出席",
+      "attendanceAdmin": "出席管理",
       "signIn": "登入",
       "signOut": "登出"
     },
@@ -241,5 +243,67 @@
     "lockedByApi": "API",
     "empty": "此範圍內沒有鎖定紀錄",
     "loadFailed": "載入失敗"
+  },
+  "Attendance": {
+    "title": "出席",
+    "today": "今天",
+    "notScheduled": "未安排",
+    "nobody": "無",
+    "availableToday": "今天可以來的人（{count}）",
+    "availableTomorrow": "明天可以來的人（{count}）",
+    "noSeason": "尚未設定賽季，請管理員先設定。",
+    "signInRequired": "請先登入才能使用出席功能。",
+    "duty": {
+      "CE": "值班 CE",
+      "PM": "值班 PM",
+      "MACHINING": "值班加工監督"
+    },
+    "week": {
+      "heading": "我的出席時間",
+      "help": "標記確定不能來的日子後儲存。沒有標記只代表可以來，不是一定要來。整週都沒有標記會算成未填寫。",
+      "previous": "上一週",
+      "next": "下一週",
+      "thisWeek": "本週",
+      "cannotCome": "不能來",
+      "canCome": "可以來",
+      "outOfSeason": "非賽季",
+      "save": "儲存這一週",
+      "saved": "已儲存",
+      "saveFailed": "儲存失敗",
+      "filled": "已填寫",
+      "notFilled": "未填寫"
+    },
+    "admin": {
+      "title": "出席管理",
+      "season": "賽季",
+      "seasonName": "名稱",
+      "startDate": "開始日期",
+      "endDate": "結束日期",
+      "eventEndDate": "結束日期（單日留空）",
+      "saveSeason": "儲存賽季",
+      "events": "賽季事件",
+      "eventName": "事件",
+      "notes": "備註",
+      "addEvent": "新增事件",
+      "deleteEvent": "刪除",
+      "noEvents": "尚無事件",
+      "duty": "值班人員",
+      "dutyHelp": "點格子可以排入或取消這個人的值班。紅色格子代表當天不能來。",
+      "noDutyUsers": "還沒有人設定值班身分，請到使用者頁面設定。",
+      "wanted": "通緝令",
+      "wantedHelp": "每週一記錄剛結束那週完全沒有標記的人，不會發到 Slack。",
+      "name": "姓名",
+      "missedCount": "累計次數",
+      "missedWeeks": "週起日",
+      "noneMissing": "目前沒有紀錄",
+      "failed": "儲存失敗"
+    },
+    "userForm": {
+      "slackUserId": "Slack 成員 ID",
+      "slackUserIdHelp": "用來在出席表通知中標記這個人。",
+      "dutyRole": "值班身分",
+      "noDutyRole": "無",
+      "attendanceExempt": "不需要填寫出席"
+    }
   }
 }

@@ -179,6 +179,8 @@
       "reports": "Reports",
       "users": "Users",
       "statRanges": "Stat Ranges",
+      "attendance": "Attendance",
+      "attendanceAdmin": "Attendance Admin",
       "signIn": "Sign-In",
       "signOut": "Sign-Out"
     },
@@ -241,5 +243,67 @@
     "lockedByApi": "API",
     "empty": "No locked logs in this range",
     "loadFailed": "Failed to load"
+  },
+  "Attendance": {
+    "title": "Attendance",
+    "today": "Today",
+    "notScheduled": "Not scheduled",
+    "nobody": "Nobody",
+    "availableToday": "Can come today ({count})",
+    "availableTomorrow": "Can come tomorrow ({count})",
+    "noSeason": "No season has been set up yet. Ask an admin to set one.",
+    "signInRequired": "Sign in to use attendance.",
+    "duty": {
+      "CE": "CE",
+      "PM": "PM",
+      "MACHINING": "Machining supervisor"
+    },
+    "week": {
+      "heading": "My availability",
+      "help": "Mark the days you definitely cannot come, then save. Unmarked days only mean you can come, not that you must. A week with no marks at all counts as not filled in.",
+      "previous": "Previous week",
+      "next": "Next week",
+      "thisWeek": "This week",
+      "cannotCome": "Can't come",
+      "canCome": "Can come",
+      "outOfSeason": "Off season",
+      "save": "Save this week",
+      "saved": "Saved",
+      "saveFailed": "Could not save",
+      "filled": "Filled in",
+      "notFilled": "Not filled in"
+    },
+    "admin": {
+      "title": "Attendance admin",
+      "season": "Season",
+      "seasonName": "Name",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "eventEndDate": "End date (blank for one day)",
+      "saveSeason": "Save season",
+      "events": "Season events",
+      "eventName": "Event",
+      "notes": "Notes",
+      "addEvent": "Add event",
+      "deleteEvent": "Delete",
+      "noEvents": "No events yet",
+      "duty": "Duty roster",
+      "dutyHelp": "Click a cell to assign or remove that person's duty. Red cells are days they cannot come.",
+      "noDutyUsers": "Nobody has a duty role yet. Set one on the user's page.",
+      "wanted": "Wanted list",
+      "wantedHelp": "Recorded every Monday for the week that just ended, for people with no marks that week. Not posted to Slack.",
+      "name": "Name",
+      "missedCount": "Count",
+      "missedWeeks": "Weeks starting",
+      "noneMissing": "Nobody on the list",
+      "failed": "Could not save"
+    },
+    "userForm": {
+      "slackUserId": "Slack member ID",
+      "slackUserIdHelp": "Used to mention this person in attendance notifications.",
+      "dutyRole": "Duty role",
+      "noDutyRole": "None",
+      "attendanceExempt": "Not expected to fill in attendance"
+    }
   }
 }

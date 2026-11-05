@@ -8,11 +8,15 @@ const schema = z.object({
   id: z.string().optional(),
   name: z.string().trim().nonempty(),
   email: z.email().toLowerCase(),
+  slackUserId: z.union([z.string().trim().regex(/^[UW][A-Z0-9]+$/, "Slack member IDs look like U012ABCDEF"), z.literal("")])
+    .optional().transform(v => v || undefined),
+  dutyRole: z.enum(["", "CE", "PM", "MACHINING"]).optional().transform(v => v || undefined),
+  attendanceExempt: z.string().optional().transform(v => v === "on"),
 });
 
 export type UserFormState = {
   issues?: z.ZodError["issues"];
-  prevValues?: z.infer<typeof schema>
+  prevValues?: Partial<z.infer<typeof schema>>;
 }
 
 export async function formSubmit(state: UserFormState, formData: FormData): Promise<UserFormState> {
@@ -21,16 +25,18 @@ export async function formSubmit(state: UserFormState, formData: FormData): Prom
   try {
     const parsed: z.infer<typeof schema> = schema.parse(formDataObj);
 
+    const data = {
+      email: parsed.email,
+      name: parsed.name,
+      slackUserId: parsed.slackUserId ?? null,
+      dutyRole: parsed.dutyRole ?? null,
+      attendanceExempt: parsed.attendanceExempt,
+    };
+
     if (parsed.id) {
-      await updateUser(parsed.id, {
-        email: parsed.email,
-        name: parsed.name,
-      });
+      await updateUser(parsed.id, data);
     } else {
-      await createUser({
-        email: parsed.email,
-        name: parsed.name,
-      });
+      await createUser(data);
     }
 
     redirect("/admin/users");

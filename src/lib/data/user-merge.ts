@@ -1,5 +1,6 @@
 import "server-only";
 import { auth, Role } from "@/auth";
+import { rowsToReassign } from "../attendance";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
 
@@ -191,6 +192,26 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
     await tx.timeLog.updateMany({
       where: { lockedById: { in: sourceIds } },
       data: { lockedById: targetId },
+    });
+
+    // Rows the target already has are dropped with the source user (cascade)
+    const where = { userId: { in: ids } };
+    const marks = await tx.attendanceMark.findMany({ where, select: { id: true, userId: true, date: true } });
+    await tx.attendanceMark.updateMany({
+      where: { id: { in: rowsToReassign(marks, targetId, row => row.date) } },
+      data: { userId: targetId },
+    });
+
+    const wanted = await tx.wantedRecord.findMany({ where, select: { id: true, userId: true, weekStart: true } });
+    await tx.wantedRecord.updateMany({
+      where: { id: { in: rowsToReassign(wanted, targetId, row => row.weekStart) } },
+      data: { userId: targetId },
+    });
+
+    const duties = await tx.dutyAssignment.findMany({ where, select: { id: true, userId: true, date: true } });
+    await tx.dutyAssignment.updateMany({
+      where: { id: { in: rowsToReassign(duties, targetId, row => row.date) } },
+      data: { userId: targetId },
     });
 
     await tx.user.deleteMany({

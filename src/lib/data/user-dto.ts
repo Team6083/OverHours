@@ -1,6 +1,6 @@
 import "server-only";
 import { auth, Role } from "@/auth";
-import { User } from "@/generated/prisma";
+import { DutyRole, User } from "@/generated/prisma";
 import prisma from "../prisma";
 import { maskName } from "../util";
 
@@ -11,9 +11,19 @@ export type UserDTO = {
   name: string;
   image?: string;
 
+  slackUserId?: string;
+  dutyRole?: DutyRole;
+  attendanceExempt: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }
+
+type UserAttendanceFields = {
+  slackUserId?: string | null;
+  dutyRole?: DutyRole | null;
+  attendanceExempt?: boolean;
+};
 
 export function prismaUserToDTO(user: User): UserDTO {
   return {
@@ -21,6 +31,9 @@ export function prismaUserToDTO(user: User): UserDTO {
     email: user.email,
     name: user.name,
     image: user.image || undefined,
+    slackUserId: user.slackUserId || undefined,
+    dutyRole: user.dutyRole || undefined,
+    attendanceExempt: user.attendanceExempt === true,
     createdAt: new Date(user.createdAt),
     updatedAt: new Date(user.updatedAt),
   };
@@ -82,7 +95,7 @@ export async function getAllUserAvatars(): Promise<{ id: string; image?: string 
 export async function createUser(data: {
   email: string;
   name: string;
-}): Promise<UserDTO> {
+} & UserAttendanceFields): Promise<UserDTO> {
   const session = await auth();
 
   if (!session) {
@@ -97,6 +110,9 @@ export async function createUser(data: {
     data: {
       email: data.email,
       name: data.name,
+      slackUserId: data.slackUserId,
+      dutyRole: data.dutyRole,
+      attendanceExempt: data.attendanceExempt,
     },
   });
 
@@ -106,7 +122,7 @@ export async function createUser(data: {
 export async function updateUser(id: string, data: {
   email: string;
   name: string;
-}): Promise<UserDTO | null> {
+} & UserAttendanceFields): Promise<UserDTO | null> {
   const session = await auth();
 
   if (!session) {
@@ -122,6 +138,9 @@ export async function updateUser(id: string, data: {
     data: {
       email: data.email,
       name: data.name,
+      slackUserId: data.slackUserId,
+      dutyRole: data.dutyRole,
+      attendanceExempt: data.attendanceExempt,
     },
   });
 

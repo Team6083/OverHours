@@ -21,6 +21,14 @@ model User {
   teamIds String[] @default([]) @db.ObjectId
 
   timeLogs TimeLog[]
+
+  slackUserId      String?
+  dutyRole         DutyRole?
+  attendanceExempt Boolean?
+
+  attendanceMarks AttendanceMark[]
+  wantedRecords   WantedRecord[]
+  dutyAssignments DutyAssignment[]
 }
 
 enum TimeLogStatus {
@@ -79,4 +87,72 @@ model StatRange {
   startDate DateTime
   endDate   DateTime
   status    StatRangeStatus @default(Active)
+}
+
+// Calendar days are `YYYY-MM-DD` strings in `TZ`, so they never shift with a viewer's time zone.
+
+enum DutyRole {
+  CE
+  PM
+  MACHINING
+}
+
+model AttendanceSeason {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name      String
+  startDate String
+  endDate   String
+}
+
+model SeasonEvent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name      String
+  startDate String
+  endDate   String?
+  notes     String?
+}
+
+model AttendanceMark {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @db.ObjectId
+
+  date String
+
+  @@unique([userId, date])
+  @@index([date])
+}
+
+model WantedRecord {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @db.ObjectId
+
+  weekStart String
+
+  @@unique([userId, weekStart])
+}
+
+model DutyAssignment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @db.ObjectId
+
+  date String
+  role DutyRole
+
+  @@unique([userId, date])
+  @@index([date])
 }
