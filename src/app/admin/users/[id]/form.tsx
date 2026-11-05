@@ -18,7 +18,6 @@ export default function UserForm(props: {
 
   const nameFieldError = state.issues?.filter(issue => issue.path[0] === "name");
   const emailFieldError = state.issues?.filter(issue => issue.path[0] === "email");
-  const slackFieldError = state.issues?.filter(issue => issue.path[0] === "slackUserId");
 
   return <form action={action}>
     <Fieldset.Root size="lg" invalid={!!state.issues?.length}>
@@ -50,13 +49,6 @@ export default function UserForm(props: {
           </Field.Label>
           <Input name="email" type="email" defaultValue={state.prevValues?.email} />
           <Field.ErrorText>{emailFieldError?.map((v) => v.message).join(", ")}</Field.ErrorText>
-        </Field.Root>
-
-        <Field.Root invalid={slackFieldError && slackFieldError.length > 0}>
-          <Field.Label>{t("userForm.slackUserId")}</Field.Label>
-          <Input name="slackUserId" defaultValue={state.prevValues?.slackUserId} />
-          <Field.HelperText>{t("userForm.slackUserIdHelp")}</Field.HelperText>
-          <Field.ErrorText>{slackFieldError?.map((v) => v.message).join(", ")}</Field.ErrorText>
         </Field.Root>
 
         <Field.Root>

@@ -299,8 +299,6 @@
       "failed": "儲存失敗"
     },
     "userForm": {
-      "slackUserId": "Slack 成員 ID",
-      "slackUserIdHelp": "用來在出席表通知中標記這個人。",
       "dutyRole": "值班身分",
       "noDutyRole": "無",
       "attendanceExempt": "不需要填寫出席"

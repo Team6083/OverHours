@@ -8,8 +8,6 @@ const schema = z.object({
   id: z.string().optional(),
   name: z.string().trim().nonempty(),
   email: z.email().toLowerCase(),
-  slackUserId: z.union([z.string().trim().regex(/^[UW][A-Z0-9]+$/, "Slack member IDs look like U012ABCDEF"), z.literal("")])
-    .optional().transform(v => v || undefined),
   dutyRole: z.enum(["", "CE", "PM", "MACHINING"]).optional().transform(v => v || undefined),
   attendanceExempt: z.string().optional().transform(v => v === "on"),
 });
@@ -28,7 +26,6 @@ export async function formSubmit(state: UserFormState, formData: FormData): Prom
     const data = {
       email: parsed.email,
       name: parsed.name,
-      slackUserId: parsed.slackUserId ?? null,
       dutyRole: parsed.dutyRole ?? null,
       attendanceExempt: parsed.attendanceExempt,
     };

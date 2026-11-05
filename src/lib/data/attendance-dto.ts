@@ -6,10 +6,11 @@ import {
 } from "../attendance";
 import { getTimeZone } from "../config";
 import prisma from "../prisma";
+import { withSlackIds } from "../slack";
 
 export type AttendanceSeasonDTO = { id: string; name: string; startDate: string; endDate: string };
 export type SeasonEventDTO = { id: string; name: string; startDate: string; endDate?: string; notes?: string };
-export type AttendancePerson = { id: string; name: string; slackUserId?: string };
+export type AttendancePerson = { id: string; name: string; email: string };
 export type PublicPerson = { id: string; name: string };
 export type WantedRow = { userId: string; name: string; weeks: string[] };
 export type DutyGrid = {
@@ -58,13 +59,13 @@ async function findEvents(): Promise<SeasonEventDTO[]> {
 
 async function findRoster(): Promise<AttendancePerson[]> {
   const users = await prisma.user.findMany({
-    select: { id: true, name: true, slackUserId: true, attendanceExempt: true },
+    select: { id: true, name: true, email: true, attendanceExempt: true },
     orderBy: { name: "asc" },
   });
 
   return users
     .filter(user => user.attendanceExempt !== true)
-    .map(user => ({ id: user.id, name: user.name, slackUserId: user.slackUserId ?? undefined }));
+    .map(({ id, name, email }) => ({ id, name, email }));
 }
 
 const findMarks = (dates: string[]) => prisma.attendanceMark.findMany({
@@ -79,14 +80,14 @@ async function buildDailyBoard(date: string): Promise<DailyBoard<AttendancePerso
     findMarks([date]),
     prisma.dutyAssignment.findMany({
       where: { date },
-      select: { role: true, user: { select: { id: true, name: true, slackUserId: true } } },
+      select: { role: true, user: { select: { id: true, name: true, email: true } } },
     }),
   ]);
 
   const unavailable = new Set(marks.map(mark => mark.userId));
   const onDuty = (role: DutyRoleName) => duties
     .filter(duty => duty.role === role)
-    .map(({ user }) => ({ id: user.id, name: user.name, slackUserId: user.slackUserId ?? undefined }));
+    .map(({ user }) => user);
 
   return {
     date,
@@ -270,8 +271,12 @@ export async function buildAttendanceMessage(today: string, url?: string): Promi
     buildDailyBoard(tomorrow),
   ]);
 
+  const nextWeekUnfilled = nextWeekDates.length > 0
+    ? await withSlackIds(unfilledUsers(roster, marks, nextWeekDates), process.env.SLACK_BOT_TOKEN?.trim())
+    : null;
+
   return attendanceSlackMessage({
-    nextWeekUnfilled: nextWeekDates.length > 0 ? unfilledUsers(roster, marks, nextWeekDates) : null,
+    nextWeekUnfilled,
     tomorrowAvailable: isInSeason(tomorrow, season) ? board.available : null,
     url,
   });

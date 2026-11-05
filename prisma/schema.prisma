@@ -22,7 +22,6 @@ model User {
 
   timeLogs TimeLog[]
 
-  slackUserId      String?
   dutyRole         DutyRole?
   attendanceExempt Boolean?
 

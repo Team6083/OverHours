@@ -299,8 +299,6 @@
       "failed": "Could not save"
     },
     "userForm": {
-      "slackUserId": "Slack member ID",
-      "slackUserIdHelp": "Used to mention this person in attendance notifications.",
       "dutyRole": "Duty role",
       "noDutyRole": "None",
       "attendanceExempt": "Not expected to fill in attendance"

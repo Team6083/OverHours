@@ -11,7 +11,6 @@ export type UserDTO = {
   name: string;
   image?: string;
 
-  slackUserId?: string;
   dutyRole?: DutyRole;
   attendanceExempt: boolean;
 
@@ -20,7 +19,6 @@ export type UserDTO = {
 }
 
 type UserAttendanceFields = {
-  slackUserId?: string | null;
   dutyRole?: DutyRole | null;
   attendanceExempt?: boolean;
 };
@@ -31,7 +29,6 @@ export function prismaUserToDTO(user: User): UserDTO {
     email: user.email,
     name: user.name,
     image: user.image || undefined,
-    slackUserId: user.slackUserId || undefined,
     dutyRole: user.dutyRole || undefined,
     attendanceExempt: user.attendanceExempt === true,
     createdAt: new Date(user.createdAt),
@@ -110,7 +107,6 @@ export async function createUser(data: {
     data: {
       email: data.email,
       name: data.name,
-      slackUserId: data.slackUserId,
       dutyRole: data.dutyRole,
       attendanceExempt: data.attendanceExempt,
     },
@@ -138,7 +134,6 @@ export async function updateUser(id: string, data: {
     data: {
       email: data.email,
       name: data.name,
-      slackUserId: data.slackUserId,
       dutyRole: data.dutyRole,
       attendanceExempt: data.attendanceExempt,
     },
