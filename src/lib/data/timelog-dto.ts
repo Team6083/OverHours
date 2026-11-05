@@ -147,7 +147,7 @@ export async function getAllUsersTotalTimeSec(opts?: {
 }): Promise<{ [userId: string]: number }> {
   const { startDate, endDate } = opts || {};
 
-  const matchStage: any = {
+  const matchStage: { status: string; $expr?: Prisma.InputJsonObject } = {
     status: "Done",
   };
 
