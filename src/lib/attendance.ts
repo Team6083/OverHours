@@ -1,9 +1,9 @@
 import { toWallTime } from "./zoned-time";
 
-export type DutyRoleName = "CE" | "PM" | "MACHINING";
+export type AttendanceStatus = "AVAILABLE" | "UNAVAILABLE";
+export type DayStatus = AttendanceStatus | "NOT_FILLED";
 
-export type SeasonRange = { startDate: string; endDate: string };
-export type SeasonEventRange = { name: string; startDate: string; endDate?: string | null };
+export const MAX_RANGE_DAYS = 92;
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -36,30 +36,20 @@ export function weekDates(weekStart: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 }
 
-export function isInSeason(date: string, season: SeasonRange): boolean {
-  return season.startDate <= date && date <= season.endDate;
+/** Every day from `start` to `end` inclusive; null when the range is backwards or too long. */
+export function datesInRange(start: string, end: string, maxDays = MAX_RANGE_DAYS): string[] | null {
+  const days = (toUtc(end).getTime() - toUtc(start).getTime()) / 864e5 + 1;
+  if (days < 1 || days > maxDays) return null;
+
+  return Array.from({ length: days }, (_, i) => addDays(start, i));
 }
 
-export function seasonDatesOfWeek(weekStart: string, season: SeasonRange): string[] {
-  return weekDates(weekStart).filter(date => isInSeason(date, season));
-}
-
-export function eventsOn(date: string, events: SeasonEventRange[]): string[] {
-  return events
-    .filter(event => event.startDate <= date && date <= (event.endDate || event.startDate))
-    .map(event => event.name);
-}
-
-/** People with no mark on any of `dates`: a week with no X counts as not filled in. */
-export function unfilledUsers<U extends { id: string }>(
-  users: U[],
-  marks: { userId: string; date: string }[],
+export function dayStatuses(
   dates: string[],
-): U[] {
-  if (dates.length === 0) return [];
-
-  const marked = new Set(marks.filter(mark => dates.includes(mark.date)).map(mark => mark.userId));
-  return users.filter(user => !marked.has(user.id));
+  entries: { date: string; status: AttendanceStatus }[],
+): { date: string; status: DayStatus }[] {
+  const byDate = new Map(entries.map(entry => [entry.date, entry.status]));
+  return dates.map(date => ({ date, status: byDate.get(date) ?? "NOT_FILLED" }));
 }
 
 /** Source rows that can move to `targetId` without breaking the unique index, one per key. */
@@ -78,42 +68,4 @@ export function rowsToReassign<T extends { id: string; userId: string }>(
   }
 
   return ids;
-}
-
-export type SlackPerson = { name: string; slackUserId?: string | null };
-
-export type DailyBoard<P> = {
-  date: string;
-  events: string[];
-  duty: Record<DutyRoleName, P[]>;
-  available: P[];
-};
-
-const escapeSlack = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-/** `null` for a line means its day or week is outside the season, so the line is left out. */
-export function attendanceSlackMessage(input: {
-  nextWeekUnfilled: SlackPerson[] | null;
-  tomorrowAvailable: SlackPerson[] | null;
-  url?: string;
-}): string | null {
-  const { nextWeekUnfilled, tomorrowAvailable, url } = input;
-  const lines: string[] = [];
-
-  if (nextWeekUnfilled) {
-    const people = nextWeekUnfilled.map(p => p.slackUserId ? `<@${p.slackUserId}>` : escapeSlack(p.name));
-    lines.push(`• 下周出席表未填寫：${people.join(" ") || "無"}`);
-  }
-
-  if (tomorrowAvailable) {
-    lines.push(`• 明天可來：${tomorrowAvailable.map(p => escapeSlack(p.name)).join("、") || "無"}`);
-  }
-
-  if (lines.length === 0) return null;
-
-  if (nextWeekUnfilled) {
-    lines.push(`尚未填寫${url ? `<${url}|出席表>` : "出席表"}的請盡速填寫下周的範圍`);
-  }
-
-  return ["《出席表通知》", ...lines].join("\n");
 }

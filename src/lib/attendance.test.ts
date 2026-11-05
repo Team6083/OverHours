@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  addDays, attendanceSlackMessage, calendarDateInZone, eventsOn, isCalendarDate, isInSeason, rowsToReassign,
-  seasonDatesOfWeek, unfilledUsers, weekDates, weekStartOf,
+  addDays, calendarDateInZone, datesInRange, dayStatuses, isCalendarDate, rowsToReassign, weekDates, weekStartOf,
 } from "./attendance";
 
 describe("isCalendarDate", () => {
@@ -39,56 +38,35 @@ describe("calendar helpers", () => {
   });
 });
 
-describe("season", () => {
-  const season = { startDate: "2027-01-09", endDate: "2027-04-09" };
-
+describe("datesInRange", () => {
   it("includes both ends", () => {
-    expect(isInSeason("2027-01-09", season)).toBe(true);
-    expect(isInSeason("2027-04-09", season)).toBe(true);
-    expect(isInSeason("2027-01-08", season)).toBe(false);
-    expect(isInSeason("2027-04-10", season)).toBe(false);
+    expect(datesInRange("2027-01-30", "2027-02-01")).toEqual(["2027-01-30", "2027-01-31", "2027-02-01"]);
   });
 
-  it("clips a week to the season", () => {
-    expect(seasonDatesOfWeek("2027-01-04", season)).toEqual(["2027-01-09", "2027-01-10"]);
-    expect(seasonDatesOfWeek("2027-04-05", season)).toHaveLength(5);
-    expect(seasonDatesOfWeek("2026-12-28", season)).toEqual([]);
-  });
-});
-
-describe("eventsOn", () => {
-  const events = [
-    { name: "Kickoff", startDate: "2027-01-09" },
-    { name: "Exams", startDate: "2027-01-10", endDate: "2027-01-12" },
-    { name: "Empty end", startDate: "2027-01-13", endDate: null },
-  ];
-
-  it("matches a one-day event on its day only", () => {
-    expect(eventsOn("2027-01-09", events)).toEqual(["Kickoff"]);
-    expect(eventsOn("2027-01-13", events)).toEqual(["Empty end"]);
+  it("allows a single day", () => {
+    expect(datesInRange("2027-01-30", "2027-01-30")).toEqual(["2027-01-30"]);
   });
 
-  it("matches a range inclusively", () => {
-    expect(eventsOn("2027-01-10", events)).toEqual(["Exams"]);
-    expect(eventsOn("2027-01-12", events)).toEqual(["Exams"]);
-    expect(eventsOn("2027-01-14", events)).toEqual([]);
+  it("rejects a backwards range", () => {
+    expect(datesInRange("2027-02-01", "2027-01-30")).toBeNull();
+  });
+
+  it("rejects a range over the limit", () => {
+    expect(datesInRange("2027-01-01", "2027-01-03", 3)).toHaveLength(3);
+    expect(datesInRange("2027-01-01", "2027-01-04", 3)).toBeNull();
   });
 });
 
-describe("unfilledUsers", () => {
-  const users = [{ id: "a" }, { id: "b" }];
-  const dates = ["2027-01-11", "2027-01-12"];
-
-  it("lists people with no mark in the range", () => {
-    expect(unfilledUsers(users, [{ userId: "a", date: "2027-01-12" }], dates)).toEqual([{ id: "b" }]);
-  });
-
-  it("ignores marks outside the range", () => {
-    expect(unfilledUsers(users, [{ userId: "a", date: "2027-01-13" }], dates)).toEqual(users);
-  });
-
-  it("has nobody to report without days", () => {
-    expect(unfilledUsers(users, [], [])).toEqual([]);
+describe("dayStatuses", () => {
+  it("tells the three states apart", () => {
+    expect(dayStatuses(["d1", "d2", "d3"], [
+      { date: "d1", status: "AVAILABLE" },
+      { date: "d2", status: "UNAVAILABLE" },
+    ])).toEqual([
+      { date: "d1", status: "AVAILABLE" },
+      { date: "d2", status: "UNAVAILABLE" },
+      { date: "d3", status: "NOT_FILLED" },
+    ]);
   });
 });
 
@@ -110,43 +88,5 @@ describe("rowsToReassign", () => {
       { id: "2", userId: "s2", date: "d1" },
     ];
     expect(rowsToReassign(rows, "target", key)).toEqual(["1"]);
-  });
-});
-
-describe("attendanceSlackMessage", () => {
-  const alice = { name: "Alice", slackUserId: "U1" };
-  const bob = { name: "Bob" };
-
-  it("matches the Apps Script format", () => {
-    expect(attendanceSlackMessage({
-      nextWeekUnfilled: [alice, bob],
-      tomorrowAvailable: [alice, bob],
-      url: "https://example.com/attendance",
-    })).toBe([
-      "《出席表通知》",
-      "• 下周出席表未填寫：<@U1> Bob",
-      "• 明天可來：Alice、Bob",
-      "尚未填寫<https://example.com/attendance|出席表>的請盡速填寫下周的範圍",
-    ].join("\n"));
-  });
-
-  it("says 無 for empty lists", () => {
-    const text = attendanceSlackMessage({ nextWeekUnfilled: [], tomorrowAvailable: [] });
-    expect(text).toContain("下周出席表未填寫：無");
-    expect(text).toContain("明天可來：無");
-  });
-
-  it("drops the reminder after the season's last week", () => {
-    expect(attendanceSlackMessage({ nextWeekUnfilled: null, tomorrowAvailable: [bob] }))
-      .toBe("《出席表通知》\n• 明天可來：Bob");
-  });
-
-  it("sends nothing outside the season", () => {
-    expect(attendanceSlackMessage({ nextWeekUnfilled: null, tomorrowAvailable: null })).toBeNull();
-  });
-
-  it("escapes names", () => {
-    expect(attendanceSlackMessage({ nextWeekUnfilled: null, tomorrowAvailable: [{ name: "A<b>" }] }))
-      .toContain("A&lt;b&gt;");
   });
 });

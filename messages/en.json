@@ -182,7 +182,6 @@
       "users": "Users",
       "statRanges": "Stat Ranges",
       "attendance": "Attendance",
-      "attendanceAdmin": "Attendance Admin",
       "signIn": "Sign-In",
       "signOut": "Sign-Out"
     },
@@ -248,65 +247,29 @@
   },
   "Attendance": {
     "title": "Attendance",
+    "signInRequired": "Sign in to use attendance.",
     "today": "Today",
-    "notScheduled": "Not scheduled",
     "nobody": "Nobody",
     "showMore": "{count} more",
-    "showLess": "Show less",
-    "availableToday": "Today ({count})",
-    "availableTomorrow": "Tomorrow ({count})",
-    "noSeason": "No season has been set up yet. Ask an admin to set one.",
-    "signInRequired": "Sign in to use attendance.",
-    "duty": {
-      "CE": "CE",
-      "PM": "PM",
-      "MACHINING": "Machining supervisor"
+    "filledCount": "{count} filled in",
+    "status": {
+      "AVAILABLE": "Can come",
+      "UNAVAILABLE": "Can't come",
+      "NOT_FILLED": "Not filled"
+    },
+    "board": {
+      "available": "Can come ({count})",
+      "unavailable": "Can't come ({count})"
     },
     "week": {
       "heading": "My availability",
-      "help": "Set the days you definitely cannot come, then save. Can come only means you may, not that you must. A week with no days marked counts as not filled in.",
-      "date": "Date",
-      "status": "Status",
+      "help": "Fill in each day, then save. Pick a date to see who can come that day. Past days can't be changed.",
       "previous": "Previous week",
       "next": "Next week",
       "thisWeek": "This week",
-      "cannotCome": "Can't come",
-      "canCome": "Can come",
-      "outOfSeason": "Off season",
       "save": "Save this week",
       "saved": "Saved",
-      "saveFailed": "Could not save",
-      "filled": "Filled in",
-      "notFilled": "Not filled in"
-    },
-    "admin": {
-      "title": "Attendance admin",
-      "season": "Season",
-      "startDate": "Start date",
-      "endDate": "End date",
-      "eventEndDate": "End date (blank for one day)",
-      "saveSeason": "Save season",
-      "events": "Season events",
-      "eventName": "Event",
-      "notes": "Notes",
-      "addEvent": "Add event",
-      "deleteEvent": "Delete",
-      "noEvents": "No events yet",
-      "duty": "Duty roster",
-      "dutyHelp": "Click a cell to assign or remove that person's duty. Red cells are days they cannot come.",
-      "noDutyUsers": "Nobody has a duty role yet. Set one on the user's page.",
-      "wanted": "Wanted list",
-      "wantedHelp": "Recorded every Monday for the week that just ended, for people with no marks that week. Not posted to Slack.",
-      "name": "Name",
-      "missedCount": "Count",
-      "missedWeeks": "Weeks starting",
-      "noneMissing": "Nobody on the list",
-      "failed": "Could not save"
-    },
-    "userForm": {
-      "dutyRole": "Duty role",
-      "noDutyRole": "None",
-      "attendanceExempt": "Not expected to fill in attendance"
+      "saveFailed": "Could not save"
     }
   }
 }

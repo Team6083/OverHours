@@ -8,13 +8,11 @@ const schema = z.object({
   id: z.string().optional(),
   name: z.string().trim().nonempty(),
   email: z.email().toLowerCase(),
-  dutyRole: z.enum(["", "CE", "PM", "MACHINING"]).optional().transform(v => v || undefined),
-  attendanceExempt: z.string().optional().transform(v => v === "on"),
 });
 
 export type UserFormState = {
   issues?: z.ZodError["issues"];
-  prevValues?: Partial<z.infer<typeof schema>>;
+  prevValues?: z.infer<typeof schema>
 }
 
 export async function formSubmit(state: UserFormState, formData: FormData): Promise<UserFormState> {
@@ -23,17 +21,16 @@ export async function formSubmit(state: UserFormState, formData: FormData): Prom
   try {
     const parsed: z.infer<typeof schema> = schema.parse(formDataObj);
 
-    const data = {
-      email: parsed.email,
-      name: parsed.name,
-      dutyRole: parsed.dutyRole ?? null,
-      attendanceExempt: parsed.attendanceExempt,
-    };
-
     if (parsed.id) {
-      await updateUser(parsed.id, data);
+      await updateUser(parsed.id, {
+        email: parsed.email,
+        name: parsed.name,
+      });
     } else {
-      await createUser(data);
+      await createUser({
+        email: parsed.email,
+        name: parsed.name,
+      });
     }
 
     redirect("/admin/users");

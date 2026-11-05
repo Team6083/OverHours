@@ -54,8 +54,6 @@ Variables are read at runtime unless noted otherwise.
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
 | `AUTO_LOCK_TIME` | No | Daily cut-off as `HH:mm` in `TZ`. Sessions still clocked in at the cut-off are locked as abnormal clock-outs; see [Auto-lock](#auto-lock). Unset: no automatic locking. A malformed value stops the server from starting. |
 | `TZ` | No | IANA time zone (e.g. `Asia/Taipei`) of the server, used for `AUTO_LOCK_TIME` and for times in locked-log reports and CSV exports. Default: the container's zone, usually UTC, so set it whenever auto-lock is enabled. An invalid zone stops the server from starting. |
-| `SLACK_ATTENDANCE_WEBHOOK_URL` | For attendance notifications | Slack incoming webhook used by `/api/admin/jobs/attendance-notify`. Secret. |
-| `SLACK_BOT_TOKEN` | No | Slack bot token with the `users:read` and `users:read.email` scopes. Finds people by email so notifications can mention them. Unset: names are shown as text. Secret. |
 | `SENTRY_DSN` | No | Sentry DSN for the server and edge runtimes. |
 | `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN for the browser. Inlined at build time. |
 | `SENTRY_AUTH_TOKEN` | No | Sentry auth token used to upload source maps. Build time only; secret. |
@@ -187,26 +185,22 @@ whole days in `TZ`), or through `GET /api/admin/timelogs/locked` (JSON or `forma
 
 ## Attendance
 
-Members mark the days they cannot come on `/attendance`. Unmarked days mean they can come, and a week with no
-marks at all counts as not filled in. Admins set the season, season events and the duty roster on
-`/admin/attendance`. Each user's duty role and exemption from attendance are on their user page.
+Members fill in each day on `/attendance` as available or unavailable, and can clear a day back to not filled
+in. A day without an entry counts as not filled in. Past days cannot be changed. Every member can see who is
+available and who is unavailable on each day, and how many people have filled it in; people who have not filled
+it in are not listed.
 
-Run `npx prisma db push` once after deploying so the new unique indexes exist. Set `TZ`, because "today" is
-worked out in that zone. Then call the job once a day at 18:00 from a scheduler:
+Run `npx prisma db push` once after deploying so the unique index exists. Set `TZ`, because "today" is worked
+out in that zone.
+
+External programs, such as a Slack bot, read everyone's status through the Admin API:
 
 ```bash
-curl -X POST -H "Authorization: Bearer $ADMIN_API_KEY" https://overhours.example.com/api/admin/jobs/attendance-notify
-# {"data":{"sent":true,"wantedRecorded":0,"text":"..."}}
+curl -H "Authorization: Bearer $ADMIN_API_KEY" "https://overhours.example.com/api/admin/attendance?start=2027-01-11&end=2027-01-17"
+# {"data":{"start":"2027-01-11","end":"2027-01-17","users":[{"id":"...","name":"...","email":"...","days":[{"date":"2027-01-11","status":"AVAILABLE"}]}]}}
 ```
 
-Each call posts to Slack, listing who has not filled in next week and who can come tomorrow. People are
-mentioned by looking up the email on their OverHours account in Slack; no Slack ID is stored, and anyone not
-found is shown by name, so their OverHours email must match their Slack email. Nothing is sent
-outside the season. On Mondays it also records the people with no marks in the week that just ended on the
-wanted list, which is not posted. Add `?dryRun=true` to get the text without posting or recording.
-
-`GET /api/admin/attendance/daily?date=YYYY-MM-DD` returns one day's duty roster and available people with
-their emails.
+`status` is `AVAILABLE`, `UNAVAILABLE` or `NOT_FILLED`. A request covers at most 92 days.
 
 ## Admin API
 

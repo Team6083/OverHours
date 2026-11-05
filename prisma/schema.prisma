@@ -22,12 +22,7 @@ model User {
 
   timeLogs TimeLog[]
 
-  dutyRole         DutyRole?
-  attendanceExempt Boolean?
-
-  attendanceMarks AttendanceMark[]
-  wantedRecords   WantedRecord[]
-  dutyAssignments DutyAssignment[]
+  attendanceEntries AttendanceEntry[]
 }
 
 enum TimeLogStatus {
@@ -88,69 +83,30 @@ model StatRange {
   status    StatRangeStatus @default(Active)
 }
 
-// Calendar days are `YYYY-MM-DD` strings in `TZ`, so they never shift with a viewer's time zone.
-
-enum DutyRole {
-  CE
-  PM
-  MACHINING
+enum AttendanceStatus {
+  Available
+  Unavailable
 }
 
-model AttendanceSeason {
+// Only AllDay is used for now; more values can split a day into time slots.
+enum AttendanceSlot {
+  AllDay
+}
+
+// No row for a day means the user has not filled it in.
+model AttendanceEntry {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  startDate String
-  endDate   String
-}
-
-model SeasonEvent {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  name      String
-  startDate String
-  endDate   String?
-  notes     String?
-}
-
-model AttendanceMark {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @default(now())
-
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @db.ObjectId
 
-  date String
+  // `YYYY-MM-DD` in `TZ`, so a day never shifts with a viewer's time zone.
+  date   String
+  slot   AttendanceSlot   @default(AllDay)
+  status AttendanceStatus
 
-  @@unique([userId, date])
-  @@index([date])
-}
-
-model WantedRecord {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @default(now())
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @db.ObjectId
-
-  weekStart String
-
-  @@unique([userId, weekStart])
-}
-
-model DutyAssignment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @default(now())
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @db.ObjectId
-
-  date String
-  role DutyRole
-
-  @@unique([userId, date])
+  @@unique([userId, date, slot])
   @@index([date])
 }

@@ -194,23 +194,13 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
       data: { lockedById: targetId },
     });
 
-    // Rows the target already has are dropped with the source user (cascade)
-    const where = { userId: { in: ids } };
-    const marks = await tx.attendanceMark.findMany({ where, select: { id: true, userId: true, date: true } });
-    await tx.attendanceMark.updateMany({
-      where: { id: { in: rowsToReassign(marks, targetId, row => row.date) } },
-      data: { userId: targetId },
+    // Entries the target already has are dropped with the source user (cascade)
+    const entries = await tx.attendanceEntry.findMany({
+      where: { userId: { in: ids } },
+      select: { id: true, userId: true, date: true, slot: true },
     });
-
-    const wanted = await tx.wantedRecord.findMany({ where, select: { id: true, userId: true, weekStart: true } });
-    await tx.wantedRecord.updateMany({
-      where: { id: { in: rowsToReassign(wanted, targetId, row => row.weekStart) } },
-      data: { userId: targetId },
-    });
-
-    const duties = await tx.dutyAssignment.findMany({ where, select: { id: true, userId: true, date: true } });
-    await tx.dutyAssignment.updateMany({
-      where: { id: { in: rowsToReassign(duties, targetId, row => row.date) } },
+    await tx.attendanceEntry.updateMany({
+      where: { id: { in: rowsToReassign(entries, targetId, row => `${row.date}|${row.slot}`) } },
       data: { userId: targetId },
     });
 
