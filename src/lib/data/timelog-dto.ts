@@ -2,6 +2,8 @@ import "server-only";
 import { auth, Role } from "@/auth";
 import { Prisma, TimeLog } from "@/generated/prisma";
 import prisma from "../prisma";
+import { autoLockData, getPassedCutoff } from "./auto-lock";
+import { toApiLockReason } from "./locked-export";
 
 export type TimeLogDTO = {
   id: string;
@@ -11,6 +13,12 @@ export type TimeLogDTO = {
   inTime: Date;
   outTime?: Date;
   notes?: string;
+
+  /** Why the log was locked; absent on logs locked before this was recorded. */
+  lockReason?: "AUTO_TIMEOUT" | "ADMIN";
+  lockedAt?: Date;
+  /** Admin who locked the log; absent for automatic and Admin API locks. */
+  lockedById?: string;
 
   createdAt: Date;
   updatedAt: Date;
@@ -35,6 +43,9 @@ function prismaTimeLogToDTO(timeLog: TimeLog): TimeLogDTO {
     inTime: timeLog.inTime,
     outTime: timeLog.outTime ?? undefined,
     notes: timeLog.notes || undefined,
+    lockReason: toApiLockReason(timeLog.lockReason),
+    lockedAt: timeLog.lockedAt ?? undefined,
+    lockedById: timeLog.lockedById ?? undefined,
     createdAt: timeLog.createdAt,
     updatedAt: timeLog.updatedAt,
   };
@@ -136,7 +147,7 @@ export async function getAllUsersTotalTimeSec(opts?: {
 }): Promise<{ [userId: string]: number }> {
   const { startDate, endDate } = opts || {};
 
-  const matchStage: any = {
+  const matchStage: { status: string; $expr?: Prisma.InputJsonObject } = {
     status: "Done",
   };
 
@@ -273,11 +284,51 @@ export class NotClockedInError extends Error {
   }
 }
 
+export class AutoLockedError extends Error {
+  constructor(message: string, public cutoff?: Date) {
+    super(message);
+    this.name = "AutoLockedError";
+  }
+}
+
 export class TimeLogTooShortError extends Error {
   constructor(message: string, public minDurationSec: number) {
     super(message);
     this.name = "TimeLogTooShortError";
   }
+}
+
+/**
+ * Close a clocked-in log at `now`. A log that has passed its daily cut-off is locked at the cut-off
+ * instead of being closed as Done. Writes are conditional on the log still being clocked in, so a
+ * concurrent clock-out or scheduled auto-lock cannot be overwritten; returns null if the log was no
+ * longer clocked in.
+ */
+async function closeCurrentlyInLog(
+  log: TimeLog,
+  opts: { now: Date; notes?: string; minDurationSec?: number },
+): Promise<{ result: "done" | "locked" | "tooShort"; log: TimeLog | null; cutoff?: Date }> {
+  const { now, notes, minDurationSec = 0 } = opts;
+  const where = { id: log.id, status: "CurrentlyIn" as const };
+  const notesValue = notes || log.notes;
+
+  const cutoff = getPassedCutoff(log.inTime, now);
+  if (cutoff) {
+    const { count } = await prisma.timeLog.updateMany({
+      where, data: { ...autoLockData(cutoff, now), notes: notesValue },
+    });
+    return { result: "locked", cutoff, log: count > 0 ? await prisma.timeLog.findUnique({ where: { id: log.id } }) : null };
+  }
+
+  if ((now.getTime() - log.inTime.getTime()) / 1000 < minDurationSec) {
+    const { count } = await prisma.timeLog.deleteMany({ where });
+    return { result: "tooShort", log: count > 0 ? log : null };
+  }
+
+  const { count } = await prisma.timeLog.updateMany({
+    where, data: { status: "Done", outTime: now, notes: notesValue },
+  });
+  return { result: "done", log: count > 0 ? await prisma.timeLog.findUnique({ where: { id: log.id } }) : null };
 }
 
 export async function clockOut(userId: string, notes?: string): Promise<TimeLogDTO> {
@@ -295,35 +346,45 @@ export async function clockOut(userId: string, notes?: string): Promise<TimeLogD
   });
 
   if (!existingTimeLog) {
+    // A scheduled auto-lock may have locked the session before the user clocked out
+    const lastLog = await prisma.timeLog.findFirst({ where: { userId }, orderBy: { inTime: "desc" } });
+    if (lastLog?.status === "Locked" && lastLog.lockReason === "AutoTimeout") {
+      throw new AutoLockedError(
+        "The session passed the daily cut-off and has been locked",
+        lastLog.outTime ?? undefined,
+      );
+    }
+
     throw new NotClockedInError("No currently in time log found for user");
   }
 
-  const now = new Date();
-
   const minDurationSec = await getTimeLogMinDurationSec();
-  if ((now.getTime() - existingTimeLog.inTime.getTime()) / 1000 < minDurationSec) {
-    await prisma.timeLog.delete({
-      where: { id: existingTimeLog.id },
-    });
+  const { result, log, cutoff } = await closeCurrentlyInLog(existingTimeLog, {
+    now: new Date(), notes, minDurationSec,
+  });
 
+  if (!log) {
+    throw new NotClockedInError("The time log was closed by another request");
+  }
+
+  if (result === "locked") {
+    throw new AutoLockedError("Clock-out came after the daily cut-off; the time log has been locked", cutoff);
+  }
+
+  if (result === "tooShort") {
     throw new TimeLogTooShortError(
       `Time log duration is less than the minimum of ${minDurationSec} seconds and has been deleted`,
       minDurationSec
     );
   }
 
-  const updatedTimeLog = await prisma.timeLog.update({
-    where: { id: existingTimeLog.id },
-    data: {
-      status: "Done",
-      outTime: now,
-      notes: notes || existingTimeLog.notes,
-    },
-  });
-
-  return prismaTimeLogToDTO(updatedTimeLog);
+  return prismaTimeLogToDTO(log);
 }
 
+/**
+ * Clock out a user's session on their behalf. A session past its daily cut-off is locked (as an
+ * automatic lock) instead; the returned log's status shows which happened.
+ */
 export async function adminClockOut(timeLogId: string, notes?: string): Promise<TimeLogDTO> {
   const session = await auth();
   if (session?.user.role !== Role.ADMIN) {
@@ -343,16 +404,12 @@ export async function adminClockOut(timeLogId: string, notes?: string): Promise<
     throw new Error("Time log is not currently in");
   }
 
-  const updatedTimeLog = await prisma.timeLog.update({
-    where: { id: existingTimeLog.id },
-    data: {
-      status: "Done",
-      outTime: new Date(),
-      notes: notes || existingTimeLog.notes,
-    },
-  });
+  const { log } = await closeCurrentlyInLog(existingTimeLog, { now: new Date(), notes });
+  if (!log) {
+    throw new Error("Time log is not currently in");
+  }
 
-  return prismaTimeLogToDTO(updatedTimeLog);
+  return prismaTimeLogToDTO(log);
 }
 
 export async function adminLockLog(timeLogId: string, notes?: string): Promise<TimeLogDTO> {
@@ -371,19 +428,48 @@ export async function adminLockLog(timeLogId: string, notes?: string): Promise<T
   }
 
   if (existingTimeLog.status !== "CurrentlyIn") {
-    throw new Error("Only done time logs can be locked");
+    throw new Error("Only currently in time logs can be locked");
   }
 
-  const updatedTimeLog = await prisma.timeLog.update({
-    where: { id: existingTimeLog.id },
+  const now = new Date();
+  // Conditional, so a scheduled auto-lock that got there first is not overwritten
+  const { count } = await prisma.timeLog.updateMany({
+    where: { id: existingTimeLog.id, status: "CurrentlyIn" },
     data: {
       status: "Locked",
-      outTime: new Date(),
+      outTime: now,
       notes: notes || existingTimeLog.notes,
+      lockReason: "Admin",
+      lockedAt: now,
+      lockedById: session.user.id,
     },
   });
 
+  const updatedTimeLog = await prisma.timeLog.findUnique({ where: { id: existingTimeLog.id } });
+  if (count === 0 || !updatedTimeLog) {
+    throw new Error("Only currently in time logs can be locked");
+  }
+
   return prismaTimeLogToDTO(updatedTimeLog);
+}
+
+type PrismaTimeLogStatus = "CurrentlyIn" | "Done" | "Locked";
+
+/**
+ * Lock metadata to write when a log's status is set by an admin (form or Admin API): entering Locked
+ * records a manual lock, leaving Locked clears it, and staying Locked keeps the existing values.
+ */
+function lockFieldsForStatusChange(
+  prevStatus: PrismaTimeLogStatus | null,
+  nextStatus: PrismaTimeLogStatus,
+  lockedById: string | null | undefined,
+): { lockReason?: "Admin" | null; lockedAt?: Date | null; lockedById?: string | null } {
+  if (nextStatus === "Locked") {
+    if (prevStatus === "Locked") return {};
+    return { lockReason: "Admin", lockedAt: new Date(), lockedById: lockedById ?? null };
+  }
+
+  return { lockReason: null, lockedAt: null, lockedById: null };
 }
 
 export async function createTimeLog(data: {
@@ -420,6 +506,7 @@ export async function createTimeLog(data: {
       inTime: data.inTime,
       outTime: data.outTime,
       notes: data.notes,
+      ...lockFieldsForStatusChange(null, status, session.user.id),
     }
   });
 
@@ -453,6 +540,8 @@ export async function updateTimeLog(timeLogId: string, data: {
     throw new Error("Out time must be after in time");
   }
 
+  const existing = await prisma.timeLog.findUnique({ where: { id: timeLogId }, select: { status: true } });
+
   const result = await prisma.timeLog.update({
     where: { id: timeLogId },
     data: {
@@ -461,6 +550,7 @@ export async function updateTimeLog(timeLogId: string, data: {
       inTime: data.inTime,
       outTime: data.outTime,
       notes: data.notes,
+      ...lockFieldsForStatusChange(existing?.status ?? null, status, session.user.id),
     }
   });
 
@@ -498,7 +588,7 @@ export async function deleteTimeLogs(timeLogIds: string[]) {
 // session/role checks above, since the route handlers calling them already
 // gate access via the admin API key.
 
-function toPrismaTimeLogStatus(status: TimeLogDTO["status"]): "CurrentlyIn" | "Done" | "Locked" {
+function toPrismaTimeLogStatus(status: TimeLogDTO["status"]): PrismaTimeLogStatus {
   if (status === "CURRENTLY_IN") return "CurrentlyIn";
   if (status === "DONE") return "Done";
   return "Locked";
@@ -581,6 +671,7 @@ export async function adminCreateTimeLog(data: {
       inTime: data.inTime,
       outTime: data.outTime,
       notes: data.notes,
+      ...lockFieldsForStatusChange(null, status, null),
     },
   });
 
@@ -604,6 +695,8 @@ export async function adminUpdateTimeLog(timeLogId: string, data: {
     throw new Error("Out time must be after in time");
   }
 
+  const existing = await prisma.timeLog.findUnique({ where: { id: timeLogId }, select: { status: true } });
+
   const result = await prisma.timeLog.update({
     where: { id: timeLogId },
     data: {
@@ -612,6 +705,7 @@ export async function adminUpdateTimeLog(timeLogId: string, data: {
       inTime: data.inTime,
       outTime: data.outTime ?? null,
       notes: data.notes ?? null,
+      ...lockFieldsForStatusChange(existing?.status ?? null, status, null),
     },
   });
 

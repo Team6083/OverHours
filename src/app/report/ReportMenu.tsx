@@ -2,8 +2,9 @@
 import { createListCollection, Heading, Listbox } from "@chakra-ui/react";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment } from "react";
+import { useTranslations } from "next-intl";
 
-const reports = {
+const timeAndUserReports = {
   time: {
     label: "Time",
     items: [
@@ -21,6 +22,17 @@ const reports = {
 export default function ReportMenu() {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations("ReportMenu");
+
+  const reports = {
+    ...timeAndUserReports,
+    compliance: {
+      label: t("compliance"),
+      items: [
+        { label: t("lockedLogs"), value: "locked" },
+      ],
+    },
+  };
 
   const collection = createListCollection({
     items: [

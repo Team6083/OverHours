@@ -21,6 +21,10 @@
           "title": "Time Log Too Short",
           "description": "You must be clocked-in for at least {minDuration} to log your time."
         },
+        "autoLocked": {
+          "title": "Clock-out too late",
+          "description": "You clocked out after the daily cut-off ({cutoff}). This session has been locked as an abnormal clock-out and does not count toward your hours."
+        },
         "genericError": {
           "title": "Error",
           "description": "An unexpected error occurred. Please try again."
@@ -139,6 +143,20 @@
         "createdAt": "Created At",
         "lastUpdatedAt": "Last Updated At"
       },
+      "lock": {
+        "reason": "Lock Reason",
+        "lockedAt": "Locked At",
+        "lockedBy": "Locked By",
+        "reasons": {
+          "AUTO_TIMEOUT": "Auto (past cut-off)",
+          "ADMIN": "Admin",
+          "UNKNOWN": "Unknown"
+        },
+        "bySystem": "System",
+        "byApi": "Admin API",
+        "willLock": "Saving will record this as a manual lock by you.",
+        "willUnlock": "Saving will clear the lock reason, time and operator."
+      },
       "buttons": {
         "submitCreate": "Create Log",
         "submitEdit": "Save Changes"
@@ -184,5 +202,44 @@
   "StatRangeSelector": {
     "label": "Stat Range",
     "all": "All"
+  },
+  "ReportMenu": {
+    "compliance": "Compliance",
+    "lockedLogs": "Locked Logs"
+  },
+  "LockedReportPage": {
+    "title": "Locked Logs",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "refresh": "Refresh",
+    "downloadCsv": "CSV",
+    "description": {
+      "filter": "Sessions not clocked out normally, filtered by clock-in date.",
+      "autoLockOn": "Sessions still clocked in at {time} ({timeZone}) are locked automatically.",
+      "autoLockOff": "Automatic locking is disabled (AUTO_LOCK_TIME is not set).",
+      "timeZone": "Dates and times are in {timeZone}."
+    },
+    "stats": {
+      "lockedLogs": "Locked Logs",
+      "autoLocked": "Auto-locked",
+      "users": "Users"
+    },
+    "columns": {
+      "user": "User",
+      "inTime": "In Time",
+      "outTime": "Out / Cut-off",
+      "reason": "Reason",
+      "lockedAt": "Locked At",
+      "lockedBy": "Locked By",
+      "notes": "Notes"
+    },
+    "reasons": {
+      "AUTO_TIMEOUT": "Auto (cut-off)",
+      "ADMIN": "Admin",
+      "UNKNOWN": "Unknown"
+    },
+    "lockedByApi": "API",
+    "empty": "No locked logs in this range",
+    "loadFailed": "Failed to load"
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 import { useTransition } from "react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { Button, Icon } from "@chakra-ui/react";
 import { LuDoorOpen, LuTimer } from "react-icons/lu";
 
@@ -11,6 +11,7 @@ import { userClockToggle } from "../actions";
 export default function UserClockToggleButton(props: { isClockedIn: boolean, userId: string }) {
   const { isClockedIn, userId } = props;
   const t = useTranslations("HomePage");
+  const format = useFormatter();
 
   const [isPending, startTransition] = useTransition();
 
@@ -35,6 +36,15 @@ export default function UserClockToggleButton(props: { isClockedIn: boolean, use
             toaster.warning({
               title: t("userClockToggleButton.errors.timeLogTooShort.title"),
               description: t("userClockToggleButton.errors.timeLogTooShort.description", { minDuration: minDurationStr })
+            });
+          } else if (v.error.name === "AutoLockedError") {
+            const cutoff = "cutoff" in v.error && v.error.cutoff
+              ? format.dateTime(new Date(v.error.cutoff), { dateStyle: "short", timeStyle: "short" })
+              : "-";
+
+            toaster.error({
+              title: t("userClockToggleButton.errors.autoLocked.title"),
+              description: t("userClockToggleButton.errors.autoLocked.description", { cutoff }),
             });
           } else {
             toaster.error({

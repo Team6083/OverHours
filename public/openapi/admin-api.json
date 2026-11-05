@@ -15,7 +15,8 @@
   ],
   "tags": [
     { "name": "Users" },
-    { "name": "TimeLogs" }
+    { "name": "TimeLogs" },
+    { "name": "Jobs" }
   ],
   "paths": {
     "/admin/users": {
@@ -271,6 +272,90 @@
         }
       }
     },
+    "/admin/timelogs/locked": {
+      "get": {
+        "tags": ["TimeLogs"],
+        "summary": "Export locked time logs",
+        "description": "Locked (abnormal clock-out) time logs whose clock-in is in [startTime, endTime), oldest first, with user details. format=csv returns a UTF-8 CSV (with BOM) whose times are wall-clock times in the server time zone (TZ).",
+        "parameters": [
+          {
+            "name": "startTime",
+            "in": "query",
+            "required": false,
+            "description": "ISO 8601 datetime; inclusive lower bound on inTime",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "endTime",
+            "in": "query",
+            "required": false,
+            "description": "ISO 8601 datetime; exclusive upper bound on inTime",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["json", "csv"], "default": "json" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Locked time logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/LockedTimeLog" } }
+                  },
+                  "required": ["data"]
+                }
+              },
+              "text/csv": { "schema": { "type": "string" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/NotConfigured" }
+        }
+      }
+    },
+    "/admin/jobs/auto-lock": {
+      "post": {
+        "tags": ["Jobs"],
+        "summary": "Lock sessions past the daily cut-off",
+        "description": "Locks every CURRENTLY_IN time log that has passed the daily cut-off (AUTO_LOCK_TIME), with outTime set to the cut-off and lockReason AUTO_TIMEOUT. Meant for an external scheduler; idempotent. Does nothing when auto-lock is not configured (enabled: false).",
+        "responses": {
+          "200": {
+            "description": "Sweep result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": { "type": "boolean" },
+                        "lockedCount": { "type": "integer" },
+                        "lockedIds": { "type": "array", "items": { "type": "string" } }
+                      },
+                      "required": ["enabled", "lockedCount", "lockedIds"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/NotConfigured" }
+        }
+      }
+    },
     "/admin/timelogs/{id}": {
       "parameters": [
         {
@@ -415,10 +500,45 @@
           "inTime": { "type": "string", "format": "date-time" },
           "outTime": { "type": "string", "format": "date-time", "nullable": true },
           "notes": { "type": "string", "nullable": true },
+          "lockReason": {
+            "$ref": "#/components/schemas/LockReason",
+            "description": "Set on LOCKED logs; absent on logs locked before the reason was recorded"
+          },
+          "lockedAt": { "type": "string", "format": "date-time", "description": "When the log was locked" },
+          "lockedById": {
+            "type": "string",
+            "description": "Admin user who locked the log; absent for automatic and Admin API locks"
+          },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
         },
         "required": ["id", "userId", "status", "inTime", "createdAt", "updatedAt"]
+      },
+      "LockReason": {
+        "type": "string",
+        "enum": ["AUTO_TIMEOUT", "ADMIN"],
+        "description": "AUTO_TIMEOUT: still clocked in at the daily cut-off (AUTO_LOCK_TIME). ADMIN: locked by an admin (web UI or Admin API)."
+      },
+      "LockedTimeLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "userName": { "type": "string" },
+          "userEmail": { "type": "string", "format": "email" },
+          "inTime": { "type": "string", "format": "date-time" },
+          "outTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The cut-off for automatic locks; the moment of locking for manual ones"
+          },
+          "lockReason": { "type": "string", "enum": ["AUTO_TIMEOUT", "ADMIN", "UNKNOWN"] },
+          "lockedAt": { "type": "string", "format": "date-time" },
+          "lockedById": { "type": "string" },
+          "lockedByName": { "type": "string" },
+          "notes": { "type": "string" }
+        },
+        "required": ["id", "userId", "userName", "userEmail", "inTime", "lockReason"]
       },
       "TimeLogCreate": {
         "type": "object",

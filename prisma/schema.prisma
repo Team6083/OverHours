@@ -41,6 +41,17 @@ model TimeLog {
   inTime  DateTime
   outTime DateTime?
   notes   String?
+
+  // Set when status is Locked; null on logs locked before these fields existed.
+  lockReason TimeLogLockReason?
+  lockedAt   DateTime?
+  // Admin who locked the log; null for automatic locks and Admin API (API key) locks.
+  lockedById String?            @db.ObjectId
+}
+
+enum TimeLogLockReason {
+  AutoTimeout
+  Admin
 }
 
 model Team {

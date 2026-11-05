@@ -21,6 +21,10 @@
         "title": "操作無效",
         "description": "簽到時長過短，紀錄已被刪除。至少需簽到 {minDuration} 後才能進行有效紀錄。"
       },
+      "autoLocked": {
+        "title": "簽退逾時",
+        "description": "已超過每日截止時間（{cutoff}）才簽退，本次紀錄已被鎖定為未正常簽退，不計入時數。"
+      },
       "genericError": {
         "title": "發生錯誤",
         "description": "執行操作時發生未知錯誤，請稍後再試。"
@@ -139,6 +143,20 @@
         "createdAt": "建立時間",
         "lastUpdatedAt": "最後更新時間"
       },
+      "lock": {
+        "reason": "鎖定原因",
+        "lockedAt": "鎖定時間",
+        "lockedBy": "鎖定者",
+        "reasons": {
+          "AUTO_TIMEOUT": "自動（超過截止時間）",
+          "ADMIN": "管理員",
+          "UNKNOWN": "未知"
+        },
+        "bySystem": "系統",
+        "byApi": "Admin API",
+        "willLock": "儲存後會記錄為由你手動鎖定。",
+        "willUnlock": "儲存後會清除鎖定原因、時間與鎖定者。"
+      },
       "buttons": {
         "submitCreate": "新增紀錄",
         "submitEdit": "儲存更改"
@@ -184,5 +202,44 @@
   "StatRangeSelector": {
     "label": "統計範圍",
     "all": "全部"
+  },
+  "ReportMenu": {
+    "compliance": "合規",
+    "lockedLogs": "鎖定紀錄"
+  },
+  "LockedReportPage": {
+    "title": "鎖定紀錄",
+    "startDate": "開始日期",
+    "endDate": "結束日期",
+    "refresh": "重新整理",
+    "downloadCsv": "CSV",
+    "description": {
+      "filter": "未正常簽退的紀錄，依簽到日期篩選。",
+      "autoLockOn": "在 {time}（{timeZone}）仍未簽退的紀錄會自動鎖定。",
+      "autoLockOff": "未啟用自動鎖定（未設定 AUTO_LOCK_TIME）。",
+      "timeZone": "日期與時間皆為 {timeZone}。"
+    },
+    "stats": {
+      "lockedLogs": "鎖定紀錄",
+      "autoLocked": "自動鎖定",
+      "users": "使用者"
+    },
+    "columns": {
+      "user": "使用者",
+      "inTime": "簽到時間",
+      "outTime": "簽退／截止時間",
+      "reason": "原因",
+      "lockedAt": "鎖定時間",
+      "lockedBy": "鎖定者",
+      "notes": "備註"
+    },
+    "reasons": {
+      "AUTO_TIMEOUT": "自動（超過截止時間）",
+      "ADMIN": "管理員",
+      "UNKNOWN": "未知"
+    },
+    "lockedByApi": "API",
+    "empty": "此範圍內沒有鎖定紀錄",
+    "loadFailed": "載入失敗"
   }
 }

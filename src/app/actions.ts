@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 
-import { AlreadyClockedInError, clockIn, clockOut, NotClockedInError, TimeLogTooShortError, getAllUsersTotalTimeSec } from "@/lib/data/timelog-dto";
+import { AlreadyClockedInError, AutoLockedError, clockIn, clockOut, NotClockedInError, TimeLogTooShortError, getAllUsersTotalTimeSec } from "@/lib/data/timelog-dto";
 import { getAllUserNames } from "@/lib/data/user-dto";
 
 export async function handleAdminClockIn(userId: string) {
@@ -20,6 +20,7 @@ export type UserClockToggleActionState = {
     message: string;
 
     minDurationSec?: number; // Only for TimeLogTooShortError
+    cutoff?: string; // Only for AutoLockedError (ISO string)
   }
 };
 
@@ -33,13 +34,17 @@ export async function userClockToggle(userId: string, isClockedIn: boolean): Pro
 
     return { ok: true };
   } catch (error) {
-    if (error instanceof AlreadyClockedInError || error instanceof NotClockedInError || error instanceof TimeLogTooShortError) {
+    if (
+      error instanceof AlreadyClockedInError || error instanceof NotClockedInError
+      || error instanceof TimeLogTooShortError || error instanceof AutoLockedError
+    ) {
       return {
         ok: false,
         error: {
           name: error.name,
           message: error.message,
-          ...(error instanceof TimeLogTooShortError ? { minDurationSec: error.minDurationSec } : {})
+          ...(error instanceof TimeLogTooShortError ? { minDurationSec: error.minDurationSec } : {}),
+          ...(error instanceof AutoLockedError && error.cutoff ? { cutoff: error.cutoff.toISOString() } : {}),
         },
       };
     } else {

@@ -187,6 +187,12 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
       data: { userId: targetId },
     });
 
+    // Keep "locked by" on violation records pointing at an existing user
+    await tx.timeLog.updateMany({
+      where: { lockedById: { in: sourceIds } },
+      data: { lockedById: targetId },
+    });
+
     await tx.user.deleteMany({
       where: { id: { in: sourceIds } },
     });
