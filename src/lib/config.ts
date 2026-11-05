@@ -13,19 +13,31 @@ export function getOrgName(): string {
   return process.env.ORG_NAME?.trim() ?? "";
 }
 
-const DEFAULT_TIMEZONE = "Asia/Taipei";
+// Config is read on every call, so each distinct warning is logged once per process
+const warned = new Set<string>();
+function warnOnce(message: string) {
+  if (warned.has(message)) return;
+  warned.add(message);
+  console.warn(message);
+}
+
+/** The server process's own zone (the `TZ` env var; usually UTC in containers). */
+function runtimeTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
 
 /**
  * IANA time zone used to interpret the daily auto-lock time and to format exported times
- * (`OVERHOURS_TIMEZONE`). Falls back to `Asia/Taipei` when unset or invalid.
+ * (`OVERHOURS_TIMEZONE`). Falls back to the server's own zone when unset or invalid.
  */
 export function getTimeZone(): string {
   const tz = process.env.OVERHOURS_TIMEZONE?.trim();
-  if (!tz) return DEFAULT_TIMEZONE;
+  if (!tz) return runtimeTimeZone();
 
   if (!isValidTimeZone(tz)) {
-    console.warn(`Invalid OVERHOURS_TIMEZONE "${tz}", falling back to ${DEFAULT_TIMEZONE}`);
-    return DEFAULT_TIMEZONE;
+    const fallback = runtimeTimeZone();
+    warnOnce(`Invalid OVERHOURS_TIMEZONE "${tz}", falling back to the server time zone ${fallback}`);
+    return fallback;
   }
 
   return tz;
@@ -48,9 +60,14 @@ export function getAutoLockConfig(): AutoLockConfig | null {
 
   const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(raw);
   if (!match) {
-    console.warn(`Invalid OVERHOURS_AUTO_LOCK_TIME "${raw}" (expected HH:mm), auto-lock disabled`);
+    warnOnce(`Invalid OVERHOURS_AUTO_LOCK_TIME "${raw}" (expected HH:mm), auto-lock disabled`);
     return null;
   }
 
-  return { hour: parseInt(match[1], 10), minute: parseInt(match[2], 10), timeZone: getTimeZone() };
+  const timeZone = getTimeZone();
+  if (!process.env.OVERHOURS_TIMEZONE?.trim()) {
+    warnOnce(`OVERHOURS_TIMEZONE is not set; OVERHOURS_AUTO_LOCK_TIME ${raw} is read in the server time zone ${timeZone}`);
+  }
+
+  return { hour: parseInt(match[1], 10), minute: parseInt(match[2], 10), timeZone };
 }

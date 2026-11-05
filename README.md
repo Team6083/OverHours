@@ -53,7 +53,7 @@ Variables are read at runtime unless noted otherwise.
 | `ORG_NAME` | No | Name of the organisation running this instance. Shown in the header, footer and page description. When unset, no organisation text is shown. |
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
 | `OVERHOURS_AUTO_LOCK_TIME` | No | Daily cut-off as `HH:mm` (in `OVERHOURS_TIMEZONE`). Sessions still clocked in at the cut-off are locked as abnormal clock-outs; see [Auto-lock](#auto-lock). Unset or malformed: no automatic locking. |
-| `OVERHOURS_TIMEZONE` | No | IANA time zone for `OVERHOURS_AUTO_LOCK_TIME` and for times in locked-log CSV exports. Default: `Asia/Taipei`. |
+| `OVERHOURS_TIMEZONE` | No | IANA time zone (e.g. `Asia/Taipei`) for `OVERHOURS_AUTO_LOCK_TIME` and for times in locked-log CSV exports. Default: the server's own zone (`TZ`, usually UTC in containers), so set this whenever auto-lock is enabled. |
 | `SENTRY_DSN` | No | Sentry DSN for the server and edge runtimes. |
 | `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN for the browser. Inlined at build time. |
 | `SENTRY_AUTH_TOKEN` | No | Sentry auth token used to upload source maps. Build time only; secret. |
