@@ -202,5 +202,44 @@
   "StatRangeSelector": {
     "label": "Stat Range",
     "all": "All"
+  },
+  "ReportMenu": {
+    "compliance": "Compliance",
+    "lockedLogs": "Locked Logs"
+  },
+  "LockedReportPage": {
+    "title": "Locked Logs",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "refresh": "Refresh",
+    "downloadCsv": "CSV",
+    "description": {
+      "filter": "Sessions not clocked out normally, filtered by clock-in date.",
+      "autoLockOn": "Sessions still clocked in at {time} ({timeZone}) are locked automatically.",
+      "autoLockOff": "Automatic locking is disabled (AUTO_LOCK_TIME is not set).",
+      "timeZone": "Dates and times are in {timeZone}."
+    },
+    "stats": {
+      "lockedLogs": "Locked Logs",
+      "autoLocked": "Auto-locked",
+      "users": "Users"
+    },
+    "columns": {
+      "user": "User",
+      "inTime": "In Time",
+      "outTime": "Out / Cut-off",
+      "reason": "Reason",
+      "lockedAt": "Locked At",
+      "lockedBy": "Locked By",
+      "notes": "Notes"
+    },
+    "reasons": {
+      "AUTO_TIMEOUT": "Auto (cut-off)",
+      "ADMIN": "Admin",
+      "UNKNOWN": "Unknown"
+    },
+    "lockedByApi": "API",
+    "empty": "No locked logs in this range",
+    "loadFailed": "Failed to load"
   }
 }

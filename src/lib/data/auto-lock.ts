@@ -3,7 +3,7 @@ import prisma from "../prisma";
 import { firstCutoffAfter, lastCutoffAtOrBefore } from "../zoned-time";
 
 /**
- * The daily cut-off (`OVERHOURS_AUTO_LOCK_TIME`) that a session clocked in at `inTime` has already
+ * The daily cut-off (`AUTO_LOCK_TIME`) that a session clocked in at `inTime` has already
  * passed by `now`, or null if it has not passed one (or auto-lock is disabled). A session may not span
  * a cut-off; one that did is locked with this cut-off as its outTime.
  */

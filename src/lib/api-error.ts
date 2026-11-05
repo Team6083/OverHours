@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export type ApiErrorCode =
   | "invalid_request"
   | "unauthenticated"
+  | "forbidden"
   | "not_found"
   | "conflict"
   | "internal_error"
@@ -12,6 +13,7 @@ export type ApiErrorCode =
 const STATUS_BY_CODE: Record<ApiErrorCode, number> = {
   invalid_request: 400,
   unauthenticated: 401,
+  forbidden: 403,
   not_found: 404,
   conflict: 409,
   internal_error: 500,

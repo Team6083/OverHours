@@ -52,8 +52,8 @@ Variables are read at runtime unless noted otherwise.
 | `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*`. Admin API requests are rejected when it is unset. |
 | `ORG_NAME` | No | Name of the organisation running this instance. Shown in the header, footer and page description. When unset, no organisation text is shown. |
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
-| `OVERHOURS_AUTO_LOCK_TIME` | No | Daily cut-off as `HH:mm` (in `OVERHOURS_TIMEZONE`). Sessions still clocked in at the cut-off are locked as abnormal clock-outs; see [Auto-lock](#auto-lock). Unset or malformed: no automatic locking. |
-| `OVERHOURS_TIMEZONE` | No | IANA time zone (e.g. `Asia/Taipei`) for `OVERHOURS_AUTO_LOCK_TIME` and for times in locked-log CSV exports. Default: the server's own zone (`TZ`, usually UTC in containers), so set this whenever auto-lock is enabled. |
+| `AUTO_LOCK_TIME` | No | Daily cut-off as `HH:mm` in `TZ`. Sessions still clocked in at the cut-off are locked as abnormal clock-outs; see [Auto-lock](#auto-lock). Unset: no automatic locking. A malformed value stops the server from starting. |
+| `TZ` | No | IANA time zone (e.g. `Asia/Taipei`) of the server, used for `AUTO_LOCK_TIME` and for times in locked-log reports and CSV exports. Default: the container's zone, usually UTC, so set it whenever auto-lock is enabled. An invalid zone stops the server from starting. |
 | `SENTRY_DSN` | No | Sentry DSN for the server and edge runtimes. |
 | `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN for the browser. Inlined at build time. |
 | `SENTRY_AUTH_TOKEN` | No | Sentry auth token used to upload source maps. Build time only; secret. |
@@ -161,7 +161,7 @@ On `SIGTERM`, Next.js's standalone server stops accepting new connections, lets 
 
 A session that is not clocked out normally is **locked**: it gets status `LOCKED`, does not count toward
 hours, and appears in the Locked Logs report. Admins can lock a session by hand (Lock on the home page,
-or setting the status in the log editor / Admin API). With `OVERHOURS_AUTO_LOCK_TIME` set, a session may
+or setting the status in the log editor / Admin API). With `AUTO_LOCK_TIME` set, a session may
 not span the daily cut-off: with `23:00`, a session started at 22:30 must end by 23:00 that day, and one
 started at 23:30 by 23:00 the next day. A session that passed its cut-off is locked at the cut-off (its out
 time is the cut-off).
@@ -181,7 +181,7 @@ It locks every session past its cut-off and is safe to call as often as wanted. 
 locked before this was recorded show the reason as unknown.
 
 Locked logs can be exported for violation records as CSV from **Report → Locked Logs** (admins; dates are
-whole days in `OVERHOURS_TIMEZONE`), or through `GET /api/admin/timelogs/locked` (JSON or `format=csv`).
+whole days in `TZ`), or through `GET /api/admin/timelogs/locked` (JSON or `format=csv`).
 
 ## Admin API
 

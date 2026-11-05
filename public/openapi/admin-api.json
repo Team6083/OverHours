@@ -276,7 +276,7 @@
       "get": {
         "tags": ["TimeLogs"],
         "summary": "Export locked time logs",
-        "description": "Locked (abnormal clock-out) time logs whose clock-in is in [startTime, endTime), oldest first, with user details. format=csv returns a UTF-8 CSV (with BOM) whose times are wall-clock times in OVERHOURS_TIMEZONE.",
+        "description": "Locked (abnormal clock-out) time logs whose clock-in is in [startTime, endTime), oldest first, with user details. format=csv returns a UTF-8 CSV (with BOM) whose times are wall-clock times in the server time zone (TZ).",
         "parameters": [
           {
             "name": "startTime",
@@ -326,7 +326,7 @@
       "post": {
         "tags": ["Jobs"],
         "summary": "Lock sessions past the daily cut-off",
-        "description": "Locks every CURRENTLY_IN time log that has passed the daily cut-off (OVERHOURS_AUTO_LOCK_TIME), with outTime set to the cut-off and lockReason AUTO_TIMEOUT. Meant for an external scheduler; idempotent. Does nothing when auto-lock is not configured (enabled: false).",
+        "description": "Locks every CURRENTLY_IN time log that has passed the daily cut-off (AUTO_LOCK_TIME), with outTime set to the cut-off and lockReason AUTO_TIMEOUT. Meant for an external scheduler; idempotent. Does nothing when auto-lock is not configured (enabled: false).",
         "responses": {
           "200": {
             "description": "Sweep result",
@@ -517,7 +517,7 @@
       "LockReason": {
         "type": "string",
         "enum": ["AUTO_TIMEOUT", "ADMIN"],
-        "description": "AUTO_TIMEOUT: still clocked in at the daily cut-off (OVERHOURS_AUTO_LOCK_TIME). ADMIN: locked by an admin (web UI or Admin API)."
+        "description": "AUTO_TIMEOUT: still clocked in at the daily cut-off (AUTO_LOCK_TIME). ADMIN: locked by an admin (web UI or Admin API)."
       },
       "LockedTimeLog": {
         "type": "object",

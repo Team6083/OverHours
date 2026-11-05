@@ -57,6 +57,9 @@ export function lockedCsvResponse(rows: LockedTimeLogRow[], range: LockedTimeLog
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${lockedCsvFilename(range, timeZone)}"`,
       "Cache-Control": "no-store",
+      // The file holds user-entered text (names, notes); never let a browser run it as a page
+      "Content-Security-Policy": "sandbox",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

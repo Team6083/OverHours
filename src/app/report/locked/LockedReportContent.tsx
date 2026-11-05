@@ -4,6 +4,7 @@ import {
   Badge, Button, Center, EmptyState, Heading, HStack, IconButton, Input, Spinner, Stat, Table, Text, VStack,
 } from "@chakra-ui/react";
 import { LuDownload, LuLock, LuRefreshCcw } from "react-icons/lu";
+import { useTranslations } from "next-intl";
 
 import type { LockedTimeLogRow } from "@/lib/data/locked-export";
 import { getLockedReportRows } from "./actions";
@@ -14,16 +15,17 @@ function todayInZone(timeZone: string): string {
     .format(new Date());
 }
 
-const REASON_BADGE: Record<LockedTimeLogRow["lockReason"], { label: string; color: string }> = {
-  AUTO_TIMEOUT: { label: "Auto (cut-off)", color: "orange" },
-  ADMIN: { label: "Admin", color: "purple" },
-  UNKNOWN: { label: "Unknown", color: "gray" },
+const REASON_COLOR: Record<LockedTimeLogRow["lockReason"], string> = {
+  AUTO_TIMEOUT: "orange",
+  ADMIN: "purple",
+  UNKNOWN: "gray",
 };
 
 export default function LockedReportContent(props: { autoLockTime?: string; timeZone: string }) {
   const { autoLockTime, timeZone } = props;
+  const t = useTranslations("LockedReportPage");
 
-  // Dates are whole days in the server's OVERHOURS_TIMEZONE (both inclusive), resolved on the server, so
+  // Dates are whole days in the server's time zone (TZ) (both inclusive), resolved on the server, so
   // the filter, the table and the CSV agree whatever the browser's zone. Default: this month up to today.
   const [startStr, setStartStr] = useState(() => `${todayInZone(timeZone).slice(0, 8)}01`);
   const [endStr, setEndStr] = useState(() => todayInZone(timeZone));
@@ -62,43 +64,43 @@ export default function LockedReportContent(props: { autoLockTime?: string; time
 
   return (<>
     <HStack justify="space-between" mb={2} wrap="wrap" gap={3}>
-      <Heading as="h2" size="2xl">Locked Logs</Heading>
+      <Heading as="h2" size="2xl">{t("title")}</Heading>
       <HStack gap={2} wrap="wrap">
         <Input type="date" size="xs" w="auto" value={startStr} max={endStr}
-          onChange={e => setStartStr(e.target.value)} aria-label="Start date" />
+          onChange={e => setStartStr(e.target.value)} aria-label={t("startDate")} />
         <Text fontSize="sm">–</Text>
         <Input type="date" size="xs" w="auto" value={endStr} min={startStr}
-          onChange={e => setEndStr(e.target.value)} aria-label="End date" />
-        <IconButton aria-label="Refresh" size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
+          onChange={e => setEndStr(e.target.value)} aria-label={t("endDate")} />
+        <IconButton aria-label={t("refresh")} size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
           <LuRefreshCcw />
         </IconButton>
         <Button size="sm" variant="surface" asChild>
-          <a href={exportHref} download><LuDownload /> CSV</a>
+          <a href={exportHref} download><LuDownload /> {t("downloadCsv")}</a>
         </Button>
       </HStack>
     </HStack>
 
     <Text fontSize="sm" color="fg.muted" mb={6}>
-      Sessions not clocked out normally, filtered by clock-in date.{" "}
+      {t("description.filter")}{" "}
       {autoLockTime
-        ? `Sessions still clocked in at ${autoLockTime} (${timeZone}) are locked automatically.`
-        : "Automatic locking is disabled (OVERHOURS_AUTO_LOCK_TIME is not set)."}
-      {" "}Dates and times are in {timeZone}.
+        ? t("description.autoLockOn", { time: autoLockTime, timeZone })
+        : t("description.autoLockOff")}
+      {" "}{t("description.timeZone", { timeZone })}
     </Text>
 
     {loading && !rows ? <Center><Spinner /></Center> : (
       rows && rows.length > 0 ? <>
         <HStack align="start" gap={4} mb={6}>
           <Stat.Root>
-            <Stat.Label>Locked Logs</Stat.Label>
+            <Stat.Label>{t("stats.lockedLogs")}</Stat.Label>
             <Stat.ValueText>{rows.length}</Stat.ValueText>
           </Stat.Root>
           <Stat.Root>
-            <Stat.Label>Auto-locked</Stat.Label>
+            <Stat.Label>{t("stats.autoLocked")}</Stat.Label>
             <Stat.ValueText>{autoCount}</Stat.ValueText>
           </Stat.Root>
           <Stat.Root>
-            <Stat.Label>Users</Stat.Label>
+            <Stat.Label>{t("stats.users")}</Stat.Label>
             <Stat.ValueText>{userCount}</Stat.ValueText>
           </Stat.Root>
         </HStack>
@@ -107,13 +109,13 @@ export default function LockedReportContent(props: { autoLockTime?: string; time
           <Table.Root size="sm" stickyHeader>
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeader>User</Table.ColumnHeader>
-                <Table.ColumnHeader>In Time</Table.ColumnHeader>
-                <Table.ColumnHeader>Out / Cut-off</Table.ColumnHeader>
-                <Table.ColumnHeader>Reason</Table.ColumnHeader>
-                <Table.ColumnHeader>Locked At</Table.ColumnHeader>
-                <Table.ColumnHeader>Locked By</Table.ColumnHeader>
-                <Table.ColumnHeader>Notes</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("columns.user")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("columns.inTime")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("columns.outTime")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("columns.reason")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("columns.lockedAt")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("columns.lockedBy")}</Table.ColumnHeader>
+                <Table.ColumnHeader>{t("columns.notes")}</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -128,12 +130,12 @@ export default function LockedReportContent(props: { autoLockTime?: string; time
                   <Table.Cell>{formatTime(row.inTime)}</Table.Cell>
                   <Table.Cell>{formatTime(row.outTime)}</Table.Cell>
                   <Table.Cell>
-                    <Badge colorPalette={REASON_BADGE[row.lockReason].color}>
-                      {REASON_BADGE[row.lockReason].label}
+                    <Badge colorPalette={REASON_COLOR[row.lockReason]}>
+                      {t(`reasons.${row.lockReason}`)}
                     </Badge>
                   </Table.Cell>
                   <Table.Cell>{formatTime(row.lockedAt)}</Table.Cell>
-                  <Table.Cell>{row.lockedByName ?? (row.lockReason === "ADMIN" ? "API" : "-")}</Table.Cell>
+                  <Table.Cell>{row.lockedByName ?? (row.lockReason === "ADMIN" ? t("lockedByApi") : "-")}</Table.Cell>
                   <Table.Cell>{row.notes ?? ""}</Table.Cell>
                 </Table.Row>
               ))}
@@ -144,7 +146,7 @@ export default function LockedReportContent(props: { autoLockTime?: string; time
         <EmptyState.Root>
           <EmptyState.Content>
             <EmptyState.Indicator><LuLock /></EmptyState.Indicator>
-            <EmptyState.Title>{rows ? "No locked logs in this range" : "Failed to load"}</EmptyState.Title>
+            <EmptyState.Title>{rows ? t("empty") : t("loadFailed")}</EmptyState.Title>
           </EmptyState.Content>
         </EmptyState.Root>
       )
