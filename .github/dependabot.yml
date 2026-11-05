@@ -20,6 +20,10 @@ updates:
       # eslint-config-next plugins lack ESLint 10 support; see #112 for when to remove
       - dependency-name: "eslint"
         versions: [">=10"]
+      # typescript-eslint peer range is <6.1.0 and eslint crashes on TS 7; remove once it supports TS 7.1+
+      # (https://github.com/typescript-eslint/typescript-eslint/issues/10940)
+      - dependency-name: "typescript"
+        versions: [">=7"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
