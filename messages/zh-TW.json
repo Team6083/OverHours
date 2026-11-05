@@ -102,11 +102,13 @@
     "table": {
       "columns": {
         "user": "使用者",
-        "inTime": "簽到時間",
-        "outTime": "簽退時間",
+        "time": "時間",
         "duration": "時長",
         "actions": "操作"
       }
+    },
+    "filters": {
+      "finishedOnly": "只顯示已完成"
     },
     "buttons": {
       "createLog": "新增紀錄"
@@ -249,18 +251,22 @@
     "today": "今天",
     "notScheduled": "未安排",
     "nobody": "無",
-    "availableToday": "今天可以來的人（{count}）",
-    "availableTomorrow": "明天可以來的人（{count}）",
+    "showMore": "還有 {count} 人",
+    "showLess": "收合",
+    "availableToday": "今天可來（{count}）",
+    "availableTomorrow": "明天可來（{count}）",
     "noSeason": "尚未設定賽季，請管理員先設定。",
     "signInRequired": "請先登入才能使用出席功能。",
     "duty": {
       "CE": "值班 CE",
       "PM": "值班 PM",
-      "MACHINING": "值班加工監督"
+      "MACHINING": "加工監督"
     },
     "week": {
       "heading": "我的出席時間",
-      "help": "標記確定不能來的日子後儲存。沒有標記只代表可以來，不是一定要來。整週都沒有標記會算成未填寫。",
+      "help": "把確定不能來的日子改成「不能來」後儲存。可以來不代表一定要來。整週都沒標記會算未填寫。",
+      "date": "日期",
+      "status": "狀態",
       "previous": "上一週",
       "next": "下一週",
       "thisWeek": "本週",
@@ -276,7 +282,6 @@
     "admin": {
       "title": "出席管理",
       "season": "賽季",
-      "seasonName": "名稱",
       "startDate": "開始日期",
       "endDate": "結束日期",
       "eventEndDate": "結束日期（單日留空）",

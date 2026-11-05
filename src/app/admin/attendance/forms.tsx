@@ -15,11 +15,7 @@ export function SeasonForm(props: { season: AttendanceSeasonDTO | null }) {
   return (
     <form action={action}>
       <Stack gap={3}>
-        <SimpleGrid columns={{ base: 1, md: 3 }} gap={3}>
-          <Field.Root required>
-            <Field.Label>{t("seasonName")}</Field.Label>
-            <Input name="name" defaultValue={season?.name} />
-          </Field.Root>
+        <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
           <Field.Root required>
             <Field.Label>{t("startDate")}</Field.Label>
             <Input name="startDate" type="date" defaultValue={season?.startDate} />

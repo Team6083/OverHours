@@ -101,7 +101,6 @@ model AttendanceSeason {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name      String
   startDate String
   endDate   String
 }

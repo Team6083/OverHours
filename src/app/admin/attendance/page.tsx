@@ -40,13 +40,13 @@ export default async function AttendanceAdminPage(props: { searchParams: Promise
           <Heading as="h3" size="md">{t("admin.duty")}</Heading>
           <HStack>
             <Button size="xs" variant="outline" asChild>
-              <Link href={`/admin/attendance?week=${addDays(weekStart, -7)}`}>{t("week.previous")}</Link>
+              <Link href={`/admin/attendance?week=${addDays(weekStart, -7)}`} scroll={false}>{t("week.previous")}</Link>
             </Button>
             <Button size="xs" variant="outline" asChild>
-              <Link href="/admin/attendance">{t("week.thisWeek")}</Link>
+              <Link href="/admin/attendance" scroll={false}>{t("week.thisWeek")}</Link>
             </Button>
             <Button size="xs" variant="outline" asChild>
-              <Link href={`/admin/attendance?week=${addDays(weekStart, 7)}`}>{t("week.next")}</Link>
+              <Link href={`/admin/attendance?week=${addDays(weekStart, 7)}`} scroll={false}>{t("week.next")}</Link>
             </Button>
           </HStack>
         </HStack>

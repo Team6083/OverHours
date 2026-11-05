@@ -8,7 +8,7 @@ import { getTimeZone } from "../config";
 import prisma from "../prisma";
 import { withSlackIds } from "../slack";
 
-export type AttendanceSeasonDTO = { id: string; name: string; startDate: string; endDate: string };
+export type AttendanceSeasonDTO = { id: string; startDate: string; endDate: string };
 export type SeasonEventDTO = { id: string; name: string; startDate: string; endDate?: string; notes?: string };
 export type AttendancePerson = { id: string; name: string; email: string };
 export type PublicPerson = { id: string; name: string };
@@ -43,7 +43,7 @@ async function requireAdmin() {
 
 async function findSeason(): Promise<AttendanceSeasonDTO | null> {
   const season = await prisma.attendanceSeason.findFirst({ orderBy: { startDate: "desc" } });
-  return season && { id: season.id, name: season.name, startDate: season.startDate, endDate: season.endDate };
+  return season && { id: season.id, startDate: season.startDate, endDate: season.endDate };
 }
 
 async function findEvents(): Promise<SeasonEventDTO[]> {
@@ -74,7 +74,8 @@ const findMarks = (dates: string[]) => prisma.attendanceMark.findMany({
 });
 
 async function buildDailyBoard(date: string): Promise<DailyBoard<AttendancePerson>> {
-  const [events, roster, marks, duties] = await Promise.all([
+  const [season, events, roster, marks, duties] = await Promise.all([
+    findSeason(),
     findEvents(),
     findRoster(),
     findMarks([date]),
@@ -93,7 +94,7 @@ async function buildDailyBoard(date: string): Promise<DailyBoard<AttendancePerso
     date,
     events: eventsOn(date, events),
     duty: { CE: onDuty("CE"), PM: onDuty("PM"), MACHINING: onDuty("MACHINING") },
-    available: roster.filter(person => !unavailable.has(person.id)),
+    available: season && isInSeason(date, season) ? roster.filter(person => !unavailable.has(person.id)) : [],
   };
 }
 
@@ -154,7 +155,7 @@ export async function saveMyWeek(weekStart: string, unavailable: string[]): Prom
   return true;
 }
 
-export async function saveAttendanceSeason(data: { name: string; startDate: string; endDate: string }) {
+export async function saveAttendanceSeason(data: { startDate: string; endDate: string }) {
   await requireAdmin();
 
   const current = await findSeason();

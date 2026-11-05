@@ -12,7 +12,6 @@ const calendarDate = z.string().refine(isCalendarDate, "Enter a valid date");
 
 const seasonSchema = z
   .object({
-    name: z.string().trim().min(1, "Name is required"),
     startDate: calendarDate,
     endDate: calendarDate,
   })

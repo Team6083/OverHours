@@ -102,11 +102,13 @@
     "table": {
       "columns": {
         "user": "User",
-        "inTime": "Clocked-in Time",
-        "outTime": "Clock-out Time",
+        "time": "Time",
         "duration": "Duration",
         "actions": "Actions"
       }
+    },
+    "filters": {
+      "finishedOnly": "Finished only"
     },
     "buttons": {
       "createLog": "Create Log"
@@ -249,8 +251,10 @@
     "today": "Today",
     "notScheduled": "Not scheduled",
     "nobody": "Nobody",
-    "availableToday": "Can come today ({count})",
-    "availableTomorrow": "Can come tomorrow ({count})",
+    "showMore": "{count} more",
+    "showLess": "Show less",
+    "availableToday": "Today ({count})",
+    "availableTomorrow": "Tomorrow ({count})",
     "noSeason": "No season has been set up yet. Ask an admin to set one.",
     "signInRequired": "Sign in to use attendance.",
     "duty": {
@@ -260,7 +264,9 @@
     },
     "week": {
       "heading": "My availability",
-      "help": "Mark the days you definitely cannot come, then save. Unmarked days only mean you can come, not that you must. A week with no marks at all counts as not filled in.",
+      "help": "Set the days you definitely cannot come, then save. Can come only means you may, not that you must. A week with no days marked counts as not filled in.",
+      "date": "Date",
+      "status": "Status",
       "previous": "Previous week",
       "next": "Next week",
       "thisWeek": "This week",
@@ -276,7 +282,6 @@
     "admin": {
       "title": "Attendance admin",
       "season": "Season",
-      "seasonName": "Name",
       "startDate": "Start date",
       "endDate": "End date",
       "eventEndDate": "End date (blank for one day)",
