@@ -44,6 +44,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npx tsc --noEmit
 
+      - name: Test
+        if: ${{ !cancelled() }}
+        run: npm test
+
       # TODO(oh-03): non-blocking because main has existing lint errors
       # (react-hooks/*, no-explicit-any). Remove continue-on-error once fixed.
       - name: Lint (non-blocking until existing errors are fixed)
