@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { Fieldset, Stack, Field, DataList, Button, Combobox, Portal, useFilter, useListCollection, SegmentGroup, SimpleGrid, HStack, Input, GridItem, Textarea } from "@chakra-ui/react";
 import { LuCircleCheckBig, LuLock, LuTimer } from "react-icons/lu";
 
@@ -29,6 +29,7 @@ export default function LogForm(props: {
 }) {
   const { isNew, timeLog, userOptions } = props;
   const t = useTranslations("LogEditPage.form");
+  const tLock = useTranslations("LogEditPage.form.lock");
 
   const tzOffset = new Date().getTimezoneOffset();
 
@@ -51,17 +52,30 @@ export default function LogForm(props: {
   });
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(state.prevValues?.status || "CURRENTLY_IN");
-  useEffect(() => {
-    if (state.prevValues?.status) {
-      setSelectedStatus(state.prevValues.status);
-    }
-  }, [state.prevValues?.status]);
+  // Follow the status the server echoes back after a submit (adjusting state during render, not in an effect)
+  const [syncedStatus, setSyncedStatus] = useState(state.prevValues?.status);
+  if (state.prevValues?.status !== syncedStatus) {
+    setSyncedStatus(state.prevValues?.status);
+    if (state.prevValues?.status) setSelectedStatus(state.prevValues.status);
+  }
 
   const userFieldError = state.issues?.filter(issue => issue.path[0] === "user").map(issue => issue.message).join(", ");
   const statusFieldError = state.issues?.filter(issue => issue.path[0] === "status").map(issue => issue.message).join(", ");
   const clockInFieldError = state.issues?.filter(issue => issue.path[0] === "clockInTime").map(issue => issue.message).join(", ");
   const clockOutFieldError = state.issues?.filter(issue => issue.path[0] === "clockOutTime").map(issue => issue.message).join(", ");
   const notesFieldError = state.issues?.filter(issue => issue.path[0] === "notes").map(issue => issue.message).join(", ");
+  // Lock metadata is set by the server when the status changes (see lockFieldsForStatusChange)
+  const wasLocked = timeLog?.status === "LOCKED";
+  const willBeLocked = selectedStatus === "LOCKED";
+  const lockHint = !wasLocked && willBeLocked ? tLock("willLock")
+    : wasLocked && !willBeLocked ? tLock("willUnlock")
+      : undefined;
+  const lockedByLabel = timeLog?.lockedById
+    ? userOptions.find(u => u.value === timeLog.lockedById)?.label ?? timeLog.lockedById
+    : timeLog?.lockReason === "AUTO_TIMEOUT" ? tLock("bySystem")
+      : timeLog?.lockReason === "ADMIN" ? tLock("byApi")
+        : "-";
+
   const hasFieldErrors = !!(userFieldError || statusFieldError || clockInFieldError || clockOutFieldError || notesFieldError);
 
   return <form action={action}>
@@ -139,6 +153,7 @@ export default function LogForm(props: {
               <SegmentGroup.Items h={10} items={statusOptions} />
             </SegmentGroup.Root>
 
+            {lockHint && <Field.HelperText>{lockHint}</Field.HelperText>}
             <Field.ErrorText>{statusFieldError}</Field.ErrorText>
           </Field.Root>
 
@@ -186,6 +201,20 @@ export default function LogForm(props: {
             <DataList.ItemLabel>{t("labels.lastUpdatedAt")}</DataList.ItemLabel>
             <DataList.ItemValue>{timeLog.updatedAt.toLocaleString()}</DataList.ItemValue>
           </DataList.Item>
+          {wasLocked && <>
+            <DataList.Item>
+              <DataList.ItemLabel>{tLock("reason")}</DataList.ItemLabel>
+              <DataList.ItemValue>{tLock(`reasons.${timeLog.lockReason ?? "UNKNOWN"}`)}</DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>{tLock("lockedAt")}</DataList.ItemLabel>
+              <DataList.ItemValue>{timeLog.lockedAt ? timeLog.lockedAt.toLocaleString() : "-"}</DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>{tLock("lockedBy")}</DataList.ItemLabel>
+              <DataList.ItemValue>{lockedByLabel}</DataList.ItemValue>
+            </DataList.Item>
+          </>}
         </DataList.Root>
       )}
 

@@ -143,6 +143,20 @@
         "createdAt": "Created At",
         "lastUpdatedAt": "Last Updated At"
       },
+      "lock": {
+        "reason": "Lock Reason",
+        "lockedAt": "Locked At",
+        "lockedBy": "Locked By",
+        "reasons": {
+          "AUTO_TIMEOUT": "Auto (past cut-off)",
+          "ADMIN": "Admin",
+          "UNKNOWN": "Unknown"
+        },
+        "bySystem": "System",
+        "byApi": "Admin API",
+        "willLock": "Saving will record this as a manual lock by you.",
+        "willUnlock": "Saving will clear the lock reason, time and operator."
+      },
       "buttons": {
         "submitCreate": "Create Log",
         "submitEdit": "Save Changes"
