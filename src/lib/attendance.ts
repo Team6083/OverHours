@@ -1,0 +1,71 @@
+import { toWallTime } from "./zoned-time";
+
+export type AttendanceStatus = "AVAILABLE" | "UNAVAILABLE";
+export type DayStatus = AttendanceStatus | "NOT_FILLED";
+
+export const MAX_RANGE_DAYS = 92;
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const toUtc = (date: string) => new Date(`${date}T00:00:00Z`);
+const fromUtc = (date: Date) => date.toISOString().slice(0, 10);
+
+export function isCalendarDate(value: string): boolean {
+  if (!DATE_PATTERN.test(value)) return false;
+  const parsed = toUtc(value);
+  return !Number.isNaN(parsed.getTime()) && fromUtc(parsed) === value;
+}
+
+export function addDays(date: string, days: number): string {
+  const result = toUtc(date);
+  result.setUTCDate(result.getUTCDate() + days);
+  return fromUtc(result);
+}
+
+export function calendarDateInZone(now: Date, timeZone: string): string {
+  const { year, month, day } = toWallTime(now, timeZone);
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function weekStartOf(date: string): string {
+  const daysSinceMonday = (toUtc(date).getUTCDay() + 6) % 7;
+  return addDays(date, -daysSinceMonday);
+}
+
+export function weekDates(weekStart: string): string[] {
+  return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+}
+
+/** Every day from `start` to `end` inclusive; null when the range is backwards or too long. */
+export function datesInRange(start: string, end: string, maxDays = MAX_RANGE_DAYS): string[] | null {
+  const days = (toUtc(end).getTime() - toUtc(start).getTime()) / 864e5 + 1;
+  if (days < 1 || days > maxDays) return null;
+
+  return Array.from({ length: days }, (_, i) => addDays(start, i));
+}
+
+export function dayStatuses(
+  dates: string[],
+  entries: { date: string; status: AttendanceStatus }[],
+): { date: string; status: DayStatus }[] {
+  const byDate = new Map(entries.map(entry => [entry.date, entry.status]));
+  return dates.map(date => ({ date, status: byDate.get(date) ?? "NOT_FILLED" }));
+}
+
+/** Source rows that can move to `targetId` without breaking the unique index, one per key. */
+export function rowsToReassign<T extends { id: string; userId: string }>(
+  rows: T[],
+  targetId: string,
+  key: (row: T) => string,
+): string[] {
+  const taken = new Set(rows.filter(row => row.userId === targetId).map(key));
+  const ids: string[] = [];
+
+  for (const row of rows) {
+    if (row.userId === targetId || taken.has(key(row))) continue;
+    taken.add(key(row));
+    ids.push(row.id);
+  }
+
+  return ids;
+}

@@ -183,6 +183,25 @@ locked before this was recorded show the reason as unknown.
 Locked logs can be exported for violation records as CSV from **Report → Locked Logs** (admins; dates are
 whole days in `TZ`), or through `GET /api/admin/timelogs/locked` (JSON or `format=csv`).
 
+## Attendance
+
+Members fill in each day on `/attendance` as available or unavailable, and can clear a day back to not filled
+in. A day without an entry counts as not filled in. Past days cannot be changed. Every member can see who is
+available and who is unavailable on each day, and how many people have filled it in; people who have not filled
+it in are not listed.
+
+Run `npx prisma db push` once after deploying so the unique index exists. Set `TZ`, because "today" is worked
+out in that zone.
+
+External programs, such as a Slack bot, read everyone's status through the Admin API:
+
+```bash
+curl -H "Authorization: Bearer $ADMIN_API_KEY" "https://overhours.example.com/api/admin/attendance?start=2027-01-11&end=2027-01-17"
+# {"data":{"start":"2027-01-11","end":"2027-01-17","users":[{"id":"...","name":"...","email":"...","days":[{"date":"2027-01-11","status":"AVAILABLE"}]}]}}
+```
+
+`status` is `AVAILABLE`, `UNAVAILABLE` or `NOT_FILLED`. A request covers at most 92 days.
+
 ## Admin API
 
 An API-key authenticated REST API is available for managing users and time logs from

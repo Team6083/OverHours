@@ -11,7 +11,7 @@ import { getTranslations } from "next-intl/server";
 import { SessionProvider } from "next-auth/react";
 
 import { Avatar, Box, Button, CloseButton, Container, Drawer, Flex, Heading, HStack, Icon, IconButton, Menu, MenuSelectionDetails, Portal, Separator, Stack, Text } from "@chakra-ui/react";
-import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange } from "react-icons/lu";
+import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange, LuCalendarCheck } from "react-icons/lu";
 
 import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
@@ -57,7 +57,7 @@ export default async function RootLayout({
         <NextIntlClientProvider>
           <Provider nonce={nonce}> {/* Chakra-UI provider */}
             <SessionProvider> {/* Auth.js provider, for useSession() hook */}
-              <Container maxWidth="5xl" fluid p={4} my={2}>
+              <Container maxWidth="5xl" fluid px={4} py={6}>
                 <NavBar mb={4} orgName={orgName} />
                 {children}
               </Container>
@@ -99,10 +99,13 @@ async function NavBar(props: {
 
   const links = [
     { href: "/logs", label: t("nav.logs"), icon: LuLogs, roles: [Role.USER, Role.ADMIN] },
+    { href: "/attendance", label: t("nav.attendance"), icon: LuCalendarCheck, roles: [Role.USER, Role.ADMIN] },
     { href: "/report", label: t("nav.reports"), icon: LuChartNoAxesCombined, roles: [Role.ADMIN] },
     { href: "/admin/users", label: t("nav.users"), icon: LuUsers, roles: [Role.ADMIN] },
     { href: "/admin/stat-ranges", label: t("nav.statRanges"), icon: LuCalendarRange, roles: [Role.ADMIN] },
   ];
+
+  const menuBreakpoint = session?.user.role === Role.ADMIN ? "md" : "sm";
 
   return (
     <Box as="nav" {...boxProps}>
@@ -121,7 +124,7 @@ async function NavBar(props: {
           <HStack>
 
             {/* Desktop Nav Links */}
-            <HStack hideBelow="sm">
+            <HStack hideBelow={menuBreakpoint}>
               {links.map((link) => {
                 if (link.roles.length > 0 && (!session?.user.role || !link.roles.includes(session.user.role))) {
                   return null;
@@ -173,7 +176,7 @@ async function NavBar(props: {
             {/* Mobile Nav Drawer */}
             <Drawer.Root size="xs" placement="start">
               <Drawer.Trigger asChild>
-                <IconButton hideFrom="sm" size="sm" variant="outline"><LuMenu /></IconButton>
+                <IconButton hideFrom={menuBreakpoint} size="sm" variant="outline"><LuMenu /></IconButton>
               </Drawer.Trigger>
               <Portal>
                 <Drawer.Backdrop />
