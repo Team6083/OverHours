@@ -65,6 +65,36 @@ function NameLine(props: { label: string; dialogTitle: string; names: string[] }
   );
 }
 
+function StatusButtons(props: {
+  label: string;
+  current?: DayStatus;
+  disabled: boolean;
+  onSelect: (status: DayStatus) => void;
+}) {
+  const { label, current, disabled, onSelect } = props;
+  const t = useTranslations("Attendance");
+
+  return (
+    <ButtonGroup size="xs" attached>
+      {STATUS_OPTIONS.map(({ value, palette }) => (
+        <Button
+          key={value}
+          minW={{ base: 10, md: 12 }}
+          px={1}
+          variant={current === value ? "subtle" : "outline"}
+          colorPalette={current === value ? palette : "gray"}
+          disabled={disabled}
+          aria-pressed={current === value}
+          aria-label={`${label} ${t(`status.${value}`)}`}
+          onClick={() => onSelect(value)}
+        >
+          {t(`status.${value}`)}
+        </Button>
+      ))}
+    </ButtonGroup>
+  );
+}
+
 export default function AttendanceView(props: {
   weekStart: string;
   today: string;
@@ -111,7 +141,10 @@ export default function AttendanceView(props: {
 
   const selectedDay = board.find(day => day.date === selected) ?? board[0];
   const dirty = board.some(({ date }) => entries[date] !== mine[date]);
-  const canEdit = board.some(({ date }) => date >= today);
+  const editableDates = board.map(day => day.date).filter(date => date >= today);
+  const statusOf = (date: string): DayStatus => entries[date] ?? "NOT_FILLED";
+  const sameStatus = editableDates.every(date => statusOf(date) === statusOf(editableDates[0]));
+  const allStatus = editableDates.length > 0 && sameStatus ? statusOf(editableDates[0]) : undefined;
 
   return (
     <SimpleGrid columns={{ base: 1, md: 5 }} gapX={8} gapY={{ base: 3, md: 6 }}>
@@ -168,8 +201,19 @@ export default function AttendanceView(props: {
 
           <Table.Root size={{ base: "sm", md: "md" }}>
             <Table.Body>
+              <Table.Row>
+                <Table.Cell py={{ base: 1, md: 2 }} fontWeight="semibold">{t("week.all")}</Table.Cell>
+                <Table.Cell textAlign="end" py={{ base: 1, md: 2 }}>
+                  <StatusButtons
+                    label={t("week.all")}
+                    current={allStatus}
+                    disabled={editableDates.length === 0}
+                    onSelect={status => editableDates.forEach(date => setStatus(date, status))}
+                  />
+                </Table.Cell>
+              </Table.Row>
+
               {board.map(({ date }) => {
-                const current: DayStatus = entries[date] ?? "NOT_FILLED";
                 const isPast = date < today;
 
                 return (
@@ -193,23 +237,12 @@ export default function AttendanceView(props: {
                       </HStack>
                     </Table.Cell>
                     <Table.Cell textAlign="end" py={{ base: 1, md: 2 }}>
-                      <ButtonGroup size="xs" attached>
-                        {STATUS_OPTIONS.map(({ value, palette }) => (
-                          <Button
-                            key={value}
-                            minW={{ base: 10, md: 12 }}
-                            px={1}
-                            variant={current === value ? "subtle" : "outline"}
-                            colorPalette={current === value ? palette : "gray"}
-                            disabled={isPast}
-                            aria-pressed={current === value}
-                            aria-label={`${date} ${t(`status.${value}`)}`}
-                            onClick={() => setStatus(date, value)}
-                          >
-                            {t(`status.${value}`)}
-                          </Button>
-                        ))}
-                      </ButtonGroup>
+                      <StatusButtons
+                        label={date}
+                        current={statusOf(date)}
+                        disabled={isPast}
+                        onSelect={status => setStatus(date, status)}
+                      />
                     </Table.Cell>
                   </Table.Row>
                 );
@@ -224,7 +257,7 @@ export default function AttendanceView(props: {
             colorPalette="blue"
             onClick={handleSave}
             loading={isPending}
-            disabled={!canEdit}
+            disabled={editableDates.length === 0}
           >
             {t("week.save")}
           </Button>

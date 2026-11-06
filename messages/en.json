@@ -267,6 +267,7 @@
       "previous": "Previous week",
       "next": "Next week",
       "thisWeek": "This week",
+      "all": "All days",
       "save": "Save this week",
       "saved": "Saved",
       "saveFailed": "Could not save"
