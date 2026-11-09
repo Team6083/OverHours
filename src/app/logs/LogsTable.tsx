@@ -16,24 +16,9 @@ import { handleDeleteLogs } from "./actions";
 type TableData = Omit<TimeLogDTO, "createdAt" | "updatedAt"> & {
   displayName: string;
   avatarUrl?: string;
-  timeRangeStr: string;
+  inTimeStr: string;
   outTimeStr: string;
   durationStr: string;
-}
-
-const formatDayTime = (date: Date) => date.toLocaleString(undefined, {
-  month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false,
-});
-
-const formatTime = (date: Date) => date.toLocaleTimeString(undefined, {
-  hour: "2-digit", minute: "2-digit", hour12: false,
-});
-
-function formatTimeRange(inTime: Date, outTime: Date | undefined, status: TimeLogDTO["status"]): string {
-  if (!outTime || status === "LOCKED") return formatDayTime(inTime);
-
-  const sameDay = inTime.toDateString() === outTime.toDateString();
-  return `${formatDayTime(inTime)} – ${sameDay ? formatTime(outTime) : formatDayTime(outTime)}`;
 }
 
 const columns: Column<TableData>[] = [
@@ -56,7 +41,21 @@ const columns: Column<TableData>[] = [
     sortable: true,
     renderHeader: (sort, t) => {
       return <>
-        {t ? t("table.columns.time") : "Time"}
+        {t ? t("table.columns.inTime") : "In Time"}
+        {sort && (
+          sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
+            : <Icon ml={1}><LuArrowUp10 /></Icon>
+        )}
+      </>;
+    },
+    renderCell: (row) => <ClientOnly fallback={<SkeletonText noOfLines={1} />}>{row.inTimeStr}</ClientOnly>,
+  },
+  {
+    dataKey: "timeOut",
+    sortable: true,
+    renderHeader: (sort, t) => {
+      return <>
+        {t ? t("table.columns.outTime") : "Out Time"}
         {sort && (
           sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
             : <Icon ml={1}><LuArrowUp10 /></Icon>
@@ -65,20 +64,19 @@ const columns: Column<TableData>[] = [
     },
     renderCell: (row, t) => {
       return <ClientOnly fallback={<SkeletonText noOfLines={1} />}>
-        <HStack gap={2}>
-          <Text as="span" whiteSpace="nowrap">{row.timeRangeStr}</Text>
-          {!row.outTime && (
-            <Badge colorPalette="orange">
-              <Icon><LuTimer /></Icon>
-              {t ? t("status.currentlyIn") : "Currently In"}
-            </Badge>
-          )}
-          {row.outTime && row.status === "LOCKED" && (
-            <Tooltip content={`Clocked-out at ${row.outTimeStr}`}>
-              <Badge colorPalette="red"><Icon><LuLock /></Icon>{t ? t("status.locked") : "Locked"}</Badge>
-            </Tooltip>
-          )}
-        </HStack>
+        {row.outTime ? (
+          row.status === "LOCKED"
+            ? (
+              <Tooltip content={`Clocked-out at ${row.outTimeStr}`}>
+                <Badge colorPalette="red" mr={2}><Icon><LuLock /></Icon>{t ? t("status.locked") : "Locked"}</Badge>
+              </Tooltip>
+            ) : row.outTimeStr
+        ) : (
+          <Badge colorPalette="orange">
+            <Icon><LuTimer /></Icon>
+            {t ? t("status.currentlyIn") : "Currently In"}
+          </Badge>
+        )}
       </ClientOnly>;
     }
   },
@@ -132,6 +130,9 @@ const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1] | null) 
   } else if (key === "timeIn") {
     aValue = a.inTime.getTime();
     bValue = b.inTime.getTime();
+  } else if (key === "timeOut") {
+    aValue = a.outTime ? a.outTime.getTime() : Infinity;
+    bValue = b.outTime ? b.outTime.getTime() : Infinity;
   } else if (key === "duration") {
     aValue = a.outTime ? a.outTime.getTime() - a.inTime.getTime() : 0;
     bValue = b.outTime ? b.outTime.getTime() - b.inTime.getTime() : 0;
@@ -159,9 +160,9 @@ export default function LogsTable(props: {
       const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
 
       if (hours > 0) {
-        durationStr = `${hours}h ${minutes}m`;
+        durationStr = `${hours}h ${minutes}m ${seconds}s`;
       } else if (minutes > 0) {
-        durationStr = `${minutes}m`;
+        durationStr = `${minutes}m ${seconds}s`;
       } else {
         durationStr = `${seconds}s`;
       }
@@ -171,7 +172,7 @@ export default function LogsTable(props: {
       ...log,
       displayName: user.name || log.userId,
       avatarUrl: user?.avatarUrl,
-      timeRangeStr: formatTimeRange(log.inTime, log.outTime, log.status),
+      inTimeStr: log.inTime.toLocaleString(),
       outTimeStr: log.outTime ? log.outTime.toLocaleString() : "N/A",
       durationStr,
     };
@@ -207,7 +208,7 @@ export default function LogsTable(props: {
       <Switch.Root size="sm" checked={finishedOnly} onCheckedChange={(e) => setFinishedOnly(e.checked)}>
         <Switch.HiddenInput />
         <Switch.Control />
-        <Switch.Label>{t("filters.finishedOnly")}</Switch.Label>
+        <Switch.Label>Finished Only</Switch.Label>
       </Switch.Root>
     </HStack>
   </HStack>;
@@ -220,10 +221,10 @@ export default function LogsTable(props: {
 
   return <Pagination.Root count={filteredData.length} defaultPageSize={10} defaultPage={1}>
     <GenericTable<TableData>
-      columns={showAdminActions ? [...columns, actionsColumn] : columns.slice(1)}
+      columns={showAdminActions ? [...columns, actionsColumn] : columns}
       items={filteredData}
       keyFn={(item) => item.id}
-      defaultSortBy={["timeIn", -1]}
+      defaultSortBy={["timeOut", -1]}
       sortingFn={sortingFn}
       checkboxOptions={{
         show: showAdminActions,

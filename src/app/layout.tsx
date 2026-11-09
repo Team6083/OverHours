@@ -57,7 +57,7 @@ export default async function RootLayout({
         <NextIntlClientProvider>
           <Provider nonce={nonce}> {/* Chakra-UI provider */}
             <SessionProvider> {/* Auth.js provider, for useSession() hook */}
-              <Container maxWidth="5xl" fluid px={4} py={6}>
+              <Container maxWidth="5xl" fluid p={4} my={2}>
                 <NavBar mb={4} orgName={orgName} />
                 {children}
               </Container>
@@ -105,8 +105,6 @@ async function NavBar(props: {
     { href: "/admin/stat-ranges", label: t("nav.statRanges"), icon: LuCalendarRange, roles: [Role.ADMIN] },
   ];
 
-  const menuBreakpoint = session?.user.role === Role.ADMIN ? "md" : "sm";
-
   return (
     <Box as="nav" {...boxProps}>
       {/* Main Navigation */}
@@ -124,7 +122,7 @@ async function NavBar(props: {
           <HStack>
 
             {/* Desktop Nav Links */}
-            <HStack hideBelow={menuBreakpoint}>
+            <HStack hideBelow="sm">
               {links.map((link) => {
                 if (link.roles.length > 0 && (!session?.user.role || !link.roles.includes(session.user.role))) {
                   return null;
@@ -176,7 +174,7 @@ async function NavBar(props: {
             {/* Mobile Nav Drawer */}
             <Drawer.Root size="xs" placement="start">
               <Drawer.Trigger asChild>
-                <IconButton hideFrom={menuBreakpoint} size="sm" variant="outline"><LuMenu /></IconButton>
+                <IconButton hideFrom="sm" size="sm" variant="outline"><LuMenu /></IconButton>
               </Drawer.Trigger>
               <Portal>
                 <Drawer.Backdrop />

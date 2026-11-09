@@ -1,7 +1,6 @@
 "use client";
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { Global } from "@emotion/react";
 import { useFormatter, useTranslations } from "next-intl";
 import {
   Badge, Button, ButtonGroup, Card, CloseButton, Dialog, GridItem, Heading, HStack, Portal, SimpleGrid, Stack, Table, Text,
@@ -148,8 +147,6 @@ export default function AttendanceView(props: {
 
   return (
     <SimpleGrid columns={{ base: 1, md: 5 }} gapX={8} gapY={{ base: 3, md: 6 }}>
-      <Global styles={{ "@media (max-width: 47.99em)": { footer: { display: "none" } } }} />
-
       <GridItem colSpan={{ base: 1, md: 2 }} minW={0}>
         <Card.Root w="full" size="sm">
           <Card.Header>
