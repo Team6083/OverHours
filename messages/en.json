@@ -102,11 +102,13 @@
     "table": {
       "columns": {
         "user": "User",
-        "inTime": "Clocked-in Time",
-        "outTime": "Clock-out Time",
+        "time": "Time",
         "duration": "Duration",
         "actions": "Actions"
       }
+    },
+    "filters": {
+      "finishedOnly": "Finished only"
     },
     "buttons": {
       "createLog": "Create Log"

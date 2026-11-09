@@ -102,11 +102,13 @@
     "table": {
       "columns": {
         "user": "使用者",
-        "inTime": "簽到時間",
-        "outTime": "簽退時間",
+        "time": "時間",
         "duration": "時長",
         "actions": "操作"
       }
+    },
+    "filters": {
+      "finishedOnly": "只顯示已完成"
     },
     "buttons": {
       "createLog": "新增紀錄"
