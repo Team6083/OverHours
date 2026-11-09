@@ -268,7 +268,11 @@
       "all": "All days",
       "save": "Save this week",
       "saved": "Saved",
-      "saveFailed": "Could not save"
+      "saveFailed": "Could not save",
+      "unsavedTitle": "Unsaved changes",
+      "unsavedBody": "Your changes to this week haven't been saved. Switching weeks will discard them.",
+      "keepEditing": "Keep editing",
+      "discard": "Discard and switch"
     }
   }
 }

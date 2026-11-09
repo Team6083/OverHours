@@ -268,7 +268,11 @@
       "all": "全部",
       "save": "儲存這一週",
       "saved": "已儲存",
-      "saveFailed": "儲存失敗"
+      "saveFailed": "儲存失敗",
+      "unsavedTitle": "還沒儲存",
+      "unsavedBody": "這一週的修改還沒儲存，換週會清掉。",
+      "keepEditing": "繼續編輯",
+      "discard": "不儲存，換週"
     }
   }
 }

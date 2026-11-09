@@ -1,13 +1,14 @@
 "use client";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
 import {
   Badge, Button, ButtonGroup, Card, CloseButton, Dialog, GridItem, Heading, HStack, Portal, SimpleGrid, Stack, Table, Text,
 } from "@chakra-ui/react";
 
 import { toaster } from "@/components/ui/toaster";
-import { addDays, AttendanceStatus, DayStatus } from "@/lib/attendance";
+import { addDays, AttendanceStatus, DayStatus, weekStartOf } from "@/lib/attendance";
 import { BoardDay } from "@/lib/data/attendance-dto";
 import { saveWeek } from "./actions";
 
@@ -108,6 +109,8 @@ export default function AttendanceView(props: {
   const [entries, setEntries] = useState(mine);
   const [isPending, startTransition] = useTransition();
   const saving = useRef(false);
+  const router = useRouter();
+  const [leaveTo, setLeaveTo] = useState<string | null>(null);
 
   const dayLabel = (date: string) => {
     const weekday = format.dateTime(new Date(`${date}T00:00:00Z`), { timeZone: "UTC", weekday: "short" });
@@ -145,6 +148,29 @@ export default function AttendanceView(props: {
   const sameStatus = editableDates.every(date => statusOf(date) === statusOf(editableDates[0]));
   const allStatus = editableDates.length > 0 && sameStatus ? statusOf(editableDates[0]) : undefined;
 
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  const weekLink = (href: string, week: string, label: string) => (
+    <Button size="xs" variant="ghost" asChild>
+      <Link
+        href={href}
+        scroll={false}
+        onClick={event => {
+          if (!dirty || week === weekStart) return;
+          event.preventDefault();
+          setLeaveTo(href);
+        }}
+      >
+        {label}
+      </Link>
+    </Button>
+  );
+
   return (
     <SimpleGrid columns={{ base: 1, md: 5 }} gapX={8} gapY={{ base: 3, md: 6 }}>
       <GridItem colSpan={{ base: 1, md: 2 }} minW={0}>
@@ -181,15 +207,9 @@ export default function AttendanceView(props: {
             <Badge colorPalette="blue" size="md">{shortDate(weekStart)} – {shortDate(addDays(weekStart, 6))}</Badge>
           </HStack>
           <HStack gap={1}>
-            <Button size="xs" variant="ghost" asChild>
-              <Link href={`/attendance?week=${addDays(weekStart, -7)}`} scroll={false}>{t("week.previous")}</Link>
-            </Button>
-            <Button size="xs" variant="ghost" asChild>
-              <Link href="/attendance" scroll={false}>{t("week.thisWeek")}</Link>
-            </Button>
-            <Button size="xs" variant="ghost" asChild>
-              <Link href={`/attendance?week=${addDays(weekStart, 7)}`} scroll={false}>{t("week.next")}</Link>
-            </Button>
+            {weekLink(`/attendance?week=${addDays(weekStart, -7)}`, addDays(weekStart, -7), t("week.previous"))}
+            {weekLink("/attendance", weekStartOf(today), t("week.thisWeek"))}
+            {weekLink(`/attendance?week=${addDays(weekStart, 7)}`, addDays(weekStart, 7), t("week.next"))}
           </HStack>
         </HStack>
 
@@ -259,6 +279,43 @@ export default function AttendanceView(props: {
             {t("week.save")}
           </Button>
         </Stack>
+
+        <Dialog.Root
+          role="alertdialog"
+          size="xs"
+          placement="center"
+          open={leaveTo !== null}
+          onOpenChange={details => { if (!details.open) setLeaveTo(null); }}
+        >
+          <Portal>
+            <Dialog.Backdrop />
+            <Dialog.Positioner>
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>{t("week.unsavedTitle")}</Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body>
+                  <Text fontSize="sm">{t("week.unsavedBody")}</Text>
+                </Dialog.Body>
+                <Dialog.Footer>
+                  <Dialog.ActionTrigger asChild>
+                    <Button size="sm" variant="outline">{t("week.keepEditing")}</Button>
+                  </Dialog.ActionTrigger>
+                  <Button
+                    size="sm"
+                    colorPalette="red"
+                    onClick={() => {
+                      if (leaveTo) router.push(leaveTo, { scroll: false });
+                      setLeaveTo(null);
+                    }}
+                  >
+                    {t("week.discard")}
+                  </Button>
+                </Dialog.Footer>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Portal>
+        </Dialog.Root>
       </GridItem>
     </SimpleGrid>
   );
