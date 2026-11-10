@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   describeError,
+  describeErrorDescription,
   INVALID_TOKEN_ERROR_CODES,
   isVerifyGraceExpired,
   KNOWN_TRANSIENT_ERROR_CODES,
@@ -177,5 +178,18 @@ describe("isVerifyGraceExpired", () => {
     const grace = parseVerifyGraceSec("oops");
     expect(isVerifyGraceExpired(since + 899, since, grace)).toBe(false);
     expect(isVerifyGraceExpired(since + 901, since, grace)).toBe(true);
+  });
+});
+
+describe("describeErrorDescription", () => {
+  it("returns a known Keycloak error_description", () => {
+    expect(describeErrorDescription({ error: "invalid_grant", error_description: "Token is not active" }))
+      .toBe("Token is not active");
+  });
+
+  it("returns unknown for unrecognized or missing descriptions", () => {
+    expect(describeErrorDescription({ error: "invalid_grant", error_description: "eyJhbGciOi..." })).toBe("unknown");
+    expect(describeErrorDescription({ error: "invalid_grant" })).toBe("unknown");
+    expect(describeErrorDescription(undefined)).toBe("unknown");
   });
 });

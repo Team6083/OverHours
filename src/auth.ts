@@ -2,14 +2,14 @@
 import NextAuth, { DefaultSession, Profile } from "next-auth";
 import { DefaultJWT, getToken } from "next-auth/jwt";
 import Keycloak from "next-auth/providers/keycloak";
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { createRemoteJWKSet, decodeJwt, jwtVerify } from "jose";
 import memoize from "memoize";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { linkProviderAccount } from "./lib/data/user-account";
 import { evaluateAccess, extractRoles, parseAdminRoles, parseRoleList } from "./lib/auth-roles";
-import { describeError, INVALID_TOKEN_ERROR_CODES, isVerifyGraceExpired, parseVerifyGraceSec } from "./lib/auth-errors";
+import { describeError, describeErrorDescription, INVALID_TOKEN_ERROR_CODES, isVerifyGraceExpired, parseVerifyGraceSec } from "./lib/auth-errors";
 
 export enum Role {
   ADMIN = "admin",
@@ -152,6 +152,16 @@ function getNameFromProfile(profile: Profile): string | undefined {
   return profile.name || undefined;
 }
 
+/** Seconds until the (Keycloak, JWT-shaped) refresh token expires, or "unknown" if it has no readable `exp`. */
+function refreshTokenRemaining(refreshToken: string): string {
+  try {
+    const { exp } = decodeJwt(refreshToken);
+    return typeof exp === "number" ? `${exp - Math.floor(Date.now() / 1000)}s` : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 const refreshAccessToken = memoize(async (refreshToken: string) => {
   const response = await fetch(`${process.env.AUTH_KEYCLOAK_ISSUER}/protocol/openid-connect/token`, {
     method: "POST",
@@ -244,12 +254,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Access token has expired
 
         if (!token.refreshToken) {
+          console.warn("Ending session: access token expired and there is no refresh token");
           return null;
         }
 
         // Refresh the access token
+        const { refreshToken } = token;
         try {
-          const tokensOrError = await refreshAccessToken(token.refreshToken);
+          const tokensOrError = await refreshAccessToken(refreshToken);
 
           token.accessToken = tokensOrError.access_token;
           token.accessTokenExpiresAt = Math.floor(Date.now() / 1000 + tokensOrError.expires_in);
@@ -259,10 +271,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           accessTokenChanged = true;
         } catch (error) {
           if (typeof error === 'object' && error !== null && 'error' in error && error.error === 'invalid_grant') {
+            console.warn(
+              `Ending session: refresh token rejected (invalid_grant: ${describeErrorDescription(error)}, ` +
+              `refresh token expires in ${refreshTokenRemaining(refreshToken)}, ` +
+              `access token expired ${Math.floor(Date.now() / 1000 - token.accessTokenExpiresAt)}s ago)`,
+            );
             return null;
           }
 
-          console.error("Error refreshing access_token", describeError(error));
+          console.error(
+            "Error refreshing access_token",
+            describeError(error),
+            describeErrorDescription(error),
+          );
         }
       }
 
@@ -282,6 +303,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (access) {
           if (!access.allowed) {
             // Lost the role required by ALLOWED_ROLES: end the session.
+            console.warn("Ending session: user no longer has a role required by ALLOWED_ROLES");
             return null;
           }
 
