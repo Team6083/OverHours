@@ -248,6 +248,7 @@
     "signInRequired": "Sign in to fill in your availability.",
     "today": "Today",
     "nobody": "Nobody",
+    "findPerson": "Find person",
     "back": "Back",
     "calendar": {
       "previousMonth": "Previous month",
@@ -270,7 +271,8 @@
     },
     "board": {
       "available": "Coming ({count})",
-      "unavailable": "Not coming ({count})"
+      "unavailable": "Not coming ({count})",
+      "everyone": "Everyone ({count})"
     },
     "week": {
       "heading": "My availability",

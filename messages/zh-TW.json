@@ -248,6 +248,7 @@
     "signInRequired": "請先登入才能填寫可出席時間。",
     "today": "今天",
     "nobody": "無",
+    "findPerson": "查詢成員",
     "back": "返回",
     "calendar": {
       "previousMonth": "上個月",
@@ -270,7 +271,8 @@
     },
     "board": {
       "available": "可以來（{count}）",
-      "unavailable": "不能來（{count}）"
+      "unavailable": "不能來（{count}）",
+      "everyone": "全部成員（{count}）"
     },
     "week": {
       "heading": "我的可出席時間",
