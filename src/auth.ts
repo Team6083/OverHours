@@ -254,7 +254,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Access token has expired
 
         if (!token.refreshToken) {
-          console.warn("Ending session: access token expired and there is no refresh token");
+          console.warn(`Ending session for user ${token.userId}: access token expired and there is no refresh token`);
           return null;
         }
 
@@ -272,7 +272,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         } catch (error) {
           if (typeof error === 'object' && error !== null && 'error' in error && error.error === 'invalid_grant') {
             console.warn(
-              `Ending session: refresh token rejected (invalid_grant: ${describeErrorDescription(error)}, ` +
+              `Ending session for user ${token.userId}: refresh token rejected (invalid_grant: ${describeErrorDescription(error)}, ` +
               `refresh token expires in ${refreshTokenRemaining(refreshToken)}, ` +
               `access token expired ${Math.floor(Date.now() / 1000 - token.accessTokenExpiresAt)}s ago)`,
             );
@@ -303,7 +303,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (access) {
           if (!access.allowed) {
             // Lost the role required by ALLOWED_ROLES: end the session.
-            console.warn("Ending session: user no longer has a role required by ALLOWED_ROLES");
+            console.warn(`Ending session for user ${token.userId}: user no longer has a role required by ALLOWED_ROLES`);
             return null;
           }
 
