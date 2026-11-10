@@ -93,6 +93,32 @@ Sign-in uses Keycloak via Auth.js (`AUTH_KEYCLOAK_ID`, `AUTH_KEYCLOAK_SECRET`, `
 Roles are read from the Keycloak access token, which is verified (signature via the issuer's JWKS, `iss`,
 `exp`, and `azp` equal to `AUTH_KEYCLOAK_ID`) before any role is trusted.
 
+Users are matched to the accounts they sign in with (an `Account` per Auth.js provider id and OIDC `sub`), not by
+email, so changing the email in Keycloak keeps the same user and updates their email here. A user without an
+account yet (created before accounts existed, or by an admin) is linked on their first sign-in with the same email.
+If that email belongs to a user already linked to another account, the sign-in is refused with an "Account
+conflict" page; an admin resolves it by unlinking the old account on the user's page, or by merging. When a user's
+new email is already taken by another user, their old email is kept and the users list marks them "Out of sync"
+until an admin merges them.
+
+Merging moves every linked account to the kept user. The email of a user with exactly one account follows that
+account and cannot be edited in the app or the Admin API; a user with several accounts keeps their email until an
+admin edits it, so it does not switch with every sign-in.
+
+Accounts are keyed by the provider id (`keycloak`), not the issuer URL, because Keycloak keeps `sub` when its
+hostname or realm name changes: changing `AUTH_KEYCLOAK_ISSUER` for such a move needs no data change (the issuer
+stored on each account is for reference and updates at the next sign-in). Moving to a different Keycloak instance
+or realm whose users have new IDs changes every `sub`, so no sign-in would match and every user would hit "Account
+conflict". In that case remove the old links before switching, so each user is linked again by email at their next
+sign-in (a user whose email differs between the two systems gets a new user, to merge afterwards):
+
+```js
+// mongosh, against DATABASE_URL
+db.Account.deleteMany({ provider: "keycloak" })
+```
+
+Run `npx prisma db push` once after deploying so the `Account` indexes exist.
+
 Role settings are comma-separated lists. Realm roles are written as-is (`admin`) and client roles as
 `client:role` (`overhours:manager`); a user's roles are the union of `realm_access.roles` and every
 client's `resource_access.<client>.roles`.

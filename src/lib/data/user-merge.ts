@@ -204,6 +204,12 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
       data: { userId: targetId },
     });
 
+    // The merged user keeps every sign-in account, or the next sign-in would create a new user again
+    await tx.account.updateMany({
+      where: { userId: { in: sourceIds } },
+      data: { userId: targetId },
+    });
+
     await tx.user.deleteMany({
       where: { id: { in: sourceIds } },
     });

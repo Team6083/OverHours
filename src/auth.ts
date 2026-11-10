@@ -7,7 +7,7 @@ import memoize from "memoize";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import prisma from "./lib/prisma";
+import { linkProviderAccount } from "./lib/data/user-account";
 import { evaluateAccess, extractRoles, parseAdminRoles, parseRoleList } from "./lib/auth-roles";
 import { describeError, INVALID_TOKEN_ERROR_CODES, isVerifyGraceExpired, parseVerifyGraceSec } from "./lib/auth-errors";
 
@@ -174,7 +174,7 @@ const refreshAccessToken = memoize(async (refreshToken: string) => {
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [Keycloak],
   callbacks: {
-    signIn: async ({ account, profile }) => {
+    signIn: async ({ user, account, profile }) => {
       if (account?.provider !== 'keycloak' || !profile?.email_verified) {
         return '/auth/error?error=EmailNotVerified';
       }
@@ -191,40 +191,45 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return '/auth/error?error=MissingRole';
       }
 
+      if (typeof profile.iss !== 'string' || !account.providerAccountId || !user.email) {
+        throw new Error('Missing issuer, subject or email');
+      }
+
+      const linked = await linkProviderAccount({
+        provider: account.provider,
+        subject: account.providerAccountId,
+        issuer: profile.iss,
+        email: user.email,
+        name: getNameFromProfile(profile) || user.name || user.email,
+        image: profile.picture || user.image || null,
+      });
+      if (!linked.ok) {
+        return `/auth/error?error=${linked.error}`;
+      }
+
+      // Without an adapter Auth.js passes this same object to the jwt callback, which reads the id.
+      user.id = linked.userId;
+
       return true;
     },
     async jwt({
-      token, user, account, profile, trigger,
+      token, user, account, trigger,
     }) {
       if (trigger === 'signIn') {
         if (account?.provider !== 'keycloak') {
           throw new Error('Unsupported account provider');
         }
 
-        if (!user.email) {
-          throw new Error('Missing email');
-        }
-
         if (!account.access_token || !account.expires_at) {
           throw new Error('Missing access token or expiration time');
         }
 
-        const userProps = {
-          name: (profile && getNameFromProfile(profile)) || user.name || user.email,
-          image: profile?.picture || user.image || null,
-        };
-
-        const dbUser = await prisma.user.upsert({
-          where: {
-            email: user.email,
-          },
-          create: {
-            email: user.email,
-            ...userProps,
-          },
-          update: userProps,
-        });
-        token.userId = dbUser.id;
+        // Set by the signIn callback, which linked (or created) the user. The provider fills `id` with
+        // `sub` before that, so still seeing it means the user id was never set.
+        if (!user.id || user.id === account.providerAccountId) {
+          throw new Error('Signed-in account is not linked to a user');
+        }
+        token.userId = user.id;
 
         token.accessToken = account.access_token;
         token.accessTokenExpiresAt = account.expires_at;

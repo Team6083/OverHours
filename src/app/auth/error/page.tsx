@@ -13,6 +13,10 @@ const ERRORS: Record<string, { title: string; description: string }> = {
     title: "Email not verified",
     description: "Your email address must be verified before you can sign in.",
   },
+  AccountConflict: {
+    title: "Account conflict",
+    description: "Another user in this application already uses your email address. Please ask an administrator to resolve it.",
+  },
   VerificationUnavailable: {
     title: "Sign-in unavailable",
     description: "Your sign-in could not be verified right now. Please try again in a moment.",
