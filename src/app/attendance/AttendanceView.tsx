@@ -8,7 +8,7 @@ import {
 } from "@chakra-ui/react";
 
 import { IconType } from "react-icons";
-import { LuCheck, LuUsers, LuX } from "react-icons/lu";
+import { LuCheck, LuX } from "react-icons/lu";
 
 import { toaster } from "@/components/ui/toaster";
 import { addDays, AttendanceStatus, DayStatus, weekStartOf } from "@/lib/attendance";
@@ -75,7 +75,7 @@ export default function AttendanceView(props: {
   const saving = useRef(false);
   const router = useRouter();
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
-  const [details, setDetails] = useState<"day" | "week" | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const dayLabel = (date: string) => {
     const weekday = format.dateTime(new Date(`${date}T00:00:00Z`), { timeZone: "UTC", weekday: "short" });
@@ -107,8 +107,6 @@ export default function AttendanceView(props: {
   };
 
   const selectedDay = board.find(day => day.date === selected) ?? board[0];
-  const weekUsers = [...new Map(board.flatMap(day => [...day.available, ...day.unavailable]).map(user => [user.id, user])).values()]
-    .sort((a, b) => a.name.localeCompare(b.name));
   const dirty = board.some(({ date }) => entries[date] !== mine[date]);
   const editableDates = board.map(day => day.date).filter(date => date >= today);
   const statusOf = (date: string): DayStatus => entries[date] ?? "NOT_FILLED";
@@ -181,12 +179,7 @@ export default function AttendanceView(props: {
 
           <Card.Root w="full" size="sm">
             <Card.Header>
-              <HStack justify="space-between">
-                <Card.Title>{dayLabel(selectedDay.date)}</Card.Title>
-                <Button size="xs" variant="ghost" onClick={() => setDetails("week")}>
-                  <LuUsers />{t("findPerson")}
-                </Button>
-              </HStack>
+              <Card.Title>{dayLabel(selectedDay.date)}</Card.Title>
             </Card.Header>
             <Card.Body>
               <Stack gap={4}>
@@ -194,13 +187,13 @@ export default function AttendanceView(props: {
                   label={t("board.available", { count: selectedDay.available.length })}
                   palette="green"
                   users={selectedDay.available}
-                  onOpen={() => setDetails("day")}
+                  onOpen={() => setDetailsOpen(true)}
                 />
                 <NameGroup
                   label={t("board.unavailable", { count: selectedDay.unavailable.length })}
                   palette="red"
                   users={selectedDay.unavailable}
-                  onOpen={() => setDetails("day")}
+                  onOpen={() => setDetailsOpen(true)}
                 />
               </Stack>
             </Card.Body>
@@ -208,18 +201,16 @@ export default function AttendanceView(props: {
         </Stack>
 
         <UserListDialog
-          open={details !== null}
-          title={details === "week" ? t("findPerson") : dayLabel(selectedDay.date)}
-          resetKey={details === "week" ? "week" : selectedDay.date}
+          open={detailsOpen}
+          title={dayLabel(selectedDay.date)}
+          resetKey={selectedDay.date}
           month={selectedDay.date.slice(0, 7)}
           today={today}
-          onClose={() => setDetails(null)}
-          groups={details === "week"
-            ? [{ key: "everyone", palette: "blue", users: weekUsers }]
-            : [
-              { key: "available", palette: "green", users: selectedDay.available },
-              { key: "unavailable", palette: "red", users: selectedDay.unavailable },
-            ]}
+          onClose={() => setDetailsOpen(false)}
+          groups={[
+            { key: "available", palette: "green", users: selectedDay.available },
+            { key: "unavailable", palette: "red", users: selectedDay.unavailable },
+          ]}
         />
       </GridItem>
 

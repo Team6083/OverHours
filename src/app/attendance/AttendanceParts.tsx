@@ -104,7 +104,7 @@ export function useKeyedLoad<T>(key: string, load: (key: string) => Promise<T | 
 const matchesQuery = (user: BoardUser, needle: string) =>
   [user.name, user.id].some(field => field.toLowerCase().includes(needle));
 
-export type UserGroup = { key: "available" | "unavailable" | "everyone"; palette: string; users: BoardUser[] };
+export type UserGroup = { key: "available" | "unavailable"; palette: string; users: BoardUser[] };
 
 function PersonCalendar(props: {
   user: BoardUser;
