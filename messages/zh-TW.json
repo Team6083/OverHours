@@ -248,8 +248,21 @@
     "signInRequired": "請先登入才能使用出席功能。",
     "today": "今天",
     "nobody": "無",
-    "showMore": "還有 {count} 人",
-    "filledCount": "已填 {count} 人",
+    "findPerson": "查詢成員",
+    "back": "返回",
+    "calendar": {
+      "previousMonth": "上個月",
+      "nextMonth": "下個月",
+      "loadFailed": "無法載入這個月份"
+    },
+    "day": {
+      "previous": "前一天",
+      "next": "後一天",
+      "loadFailed": "無法載入這一天"
+    },
+    "showAll": "查看全部",
+    "searchPlaceholder": "搜尋姓名、Email 或 ID",
+    "noMatch": "找不到符合的姓名",
     "status": {
       "AVAILABLE": "可以",
       "UNAVAILABLE": "不能",
@@ -257,7 +270,8 @@
     },
     "board": {
       "available": "可以來（{count}）",
-      "unavailable": "不能來（{count}）"
+      "unavailable": "不能來（{count}）",
+      "everyone": "全部成員（{count}）"
     },
     "week": {
       "heading": "我的出席時間",

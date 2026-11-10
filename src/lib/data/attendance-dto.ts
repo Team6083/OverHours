@@ -1,11 +1,12 @@
 import "server-only";
 import { auth } from "@/auth";
 import { AttendanceEntry } from "@/generated/prisma";
-import { AttendanceStatus, calendarDateInZone, DayStatus, dayStatuses, weekDates } from "../attendance";
+import { AttendanceStatus, calendarDateInZone, DayStatus, dayStatuses, monthDates, weekDates } from "../attendance";
 import { getTimeZone } from "../config";
 import prisma from "../prisma";
 
-export type BoardDay = { date: string; available: string[]; unavailable: string[] };
+export type BoardUser = { id: string; name: string; email: string; image: string | null };
+export type BoardDay = { date: string; available: BoardUser[]; unavailable: BoardUser[] };
 export type AdminAttendanceUser = {
   id: string;
   name: string;
@@ -26,21 +27,39 @@ async function requireUserId(): Promise<string> {
   return session.user.id;
 }
 
-export async function getWeekBoard(weekStart: string): Promise<BoardDay[]> {
+async function boardFor(dates: string[]): Promise<BoardDay[]> {
   await requireUserId();
 
-  const dates = weekDates(weekStart);
   const entries = await prisma.attendanceEntry.findMany({
     where: { date: { in: dates }, slot: "AllDay" },
-    select: { date: true, status: true, user: { select: { name: true } } },
+    select: { date: true, status: true, user: { select: { id: true, name: true, email: true, image: true } } },
     orderBy: { user: { name: "asc" } },
   });
 
-  const names = (date: string, status: AttendanceEntry["status"]) => entries
+  const users = (date: string, status: AttendanceEntry["status"]): BoardUser[] => entries
     .filter(entry => entry.date === date && entry.status === status)
-    .map(entry => entry.user.name);
+    .map(({ user }) => ({ id: user.id, name: user.name, email: user.email, image: user.image ?? null }));
 
-  return dates.map(date => ({ date, available: names(date, "Available"), unavailable: names(date, "Unavailable") }));
+  return dates.map(date => ({ date, available: users(date, "Available"), unavailable: users(date, "Unavailable") }));
+}
+
+export const getWeekBoard = (weekStart: string): Promise<BoardDay[]> => boardFor(weekDates(weekStart));
+
+export async function getDayBoard(date: string): Promise<BoardDay> {
+  const [day] = await boardFor([date]);
+  return day;
+}
+
+/** One user's entries for a `YYYY-MM` month, for the member calendar. */
+export async function getUserMonth(userId: string, month: string): Promise<Record<string, AttendanceStatus>> {
+  await requireUserId();
+
+  const entries = await prisma.attendanceEntry.findMany({
+    where: { userId, date: { in: monthDates(month) }, slot: "AllDay" },
+    select: { date: true, status: true },
+  });
+
+  return Object.fromEntries(entries.map(entry => [entry.date, toStatus(entry.status)]));
 }
 
 export async function getMyWeek(weekStart: string): Promise<Record<string, AttendanceStatus>> {

@@ -248,20 +248,34 @@
     "signInRequired": "Sign in to use attendance.",
     "today": "Today",
     "nobody": "Nobody",
-    "showMore": "{count} more",
-    "filledCount": "{count} filled in",
+    "findPerson": "Find person",
+    "back": "Back",
+    "calendar": {
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "loadFailed": "Could not load this month"
+    },
+    "day": {
+      "previous": "Previous day",
+      "next": "Next day",
+      "loadFailed": "Could not load this day"
+    },
+    "showAll": "View all",
+    "searchPlaceholder": "Search name, email or ID",
+    "noMatch": "No matching names",
     "status": {
-      "AVAILABLE": "Can come",
-      "UNAVAILABLE": "Can't come",
+      "AVAILABLE": "Yes",
+      "UNAVAILABLE": "No",
       "NOT_FILLED": "Not filled"
     },
     "board": {
-      "available": "Can come ({count})",
-      "unavailable": "Can't come ({count})"
+      "available": "Coming ({count})",
+      "unavailable": "Not coming ({count})",
+      "everyone": "Everyone ({count})"
     },
     "week": {
       "heading": "My availability",
-      "help": "Fill in each day, then save. Pick a date to see who can come that day. Past days can't be changed.",
+      "help": "Fill in each day, then save. Pick a date to see who is coming that day. Past days can't be changed.",
       "previous": "Previous week",
       "next": "Next week",
       "thisWeek": "This week",

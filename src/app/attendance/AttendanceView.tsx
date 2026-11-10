@@ -4,66 +4,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
 import {
-  Badge, Button, ButtonGroup, Card, CloseButton, Dialog, GridItem, Heading, HStack, Portal, SimpleGrid, Stack, Table, Text,
+  Badge, Button, Card, Dialog, GridItem, Heading, HStack, Portal, SimpleGrid, Stack, Table, Text,
 } from "@chakra-ui/react";
+
+import { IconType } from "react-icons";
+import { LuCheck, LuUsers, LuX } from "react-icons/lu";
 
 import { toaster } from "@/components/ui/toaster";
 import { addDays, AttendanceStatus, DayStatus, weekStartOf } from "@/lib/attendance";
 import { BoardDay } from "@/lib/data/attendance-dto";
 import { saveWeek } from "./actions";
+import { NameGroup, shortDate, UserListDialog } from "./AttendanceParts";
 
-const PREVIEW_COUNT = 4;
-
-const STATUS_OPTIONS: { value: DayStatus; palette: string }[] = [
-  { value: "AVAILABLE", palette: "green" },
-  { value: "UNAVAILABLE", palette: "red" },
-  { value: "NOT_FILLED", palette: "gray" },
+const STATUS_OPTIONS: { value: "AVAILABLE" | "UNAVAILABLE"; palette: string; icon: IconType }[] = [
+  { value: "AVAILABLE", palette: "green", icon: LuCheck },
+  { value: "UNAVAILABLE", palette: "red", icon: LuX },
 ];
-
-const shortDate = (date: string) => date.slice(5).replace("-", "/");
-
-function NameLine(props: { label: string; dialogTitle: string; names: string[] }) {
-  const { label, dialogTitle, names } = props;
-  const t = useTranslations("Attendance");
-
-  const hiddenCount = names.length - PREVIEW_COUNT;
-
-  return (
-    <HStack gap={1} align="baseline" fontSize="sm" minW={0}>
-      <Text fontWeight="medium" flexShrink={0}>{label}</Text>
-      <Text color="fg.muted" flex={1} minW={0} truncate>
-        {names.slice(0, PREVIEW_COUNT).join("、") || t("nobody")}
-      </Text>
-      {hiddenCount > 0 && (
-        <Dialog.Root size="sm" placement="center">
-          <Dialog.Trigger asChild>
-            <Button size="2xs" variant="plain" height="auto" minW={0} px={0} flexShrink={0} colorPalette="blue">
-              {t("showMore", { count: hiddenCount })}
-            </Button>
-          </Dialog.Trigger>
-          <Portal>
-            <Dialog.Backdrop />
-            <Dialog.Positioner>
-              <Dialog.Content>
-                <Dialog.Header>
-                  <Dialog.Title>{dialogTitle}</Dialog.Title>
-                </Dialog.Header>
-                <Dialog.Body pb={6}>
-                  <HStack wrap="wrap" gap={2}>
-                    {names.map((name, index) => <Badge key={index} size="md">{name}</Badge>)}
-                  </HStack>
-                </Dialog.Body>
-                <Dialog.CloseTrigger asChild>
-                  <CloseButton size="sm" />
-                </Dialog.CloseTrigger>
-              </Dialog.Content>
-            </Dialog.Positioner>
-          </Portal>
-        </Dialog.Root>
-      )}
-    </HStack>
-  );
-}
 
 function StatusButtons(props: {
   label: string;
@@ -74,24 +30,32 @@ function StatusButtons(props: {
   const { label, current, disabled, onSelect } = props;
   const t = useTranslations("Attendance");
 
+  // Tapping the active option again clears it back to "not filled".
   return (
-    <ButtonGroup size="xs" attached>
-      {STATUS_OPTIONS.map(({ value, palette }) => (
-        <Button
-          key={value}
-          minW={{ base: 10, md: 12 }}
-          px={1}
-          variant={current === value ? "subtle" : "outline"}
-          colorPalette={current === value ? palette : "gray"}
-          disabled={disabled}
-          aria-pressed={current === value}
-          aria-label={`${label} ${t(`status.${value}`)}`}
-          onClick={() => onSelect(value)}
-        >
-          {t(`status.${value}`)}
-        </Button>
-      ))}
-    </ButtonGroup>
+    <HStack gap={2} justify="flex-end">
+      {STATUS_OPTIONS.map(({ value, palette, icon: Icon }) => {
+        const active = current === value;
+        return (
+          <Button
+            key={value}
+            size="xs"
+            rounded="full"
+            px={{ base: 2.5, md: 3 }}
+            variant={active ? "solid" : "outline"}
+            colorPalette={active ? palette : "gray"}
+            color={active ? undefined : "fg.muted"}
+            disabled={disabled}
+            aria-pressed={active}
+            aria-label={`${label} ${t(`status.${value}`)}`}
+            title={t(`status.${value}`)}
+            onClick={() => onSelect(active ? "NOT_FILLED" : value)}
+          >
+            <Icon />
+            <Text as="span" hideBelow="md">{t(`status.${value}`)}</Text>
+          </Button>
+        );
+      })}
+    </HStack>
   );
 }
 
@@ -111,6 +75,7 @@ export default function AttendanceView(props: {
   const saving = useRef(false);
   const router = useRouter();
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
+  const [details, setDetails] = useState<"day" | "week" | null>(null);
 
   const dayLabel = (date: string) => {
     const weekday = format.dateTime(new Date(`${date}T00:00:00Z`), { timeZone: "UTC", weekday: "short" });
@@ -142,6 +107,8 @@ export default function AttendanceView(props: {
   };
 
   const selectedDay = board.find(day => day.date === selected) ?? board[0];
+  const weekUsers = [...new Map(board.flatMap(day => [...day.available, ...day.unavailable]).map(user => [user.id, user])).values()]
+    .sort((a, b) => a.name.localeCompare(b.name));
   const dirty = board.some(({ date }) => entries[date] !== mine[date]);
   const editableDates = board.map(day => day.date).filter(date => date >= today);
   const statusOf = (date: string): DayStatus => entries[date] ?? "NOT_FILLED";
@@ -174,30 +141,86 @@ export default function AttendanceView(props: {
   return (
     <SimpleGrid columns={{ base: 1, md: 5 }} gapX={8} gapY={{ base: 3, md: 6 }}>
       <GridItem colSpan={{ base: 1, md: 2 }} minW={0}>
-        <Card.Root w="full" size="sm">
-          <Card.Header>
-            <HStack justify="space-between">
-              <Card.Title>{dayLabel(selectedDay.date)}</Card.Title>
-              <Badge colorPalette="blue">
-                {t("filledCount", { count: selectedDay.available.length + selectedDay.unavailable.length })}
-              </Badge>
-            </HStack>
-          </Card.Header>
-          <Card.Body>
-            <Stack gap={1}>
-              <NameLine
-                label={t("board.available", { count: selectedDay.available.length })}
-                dialogTitle={`${dayLabel(selectedDay.date)} ${t("board.available", { count: selectedDay.available.length })}`}
-                names={selectedDay.available}
-              />
-              <NameLine
-                label={t("board.unavailable", { count: selectedDay.unavailable.length })}
-                dialogTitle={`${dayLabel(selectedDay.date)} ${t("board.unavailable", { count: selectedDay.unavailable.length })}`}
-                names={selectedDay.unavailable}
-              />
-            </Stack>
-          </Card.Body>
-        </Card.Root>
+        <Stack gap={3}>
+          <SimpleGrid columns={7} gap={1.5}>
+            {board.map(day => {
+              const weekday = format.dateTime(new Date(`${day.date}T00:00:00Z`), { timeZone: "UTC", weekday: "short" });
+              const active = day.date === selectedDay.date;
+
+              return (
+                <Button
+                  key={day.date}
+                  variant="outline"
+                  colorPalette={active ? "blue" : "gray"}
+                  bg={active ? "blue.subtle" : undefined}
+                  borderColor={active ? "blue.solid" : undefined}
+                  rounded="lg"
+                  height="auto"
+                  minW={0}
+                  px={0}
+                  py={1.5}
+                  flexDirection="column"
+                  gap={0}
+                  aria-pressed={active}
+                  aria-label={dayLabel(day.date)}
+                  onClick={() => setSelected(day.date)}
+                >
+                  <Text fontSize="2xs" color="fg.muted">{weekday}</Text>
+                  <Text fontSize="md" fontWeight={day.date === today ? "bold" : "medium"} color={day.date < today ? "fg.muted" : undefined}>
+                    {Number(day.date.slice(8))}
+                  </Text>
+                  <Text fontSize="2xs" fontWeight="semibold" whiteSpace="nowrap">
+                    <Text as="span" color="green.fg">{day.available.length}</Text>
+                    <Text as="span" color="fg.muted"> · </Text>
+                    <Text as="span" color="red.fg">{day.unavailable.length}</Text>
+                  </Text>
+                </Button>
+              );
+            })}
+          </SimpleGrid>
+
+          <Card.Root w="full" size="sm">
+            <Card.Header>
+              <HStack justify="space-between">
+                <Card.Title>{dayLabel(selectedDay.date)}</Card.Title>
+                <Button size="xs" variant="ghost" onClick={() => setDetails("week")}>
+                  <LuUsers />{t("findPerson")}
+                </Button>
+              </HStack>
+            </Card.Header>
+            <Card.Body>
+              <Stack gap={4}>
+                <NameGroup
+                  label={t("board.available", { count: selectedDay.available.length })}
+                  palette="green"
+                  users={selectedDay.available}
+                  onOpen={() => setDetails("day")}
+                />
+                <NameGroup
+                  label={t("board.unavailable", { count: selectedDay.unavailable.length })}
+                  palette="red"
+                  users={selectedDay.unavailable}
+                  onOpen={() => setDetails("day")}
+                />
+              </Stack>
+            </Card.Body>
+          </Card.Root>
+        </Stack>
+
+        <UserListDialog
+          open={details !== null}
+          title={details === "week" ? t("findPerson") : dayLabel(selectedDay.date)}
+          resetKey={details === "week" ? "week" : selectedDay.date}
+          month={selectedDay.date.slice(0, 7)}
+          today={today}
+          onClose={() => setDetails(null)}
+          groups={details === "week"
+            ? [{ key: "everyone", palette: "blue", users: weekUsers }]
+            : [
+              { key: "available", palette: "green", users: selectedDay.available },
+              { key: "unavailable", palette: "red", users: selectedDay.unavailable },
+            ]}
+        />
       </GridItem>
 
       <GridItem colSpan={{ base: 1, md: 3 }} minW={0}>

@@ -13,6 +13,7 @@ import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
 import LeaderboardCard from "./_components/LeaderboardCard";
 import LeaderboardWithFilter from "./_components/LeaderboardWithFilter";
+import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import {
   adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
@@ -30,6 +31,7 @@ import {
   CurrentlyClockedInTable
 } from "./_components/CurrentlyClockedIn";
 import HomePageSkeleton from "./home-skeleton";
+import DayAttendanceSection from "./attendance/DayAttendanceSection";
 
 type UserInfo = {
   id: string;
@@ -86,6 +88,10 @@ export default async function Home() {
       };
     }
   }
+
+  // Attendance for today, only for signed-in users
+  const today = getToday();
+  const todayBoard = session?.user.id ? await getDayBoard(today) : undefined;
 
   // Get Currently In Logs
   const currentlyInLogs = (await getAllCurrentlyInTimelogDTOs()).map(log => ({
@@ -163,6 +169,12 @@ export default async function Home() {
 
         {/* Right column */}
         <GridItem colSpan={{ base: 1, md: 3 }}>
+          {/* Attendance of the day */}
+          {todayBoard && (<>
+            <DayAttendanceSection initialDay={todayBoard} today={today} />
+            <Separator my={4} />
+          </>)}
+
           {/* Currently Clocked In Users */}
           <CurrentlyClockedIn hasUser={!!userInfo} isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
         </GridItem>
@@ -201,6 +213,11 @@ export default async function Home() {
               <UserClockToggleButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
             </VStack>
             <Separator mb={4} />
+          </>)}
+
+          {todayBoard && (<>
+            <DayAttendanceSection initialDay={todayBoard} today={today} />
+            <Separator my={4} />
           </>)}
 
           <CurrentlyClockedIn hasUser={!!userInfo} isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
