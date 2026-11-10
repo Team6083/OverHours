@@ -51,6 +51,31 @@ export function describeError(error: unknown): string {
   return "unknown";
 }
 
+// `error_description` values Keycloak's token endpoint returns for a refused refresh. Logged so we can
+// tell why a session ended (expired vs revoked vs reused refresh token).
+export const KNOWN_REFRESH_ERROR_DESCRIPTIONS: readonly string[] = [
+  "Token is not active",
+  "Session not active",
+  "Offline session not active",
+  "Invalid refresh token",
+  "Stale token",
+  "Maximum allowed refresh token reuse exceeded",
+  "Token client and authorized client don't match",
+  "Unmatching clients",
+  "Invalid token issuer",
+  "User disabled",
+  "Session doesn't have required client",
+  "Client session not active",
+  "Refresh toked issued before the client session started",
+];
+
+// Maps an OAuth error response's `error_description` to one of the known literals above ("unknown"
+// otherwise), so as with describeError nothing taken from the response itself reaches the logs.
+export function describeErrorDescription(error: unknown): string {
+  const { error_description: description } = (error ?? {}) as { error_description?: unknown };
+  return KNOWN_REFRESH_ERROR_DESCRIPTIONS.find((known) => known === description) ?? "unknown";
+}
+
 /** AUTH_KEYCLOAK_VERIFY_GRACE_SEC, falling back to 15 minutes when unset, empty, zero or not a number. */
 export function parseVerifyGraceSec(value: string | undefined): number {
   return Number(value) || 15 * 60;
