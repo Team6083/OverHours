@@ -122,7 +122,7 @@ async function NavBar(props: {
           <HStack>
 
             {/* Desktop Nav Links */}
-            <HStack hideBelow="sm">
+            <HStack hideBelow="md">
               {links.map((link) => {
                 if (link.roles.length > 0 && (!session?.user.role || !link.roles.includes(session.user.role))) {
                   return null;
@@ -174,7 +174,7 @@ async function NavBar(props: {
             {/* Mobile Nav Drawer */}
             <Drawer.Root size="xs" placement="start">
               <Drawer.Trigger asChild>
-                <IconButton hideFrom="sm" size="sm" variant="outline"><LuMenu /></IconButton>
+                <IconButton hideFrom="md" size="sm" variant="outline"><LuMenu /></IconButton>
               </Drawer.Trigger>
               <Portal>
                 <Drawer.Backdrop />
