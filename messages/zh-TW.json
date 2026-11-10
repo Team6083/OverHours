@@ -179,6 +179,7 @@
       "reports": "報告",
       "users": "使用者",
       "statRanges": "統計範圍",
+      "attendance": "出席",
       "signIn": "登入",
       "signOut": "登出"
     },
@@ -241,5 +242,37 @@
     "lockedByApi": "API",
     "empty": "此範圍內沒有鎖定紀錄",
     "loadFailed": "載入失敗"
+  },
+  "Attendance": {
+    "title": "出席",
+    "signInRequired": "請先登入才能使用出席功能。",
+    "today": "今天",
+    "nobody": "無",
+    "showMore": "還有 {count} 人",
+    "filledCount": "已填 {count} 人",
+    "status": {
+      "AVAILABLE": "可以",
+      "UNAVAILABLE": "不能",
+      "NOT_FILLED": "未填"
+    },
+    "board": {
+      "available": "可以來（{count}）",
+      "unavailable": "不能來（{count}）"
+    },
+    "week": {
+      "heading": "我的出席時間",
+      "help": "逐日填寫後儲存。點日期可以看當天誰能來。過去的日期不能修改。",
+      "previous": "上一週",
+      "next": "下一週",
+      "thisWeek": "本週",
+      "all": "全部",
+      "save": "儲存這一週",
+      "saved": "已儲存",
+      "saveFailed": "儲存失敗",
+      "unsavedTitle": "還沒儲存",
+      "unsavedBody": "這一週的修改還沒儲存，換週會清掉。",
+      "keepEditing": "繼續編輯",
+      "discard": "不儲存，換週"
+    }
   }
 }

@@ -1,5 +1,6 @@
 import "server-only";
 import { auth, Role } from "@/auth";
+import { rowsToReassign } from "../attendance";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
 
@@ -191,6 +192,16 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
     await tx.timeLog.updateMany({
       where: { lockedById: { in: sourceIds } },
       data: { lockedById: targetId },
+    });
+
+    // Entries the target already has are dropped with the source user (cascade)
+    const entries = await tx.attendanceEntry.findMany({
+      where: { userId: { in: ids } },
+      select: { id: true, userId: true, date: true, slot: true },
+    });
+    await tx.attendanceEntry.updateMany({
+      where: { id: { in: rowsToReassign(entries, targetId, row => `${row.date}|${row.slot}`) } },
+      data: { userId: targetId },
     });
 
     await tx.user.deleteMany({
