@@ -44,6 +44,23 @@ export function datesInRange(start: string, end: string, maxDays = MAX_RANGE_DAY
   return Array.from({ length: days }, (_, i) => addDays(start, i));
 }
 
+const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+export const isMonth = (value: string): boolean => MONTH_PATTERN.test(value);
+
+export function addMonths(month: string, count: number): string {
+  const result = toUtc(`${month}-01`);
+  result.setUTCMonth(result.getUTCMonth() + count);
+  return fromUtc(result).slice(0, 7);
+}
+
+/** Every day of a `YYYY-MM` month. */
+export function monthDates(month: string): string[] {
+  const start = `${month}-01`;
+  const next = `${addMonths(month, 1)}-01`;
+  return datesInRange(start, addDays(next, -1)) ?? [];
+}
+
 export function dayStatuses(
   dates: string[],
   entries: { date: string; status: AttendanceStatus }[],

@@ -179,7 +179,7 @@
       "reports": "報告",
       "users": "使用者",
       "statRanges": "統計範圍",
-      "attendance": "出席",
+      "attendance": "可出席時間",
       "signIn": "登入",
       "signOut": "登出"
     },
@@ -244,12 +244,26 @@
     "loadFailed": "載入失敗"
   },
   "Attendance": {
-    "title": "出席",
-    "signInRequired": "請先登入才能使用出席功能。",
+    "title": "可出席時間",
+    "signInRequired": "請先登入才能填寫可出席時間。",
     "today": "今天",
     "nobody": "無",
-    "showMore": "還有 {count} 人",
-    "filledCount": "已填 {count} 人",
+    "findPerson": "查詢成員",
+    "back": "返回",
+    "calendar": {
+      "previousMonth": "上個月",
+      "nextMonth": "下個月",
+      "loadFailed": "無法載入這個月份"
+    },
+    "day": {
+      "previous": "前一天",
+      "next": "後一天",
+      "loadFailed": "無法載入這一天"
+    },
+    "retry": "重試",
+    "showAll": "查看全部",
+    "searchPlaceholder": "搜尋姓名或 ID",
+    "noMatch": "找不到符合的姓名",
     "status": {
       "AVAILABLE": "可以",
       "UNAVAILABLE": "不能",
@@ -257,10 +271,11 @@
     },
     "board": {
       "available": "可以來（{count}）",
-      "unavailable": "不能來（{count}）"
+      "unavailable": "不能來（{count}）",
+      "everyone": "全部成員（{count}）"
     },
     "week": {
-      "heading": "我的出席時間",
+      "heading": "我的可出席時間",
       "help": "逐日填寫後儲存。點日期可以看當天誰能來。過去的日期不能修改。",
       "previous": "上一週",
       "next": "下一週",

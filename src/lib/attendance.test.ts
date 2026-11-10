@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  addDays, calendarDateInZone, datesInRange, dayStatuses, isCalendarDate, rowsToReassign, weekDates, weekStartOf,
+  addDays, addMonths, calendarDateInZone, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, weekDates, weekStartOf,
 } from "./attendance";
 
 describe("isCalendarDate", () => {
@@ -88,5 +88,24 @@ describe("rowsToReassign", () => {
       { id: "2", userId: "s2", date: "d1" },
     ];
     expect(rowsToReassign(rows, "target", key)).toEqual(["1"]);
+  });
+});
+
+describe("months", () => {
+  it("validates YYYY-MM", () => {
+    expect(isMonth("2027-12")).toBe(true);
+    expect(isMonth("2027-13")).toBe(false);
+    expect(isMonth("2027-1")).toBe(false);
+  });
+
+  it("moves across year boundaries", () => {
+    expect(addMonths("2027-12", 1)).toBe("2028-01");
+    expect(addMonths("2027-01", -1)).toBe("2026-12");
+  });
+
+  it("lists every day of the month", () => {
+    expect(monthDates("2028-02")).toHaveLength(29);
+    expect(monthDates("2027-02")).toHaveLength(28);
+    expect(monthDates("2027-01")[30]).toBe("2027-01-31");
   });
 });

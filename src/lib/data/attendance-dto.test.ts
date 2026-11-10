@@ -31,7 +31,7 @@ vi.mock("../prisma", () => {
   return { default: prisma };
 });
 
-import { adminGetAttendance, getMyWeek, getWeekBoard, saveMyWeek } from "./attendance-dto";
+import { adminGetAttendance, getDayBoard, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
 
 const entry = (userId: string, date: string, status = "Available") => ({ userId, date, status });
 
@@ -103,14 +103,47 @@ describe("getMyWeek", () => {
   });
 });
 
+describe("getUserMonth", () => {
+  it("returns one user's entries for the month", async () => {
+    db.entries = [
+      entry("b", "2027-01-31"),
+      entry("b", "2027-01-05", "Unavailable"),
+      entry("b", "2027-02-01"),
+      entry("a", "2027-01-05"),
+    ];
+
+    expect(await getUserMonth("b", "2027-01")).toEqual({ "2027-01-31": "AVAILABLE", "2027-01-05": "UNAVAILABLE" });
+  });
+
+  it("requires sign-in", async () => {
+    db.session = null;
+    await expect(getUserMonth("b", "2027-01")).rejects.toThrow("Unauthorized");
+  });
+});
+
+describe("getDayBoard", () => {
+  it("returns one day grouped by status", async () => {
+    db.entries = [entry("a", "2027-01-12"), entry("b", "2027-01-12", "Unavailable"), entry("a", "2027-01-13")];
+
+    const day = await getDayBoard("2027-01-12");
+
+    expect(day.date).toBe("2027-01-12");
+    expect(day.available.map(user => user.id)).toEqual(["a"]);
+    expect(day.unavailable.map(user => user.id)).toEqual(["b"]);
+  });
+});
+
 describe("getWeekBoard", () => {
-  it("groups names by status and leaves out people who have not filled in", async () => {
+  it("groups users by status and leaves out people who have not filled in", async () => {
     db.entries = [entry("a", "2027-01-12"), entry("b", "2027-01-12", "Unavailable")];
 
     const board = await getWeekBoard("2027-01-11");
 
     expect(board).toHaveLength(7);
-    expect(board[1]).toEqual({ date: "2027-01-12", available: ["A"], unavailable: ["B"] });
+    const userA = { id: "a", name: "A", image: null };
+    const userB = { id: "b", name: "B", image: null };
+    expect(board[1]).toEqual({ date: "2027-01-12", available: [userA], unavailable: [userB] });
+    expect(JSON.stringify(board)).not.toContain("example.com");
     expect(board[2]).toEqual({ date: "2027-01-13", available: [], unavailable: [] });
   });
 

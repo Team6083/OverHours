@@ -13,6 +13,7 @@ import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
 import LeaderboardCard from "./_components/LeaderboardCard";
 import LeaderboardWithFilter from "./_components/LeaderboardWithFilter";
+import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import {
   adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
@@ -30,6 +31,7 @@ import {
   CurrentlyClockedInTable
 } from "./_components/CurrentlyClockedIn";
 import HomePageSkeleton from "./home-skeleton";
+import DayAttendanceSection, { DayAttendanceProvider } from "./attendance/DayAttendanceSection";
 
 type UserInfo = {
   id: string;
@@ -46,6 +48,16 @@ export default async function Home() {
   const t = await getTranslations("HomePage");
 
   const session = await auth();
+
+  // Attendance for today, only for signed-in users. It is optional, so a failure leaves the section out
+  // instead of breaking the home page, and it loads alongside the other queries.
+  const today = getToday();
+  const todayBoardPromise = session?.user.id
+    ? getDayBoard(today).catch((error) => {
+      console.error("Failed to load today's attendance", error);
+      return undefined;
+    })
+    : Promise.resolve(undefined);
   const isAdmin = session?.user.role === Role.ADMIN;
 
   // Get All User Names
@@ -87,6 +99,8 @@ export default async function Home() {
     }
   }
 
+  const todayBoard = await todayBoardPromise;
+
   // Get Currently In Logs
   const currentlyInLogs = (await getAllCurrentlyInTimelogDTOs()).map(log => ({
     id: log.id,
@@ -102,8 +116,13 @@ export default async function Home() {
   const allUsers = isAdmin ? await getAllUserDTOs() : undefined;
   const canClockInUsers = allUsers ? allUsers.filter(user => !currentlyInLogs.find(log => log.user.id === user.id)) : [];
 
+  // One provider for both layouts, so they share the selected day and a single dialog.
+  const withAttendance = (node: React.ReactNode) => todayBoard
+    ? <DayAttendanceProvider initialDay={todayBoard} today={today}>{node}</DayAttendanceProvider>
+    : node;
+
   return (<Suspense fallback={<HomePageSkeleton />}>
-    <CurrentlyClockedInProvider
+    {withAttendance(<CurrentlyClockedInProvider
       logs={currentlyInLogs}
       handleClockout={async (id: string) => {
         "use server";
@@ -163,6 +182,12 @@ export default async function Home() {
 
         {/* Right column */}
         <GridItem colSpan={{ base: 1, md: 3 }}>
+          {/* Attendance of the day */}
+          {todayBoard && (<>
+            <DayAttendanceSection />
+            <Separator my={4} />
+          </>)}
+
           {/* Currently Clocked In Users */}
           <CurrentlyClockedIn hasUser={!!userInfo} isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
         </GridItem>
@@ -203,6 +228,11 @@ export default async function Home() {
             <Separator mb={4} />
           </>)}
 
+          {todayBoard && (<>
+            <DayAttendanceSection />
+            <Separator my={4} />
+          </>)}
+
           <CurrentlyClockedIn hasUser={!!userInfo} isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
         </Tabs.Content>
 
@@ -212,7 +242,7 @@ export default async function Home() {
 
       </Tabs.Root>
 
-    </CurrentlyClockedInProvider>
+    </CurrentlyClockedInProvider>)}
   </Suspense>);
 }
 
