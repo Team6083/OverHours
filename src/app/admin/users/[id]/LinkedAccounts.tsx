@@ -22,27 +22,27 @@ export default function LinkedAccounts(props: {
     {accounts.map(account => (
       <Card.Root key={account.id} size="sm" minW={0}>
         <Card.Body>
-          <DataList.Root orientation={{ base: "vertical", md: "horizontal" }} size="sm">
-            <DataList.Item>
+          <DataList.Root orientation="horizontal" size="sm">
+            <DataList.Item flexDirection={{ base: "column", md: "row" }} alignItems={{ base: "flex-start", md: "center" }} gap={{ base: 1, md: 4 }}>
               <DataList.ItemLabel>Provider</DataList.ItemLabel>
               <DataList.ItemValue minW={0} overflowWrap="anywhere"><Code whiteSpace="normal" wordBreak="break-all">{account.provider}</Code></DataList.ItemValue>
             </DataList.Item>
-            <DataList.Item>
+            <DataList.Item flexDirection={{ base: "column", md: "row" }} alignItems={{ base: "flex-start", md: "center" }} gap={{ base: 1, md: 4 }}>
               <DataList.ItemLabel>Subject</DataList.ItemLabel>
               <DataList.ItemValue minW={0} overflowWrap="anywhere"><Code whiteSpace="normal" wordBreak="break-all">{account.subject}</Code></DataList.ItemValue>
             </DataList.Item>
-            <DataList.Item>
+            <DataList.Item flexDirection={{ base: "column", md: "row" }} alignItems={{ base: "flex-start", md: "center" }} gap={{ base: 1, md: 4 }}>
               <DataList.ItemLabel>Issuer</DataList.ItemLabel>
               <DataList.ItemValue minW={0} overflowWrap="anywhere"><Code whiteSpace="normal" wordBreak="break-all">{account.issuer}</Code></DataList.ItemValue>
             </DataList.Item>
-            <DataList.Item>
+            <DataList.Item flexDirection={{ base: "column", md: "row" }} alignItems={{ base: "flex-start", md: "center" }} gap={{ base: 1, md: 4 }}>
               <DataList.ItemLabel>Provider Email</DataList.ItemLabel>
               <DataList.ItemValue minW={0} overflowWrap="anywhere">
                 {account.email}
                 {account.emailTakenByOtherUser && <Text as="span" color="fg.warning" ms={2}>(another user has this email)</Text>}
               </DataList.ItemValue>
             </DataList.Item>
-            <DataList.Item>
+            <DataList.Item flexDirection={{ base: "column", md: "row" }} alignItems={{ base: "flex-start", md: "center" }} gap={{ base: 1, md: 4 }}>
               <DataList.ItemLabel>Linked At</DataList.ItemLabel>
               <DataList.ItemValue minW={0} overflowWrap="anywhere">{account.createdAt.toLocaleString()}</DataList.ItemValue>
             </DataList.Item>
