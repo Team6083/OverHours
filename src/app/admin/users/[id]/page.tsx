@@ -36,8 +36,8 @@ export default async function SingleUserPage(props: {
     </HStack>
 
     <Container>
-      <UserForm isNew={isNew} user={userDTO ?? undefined} emailManaged={accounts.length > 0} />
-      {userDTO && <LinkedAccounts userId={userDTO.id} userEmail={userDTO.email} accounts={accounts} />}
+      <UserForm isNew={isNew} user={userDTO ?? undefined} emailManaged={accounts.length === 1} />
+      {userDTO && <LinkedAccounts userId={userDTO.id} accounts={accounts} />}
     </Container>
   </>);
 }

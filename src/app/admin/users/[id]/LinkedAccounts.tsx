@@ -6,10 +6,9 @@ import { handleUnlinkAccount } from "./actions";
 
 export default function LinkedAccounts(props: {
   userId: string;
-  userEmail: string;
   accounts: AccountDTO[];
 }) {
-  const { userId, userEmail, accounts } = props;
+  const { userId, accounts } = props;
 
   return <Stack mt={8} gap={3}>
     <Heading size="md">Linked Accounts</Heading>
@@ -25,18 +24,22 @@ export default function LinkedAccounts(props: {
         <Card.Body>
           <DataList.Root orientation="horizontal" size="sm">
             <DataList.Item>
-              <DataList.ItemLabel>Issuer</DataList.ItemLabel>
-              <DataList.ItemValue><Code>{account.issuer}</Code></DataList.ItemValue>
+              <DataList.ItemLabel>Provider</DataList.ItemLabel>
+              <DataList.ItemValue><Code>{account.provider}</Code></DataList.ItemValue>
             </DataList.Item>
             <DataList.Item>
               <DataList.ItemLabel>Subject</DataList.ItemLabel>
               <DataList.ItemValue><Code>{account.subject}</Code></DataList.ItemValue>
             </DataList.Item>
             <DataList.Item>
+              <DataList.ItemLabel>Issuer</DataList.ItemLabel>
+              <DataList.ItemValue><Code>{account.issuer}</Code></DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
               <DataList.ItemLabel>Provider Email</DataList.ItemLabel>
               <DataList.ItemValue>
                 {account.email}
-                {account.email !== userEmail && <Text as="span" color="fg.warning" ms={2}>(another user has this email)</Text>}
+                {account.emailTakenByOtherUser && <Text as="span" color="fg.warning" ms={2}>(another user has this email)</Text>}
               </DataList.ItemValue>
             </DataList.Item>
             <DataList.Item>

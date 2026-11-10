@@ -17,16 +17,19 @@ export type UserDTO = {
 
 export class EmailManagedByProviderError extends Error {
   constructor() {
-    super("This user signs in through an identity provider, which manages their email. Change it there, or unlink the account first.");
+    super("This user's email is managed by their identity provider account. Change it there, or unlink the account first.");
   }
 }
 
-/** A linked user's email follows their provider at every sign-in, so it cannot be changed here. */
+/**
+ * The email of a user with exactly one linked account follows that provider at every sign-in, so it cannot
+ * be changed here. With several accounts (after a merge) it is managed here instead.
+ */
 async function assertEmailEditable(id: string, email: string) {
   const user = await prisma.user.findUnique({ where: { id }, select: { email: true } });
   if (!user || user.email === email) return;
 
-  if (await prisma.account.count({ where: { userId: id } }) > 0) {
+  if (await prisma.account.count({ where: { userId: id } }) === 1) {
     throw new EmailManagedByProviderError();
   }
 }

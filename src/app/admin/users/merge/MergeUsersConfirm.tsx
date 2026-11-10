@@ -64,7 +64,7 @@ export default function MergeUsersConfirm(props: {
 
     <Text color="fg.muted">Linked sign-in accounts of the deleted users move to the kept user, so signing in with any of them reaches the kept user.</Text>
 
-    <Text color="fg.muted">{totalLogs} time logs will belong to the kept user. Its name stays unchanged; if it has a linked account, its email follows the identity provider at the next sign-in.</Text>
+    <Text color="fg.muted">{totalLogs} time logs will belong to the kept user. Its name and email stay unchanged. With several linked accounts its email no longer follows a provider; edit it on the user&apos;s page.</Text>
 
     {hasConflicts && (
       <Alert.Root status="error">

@@ -52,7 +52,7 @@ export async function formSubmit(state: UserFormState, formData: FormData): Prom
 }
 
 export async function handleUnlinkAccount(userId: string, accountId: string) {
-  await unlinkAccount(accountId);
+  await unlinkAccount(userId, accountId);
   revalidatePath(`/admin/users/${userId}`);
   revalidatePath("/admin/users");
 }

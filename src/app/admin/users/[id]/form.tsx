@@ -9,7 +9,7 @@ import { formSubmit } from "./actions";
 export default function UserForm(props: {
   isNew?: boolean;
   user?: UserDTO;
-  /** The user is linked to a provider account, which manages their email. */
+  /** The user has exactly one linked account, which manages their email. */
   emailManaged?: boolean;
 }) {
   const { isNew, user, emailManaged } = props;

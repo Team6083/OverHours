@@ -191,14 +191,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return '/auth/error?error=MissingRole';
       }
 
-      // `iss` is validated against the provider's issuer when the id token is checked.
       if (typeof profile.iss !== 'string' || !account.providerAccountId || !user.email) {
         throw new Error('Missing issuer, subject or email');
       }
 
       const linked = await linkProviderAccount({
-        issuer: profile.iss,
+        provider: account.provider,
         subject: account.providerAccountId,
+        issuer: profile.iss,
         email: user.email,
         name: getNameFromProfile(profile) || user.name || user.email,
         image: profile.picture || user.image || null,

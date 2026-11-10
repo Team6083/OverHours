@@ -126,7 +126,7 @@
       "put": {
         "tags": ["Users"],
         "summary": "Update a user",
-        "description": "The email of a user linked to an identity provider account follows the provider and cannot be changed here (409).",
+        "description": "The email of a user with exactly one linked identity provider account follows the provider and cannot be changed here (409).",
         "requestBody": {
           "required": true,
           "content": {

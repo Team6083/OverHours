@@ -10,8 +10,8 @@ import { UserDTO } from "@/lib/data/user-dto";
 import { handleDeleteUsers } from "./actions";
 
 type TableData = UserDTO & {
-  /** Set when the provider reports another email, which another user already has. */
-  providerEmail?: string;
+  /** Emails this user signs in with that another user already has. */
+  takenEmails?: string[];
 };
 
 const columns: Column<TableData>[] = [
@@ -46,8 +46,8 @@ const columns: Column<TableData>[] = [
           </ChakraLink>
         </Clipboard.Trigger>
       </Clipboard.Root>
-      {row.providerEmail && (
-        <Tooltip content={`Signs in as ${row.providerEmail}, which another user has. Merge the users to fix it.`}>
+      {row.takenEmails && (
+        <Tooltip content={`Signs in as ${row.takenEmails.join(", ")}, which another user has. Merge the users to fix it.`}>
           <Badge colorPalette="orange">Out of sync</Badge>
         </Tooltip>
       )}
@@ -113,13 +113,13 @@ const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1]) => {
 
 export default function UsersTable(props: {
   users: UserDTO[];
-  outOfSyncEmails: Record<string, string>;
+  outOfSyncEmails: Record<string, string[]>;
 }) {
   const { users, outOfSyncEmails } = props;
 
   const items: TableData[] = users.map(user => ({
     ...user,
-    providerEmail: outOfSyncEmails[user.id],
+    takenEmails: outOfSyncEmails[user.id],
   }));
 
   const topRightElement = (<HStack justify="flex-end" w="full">
