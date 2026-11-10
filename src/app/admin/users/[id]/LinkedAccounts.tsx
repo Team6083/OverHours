@@ -22,7 +22,7 @@ export default function LinkedAccounts(props: {
     {accounts.map(account => (
       <Card.Root key={account.id} size="sm" minW={0}>
         <Card.Body>
-          <DataList.Root orientation="horizontal" size="sm">
+          <DataList.Root orientation={{ base: "vertical", md: "horizontal" }} size="sm">
             <DataList.Item>
               <DataList.ItemLabel>Provider</DataList.ItemLabel>
               <DataList.ItemValue minW={0} overflowWrap="anywhere"><Code whiteSpace="normal" wordBreak="break-all">{account.provider}</Code></DataList.ItemValue>
