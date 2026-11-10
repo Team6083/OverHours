@@ -9,8 +9,10 @@ import { formSubmit } from "./actions";
 export default function UserForm(props: {
   isNew?: boolean;
   user?: UserDTO;
+  /** The user is linked to a provider account, which manages their email. */
+  emailManaged?: boolean;
 }) {
-  const { isNew, user } = props;
+  const { isNew, user, emailManaged } = props;
 
   const [state, action, pending] = useActionState(formSubmit, { prevValues: user });
 
@@ -45,7 +47,10 @@ export default function UserForm(props: {
             Email Address
             <Field.RequiredIndicator />
           </Field.Label>
-          <Input name="email" type="email" defaultValue={state.prevValues?.email} />
+          <Input name="email" type="email" defaultValue={state.prevValues?.email} readOnly={emailManaged} />
+          {emailManaged && (
+            <Field.HelperText>Managed by the identity provider and updated at sign-in. Unlink the account below to edit it here.</Field.HelperText>
+          )}
           <Field.ErrorText>{emailFieldError?.map((v) => v.message).join(", ")}</Field.ErrorText>
         </Field.Root>
       </Fieldset.Content>

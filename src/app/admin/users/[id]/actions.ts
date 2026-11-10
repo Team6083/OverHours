@@ -1,8 +1,10 @@
 "use server";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import * as z from "zod";
 
-import { createUser, updateUser } from "@/lib/data/user-dto";
+import { unlinkAccount } from "@/lib/data/account-dto";
+import { createUser, EmailManagedByProviderError, updateUser } from "@/lib/data/user-dto";
 
 const schema = z.object({
   id: z.string().optional(),
@@ -39,6 +41,18 @@ export async function formSubmit(state: UserFormState, formData: FormData): Prom
       console.log("Validation errors:", e.issues);
       return { issues: e.issues, prevValues: formDataObj as never };
     }
+    if (e instanceof EmailManagedByProviderError) {
+      return {
+        issues: [{ code: "custom", path: ["email"], message: e.message, input: formDataObj.email }],
+        prevValues: formDataObj as never,
+      };
+    }
     throw e;
   }
+}
+
+export async function handleUnlinkAccount(userId: string, accountId: string) {
+  await unlinkAccount(accountId);
+  revalidatePath(`/admin/users/${userId}`);
+  revalidatePath("/admin/users");
 }

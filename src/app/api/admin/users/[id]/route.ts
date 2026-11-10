@@ -3,7 +3,7 @@ import * as z from "zod";
 
 import { apiError, withApiErrors } from "@/lib/api-error";
 import { verifyAdminApiKey } from "@/lib/admin-api-auth";
-import { adminDeleteUser, adminGetUser, adminUpdateUser } from "@/lib/data/user-dto";
+import { adminDeleteUser, adminGetUser, adminUpdateUser, EmailManagedByProviderError } from "@/lib/data/user-dto";
 import { objectIdSchema } from "@/lib/objectid";
 
 const updateSchema = z.object({
@@ -59,6 +59,10 @@ export const PUT = withApiErrors(async (req: NextRequest, { params }: RouteParam
   } catch (e) {
     if (e instanceof z.ZodError) {
       return apiError("invalid_request", "Validation failed", e.issues);
+    }
+
+    if (e instanceof EmailManagedByProviderError) {
+      return apiError("conflict", e.message);
     }
 
     if (e instanceof Error && "code" in e) {

@@ -93,12 +93,15 @@ Sign-in uses Keycloak via Auth.js (`AUTH_KEYCLOAK_ID`, `AUTH_KEYCLOAK_SECRET`, `
 Roles are read from the Keycloak access token, which is verified (signature via the issuer's JWKS, `iss`,
 `exp`, and `azp` equal to `AUTH_KEYCLOAK_ID`) before any role is trusted.
 
-Users are matched to their Keycloak account by its `sub` (stored as `keycloakId`), not by email, so changing
-the email in Keycloak keeps the same user and updates their email here. A user without a link yet (created
-before linking existed, or by an admin) is linked on their first sign-in with the same email. If that email
-already belongs to a user linked to another Keycloak account, the sign-in is refused with an "Account conflict"
-page for an admin to resolve. Merging users keeps the link on the merged user. Run `npx prisma db push` once
-after deploying so the `keycloakId` index exists.
+Users are matched to the accounts they sign in with (an `Account` per OIDC issuer and `sub`), not by email, so
+changing the email in Keycloak keeps the same user and updates their email here. A user without an account yet
+(created before accounts existed, or by an admin) is linked on their first sign-in with the same email. If that
+email belongs to a user already linked to another account, the sign-in is refused with an "Account conflict" page;
+an admin resolves it by unlinking the old account on the user's page, or by merging. When a user's new email is
+already taken by another user, their old email is kept and the users list marks them "Out of sync" until an admin
+merges them. Merging moves every linked account to the kept user. The email of a linked user is managed by the
+provider and cannot be edited in the app or the Admin API. Run `npx prisma db push` once after deploying so the
+`Account` indexes exist.
 
 Role settings are comma-separated lists. Realm roles are written as-is (`admin`) and client roles as
 `client:role` (`overhours:manager`); a user's roles are the union of `realm_access.roles` and every

@@ -15,6 +15,22 @@ export type UserDTO = {
   updatedAt: Date;
 }
 
+export class EmailManagedByProviderError extends Error {
+  constructor() {
+    super("This user signs in through an identity provider, which manages their email. Change it there, or unlink the account first.");
+  }
+}
+
+/** A linked user's email follows their provider at every sign-in, so it cannot be changed here. */
+async function assertEmailEditable(id: string, email: string) {
+  const user = await prisma.user.findUnique({ where: { id }, select: { email: true } });
+  if (!user || user.email === email) return;
+
+  if (await prisma.account.count({ where: { userId: id } }) > 0) {
+    throw new EmailManagedByProviderError();
+  }
+}
+
 export function prismaUserToDTO(user: User): UserDTO {
   return {
     id: user.id,
@@ -117,6 +133,8 @@ export async function updateUser(id: string, data: {
     throw new Error("Forbidden");
   }
 
+  await assertEmailEditable(id, data.email);
+
   const user = await prisma.user.update({
     where: { id },
     data: {
@@ -207,6 +225,8 @@ export async function adminUpdateUser(id: string, data: {
   email: string;
   name: string;
 }): Promise<UserDTO> {
+  await assertEmailEditable(id, data.email);
+
   const user = await prisma.user.update({
     where: { id },
     data: {

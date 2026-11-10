@@ -62,9 +62,9 @@ export default function MergeUsersConfirm(props: {
       </Stack>
     </RadioGroup.Root>
 
-    <Text color="fg.muted">Deleted users' emails are not remembered: if someone signs in again with the email of a deleted user, a new user is created.</Text>
+    <Text color="fg.muted">Linked sign-in accounts of the deleted users move to the kept user, so signing in with any of them reaches the kept user.</Text>
 
-    <Text color="fg.muted">{totalLogs} time logs will belong to the kept user. Its name and email stay unchanged.</Text>
+    <Text color="fg.muted">{totalLogs} time logs will belong to the kept user. Its name stays unchanged; if it has a linked account, its email follows the identity provider at the next sign-in.</Text>
 
     {hasConflicts && (
       <Alert.Root status="error">

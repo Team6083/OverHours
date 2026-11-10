@@ -5,11 +5,13 @@ import { Button, ButtonGroup, Clipboard, Icon, IconButton, Link as ChakraLink, C
 import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuMerge, LuPen, LuTrash2, LuUserPlus } from "react-icons/lu";
 
 import GenericTable, { Column } from "@/components/GenericTable";
+import { Tooltip } from "@/components/ui/tooltip";
 import { UserDTO } from "@/lib/data/user-dto";
 import { handleDeleteUsers } from "./actions";
 
 type TableData = UserDTO & {
-
+  /** Set when the provider reports another email, which another user already has. */
+  providerEmail?: string;
 };
 
 const columns: Column<TableData>[] = [
@@ -35,7 +37,7 @@ const columns: Column<TableData>[] = [
           : <Icon ml={1}><LuArrowUpZA /></Icon>
       )}
     </>,
-    renderCell: (row) => (
+    renderCell: (row) => (<HStack gap={2}>
       <Clipboard.Root value={row.email}>
         <Clipboard.Trigger asChild>
           <ChakraLink as="span" color="blue.fg" textStyle="sm">
@@ -44,7 +46,12 @@ const columns: Column<TableData>[] = [
           </ChakraLink>
         </Clipboard.Trigger>
       </Clipboard.Root>
-    ),
+      {row.providerEmail && (
+        <Tooltip content={`Signs in as ${row.providerEmail}, which another user has. Merge the users to fix it.`}>
+          <Badge colorPalette="orange">Out of sync</Badge>
+        </Tooltip>
+      )}
+    </HStack>),
   },
   {
     dataKey: "createdAt",
@@ -106,11 +113,13 @@ const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1]) => {
 
 export default function UsersTable(props: {
   users: UserDTO[];
+  outOfSyncEmails: Record<string, string>;
 }) {
-  const { users } = props;
+  const { users, outOfSyncEmails } = props;
 
   const items: TableData[] = users.map(user => ({
     ...user,
+    providerEmail: outOfSyncEmails[user.id],
   }));
 
   const topRightElement = (<HStack justify="flex-end" w="full">
