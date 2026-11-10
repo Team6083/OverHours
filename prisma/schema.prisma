@@ -17,6 +17,14 @@ model User {
   name  String
   image String?
 
+  // Keycloak `sub` of the account this user signs in with; null until the user first signs in
+  // (e.g. created by an admin). Users are matched by this, not by email, so changing the email in
+  // Keycloak keeps the same user. Not @unique: Prisma's MongoDB unique index is not sparse, so
+  // existing users without it would collide; linkKeycloakUser keeps it unique instead.
+  keycloakId String?
+
+  @@index([keycloakId])
+
   teams   Team[]   @relation(fields: [teamIds], references: [id])
   teamIds String[] @default([]) @db.ObjectId
 

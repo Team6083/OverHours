@@ -93,6 +93,13 @@ Sign-in uses Keycloak via Auth.js (`AUTH_KEYCLOAK_ID`, `AUTH_KEYCLOAK_SECRET`, `
 Roles are read from the Keycloak access token, which is verified (signature via the issuer's JWKS, `iss`,
 `exp`, and `azp` equal to `AUTH_KEYCLOAK_ID`) before any role is trusted.
 
+Users are matched to their Keycloak account by its `sub` (stored as `keycloakId`), not by email, so changing
+the email in Keycloak keeps the same user and updates their email here. A user without a link yet (created
+before linking existed, or by an admin) is linked on their first sign-in with the same email. If that email
+already belongs to a user linked to another Keycloak account, the sign-in is refused with an "Account conflict"
+page for an admin to resolve. Merging users keeps the link on the merged user. Run `npx prisma db push` once
+after deploying so the `keycloakId` index exists.
+
 Role settings are comma-separated lists. Realm roles are written as-is (`admin`) and client roles as
 `client:role` (`overhours:manager`); a user's roles are the union of `realm_access.roles` and every
 client's `resource_access.<client>.roles`.

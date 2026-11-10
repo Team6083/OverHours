@@ -168,10 +168,20 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
   }
 
   await prisma.$transaction(async (tx) => {
-    const userCount = await tx.user.count({ where: { id: { in: ids } } });
-    if (userCount !== ids.length) {
+    const users = await tx.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, keycloakId: true },
+    });
+    if (users.length !== ids.length) {
       throw new MergeUsersError("Some of the selected users no longer exist.");
     }
+
+    // The merged user keeps the Keycloak link, or the next sign-in would create a new user again.
+    const keycloakIds = new Set(users.map(user => user.keycloakId).filter(id => id !== null));
+    if (keycloakIds.size > 1) {
+      throw new MergeUsersError("The selected users sign in with different Keycloak accounts and cannot be merged.");
+    }
+    const [keycloakId] = keycloakIds;
 
     const logs = await tx.timeLog.findMany({
       where: { userId: { in: ids } },
@@ -207,5 +217,9 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
     await tx.user.deleteMany({
       where: { id: { in: sourceIds } },
     });
+
+    if (keycloakId) {
+      await tx.user.update({ where: { id: targetId }, data: { keycloakId } });
+    }
   });
 }
