@@ -140,9 +140,10 @@ describe("getWeekBoard", () => {
     const board = await getWeekBoard("2027-01-11");
 
     expect(board).toHaveLength(7);
-    const userA = { id: "a", name: "A", email: "a@example.com", image: null };
-    const userB = { id: "b", name: "B", email: "b@example.com", image: null };
+    const userA = { id: "a", name: "A", image: null };
+    const userB = { id: "b", name: "B", image: null };
     expect(board[1]).toEqual({ date: "2027-01-12", available: [userA], unavailable: [userB] });
+    expect(JSON.stringify(board)).not.toContain("example.com");
     expect(board[2]).toEqual({ date: "2027-01-13", available: [], unavailable: [] });
   });
 

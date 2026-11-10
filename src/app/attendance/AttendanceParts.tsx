@@ -6,8 +6,8 @@ import {
 } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
-import { addMonths, AttendanceStatus, DayStatus, monthDates, weekDates } from "@/lib/attendance";
-import { BoardDay, BoardUser } from "@/lib/data/attendance-dto";
+import { addMonths, DayStatus, monthDates, weekDates } from "@/lib/attendance";
+import { BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getPersonMonth } from "./actions";
 
 export const shortDate = (date: string) => date.slice(5).replace("-", "/");
@@ -69,8 +69,40 @@ export function NameGroup(props: { label: string; palette: string; users: BoardU
   );
 }
 
+/**
+ * Loads `key` once and caches it. A failure is not cached: it shows until `retry` is called,
+ * and the load is attempted again when the key changes.
+ */
+export function useKeyedLoad<T>(key: string, load: (key: string) => Promise<T | null>, seed: Record<string, T> = {}) {
+  const [cache, setCache] = useState<Record<string, T>>(seed);
+  const [failedKey, setFailedKey] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const data = cache[key];
+
+  useEffect(() => {
+    if (data !== undefined) return;
+    let cancelled = false;
+
+    load(key)
+      .catch(() => null)
+      .then(result => {
+        if (cancelled) return;
+        if (result === null) setFailedKey(key);
+        else setCache(prev => ({ ...prev, [key]: result }));
+      });
+
+    return () => { cancelled = true; };
+    // `load` is a stable closure over the caller's fixed arguments.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, attempt, data]);
+
+  const retry = () => { setFailedKey(null); setAttempt(count => count + 1); };
+
+  return { data, failed: data === undefined && failedKey === key, retry };
+}
+
 const matchesQuery = (user: BoardUser, needle: string) =>
-  [user.name, user.email, user.id].some(field => field.toLowerCase().includes(needle));
+  [user.name, user.id].some(field => field.toLowerCase().includes(needle));
 
 export type UserGroup = { key: "available" | "unavailable" | "everyone"; palette: string; users: BoardUser[] };
 
@@ -85,21 +117,13 @@ function PersonCalendar(props: {
   const t = useTranslations("Attendance");
   const format = useFormatter();
 
-  // undefined while loading, null when loading failed
-  const [months, setMonths] = useState<Record<string, Record<string, AttendanceStatus> | null>>({});
-  const days = months[month];
-
-  useEffect(() => {
-    if (days !== undefined) return;
-    let cancelled = false;
-
-    getPersonMonth(user.id, month)
-      .then(result => result.ok ? result.days : null)
-      .catch(() => null)
-      .then(result => { if (!cancelled) setMonths(prev => ({ ...prev, [month]: result })); });
-
-    return () => { cancelled = true; };
-  }, [user.id, month, days]);
+  const { data: days, failed, retry } = useKeyedLoad(
+    month,
+    async key => {
+      const result = await getPersonMonth(user.id, key);
+      return result.ok ? result.days : null;
+    },
+  );
 
   const dates = monthDates(month);
   const offset = (new Date(`${dates[0]}T00:00:00Z`).getUTCDay() + 6) % 7;
@@ -119,7 +143,6 @@ function PersonCalendar(props: {
         <UserAvatar user={user} size="sm" />
         <Stack gap={0} minW={0}>
           <Text fontWeight="medium" truncate>{user.name}</Text>
-          <Text fontSize="xs" color="fg.muted" truncate>{user.email}</Text>
         </Stack>
       </HStack>
 
@@ -166,7 +189,12 @@ function PersonCalendar(props: {
         })}
       </SimpleGrid>
 
-      {days === null && <Text fontSize="sm" color="red.fg">{t("calendar.loadFailed")}</Text>}
+      {failed && (
+        <HStack gap={2}>
+          <Text fontSize="sm" color="red.fg">{t("calendar.loadFailed")}</Text>
+          <Button size="xs" variant="outline" onClick={retry}>{t("retry")}</Button>
+        </HStack>
+      )}
 
       <HStack gap={4} fontSize="xs" color="fg.muted" wrap="wrap">
         {(["AVAILABLE", "UNAVAILABLE", "NOT_FILLED"] as const).map(status => (
@@ -191,6 +219,8 @@ function UserListView(props: { groups: UserGroup[]; onSelectUser: (user: BoardUs
   const { groups, onSelectUser } = props;
   const t = useTranslations("Attendance");
   const [query, setQuery] = useState("");
+  // Skip autofocus on touch devices, where it would raise the keyboard over the dialog.
+  const [autoFocus] = useState(() => typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches);
 
   const needle = query.trim().toLowerCase();
   const visible = groups
@@ -202,7 +232,7 @@ function UserListView(props: { groups: UserGroup[]; onSelectUser: (user: BoardUs
       <Input
         size="sm"
         type="search"
-        autoFocus
+        autoFocus={autoFocus}
         value={query}
         placeholder={t("searchPlaceholder")}
         aria-label={t("searchPlaceholder")}
@@ -231,7 +261,6 @@ function UserListView(props: { groups: UserGroup[]; onSelectUser: (user: BoardUs
                 <UserAvatar user={user} size="sm" />
                 <Stack gap={0} minW={0} align="flex-start" fontWeight="normal">
                   <Text fontSize="sm" truncate maxW="full">{user.name}</Text>
-                  <Text fontSize="xs" color="fg.muted" truncate maxW="full">{user.email}</Text>
                 </Stack>
               </Button>
             ))}
@@ -246,23 +275,23 @@ function UserListView(props: { groups: UserGroup[]; onSelectUser: (user: BoardUs
 function DayView(props: { date: string; onSelectUser: (user: BoardUser) => void }) {
   const { date, onSelectUser } = props;
   const t = useTranslations("Attendance");
-  // undefined while loading, null when loading failed
-  const [loaded, setLoaded] = useState<{ date: string; day: BoardDay | null }>();
-  const day = loaded?.date === date ? loaded.day : undefined;
+  const { data: day, failed, retry } = useKeyedLoad(
+    date,
+    async key => {
+      const result = await getBoardDay(key);
+      return result.ok ? result.day : null;
+    },
+  );
 
-  useEffect(() => {
-    let cancelled = false;
-
-    getBoardDay(date)
-      .then(result => result.ok ? result.day : null)
-      .catch(() => null)
-      .then(day => { if (!cancelled) setLoaded({ date, day }); });
-
-    return () => { cancelled = true; };
-  }, [date]);
-
+  if (failed) {
+    return (
+      <HStack gap={2}>
+        <Text fontSize="sm" color="red.fg">{t("day.loadFailed")}</Text>
+        <Button size="xs" variant="outline" onClick={retry}>{t("retry")}</Button>
+      </HStack>
+    );
+  }
   if (day === undefined) return <Spinner size="sm" />;
-  if (day === null) return <Text fontSize="sm" color="red.fg">{t("day.loadFailed")}</Text>;
 
   return (
     <UserListView

@@ -179,7 +179,7 @@
       "reports": "Reports",
       "users": "Users",
       "statRanges": "Stat Ranges",
-      "attendance": "Attendance",
+      "attendance": "Availability",
       "signIn": "Sign-In",
       "signOut": "Sign-Out"
     },
@@ -244,8 +244,8 @@
     "loadFailed": "Failed to load"
   },
   "Attendance": {
-    "title": "Attendance",
-    "signInRequired": "Sign in to use attendance.",
+    "title": "Availability",
+    "signInRequired": "Sign in to fill in your availability.",
     "today": "Today",
     "nobody": "Nobody",
     "findPerson": "Find person",
@@ -260,8 +260,9 @@
       "next": "Next day",
       "loadFailed": "Could not load this day"
     },
+    "retry": "Retry",
     "showAll": "View all",
-    "searchPlaceholder": "Search name, email or ID",
+    "searchPlaceholder": "Search name or ID",
     "noMatch": "No matching names",
     "status": {
       "AVAILABLE": "Yes",

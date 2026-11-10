@@ -32,7 +32,8 @@ export async function getPersonMonth(
 
   try {
     return { ok: true, days: await getUserMonth(parsed.data.userId, parsed.data.month) };
-  } catch {
+  } catch (error) {
+    console.error("Failed to load a member's attendance month", error);
     return { ok: false };
   }
 }
@@ -42,7 +43,8 @@ export async function getBoardDay(date: string): Promise<{ ok: true; day: BoardD
 
   try {
     return { ok: true, day: await getDayBoard(date) };
-  } catch {
+  } catch (error) {
+    console.error("Failed to load the attendance of a day", error);
     return { ok: false };
   }
 }

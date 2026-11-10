@@ -5,7 +5,8 @@ import { AttendanceStatus, calendarDateInZone, DayStatus, dayStatuses, monthDate
 import { getTimeZone } from "../config";
 import prisma from "../prisma";
 
-export type BoardUser = { id: string; name: string; email: string; image: string | null };
+/** Deliberately without email: emails are only visible to admins elsewhere. */
+export type BoardUser = { id: string; name: string; image: string | null };
 export type BoardDay = { date: string; available: BoardUser[]; unavailable: BoardUser[] };
 export type AdminAttendanceUser = {
   id: string;
@@ -32,13 +33,13 @@ async function boardFor(dates: string[]): Promise<BoardDay[]> {
 
   const entries = await prisma.attendanceEntry.findMany({
     where: { date: { in: dates }, slot: "AllDay" },
-    select: { date: true, status: true, user: { select: { id: true, name: true, email: true, image: true } } },
+    select: { date: true, status: true, user: { select: { id: true, name: true, image: true } } },
     orderBy: { user: { name: "asc" } },
   });
 
   const users = (date: string, status: AttendanceEntry["status"]): BoardUser[] => entries
     .filter(entry => entry.date === date && entry.status === status)
-    .map(({ user }) => ({ id: user.id, name: user.name, email: user.email, image: user.image ?? null }));
+    .map(({ user }) => ({ id: user.id, name: user.name, image: user.image ?? null }));
 
   return dates.map(date => ({ date, available: users(date, "Available"), unavailable: users(date, "Unavailable") }));
 }
