@@ -20,31 +20,31 @@ export default function LinkedAccounts(props: {
     {accounts.length === 0 && <Text textStyle="sm">No linked accounts. The next sign-in with this email links one.</Text>}
 
     {accounts.map(account => (
-      <Card.Root key={account.id} size="sm">
+      <Card.Root key={account.id} size="sm" minW={0}>
         <Card.Body>
           <DataList.Root orientation="horizontal" size="sm">
             <DataList.Item>
               <DataList.ItemLabel>Provider</DataList.ItemLabel>
-              <DataList.ItemValue><Code>{account.provider}</Code></DataList.ItemValue>
+              <DataList.ItemValue minW={0} overflowWrap="anywhere"><Code whiteSpace="normal" wordBreak="break-all">{account.provider}</Code></DataList.ItemValue>
             </DataList.Item>
             <DataList.Item>
               <DataList.ItemLabel>Subject</DataList.ItemLabel>
-              <DataList.ItemValue><Code>{account.subject}</Code></DataList.ItemValue>
+              <DataList.ItemValue minW={0} overflowWrap="anywhere"><Code whiteSpace="normal" wordBreak="break-all">{account.subject}</Code></DataList.ItemValue>
             </DataList.Item>
             <DataList.Item>
               <DataList.ItemLabel>Issuer</DataList.ItemLabel>
-              <DataList.ItemValue><Code>{account.issuer}</Code></DataList.ItemValue>
+              <DataList.ItemValue minW={0} overflowWrap="anywhere"><Code whiteSpace="normal" wordBreak="break-all">{account.issuer}</Code></DataList.ItemValue>
             </DataList.Item>
             <DataList.Item>
               <DataList.ItemLabel>Provider Email</DataList.ItemLabel>
-              <DataList.ItemValue>
+              <DataList.ItemValue minW={0} overflowWrap="anywhere">
                 {account.email}
                 {account.emailTakenByOtherUser && <Text as="span" color="fg.warning" ms={2}>(another user has this email)</Text>}
               </DataList.ItemValue>
             </DataList.Item>
             <DataList.Item>
               <DataList.ItemLabel>Linked At</DataList.ItemLabel>
-              <DataList.ItemValue>{account.createdAt.toLocaleString()}</DataList.ItemValue>
+              <DataList.ItemValue minW={0} overflowWrap="anywhere">{account.createdAt.toLocaleString()}</DataList.ItemValue>
             </DataList.Item>
           </DataList.Root>
         </Card.Body>
