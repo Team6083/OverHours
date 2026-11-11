@@ -36,25 +36,25 @@ function teamOptions(users: MergePreview["users"]): MergeTeamOption[] {
 function MergeTeamsPicker(props: {
   teams: MergeTeamOption[];
   nameById: Map<string, string>;
-  keepTeamIds: string[];
-  onChange: (keepTeamIds: string[]) => void;
+  dropTeamIds: string[];
+  onChange: (dropTeamIds: string[]) => void;
 }) {
-  const { teams, nameById, keepTeamIds, onChange } = props;
+  const { teams, nameById, dropTeamIds, onChange } = props;
 
   return <Stack gap={2}>
     <Heading as="h3" size="sm">Teams</Heading>
     <Text color="fg.muted">
       Choose the teams the kept user stays in. Each keeps how it was joined: by hand, or by role when every user
       in it joined by role. A role team that is not kept is joined again at the next sign-in if the user still
-      has the role.
+      has the role. A team the users join after this page loaded is kept too.
     </Text>
     {teams.map(team => (
       <Checkbox.Root
         key={team.id}
-        checked={keepTeamIds.includes(team.id)}
+        checked={!dropTeamIds.includes(team.id)}
         onCheckedChange={(e) => onChange(e.checked
-          ? [...keepTeamIds, team.id]
-          : keepTeamIds.filter(id => id !== team.id))}
+          ? dropTeamIds.filter(id => id !== team.id)
+          : [...dropTeamIds, team.id])}
       >
         <Checkbox.HiddenInput />
         <Checkbox.Control />
@@ -86,8 +86,9 @@ export default function MergeUsersConfirm(props: {
   const [pending, startTransition] = useTransition();
 
   const teams = useMemo(() => teamOptions(users), [users]);
-  // Every team is kept unless the admin unticks it
-  const [keepTeamIds, setKeepTeamIds] = useState(() => teams.map(team => team.id));
+  // Every team is kept unless the admin unticks it. Only the unticked teams are sent, so a team the users join
+  // after this page loaded is kept too.
+  const [dropTeamIds, setDropTeamIds] = useState<string[]>([]);
 
   const nameById = new Map(users.map(u => [u.id, u.name]));
   const sources = users.filter(u => u.id !== targetId);
@@ -96,7 +97,7 @@ export default function MergeUsersConfirm(props: {
   const totalLogs = users.reduce((sum, u) => sum + u.timeLogCount, 0);
 
   const submit = () => startTransition(async () => {
-    const state = await handleMergeUsers(targetId, users.map(u => u.id), keepTeamIds);
+    const state = await handleMergeUsers(targetId, users.map(u => u.id), dropTeamIds);
     setError(state?.error);
   });
 
@@ -128,7 +129,7 @@ export default function MergeUsersConfirm(props: {
     </RadioGroup.Root>
 
     {teams.length > 0 && (
-      <MergeTeamsPicker teams={teams} nameById={nameById} keepTeamIds={keepTeamIds} onChange={setKeepTeamIds} />
+      <MergeTeamsPicker teams={teams} nameById={nameById} dropTeamIds={dropTeamIds} onChange={setDropTeamIds} />
     )}
 
     <Text color="fg.muted">Linked sign-in accounts of the deleted users move to the kept user, so signing in with any of them reaches the kept user.</Text>

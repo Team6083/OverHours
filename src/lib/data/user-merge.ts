@@ -166,10 +166,10 @@ export async function getMergePreview(ids: string[]): Promise<MergePreview | nul
 }
 
 /**
- * Merges `userIds` into `targetId`. The kept user ends up in exactly the teams in `keepTeamIds`, which must be
- * teams of the merged users; each keeps how it was joined (see `planMergedTeams`).
+ * Merges `userIds` into `targetId`. The kept user ends up in every team any of the users is in when the merge
+ * runs, except those in `dropTeamIds`; each keeps how it was joined (see `planMergedTeams`).
  */
-export async function mergeUsers(targetId: string, userIds: string[], keepTeamIds: string[]) {
+export async function mergeUsers(targetId: string, userIds: string[], dropTeamIds: string[]) {
   const session = await requireAdmin();
 
   const ids = Array.from(new Set(userIds));
@@ -185,8 +185,8 @@ export async function mergeUsers(targetId: string, userIds: string[], keepTeamId
     throw new MergeUsersError("The target user must be one of the selected users.");
   }
 
-  if (!Array.isArray(keepTeamIds) || !areValidIds(keepTeamIds)) {
-    throw new MergeUsersError("Some of the chosen teams no longer exist.");
+  if (!Array.isArray(dropTeamIds) || !areValidIds(dropTeamIds)) {
+    throw new MergeUsersError("Some of the teams to drop are not valid team ids.");
   }
 
   const sourceIds = ids.filter(id => id !== targetId);
@@ -240,22 +240,19 @@ export async function mergeUsers(targetId: string, userIds: string[], keepTeamId
       data: { userId: targetId },
     });
 
-    // The kept user stays in the teams the admin chose, each joined the way the merged users joined it.
-    // Ids of teams that no longer exist are ignored.
+    // The kept user stays in every team the selected users are in now, read in this transaction so a team
+    // joined after the page loaded is kept, except the teams the admin unticked. Each is joined the way the
+    // selected users joined it. Stale ids of deleted teams in the users' teamIds are skipped, and an unticked
+    // team that is no longer a team of any selected user is ignored, as there is nothing to drop.
     const existingTeamIds = new Set((await tx.team.findMany({
       where: { id: { in: users.flatMap(user => user.teamIds) } },
       select: { id: true },
     })).map(team => team.id));
-    let plan;
-    try {
-      plan = planMergedTeams(
-        users.map(user => ({ ...user, teamIds: user.teamIds.filter(id => existingTeamIds.has(id)) })),
-        targetId,
-        keepTeamIds,
-      );
-    } catch {
-      throw new MergeUsersError("Some of the chosen teams are no longer teams of the selected users. Reload and try again.");
-    }
+    const plan = planMergedTeams(
+      users.map(user => ({ ...user, teamIds: user.teamIds.filter(id => existingTeamIds.has(id)) })),
+      targetId,
+      dropTeamIds,
+    );
     await tx.user.update({
       where: { id: targetId },
       data: {

@@ -27,6 +27,7 @@ const MERGED = "000000000000000000000002";
 const T1 = "0000000000000000000000a1";
 const T2 = "0000000000000000000000a2";
 const T3 = "0000000000000000000000a3";
+const T4 = "0000000000000000000000a4";
 const OTHER = "0000000000000000000000a9";
 
 beforeEach(() => {
@@ -36,14 +37,14 @@ beforeEach(() => {
     { id: MERGED, teamIds: [T2, T3], roleTeamIds: [T3] },
   ]);
   prismaMock.team.findMany.mockImplementation(async ({ where }: { where: { id?: { in: string[] } } }) =>
-    (where.id?.in ?? [T1, T2, T3]).filter(id => [T1, T2, T3].includes(id)).map(id => ({ id, userIds: [] })));
+    (where.id?.in ?? [T1, T2, T3, T4]).filter(id => [T1, T2, T3, T4].includes(id)).map(id => ({ id, userIds: [] })));
   prismaMock.timeLog.findMany.mockResolvedValue([]);
   prismaMock.attendanceEntry.findMany.mockResolvedValue([]);
 });
 
 describe("mergeUsers teams", () => {
-  it("keeps the chosen teams with their source and drops the others", async () => {
-    await mergeUsers(KEPT, [KEPT, MERGED], [T2, T3]);
+  it("keeps the teams that were not dropped with their source and drops the others", async () => {
+    await mergeUsers(KEPT, [KEPT, MERGED], [T1]);
 
     expect(prismaMock.user.update).toHaveBeenCalledWith({
       where: { id: KEPT },
@@ -56,10 +57,51 @@ describe("mergeUsers teams", () => {
     expect(prismaMock.user.deleteMany).toHaveBeenCalledWith({ where: { id: { in: [MERGED] } } });
   });
 
-  it("refuses a team that is not a team of the merged users", async () => {
-    await expect(mergeUsers(KEPT, [KEPT, MERGED], [T1, OTHER])).rejects.toBeInstanceOf(MergeUsersError);
-    expect(prismaMock.user.update).not.toHaveBeenCalled();
-    expect(prismaMock.user.deleteMany).not.toHaveBeenCalled();
+  it("keeps a team the users joined after the page loaded", async () => {
+    // T4 was joined by the merged user after the admin loaded the page, so it was never shown or unticked
+    prismaMock.user.findMany.mockResolvedValue([
+      { id: KEPT, teamIds: [T1, T2], roleTeamIds: [T2] },
+      { id: MERGED, teamIds: [T2, T3, T4], roleTeamIds: [T3] },
+    ]);
+
+    await mergeUsers(KEPT, [KEPT, MERGED], [T1]);
+
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: KEPT },
+      data: {
+        teams: { connect: [{ id: T3 }, { id: T4 }], disconnect: [{ id: T1 }] },
+        roleTeamIds: [T3],
+      },
+    });
+  });
+
+  it("ignores a dropped team that is no longer a team of the selected users", async () => {
+    await mergeUsers(KEPT, [KEPT, MERGED], [OTHER]);
+
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: KEPT },
+      data: {
+        teams: { connect: [{ id: T3 }], disconnect: [] },
+        roleTeamIds: [T3],
+      },
+    });
+  });
+
+  it("skips stale ids of deleted teams", async () => {
+    prismaMock.user.findMany.mockResolvedValue([
+      { id: KEPT, teamIds: [T1, T2], roleTeamIds: [T2] },
+      { id: MERGED, teamIds: [T2, T3, OTHER], roleTeamIds: [T3] },
+    ]);
+
+    await mergeUsers(KEPT, [KEPT, MERGED], []);
+
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: KEPT },
+      data: {
+        teams: { connect: [{ id: T3 }], disconnect: [] },
+        roleTeamIds: [T3],
+      },
+    });
   });
 
   it("refuses team ids that are not ids", async () => {

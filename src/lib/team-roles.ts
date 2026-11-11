@@ -69,30 +69,29 @@ export type MergedTeamsPlan = {
 };
 
 /**
- * Works out the kept user's teams after a merge, from the teams the admin chose to keep:
- * - every chosen team must be a team of one of the merged users, or this throws;
- * - a chosen team stays a role membership only if every merged user in it joined by role; if any of them was
+ * Works out the kept user's teams after a merge, from the teams the admin chose to drop:
+ * - the kept user ends up in every team any merged user is in, except the dropped ones, so a team that was
+ *   joined after the admin made the choice is kept;
+ * - a kept team stays a role membership only if every merged user in it joined by role; if any of them was
  *   added by hand, the kept user is now a hand-made member, so the role sync never removes them;
- * - teams that were not chosen are left, including the kept user's own.
+ * - dropped teams are left, including the kept user's own; a dropped id that is no team of the merged users is
+ *   ignored, as there is nothing to drop.
  */
-export function planMergedTeams(users: MergeTeamsUser[], targetId: string, keepTeamIds: string[]): MergedTeamsPlan {
+export function planMergedTeams(users: MergeTeamsUser[], targetId: string, dropTeamIds: string[]): MergedTeamsPlan {
   const target = users.find(user => user.id === targetId);
   if (!target) {
     throw new Error("The kept user must be one of the merged users.");
   }
 
-  const keep = [...new Set(keepTeamIds)];
-  const available = new Set(users.flatMap(user => user.teamIds));
-  if (keep.some(id => !available.has(id))) {
-    throw new Error("Some of the chosen teams are not teams of the merged users.");
-  }
+  const drop = new Set(dropTeamIds);
+  const keep = [...new Set(users.flatMap(user => user.teamIds))].filter(id => !drop.has(id));
 
   const holders = (teamId: string) => users.filter(user => user.teamIds.includes(teamId));
   const roleTeamIds = keep.filter(id => holders(id).every(user => user.roleTeamIds.includes(id)));
 
   return {
     connect: keep.filter(id => !target.teamIds.includes(id)),
-    disconnect: target.teamIds.filter(id => !keep.includes(id)),
+    disconnect: target.teamIds.filter(id => drop.has(id)),
     roleTeamIds,
   };
 }

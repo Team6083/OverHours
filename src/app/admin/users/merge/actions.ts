@@ -11,10 +11,10 @@ export type MergeUsersState = {
 export async function handleMergeUsers(
   targetId: string,
   userIds: string[],
-  keepTeamIds: string[],
+  dropTeamIds: string[],
 ): Promise<MergeUsersState> {
   try {
-    await mergeUsers(targetId, userIds, keepTeamIds);
+    await mergeUsers(targetId, userIds, dropTeamIds);
   } catch (e) {
     if (e instanceof MergeUsersError) {
       return { error: e.message };
