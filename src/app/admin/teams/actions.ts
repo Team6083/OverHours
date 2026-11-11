@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 
-import { TeamError, addTeamMembers, createTeam, deleteTeam, removeTeamMember, updateTeam } from "@/lib/data/team-dto";
+import { addTeamMembers, createTeam, deleteTeam, removeTeamMember, toTeamError, updateTeam } from "@/lib/data/team-dto";
 
 export type TeamActionResult = {
   error?: string;
@@ -16,8 +16,10 @@ async function run(fn: () => Promise<string | void>): Promise<TeamActionResult> 
     revalidatePath("/");
     return { id: id ?? undefined };
   } catch (e) {
-    if (e instanceof TeamError) {
-      return { error: e.message };
+    // Expected failures, such as a team already deleted in another tab, become a toast instead of an error page
+    const teamError = toTeamError(e);
+    if (teamError) {
+      return { error: teamError.message };
     }
     throw e;
   }

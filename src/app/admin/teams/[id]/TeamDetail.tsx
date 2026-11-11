@@ -19,10 +19,15 @@ import {
 function useTeamAction() {
   const [pending, startTransition] = useTransition();
 
-  const run = (action: () => Promise<TeamActionResult>, onSuccess?: () => void) => startTransition(async () => {
+  const run = (
+    action: () => Promise<TeamActionResult>,
+    onSuccess?: () => void,
+    onError?: () => void,
+  ) => startTransition(async () => {
     const result = await action();
     if (result.error) {
       toaster.error({ title: result.error });
+      onError?.();
     } else {
       onSuccess?.();
     }
@@ -34,6 +39,14 @@ function useTeamAction() {
 function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
   const { team, teams } = props;
   const { pending, run } = useTeamAction();
+
+  // Controlled, so that a rejected rename shows the saved name again instead of the rejected text
+  const [name, setName] = useState(team.name);
+  const [savedName, setSavedName] = useState(team.name);
+  if (savedName !== team.name) {
+    setSavedName(team.name);
+    setName(team.name);
+  }
 
   // A team cannot move under itself or its own sub-teams
   const parentOptions = useMemo(
@@ -48,9 +61,15 @@ function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
         <DataList.ItemValue>
           <Editable.Root
             size="sm"
-            defaultValue={team.name}
+            value={name}
             disabled={pending}
-            onValueCommit={(e) => run(() => renameTeamAction(team.id, e.value))}
+            onValueChange={(e) => setName(e.value)}
+            onValueCommit={(e) => run(
+              () => renameTeamAction(team.id, e.value),
+              // The server trims the name
+              () => setName(e.value.trim()),
+              () => setName(team.name),
+            )}
           >
             <Editable.Preview />
             <Editable.Input />
