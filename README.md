@@ -240,8 +240,11 @@ active user within one access token lifetime and other users at their next sign-
 the same way: nobody is added or removed until they next sign in or refresh.
 
 Members added by hand are never removed by roles, even when they have none of the team's roles. A member who
-joined by role is marked "Role" and cannot be removed by hand; remove the role in Keycloak, or from the team. When
-users are merged, the kept user keeps the merged users' hand-made memberships only.
+joined by role is marked "Role". Admins can still remove them by hand, for example someone who left long ago and
+never signs in again (role memberships are only updated at sign-in, so removing their role in Keycloak alone does
+not take them off the team). If they still have the role, they rejoin at their next sign-in or token refresh; to
+keep them out, remove the role in Keycloak or from the team as well. When users are merged, the admin chooses
+which of their teams the kept user stays in; each kept team keeps how it was joined (by hand or by role).
 
 The roles must be in the access token, which they are by default (`realm_access` and `resource_access`). Run
 `npx prisma db push` once after deploying.

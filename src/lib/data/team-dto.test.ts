@@ -5,10 +5,16 @@ vi.mock("@/auth", () => ({
   auth: vi.fn(async () => ({ user: { id: "admin", role: "admin" } })),
   Role: { ADMIN: "admin", USER: "user" },
 }));
-const prismaMock = vi.hoisted(() => ({
-  team: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), create: vi.fn(), update: vi.fn() },
-  user: { findMany: vi.fn(), findUnique: vi.fn() },
-}));
+const prismaMock = vi.hoisted(() => {
+  const mock = {
+    team: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    user: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+    $transaction: vi.fn(),
+  };
+  // Interactive transactions run against the same mock
+  mock.$transaction.mockImplementation((fn: (tx: typeof mock) => unknown) => fn(mock));
+  return mock;
+});
 vi.mock("../prisma", () => ({ default: prismaMock }));
 
 import {
@@ -142,11 +148,26 @@ describe("getTeamMembers", () => {
 describe("removeTeamMember", () => {
   it("removes a direct member", async () => {
     teamsAre([team(A), team(B, A)]);
-    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [A, B], roleTeamIds: [] });
+    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [A, B], roleTeamIds: [B] });
 
     await removeTeamMember(A, U);
 
-    expect(prismaMock.team.update).toHaveBeenCalledWith({ where: { id: A }, data: { users: { disconnect: { id: U } } } });
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: U },
+      data: { teams: { disconnect: { id: A } }, roleTeamIds: [B] },
+    });
+  });
+
+  it("removes a member who joined by role, clearing the team from both lists", async () => {
+    teamsAre([team(A), team(B, A)]);
+    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [A, B], roleTeamIds: [A, B] });
+
+    await removeTeamMember(A, C);
+
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: C },
+      data: { teams: { disconnect: { id: A } }, roleTeamIds: [B] },
+    });
   });
 
   it("refuses a member who is only in a sub-team", async () => {
@@ -154,7 +175,14 @@ describe("removeTeamMember", () => {
     prismaMock.user.findUnique.mockResolvedValue({ teamIds: [B], roleTeamIds: [] });
 
     await expect(removeTeamMember(A, U)).rejects.toThrow(`member through "Team ${B}"`);
-    expect(prismaMock.team.update).not.toHaveBeenCalled();
+    expect(prismaMock.user.update).not.toHaveBeenCalled();
+  });
+
+  it("reports a user that no longer exists", async () => {
+    prismaMock.user.findUnique.mockResolvedValue(null);
+
+    await expect(removeTeamMember(A, C)).rejects.toBeInstanceOf(TeamError);
+    expect(prismaMock.user.update).not.toHaveBeenCalled();
   });
 });
 

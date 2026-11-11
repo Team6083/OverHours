@@ -57,3 +57,42 @@ export function planRoleMemberships(
 
   return { join, leave, roleTeamIds };
 }
+
+export type MergeTeamsUser = { id: string; teamIds: string[]; roleTeamIds: string[] };
+
+export type MergedTeamsPlan = {
+  // Teams the kept user joins or leaves
+  connect: string[];
+  disconnect: string[];
+  // The kept user's role-joined teams after the merge
+  roleTeamIds: string[];
+};
+
+/**
+ * Works out the kept user's teams after a merge, from the teams the admin chose to keep:
+ * - every chosen team must be a team of one of the merged users, or this throws;
+ * - a chosen team stays a role membership only if every merged user in it joined by role; if any of them was
+ *   added by hand, the kept user is now a hand-made member, so the role sync never removes them;
+ * - teams that were not chosen are left, including the kept user's own.
+ */
+export function planMergedTeams(users: MergeTeamsUser[], targetId: string, keepTeamIds: string[]): MergedTeamsPlan {
+  const target = users.find(user => user.id === targetId);
+  if (!target) {
+    throw new Error("The kept user must be one of the merged users.");
+  }
+
+  const keep = [...new Set(keepTeamIds)];
+  const available = new Set(users.flatMap(user => user.teamIds));
+  if (keep.some(id => !available.has(id))) {
+    throw new Error("Some of the chosen teams are not teams of the merged users.");
+  }
+
+  const holders = (teamId: string) => users.filter(user => user.teamIds.includes(teamId));
+  const roleTeamIds = keep.filter(id => holders(id).every(user => user.roleTeamIds.includes(id)));
+
+  return {
+    connect: keep.filter(id => !target.teamIds.includes(id)),
+    disconnect: target.teamIds.filter(id => !keep.includes(id)),
+    roleTeamIds,
+  };
+}

@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
-import { useState, useTransition } from "react";
-import { Alert, Badge, Button, ButtonGroup, HStack, Heading, Icon, List, RadioGroup, Stack, Text } from "@chakra-ui/react";
+import { useMemo, useState, useTransition } from "react";
+import {
+  Alert, Badge, Button, ButtonGroup, Checkbox, HStack, Heading, Icon, List, RadioGroup, Stack, Text,
+} from "@chakra-ui/react";
 import { LuMerge } from "react-icons/lu";
 
 import type { MergeConflictLog, MergePreview } from "@/lib/data/user-merge";
@@ -10,6 +12,65 @@ import { handleMergeUsers } from "./actions";
 function formatLog(log: MergeConflictLog, nameById: Map<string, string>) {
   const range = `${log.inTime.toLocaleString()} – ${log.outTime ? log.outTime.toLocaleString() : "now"}`;
   return `${nameById.get(log.userId) ?? log.userId} (${range})`;
+}
+
+type MergeTeamOption = {
+  id: string;
+  name: string;
+  members: { userId: string; viaRole: boolean }[];
+};
+
+/** Every team of the merged users, with who is in it and how they joined. */
+function teamOptions(users: MergePreview["users"]): MergeTeamOption[] {
+  const byId = new Map<string, MergeTeamOption>();
+  for (const user of users) {
+    for (const team of user.teams) {
+      const option = byId.get(team.id) ?? { id: team.id, name: team.name, members: [] };
+      option.members.push({ userId: user.id, viaRole: team.viaRole });
+      byId.set(team.id, option);
+    }
+  }
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function MergeTeamsPicker(props: {
+  teams: MergeTeamOption[];
+  nameById: Map<string, string>;
+  keepTeamIds: string[];
+  onChange: (keepTeamIds: string[]) => void;
+}) {
+  const { teams, nameById, keepTeamIds, onChange } = props;
+
+  return <Stack gap={2}>
+    <Heading as="h3" size="sm">Teams</Heading>
+    <Text color="fg.muted">
+      Choose the teams the kept user stays in. Each keeps how it was joined: by hand, or by role when every user
+      in it joined by role. A role team that is not kept is joined again at the next sign-in if the user still
+      has the role.
+    </Text>
+    {teams.map(team => (
+      <Checkbox.Root
+        key={team.id}
+        checked={keepTeamIds.includes(team.id)}
+        onCheckedChange={(e) => onChange(e.checked
+          ? [...keepTeamIds, team.id]
+          : keepTeamIds.filter(id => id !== team.id))}
+      >
+        <Checkbox.HiddenInput />
+        <Checkbox.Control />
+        <Checkbox.Label>
+          <HStack flexWrap="wrap">
+            <Text fontWeight="medium">{team.name}</Text>
+            {team.members.map(member => (
+              <Badge key={member.userId} colorPalette={member.viaRole ? "purple" : "gray"}>
+                {nameById.get(member.userId) ?? member.userId}{member.viaRole ? " · Role" : ""}
+              </Badge>
+            ))}
+          </HStack>
+        </Checkbox.Label>
+      </Checkbox.Root>
+    ))}
+  </Stack>;
 }
 
 export default function MergeUsersConfirm(props: {
@@ -24,6 +85,10 @@ export default function MergeUsersConfirm(props: {
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
 
+  const teams = useMemo(() => teamOptions(users), [users]);
+  // Every team is kept unless the admin unticks it
+  const [keepTeamIds, setKeepTeamIds] = useState(() => teams.map(team => team.id));
+
   const nameById = new Map(users.map(u => [u.id, u.name]));
   const sources = users.filter(u => u.id !== targetId);
   const mergesSelfAway = !!currentUserId && sources.some(u => u.id === currentUserId);
@@ -31,7 +96,7 @@ export default function MergeUsersConfirm(props: {
   const totalLogs = users.reduce((sum, u) => sum + u.timeLogCount, 0);
 
   const submit = () => startTransition(async () => {
-    const state = await handleMergeUsers(targetId, users.map(u => u.id));
+    const state = await handleMergeUsers(targetId, users.map(u => u.id), keepTeamIds);
     setError(state?.error);
   });
 
@@ -61,6 +126,10 @@ export default function MergeUsersConfirm(props: {
         ))}
       </Stack>
     </RadioGroup.Root>
+
+    {teams.length > 0 && (
+      <MergeTeamsPicker teams={teams} nameById={nameById} keepTeamIds={keepTeamIds} onChange={setKeepTeamIds} />
+    )}
 
     <Text color="fg.muted">Linked sign-in accounts of the deleted users move to the kept user, so signing in with any of them reaches the kept user.</Text>
 

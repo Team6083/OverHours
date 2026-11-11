@@ -3,6 +3,7 @@ import { auth, Role } from "@/auth";
 import { rowsToReassign } from "../attendance";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
+import { planMergedTeams } from "../team-roles";
 import { removeUsersFromAllTeams } from "./team-dto";
 
 export type MergeUserSummary = {
@@ -11,6 +12,14 @@ export type MergeUserSummary = {
   name: string;
   createdAt: Date;
   timeLogCount: number;
+  teams: MergeUserTeam[];
+};
+
+export type MergeUserTeam = {
+  id: string;
+  name: string;
+  // Joined because of one of the team's auto-join roles
+  viaRole: boolean;
 };
 
 export type MergeConflict = {
@@ -134,6 +143,12 @@ export async function getMergePreview(ids: string[]): Promise<MergePreview | nul
 
   const { conflicts, count } = findConflicts(logs);
 
+  const teams = await prisma.team.findMany({
+    where: { id: { in: users.flatMap(user => user.teamIds) } },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+
   return {
     users: users.map(user => ({
       id: user.id,
@@ -141,13 +156,20 @@ export async function getMergePreview(ids: string[]): Promise<MergePreview | nul
       name: user.name,
       createdAt: user.createdAt,
       timeLogCount: countByUser.get(user.id) ?? 0,
+      teams: teams
+        .filter(team => user.teamIds.includes(team.id))
+        .map(team => ({ ...team, viaRole: user.roleTeamIds.includes(team.id) })),
     })),
     conflicts,
     conflictCount: count,
   };
 }
 
-export async function mergeUsers(targetId: string, userIds: string[]) {
+/**
+ * Merges `userIds` into `targetId`. The kept user ends up in exactly the teams in `keepTeamIds`, which must be
+ * teams of the merged users; each keeps how it was joined (see `planMergedTeams`).
+ */
+export async function mergeUsers(targetId: string, userIds: string[], keepTeamIds: string[]) {
   const session = await requireAdmin();
 
   const ids = Array.from(new Set(userIds));
@@ -163,14 +185,21 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
     throw new MergeUsersError("The target user must be one of the selected users.");
   }
 
+  if (!Array.isArray(keepTeamIds) || !areValidIds(keepTeamIds)) {
+    throw new MergeUsersError("Some of the chosen teams no longer exist.");
+  }
+
   const sourceIds = ids.filter(id => id !== targetId);
   if (session.user.id && sourceIds.includes(session.user.id)) {
     throw new MergeUsersError("You cannot merge your own account into another user. Choose your account as the target instead.");
   }
 
   await prisma.$transaction(async (tx) => {
-    const userCount = await tx.user.count({ where: { id: { in: ids } } });
-    if (userCount !== ids.length) {
+    const users = await tx.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, teamIds: true, roleTeamIds: true },
+    });
+    if (users.length !== ids.length) {
       throw new MergeUsersError("Some of the selected users no longer exist.");
     }
 
@@ -211,26 +240,32 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
       data: { userId: targetId },
     });
 
-    // The merged user keeps the teams the merged users were added to by hand. Teams joined by role follow
-    // the kept user's own roles at their next sign-in.
-    const sources = await tx.user.findMany({
-      where: { id: { in: sourceIds } },
-      select: { teamIds: true, roleTeamIds: true },
-    });
-    const sourceTeamIds = Array.from(new Set(
-      sources.flatMap(user => user.teamIds.filter(id => !user.roleTeamIds.includes(id))),
-    ));
-    if (sourceTeamIds.length > 0) {
-      const target = await tx.user.findUniqueOrThrow({ where: { id: targetId }, select: { roleTeamIds: true } });
-      await tx.user.update({
-        where: { id: targetId },
-        data: {
-          teams: { connect: sourceTeamIds.map(id => ({ id })) },
-          // A team the kept user joined by role but a merged user was added to by hand stays a hand-made membership
-          roleTeamIds: target.roleTeamIds.filter(id => !sourceTeamIds.includes(id)),
-        },
-      });
+    // The kept user stays in the teams the admin chose, each joined the way the merged users joined it.
+    // Ids of teams that no longer exist are ignored.
+    const existingTeamIds = new Set((await tx.team.findMany({
+      where: { id: { in: users.flatMap(user => user.teamIds) } },
+      select: { id: true },
+    })).map(team => team.id));
+    let plan;
+    try {
+      plan = planMergedTeams(
+        users.map(user => ({ ...user, teamIds: user.teamIds.filter(id => existingTeamIds.has(id)) })),
+        targetId,
+        keepTeamIds,
+      );
+    } catch {
+      throw new MergeUsersError("Some of the chosen teams are no longer teams of the selected users. Reload and try again.");
     }
+    await tx.user.update({
+      where: { id: targetId },
+      data: {
+        teams: {
+          connect: plan.connect.map(id => ({ id })),
+          disconnect: plan.disconnect.map(id => ({ id })),
+        },
+        roleTeamIds: plan.roleTeamIds,
+      },
+    });
     await removeUsersFromAllTeams(tx, sourceIds);
 
     await tx.user.deleteMany({

@@ -8,9 +8,13 @@ export type MergeUsersState = {
   error?: string;
 };
 
-export async function handleMergeUsers(targetId: string, userIds: string[]): Promise<MergeUsersState> {
+export async function handleMergeUsers(
+  targetId: string,
+  userIds: string[],
+  keepTeamIds: string[],
+): Promise<MergeUsersState> {
   try {
-    await mergeUsers(targetId, userIds);
+    await mergeUsers(targetId, userIds, keepTeamIds);
   } catch (e) {
     if (e instanceof MergeUsersError) {
       return { error: e.message };

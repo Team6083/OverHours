@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseAutoJoinRoles, planRoleMemberships } from "./team-roles";
+import { parseAutoJoinRoles, planMergedTeams, planRoleMemberships } from "./team-roles";
 
 describe("parseAutoJoinRoles", () => {
   it("parses a comma-separated list, dropping blanks and duplicates", () => {
@@ -50,5 +50,52 @@ describe("planRoleMemberships", () => {
   it("drops a role team the user was removed from elsewhere", () => {
     expect(planRoleMemberships({ roles: [], teamIds: [], roleTeamIds: ["ce"] }, teams))
       .toEqual({ join: [], leave: [], roleTeamIds: [] });
+  });
+});
+
+describe("planMergedTeams", () => {
+  const kept = { id: "kept", teamIds: ["a", "b", "c"], roleTeamIds: ["b", "c"] };
+  const merged = { id: "merged", teamIds: ["c", "d", "e"], roleTeamIds: ["e"] };
+
+  it("keeps every chosen team with its source, and joins the merged user's teams", () => {
+    expect(planMergedTeams([kept, merged], "kept", ["a", "b", "c", "d", "e"])).toEqual({
+      connect: ["d", "e"],
+      disconnect: [],
+      // c: the kept user joined by role, the merged user by hand → hand-made
+      roleTeamIds: ["b", "e"],
+    });
+  });
+
+  it("leaves teams that were not chosen, including the kept user's own", () => {
+    expect(planMergedTeams([kept, merged], "kept", ["c", "e"])).toEqual({
+      connect: ["e"],
+      disconnect: ["a", "b"],
+      roleTeamIds: ["e"],
+    });
+  });
+
+  it("keeps a role membership when every merged user in the team joined by role", () => {
+    const other = { id: "other", teamIds: ["b"], roleTeamIds: ["b"] };
+    expect(planMergedTeams([kept, other], "kept", ["b"]).roleTeamIds).toEqual(["b"]);
+  });
+
+  it("keeps no team when none is chosen", () => {
+    expect(planMergedTeams([kept, merged], "kept", [])).toEqual({
+      connect: [],
+      disconnect: ["a", "b", "c"],
+      roleTeamIds: [],
+    });
+  });
+
+  it("ignores duplicate ids", () => {
+    expect(planMergedTeams([kept, merged], "kept", ["d", "d"]).connect).toEqual(["d"]);
+  });
+
+  it("rejects a team none of the merged users is in", () => {
+    expect(() => planMergedTeams([kept, merged], "kept", ["a", "x"])).toThrow();
+  });
+
+  it("rejects a kept user that is not one of the merged users", () => {
+    expect(() => planMergedTeams([kept, merged], "nobody", [])).toThrow();
   });
 });

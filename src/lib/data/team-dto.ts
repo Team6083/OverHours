@@ -300,23 +300,32 @@ export async function removeTeamMember(teamId: string, userId: string) {
   assertValidId(teamId);
   assertValidId(userId);
 
-  // A member through a sub-team only is managed on that sub-team
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { teamIds: true, roleTeamIds: true } });
-  if (user?.roleTeamIds.includes(teamId)) {
-    throw new TeamError("This member joined because of a Keycloak role. Remove the role in Keycloak, or the role from this team.");
-  }
-  if (user && !user.teamIds.includes(teamId)) {
-    const viaTeams = getTeamDescendants(await getTeamTree(), teamId).filter(team => user.teamIds.includes(team.id));
-    if (viaTeams.length > 0) {
-      throw new TeamError(
-        `This user is a member through ${viaTeams.map(team => `"${team.name}"`).join(", ")}. Remove them from there instead.`,
-      );
+  // A member who joined by role can be removed too, e.g. someone who left long ago and never signs in again
+  // (their role memberships are only re-evaluated at sign-in). If they still have the role, the role sync
+  // adds them back at their next sign-in or token refresh.
+  await prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({ where: { id: userId }, select: { teamIds: true, roleTeamIds: true } });
+    if (!user) {
+      throw new TeamError("The team or user no longer exists.");
     }
-  }
 
-  await prisma.team.update({
-    where: { id: teamId },
-    data: { users: { disconnect: { id: userId } } },
+    // A member through a sub-team only is managed on that sub-team
+    if (!user.teamIds.includes(teamId)) {
+      const viaTeams = getTeamDescendants(await getTeamTree(), teamId).filter(team => user.teamIds.includes(team.id));
+      if (viaTeams.length > 0) {
+        throw new TeamError(
+          `This user is a member through ${viaTeams.map(team => `"${team.name}"`).join(", ")}. Remove them from there instead.`,
+        );
+      }
+    }
+
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        teams: { disconnect: { id: teamId } },
+        roleTeamIds: user.roleTeamIds.filter(id => id !== teamId),
+      },
+    });
   });
 }
 

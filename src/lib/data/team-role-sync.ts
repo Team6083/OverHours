@@ -25,7 +25,9 @@ export async function syncUserRoleTeams(userId: string, roles: string[]) {
     && plan.roleTeamIds.every(id => user.roleTeamIds.includes(id));
   if (unchanged) return;
 
-  // One write on the user's own document, so concurrent syncs of other users cannot undo it
+  // One update: it sets the user's own document, and the nested connect / disconnect also writes each joined
+  // or left Team's `userIds`. Prisma changes those with atomic add / remove operators rather than rewriting
+  // the whole list, so concurrent syncs of other users on the same teams cannot undo each other.
   await prisma.user.update({
     where: { id: userId },
     data: {

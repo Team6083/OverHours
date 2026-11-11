@@ -12,6 +12,7 @@ import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "r
 import UserCombobox from "@/components/UserCombobox";
 import { toaster } from "@/components/ui/toaster";
 import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
+import { parseAutoJoinRoles } from "@/lib/team-roles";
 import { wouldCreateCycle } from "@/lib/team-tree";
 import {
   type TeamActionResult, addTeamMembersAction, deleteTeamAction, moveTeamAction, removeTeamMemberAction, renameTeamAction,
@@ -48,6 +49,15 @@ function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
   if (savedName !== team.name) {
     setSavedName(team.name);
     setName(team.name);
+  }
+
+  // Controlled for the same reason: a rejected role list shows the saved list again
+  const savedRolesText = team.autoJoinRoles.join(", ");
+  const [roles, setRoles] = useState(savedRolesText);
+  const [savedRoles, setSavedRoles] = useState(savedRolesText);
+  if (savedRoles !== savedRolesText) {
+    setSavedRoles(savedRolesText);
+    setRoles(savedRolesText);
   }
 
   // A team cannot move under itself or its own sub-teams
@@ -111,13 +121,17 @@ function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
         <DataList.ItemValue>
           <Stack gap={1} w="full">
             <Editable.Root
-              // Remount with the saved (normalised) list after each save
-              key={team.autoJoinRoles.join(",")}
               size="sm"
-              defaultValue={team.autoJoinRoles.join(", ")}
+              value={roles}
               placeholder="None"
               disabled={pending}
-              onValueCommit={(e) => run(() => setAutoJoinRolesAction(team.id, e.value))}
+              onValueChange={(e) => setRoles(e.value)}
+              onValueCommit={(e) => run(
+                () => setAutoJoinRolesAction(team.id, e.value),
+                // Show the list as the server saved it: trimmed, without blanks or duplicates
+                () => setRoles(parseAutoJoinRoles(e.value).join(", ")),
+                () => setRoles(savedRolesText),
+              )}
             >
               <Editable.Preview fontFamily="mono" />
               <Editable.Input fontFamily="mono" />
@@ -206,6 +220,13 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
             </Text>
           )}
 
+          {members.some(member => member.viaRole) && (
+            <Text textStyle="xs" color="fg.muted">
+              Members marked &quot;Role&quot; joined because of an auto-join role. Removing one takes them off the team now;
+              if they still have the role, they rejoin at their next sign-in.
+            </Text>
+          )}
+
           {members.length === 0 ? (
             <Text color="fg.muted">This team has no members yet.</Text>
           ) : (
@@ -230,12 +251,15 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
                     </Table.Cell>
                     <Table.Cell color="fg.muted" hideBelow="sm">{member.email}</Table.Cell>
                     <Table.Cell textAlign="end">
-                      {member.direct && !member.viaRole && (
+                      {member.direct && (
                         <IconButton
                           size="xs"
                           variant="ghost"
                           colorPalette="red"
                           aria-label={`Remove ${member.name}`}
+                          title={member.viaRole
+                            ? "Remove. They rejoin at their next sign-in if they still have the role."
+                            : "Remove"}
                           disabled={pending}
                           onClick={() => run(
                             () => removeTeamMemberAction(team.id, member.id),
