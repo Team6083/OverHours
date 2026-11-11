@@ -11,6 +11,7 @@ import GenericTable, { Column } from "@/components/GenericTable";
 import GenericClipboard from "@/components/Clipboard";
 import TimeLogStatusBadge from "@/components/TimeLogStatusBadge";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
+import { formatDuration } from "@/lib/util";
 import { handleDeleteLogs } from "./actions";
 
 type TableData = Omit<TimeLogDTO, "createdAt" | "updatedAt"> & {
@@ -21,20 +22,26 @@ type TableData = Omit<TimeLogDTO, "createdAt" | "updatedAt"> & {
   durationStr: string;
 }
 
-const formatDayTime = (date: Date) => date.toLocaleString(undefined, {
-  year: date.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
+const dayTimeOptions: Intl.DateTimeFormatOptions = {
   month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-});
+};
+const dayTimeFormat = new Intl.DateTimeFormat(undefined, dayTimeOptions);
+const yearDayTimeFormat = new Intl.DateTimeFormat(undefined, { ...dayTimeOptions, year: "numeric" });
+const timeFormat = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 
-const formatTime = (date: Date) => date.toLocaleTimeString(undefined, {
-  hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-});
+const formatDayTime = (date: Date, currentYear: number) =>
+  (date.getFullYear() === currentYear ? dayTimeFormat : yearDayTimeFormat).format(date);
 
-function formatTimeRange(inTime: Date, outTime: Date | undefined, status: TimeLogDTO["status"]): string {
-  if (!outTime || status === "LOCKED") return formatDayTime(inTime);
+function formatTimeRange(inTime: Date, outTime: Date | undefined, status: TimeLogDTO["status"], currentYear: number): string {
+  if (!outTime || status === "LOCKED") return formatDayTime(inTime, currentYear);
 
   const sameDay = inTime.toDateString() === outTime.toDateString();
-  return `${formatDayTime(inTime)} – ${sameDay ? formatTime(outTime) : formatDayTime(outTime)}`;
+  return `${formatDayTime(inTime, currentYear)} – ${sameDay ? timeFormat.format(outTime) : formatDayTime(outTime, currentYear)}`;
+}
+
+function formatLogDuration(inTime: Date, outTime: Date): string {
+  const durationMs = outTime.getTime() - inTime.getTime();
+  return durationMs < 0 ? "—" : formatDuration(durationMs / 1000, { hideSecondsFromMinute: true });
 }
 
 const columns: Column<TableData>[] = [
@@ -66,7 +73,7 @@ const columns: Column<TableData>[] = [
     },
     renderCell: (row, t) => {
       return <ClientOnly fallback={<SkeletonText noOfLines={1} />}>
-        <HStack gap={2}>
+        <HStack gap={2} rowGap={1} flexWrap="wrap">
           <Text as="span" whiteSpace="nowrap">{row.timeRangeStr}</Text>
           {!row.outTime && (
             <Badge colorPalette="orange">
@@ -75,7 +82,7 @@ const columns: Column<TableData>[] = [
             </Badge>
           )}
           {row.outTime && row.status === "LOCKED" && (
-            <Tooltip content={`Clocked-out at ${row.outTimeStr}`}>
+            <Tooltip content={t ? t("tooltips.clockedOutAt", { time: row.outTimeStr }) : `Clocked out at ${row.outTimeStr}`}>
               <Badge colorPalette="red"><Icon><LuLock /></Icon>{t ? t("status.locked") : "Locked"}</Badge>
             </Tooltip>
           )}
@@ -120,6 +127,9 @@ const actionsColumn: Column<TableData> = {
   ),
 };
 
+const adminColumns = [...columns, actionsColumn];
+const memberColumns = columns.filter(column => column.dataKey !== "user");
+
 const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1] | null) => {
   if (!sortBy) return 0;
   const [key, order] = sortBy;
@@ -149,34 +159,22 @@ export default function LogsTable(props: {
   const { logs, userInfo, showAdminActions = false } = props;
   const t = useTranslations("LogsPage");
 
-  const data = logs.map((log): TableData => {
-    const user = userInfo[log.userId];
+  const data = useMemo(() => {
+    const currentYear = new Date().getFullYear();
 
-    let durationStr = "N/A";
-    if (log.outTime) {
-      const durationMs = log.outTime.getTime() - log.inTime.getTime();
-      const totalMinutes = Math.round(durationMs / (1000 * 60));
-      const hours = Math.floor(totalMinutes / 60);
-      const minutes = totalMinutes % 60;
+    return logs.map((log): TableData => {
+      const user = userInfo[log.userId];
 
-      if (durationMs < 1000 * 60) {
-        durationStr = `${Math.floor(durationMs / 1000)}s`;
-      } else if (hours > 0) {
-        durationStr = `${hours}h ${minutes}m`;
-      } else {
-        durationStr = `${minutes}m`;
-      }
-    }
-
-    return {
-      ...log,
-      displayName: user?.name || log.userId,
-      avatarUrl: user?.avatarUrl,
-      timeRangeStr: formatTimeRange(log.inTime, log.outTime, log.status),
-      outTimeStr: log.outTime ? log.outTime.toLocaleString() : "N/A",
-      durationStr,
-    };
-  });
+      return {
+        ...log,
+        displayName: user?.name || log.userId,
+        avatarUrl: user?.avatarUrl,
+        timeRangeStr: formatTimeRange(log.inTime, log.outTime, log.status, currentYear),
+        outTimeStr: log.outTime ? formatDayTime(log.outTime, currentYear) : "N/A",
+        durationStr: log.outTime ? formatLogDuration(log.inTime, log.outTime) : "N/A",
+      };
+    });
+  }, [logs, userInfo]);
 
   const [finishedOnly, setFinishedOnly] = useState(true);
   const [userFilterSelected, setUserFilterSelected] = useState<string | null>(null);
@@ -221,7 +219,7 @@ export default function LogsTable(props: {
 
   return <Pagination.Root count={filteredData.length} defaultPageSize={10} defaultPage={1}>
     <GenericTable<TableData>
-      columns={showAdminActions ? [...columns, actionsColumn] : columns.filter(column => column.dataKey !== "user")}
+      columns={showAdminActions ? adminColumns : memberColumns}
       items={filteredData}
       keyFn={(item) => item.id}
       defaultSortBy={["timeIn", -1]}

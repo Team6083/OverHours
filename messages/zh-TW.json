@@ -117,6 +117,9 @@
       "currentlyIn": "簽到中",
       "locked": "鎖定"
     },
+    "tooltips": {
+      "clockedOutAt": "簽退時間：{time}"
+    },
     "placeholders": {
       "filterUsers": "篩選使用者...",
       "noUsersFound": "找不到使用者"

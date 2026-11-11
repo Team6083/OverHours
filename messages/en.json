@@ -117,6 +117,9 @@
       "currentlyIn": "Currently In",
       "locked": "Locked"
     },
+    "tooltips": {
+      "clockedOutAt": "Clocked out at {time}"
+    },
     "placeholders": {
       "filterUsers": "Filter users...",
       "noUsersFound": "No users found"
