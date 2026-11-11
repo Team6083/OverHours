@@ -1,10 +1,12 @@
 import { ComponentProps, JSX, JSXElementConstructor } from "react";
 
-export function formatDuration(durationSec: number): string {
-  const days = Math.floor(durationSec / 86400);
-  const hours = Math.floor((durationSec % 86400) / 3600);
-  const minutes = Math.floor((durationSec % 3600) / 60);
-  const seconds = durationSec % 60;
+/** With `hideSecondsFromMinute`, seconds are dropped (rounded down) once the duration reaches a minute. */
+export function formatDuration(durationSec: number, options: { hideSecondsFromMinute?: boolean } = {}): string {
+  const total = Math.floor(durationSec);
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = options.hideSecondsFromMinute && total >= 60 ? 0 : total % 60;
 
   const parts = [];
   if (days > 0) parts.push(`${days}d`);
