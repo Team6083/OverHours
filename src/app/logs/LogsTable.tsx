@@ -22,11 +22,12 @@ type TableData = Omit<TimeLogDTO, "createdAt" | "updatedAt"> & {
 }
 
 const formatDayTime = (date: Date) => date.toLocaleString(undefined, {
-  month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false,
+  year: date.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
+  month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
 });
 
 const formatTime = (date: Date) => date.toLocaleTimeString(undefined, {
-  hour: "2-digit", minute: "2-digit", hour12: false,
+  hour: "2-digit", minute: "2-digit", hourCycle: "h23",
 });
 
 function formatTimeRange(inTime: Date, outTime: Date | undefined, status: TimeLogDTO["status"]): string {
@@ -154,22 +155,22 @@ export default function LogsTable(props: {
     let durationStr = "N/A";
     if (log.outTime) {
       const durationMs = log.outTime.getTime() - log.inTime.getTime();
-      const hours = Math.floor(durationMs / (1000 * 60 * 60));
-      const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+      const totalMinutes = Math.round(durationMs / (1000 * 60));
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
 
-      if (hours > 0) {
+      if (durationMs < 1000 * 60) {
+        durationStr = `${Math.floor(durationMs / 1000)}s`;
+      } else if (hours > 0) {
         durationStr = `${hours}h ${minutes}m`;
-      } else if (minutes > 0) {
-        durationStr = `${minutes}m`;
       } else {
-        durationStr = `${seconds}s`;
+        durationStr = `${minutes}m`;
       }
     }
 
     return {
       ...log,
-      displayName: user.name || log.userId,
+      displayName: user?.name || log.userId,
       avatarUrl: user?.avatarUrl,
       timeRangeStr: formatTimeRange(log.inTime, log.outTime, log.status),
       outTimeStr: log.outTime ? log.outTime.toLocaleString() : "N/A",
@@ -220,7 +221,7 @@ export default function LogsTable(props: {
 
   return <Pagination.Root count={filteredData.length} defaultPageSize={10} defaultPage={1}>
     <GenericTable<TableData>
-      columns={showAdminActions ? [...columns, actionsColumn] : columns.slice(1)}
+      columns={showAdminActions ? [...columns, actionsColumn] : columns.filter(column => column.dataKey !== "user")}
       items={filteredData}
       keyFn={(item) => item.id}
       defaultSortBy={["timeIn", -1]}
@@ -256,7 +257,7 @@ export default function LogsTable(props: {
                         const user = userInfo[log.userId];
 
                         return <HStack key={log.id}>
-                          <Badge colorPalette="blue">{user.name ?? log.userId}</Badge>
+                          <Badge colorPalette="blue">{user?.name ?? log.userId}</Badge>
                           <TimeLogStatusBadge status={log.status} />
                           <Badge fontFamily="mono">{log.inTime.toLocaleString()} - {log.outTime?.toLocaleString() ?? "N/A"}</Badge>
                         </HStack>;
