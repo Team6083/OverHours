@@ -211,16 +211,24 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
       data: { userId: targetId },
     });
 
-    // The merged user belongs to every team any of the merged users was in
+    // The merged user keeps the teams the merged users were added to by hand. Teams joined by role follow
+    // the kept user's own roles at their next sign-in.
     const sources = await tx.user.findMany({
       where: { id: { in: sourceIds } },
-      select: { teamIds: true },
+      select: { teamIds: true, roleTeamIds: true },
     });
-    const sourceTeamIds = Array.from(new Set(sources.flatMap(user => user.teamIds)));
+    const sourceTeamIds = Array.from(new Set(
+      sources.flatMap(user => user.teamIds.filter(id => !user.roleTeamIds.includes(id))),
+    ));
     if (sourceTeamIds.length > 0) {
+      const target = await tx.user.findUniqueOrThrow({ where: { id: targetId }, select: { roleTeamIds: true } });
       await tx.user.update({
         where: { id: targetId },
-        data: { teams: { connect: sourceTeamIds.map(id => ({ id })) } },
+        data: {
+          teams: { connect: sourceTeamIds.map(id => ({ id })) },
+          // A team the kept user joined by role but a merged user was added to by hand stays a hand-made membership
+          roleTeamIds: target.roleTeamIds.filter(id => !sourceTeamIds.includes(id)),
+        },
       });
     }
     await removeUsersFromAllTeams(tx, sourceIds);

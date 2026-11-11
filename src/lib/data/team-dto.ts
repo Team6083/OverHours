@@ -3,6 +3,7 @@ import { auth, Role } from "@/auth";
 import { Prisma, Team } from "@/generated/prisma";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
+import { parseAutoJoinRoles } from "../team-roles";
 import { getTeamDescendants, wouldCreateCycle } from "../team-tree";
 
 export type TeamDTO = {
@@ -11,6 +12,8 @@ export type TeamDTO = {
   parentTeamId?: string;
   // Distinct users in this team or any of its sub-teams, like the member list
   memberCount: number;
+  // Users with any of these Keycloak roles join the team automatically
+  autoJoinRoles: string[];
 
   createdAt: Date;
   updatedAt: Date;
@@ -25,6 +28,8 @@ export type TeamMemberDTO = {
   direct: boolean;
   // The sub-teams (at any depth) they are in, which also make them a member of this team
   viaTeams: { id: string; name: string }[];
+  // Joined because of one of the team's auto-join roles; leaves when the role is gone
+  viaRole: boolean;
 }
 
 export class TeamError extends Error { }
@@ -98,6 +103,7 @@ export function prismaTeamToDTO(team: Team, memberCount: number): TeamDTO {
     name: team.name,
     parentTeamId: team.parentTeamId ?? undefined,
     memberCount,
+    autoJoinRoles: team.autoJoinRoles,
     createdAt: team.createdAt,
     updatedAt: team.updatedAt,
   };
@@ -187,6 +193,7 @@ export async function getTeamMembers(teamId: string): Promise<TeamMemberDTO[]> {
     viaTeams: descendants
       .filter(team => user.teamIds.includes(team.id))
       .map(team => ({ id: team.id, name: team.name })),
+    viaRole: user.roleTeamIds.includes(teamId),
   }));
 }
 
@@ -207,9 +214,21 @@ export async function createTeam(name: string, parentTeamId?: string): Promise<T
   return prismaTeamToDTO(team, 0);
 }
 
-export async function updateTeam(id: string, data: { name?: string; parentTeamId?: string | null }): Promise<TeamDTO> {
+export async function updateTeam(
+  id: string,
+  data: { name?: string; parentTeamId?: string | null; autoJoinRoles?: string | string[] },
+): Promise<TeamDTO> {
   await requireAdmin();
   assertValidId(id);
+
+  let autoJoinRoles: string[] | undefined;
+  if (data.autoJoinRoles !== undefined) {
+    try {
+      autoJoinRoles = parseAutoJoinRoles(data.autoJoinRoles);
+    } catch (error) {
+      throw new TeamError((error as Error).message);
+    }
+  }
 
   if (data.parentTeamId) {
     const parentTeamId = data.parentTeamId;
@@ -230,6 +249,7 @@ export async function updateTeam(id: string, data: { name?: string; parentTeamId
     data: {
       name: data.name === undefined ? undefined : normalizeName(data.name),
       parentTeamId: data.parentTeamId,
+      autoJoinRoles,
     },
   });
 
@@ -248,12 +268,15 @@ export async function deleteTeam(id: string) {
 
     const members = await tx.user.findMany({
       where: { teamIds: { has: id } },
-      select: { id: true, teamIds: true },
+      select: { id: true, teamIds: true, roleTeamIds: true },
     });
     for (const member of members) {
       await tx.user.update({
         where: { id: member.id },
-        data: { teamIds: member.teamIds.filter(teamId => teamId !== id) },
+        data: {
+          teamIds: member.teamIds.filter(teamId => teamId !== id),
+          roleTeamIds: member.roleTeamIds.filter(teamId => teamId !== id),
+        },
       });
     }
 
@@ -278,7 +301,10 @@ export async function removeTeamMember(teamId: string, userId: string) {
   assertValidId(userId);
 
   // A member through a sub-team only is managed on that sub-team
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { teamIds: true } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { teamIds: true, roleTeamIds: true } });
+  if (user?.roleTeamIds.includes(teamId)) {
+    throw new TeamError("This member joined because of a Keycloak role. Remove the role in Keycloak, or the role from this team.");
+  }
   if (user && !user.teamIds.includes(teamId)) {
     const viaTeams = getTeamDescendants(await getTeamTree(), teamId).filter(team => user.teamIds.includes(team.id));
     if (viaTeams.length > 0) {

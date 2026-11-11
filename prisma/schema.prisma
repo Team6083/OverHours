@@ -23,6 +23,9 @@ model User {
 
   teams   Team[]   @relation(fields: [teamIds], references: [id])
   teamIds String[] @default([]) @db.ObjectId
+  // The teams in `teamIds` the user joined because of a Keycloak role (Team.autoJoinRoles). They leave
+  // these when they lose the role; other memberships were added by hand and stay.
+  roleTeamIds String[] @default([]) @db.ObjectId
 
   timeLogs TimeLog[]
 
@@ -96,6 +99,10 @@ model Team {
 
   users   User[]   @relation(fields: [userIds], references: [id])
   userIds String[] @default([]) @db.ObjectId
+
+  // Users with any of these roles join the team automatically. Same syntax as ADMIN_ROLES: realm roles
+  // as-is, client roles as `client:role`.
+  autoJoinRoles String[] @default([])
 }
 
 enum StatRangeStatus {

@@ -37,6 +37,10 @@ export async function moveTeamAction(id: string, parentTeamId: string | null) {
   return run(async () => { await updateTeam(id, { parentTeamId }); });
 }
 
+export async function setAutoJoinRolesAction(id: string, roles: string) {
+  return run(async () => { await updateTeam(id, { autoJoinRoles: roles }); });
+}
+
 export async function deleteTeamAction(id: string) {
   return run(async () => { await deleteTeam(id); });
 }

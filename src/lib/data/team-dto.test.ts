@@ -114,7 +114,7 @@ describe("memberCount", () => {
   });
 });
 
-const user = (id: string, name: string, teamIds: string[]) => ({ id, name, email: `${name}@x`, image: null, teamIds });
+const user = (id: string, name: string, teamIds: string[]) => ({ id, name, email: `${name}@x`, image: null, teamIds, roleTeamIds: [] as string[] });
 
 describe("getTeamMembers", () => {
   it("lists direct members and members of sub-teams at any depth", async () => {
@@ -142,7 +142,7 @@ describe("getTeamMembers", () => {
 describe("removeTeamMember", () => {
   it("removes a direct member", async () => {
     teamsAre([team(A), team(B, A)]);
-    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [A, B] });
+    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [A, B], roleTeamIds: [] });
 
     await removeTeamMember(A, U);
 
@@ -151,7 +151,7 @@ describe("removeTeamMember", () => {
 
   it("refuses a member who is only in a sub-team", async () => {
     teamsAre([team(A), team(B, A)]);
-    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [B] });
+    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [B], roleTeamIds: [] });
 
     await expect(removeTeamMember(A, U)).rejects.toThrow(`member through "Team ${B}"`);
     expect(prismaMock.team.update).not.toHaveBeenCalled();

@@ -15,6 +15,7 @@ import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
 import { wouldCreateCycle } from "@/lib/team-tree";
 import {
   type TeamActionResult, addTeamMembersAction, deleteTeamAction, moveTeamAction, removeTeamMemberAction, renameTeamAction,
+  setAutoJoinRolesAction,
 } from "../actions";
 
 function useTeamAction() {
@@ -106,6 +107,42 @@ function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
       </DataList.Item>
 
       <DataList.Item>
+        <DataList.ItemLabel>Auto-join roles</DataList.ItemLabel>
+        <DataList.ItemValue>
+          <Stack gap={1} w="full">
+            <Editable.Root
+              // Remount with the saved (normalised) list after each save
+              key={team.autoJoinRoles.join(",")}
+              size="sm"
+              defaultValue={team.autoJoinRoles.join(", ")}
+              placeholder="None"
+              disabled={pending}
+              onValueCommit={(e) => run(() => setAutoJoinRolesAction(team.id, e.value))}
+            >
+              <Editable.Preview fontFamily="mono" />
+              <Editable.Input fontFamily="mono" />
+              <Editable.Control>
+                <Editable.EditTrigger asChild>
+                  <IconButton variant="ghost" size="xs" aria-label="Edit auto-join roles"><LuPencilLine /></IconButton>
+                </Editable.EditTrigger>
+                <Editable.CancelTrigger asChild>
+                  <IconButton variant="outline" size="xs" aria-label="Cancel"><LuX /></IconButton>
+                </Editable.CancelTrigger>
+                <Editable.SubmitTrigger asChild>
+                  <IconButton variant="outline" size="xs" aria-label="Save"><LuCheck /></IconButton>
+                </Editable.SubmitTrigger>
+              </Editable.Control>
+            </Editable.Root>
+            <Text textStyle="xs" color="fg.muted">
+              Comma-separated Keycloak roles, like ADMIN_ROLES: <code>role</code> for a realm role,{" "}
+              <code>client:role</code> for a client role. Users with any of them join at sign-in and leave when they
+              lose the role.
+            </Text>
+          </Stack>
+        </DataList.ItemValue>
+      </DataList.Item>
+
+      <DataList.Item>
         <DataList.ItemLabel>ID</DataList.ItemLabel>
         <DataList.ItemValue><code>{team.id}</code></DataList.ItemValue>
       </DataList.Item>
@@ -188,11 +225,12 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
                             <Link href={`/admin/teams/${via.id}`}>via {via.name}</Link>
                           </Badge>
                         ))}
+                        {member.viaRole && <Badge size="sm" colorPalette="purple">Role</Badge>}
                       </HStack>
                     </Table.Cell>
                     <Table.Cell color="fg.muted" hideBelow="sm">{member.email}</Table.Cell>
                     <Table.Cell textAlign="end">
-                      {member.direct && (
+                      {member.direct && !member.viaRole && (
                         <IconButton
                           size="xs"
                           variant="ghost"
