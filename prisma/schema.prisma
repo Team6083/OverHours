@@ -89,6 +89,11 @@ model Team {
 
   name String
 
+  // Teams form a tree. Deleting a team that still has sub-teams is refused in code.
+  parentTeam   Team?   @relation("TeamToSubTeams", fields: [parentTeamId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  parentTeamId String? @db.ObjectId
+  subTeams     Team[]  @relation("TeamToSubTeams")
+
   users   User[]   @relation(fields: [userIds], references: [id])
   userIds String[] @default([]) @db.ObjectId
 }

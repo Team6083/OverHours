@@ -2,6 +2,7 @@ import "server-only";
 import { auth, Role } from "@/auth";
 import { User } from "@/generated/prisma";
 import prisma from "../prisma";
+import { removeUsersFromAllTeams } from "./team-dto";
 import { maskName } from "../util";
 
 export type UserDTO = {
@@ -164,8 +165,9 @@ export async function deleteUser(id: string): Promise<UserDTO> {
     throw new Error("Forbidden");
   }
 
-  const user = await prisma.user.delete({
-    where: { id },
+  const user = await prisma.$transaction(async (tx) => {
+    await removeUsersFromAllTeams(tx, [id]);
+    return tx.user.delete({ where: { id } });
   });
 
   return prismaUserToDTO(user);
@@ -182,8 +184,9 @@ export async function deleteUsers(ids: string[]) {
     throw new Error("Forbidden");
   }
 
-  const payload = await prisma.user.deleteMany({
-    where: { id: { in: ids } },
+  const payload = await prisma.$transaction(async (tx) => {
+    await removeUsersFromAllTeams(tx, ids);
+    return tx.user.deleteMany({ where: { id: { in: ids } } });
   });
 
   return payload;
@@ -242,8 +245,9 @@ export async function adminUpdateUser(id: string, data: {
 }
 
 export async function adminDeleteUser(id: string): Promise<UserDTO> {
-  const user = await prisma.user.delete({
-    where: { id },
+  const user = await prisma.$transaction(async (tx) => {
+    await removeUsersFromAllTeams(tx, [id]);
+    return tx.user.delete({ where: { id } });
   });
 
   return prismaUserToDTO(user);

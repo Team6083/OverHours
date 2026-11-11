@@ -3,6 +3,7 @@ import { auth, Role } from "@/auth";
 import { rowsToReassign } from "../attendance";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
+import { removeUsersFromAllTeams } from "./team-dto";
 
 export type MergeUserSummary = {
   id: string;
@@ -209,6 +210,20 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
       where: { userId: { in: sourceIds } },
       data: { userId: targetId },
     });
+
+    // The merged user belongs to every team any of the merged users was in
+    const sources = await tx.user.findMany({
+      where: { id: { in: sourceIds } },
+      select: { teamIds: true },
+    });
+    const sourceTeamIds = Array.from(new Set(sources.flatMap(user => user.teamIds)));
+    if (sourceTeamIds.length > 0) {
+      await tx.user.update({
+        where: { id: targetId },
+        data: { teams: { connect: sourceTeamIds.map(id => ({ id })) } },
+      });
+    }
+    await removeUsersFromAllTeams(tx, sourceIds);
 
     await tx.user.deleteMany({
       where: { id: { in: sourceIds } },
