@@ -7,15 +7,19 @@ vi.mock("@/auth", () => ({
 }));
 const prismaMock = vi.hoisted(() => ({
   team: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), create: vi.fn(), update: vi.fn() },
-  user: { findMany: vi.fn() },
+  user: { findMany: vi.fn(), findUnique: vi.fn() },
 }));
 vi.mock("../prisma", () => ({ default: prismaMock }));
 
-import { TeamError, createTeam, getAllTeamDTOs, toTeamError, updateTeam } from "./team-dto";
+import {
+  TeamError, createTeam, getAllTeamDTOs, getTeamMembers, removeTeamMember, toTeamError, updateTeam,
+} from "./team-dto";
 
 // Valid ObjectIds
 const A = "000000000000000000000001";
 const B = "000000000000000000000002";
+const C = "000000000000000000000003";
+const U = "000000000000000000000011";
 
 const prismaError = (code: string) => Object.assign(new Error(code), { code });
 
@@ -96,6 +100,61 @@ describe("memberCount", () => {
 
     expect(teams.map(t => [t.id, t.memberCount])).toEqual([[A, 1], [B, 2]]);
     expect(prismaMock.user.findMany).toHaveBeenCalledWith({ where: { teamIds: { hasSome: [A, B] } }, select: { teamIds: true } });
+  });
+
+  it("counts each member of a sub-team once in every ancestor", async () => {
+    teamsAre([team(A), team(B, A), team(C, B)]);
+    prismaMock.user.findMany.mockResolvedValue([{ teamIds: [A, B] }, { teamIds: [C] }, { teamIds: [B] }]);
+
+    const teams = await getAllTeamDTOs();
+
+    expect(teams.map(t => [t.id, t.memberCount])).toEqual([[A, 3], [B, 3], [C, 1]]);
+    expect(prismaMock.user.findMany).toHaveBeenCalledTimes(1);
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith({ where: { teamIds: { hasSome: [A, B, C] } }, select: { teamIds: true } });
+  });
+});
+
+const user = (id: string, name: string, teamIds: string[]) => ({ id, name, email: `${name}@x`, image: null, teamIds });
+
+describe("getTeamMembers", () => {
+  it("lists direct members and members of sub-teams at any depth", async () => {
+    teamsAre([team(A), team(B, A), team(C, B)]);
+    prismaMock.user.findMany.mockResolvedValue([
+      user("u1", "Direct", [A]),
+      user("u2", "Both", [A, B]),
+      user("u3", "Grandchild", [C]),
+    ]);
+
+    const members = await getTeamMembers(A);
+
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith({
+      where: { teamIds: { hasSome: [A, B, C] } },
+      orderBy: { name: "asc" },
+    });
+    expect(members.map(m => [m.id, m.direct, m.viaTeams.map(t => t.name)])).toEqual([
+      ["u1", true, []],
+      ["u2", true, [`Team ${B}`]],
+      ["u3", false, [`Team ${C}`]],
+    ]);
+  });
+});
+
+describe("removeTeamMember", () => {
+  it("removes a direct member", async () => {
+    teamsAre([team(A), team(B, A)]);
+    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [A, B] });
+
+    await removeTeamMember(A, U);
+
+    expect(prismaMock.team.update).toHaveBeenCalledWith({ where: { id: A }, data: { users: { disconnect: { id: U } } } });
+  });
+
+  it("refuses a member who is only in a sub-team", async () => {
+    teamsAre([team(A), team(B, A)]);
+    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [B] });
+
+    await expect(removeTeamMember(A, U)).rejects.toThrow(`member through "Team ${B}"`);
+    expect(prismaMock.team.update).not.toHaveBeenCalled();
   });
 });
 

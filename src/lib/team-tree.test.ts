@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildTeamTree, getTeamAncestors, wouldCreateCycle } from "./team-tree";
+import { buildTeamTree, getTeamAncestors, getTeamDescendants, wouldCreateCycle } from "./team-tree";
 
 const teams = [
   { id: "root" },
@@ -46,5 +46,22 @@ describe("wouldCreateCycle", () => {
 
   it("allows moving a team under an unrelated team", () => {
     expect(wouldCreateCycle(teams, "a1", "b")).toBe(false);
+  });
+});
+
+describe("getTeamDescendants", () => {
+  it("lists every team below, parents before children", () => {
+    expect(getTeamDescendants(teams, "root").map(t => t.id)).toEqual(["a", "b", "a1"]);
+    expect(getTeamDescendants(teams, "a").map(t => t.id)).toEqual(["a1"]);
+  });
+
+  it("is empty for a leaf or an unknown team", () => {
+    expect(getTeamDescendants(teams, "a1")).toEqual([]);
+    expect(getTeamDescendants(teams, "missing")).toEqual([]);
+  });
+
+  it("terminates on a cycle", () => {
+    const cyclic = [{ id: "x", parentTeamId: "y" }, { id: "y", parentTeamId: "x" }];
+    expect(getTeamDescendants(cyclic, "x").map(t => t.id)).toEqual(["y"]);
   });
 });

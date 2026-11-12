@@ -42,3 +42,27 @@ export function wouldCreateCycle(teams: TeamLike[], id: string, parentId: string
   if (id === parentId) return true;
   return getTeamAncestors(teams, parentId).some(team => team.id === id);
 }
+
+/** The descendants of a team (sub-teams, their sub-teams and so on), parents before children. Safe on a cycle. */
+export function getTeamDescendants<T extends TeamLike>(teams: T[], id: string): T[] {
+  const children = new Map<string, T[]>();
+  for (const team of teams) {
+    if (team.parentTeamId) {
+      children.set(team.parentTeamId, [...(children.get(team.parentTeamId) ?? []), team]);
+    }
+  }
+
+  const descendants: T[] = [];
+  const seen = new Set([id]);
+  const queue = [id];
+  while (queue.length > 0) {
+    for (const child of children.get(queue.shift()!) ?? []) {
+      if (seen.has(child.id)) continue;
+      seen.add(child.id);
+      descendants.push(child);
+      queue.push(child.id);
+    }
+  }
+
+  return descendants;
+}

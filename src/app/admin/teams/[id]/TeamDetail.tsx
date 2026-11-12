@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Avatar, Button, ButtonGroup, Card, CloseButton, DataList, Dialog, Editable, HStack, Heading, IconButton,
+  Avatar, Badge, Button, ButtonGroup, Card, CloseButton, DataList, Dialog, Editable, HStack, Heading, IconButton,
   NativeSelect, Portal, Stack, Table, Text,
 } from "@chakra-ui/react";
 import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
@@ -125,10 +126,11 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
   const { pending, run } = useTeamAction();
   const [selectedUserId, setSelectedUserId] = useState("");
 
-  const memberIds = useMemo(() => new Set(members.map(m => m.id)), [members]);
+  // A member through a sub-team can still be added to this team directly
+  const directMemberIds = useMemo(() => new Set(members.filter(m => m.direct).map(m => m.id)), [members]);
   const candidates = useMemo(
-    () => users.filter(u => !memberIds.has(u.id)).sort((a, b) => a.name.localeCompare(b.name)),
-    [users, memberIds],
+    () => users.filter(u => !directMemberIds.has(u.id)).sort((a, b) => a.name.localeCompare(b.name)),
+    [users, directMemberIds],
   );
 
   return (
@@ -157,6 +159,12 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
         </HStack>
       </HStack>
 
+      {members.some(member => !member.direct) && (
+        <Text textStyle="xs" color="fg.muted">
+          Members of sub-teams are members of this team too. Those marked &quot;via&quot; are managed on that sub-team.
+        </Text>
+      )}
+
       {members.length === 0 ? (
         <Text color="fg.muted">This team has no members yet.</Text>
       ) : (
@@ -165,26 +173,33 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
             {members.map(member => (
               <Table.Row key={member.id}>
                 <Table.Cell>
-                  <HStack>
+                  <HStack flexWrap="wrap">
                     <Avatar.Root size="xs">
                       <Avatar.Fallback name={member.name} />
                       {member.image && <Avatar.Image src={member.image} />}
                     </Avatar.Root>
                     <Text>{member.name}</Text>
+                    {member.viaTeams.map(via => (
+                      <Badge key={via.id} asChild size="sm" variant="outline">
+                        <Link href={`/admin/teams/${via.id}`}>via {via.name}</Link>
+                      </Badge>
+                    ))}
                   </HStack>
                 </Table.Cell>
                 <Table.Cell color="fg.muted" hideBelow="sm">{member.email}</Table.Cell>
                 <Table.Cell textAlign="end">
-                  <IconButton
-                    size="xs"
-                    variant="ghost"
-                    colorPalette="red"
-                    aria-label={`Remove ${member.name}`}
-                    disabled={pending}
-                    onClick={() => run(() => removeTeamMemberAction(team.id, member.id))}
-                  >
-                    <LuUserMinus />
-                  </IconButton>
+                  {member.direct && (
+                    <IconButton
+                      size="xs"
+                      variant="ghost"
+                      colorPalette="red"
+                      aria-label={`Remove ${member.name}`}
+                      disabled={pending}
+                      onClick={() => run(() => removeTeamMemberAction(team.id, member.id))}
+                    >
+                      <LuUserMinus />
+                    </IconButton>
+                  )}
                 </Table.Cell>
               </Table.Row>
             ))}
@@ -195,8 +210,8 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
   );
 }
 
-function DeleteTeamButton(props: { team: TeamDTO; hasSubTeams: boolean }) {
-  const { team, hasSubTeams } = props;
+function DeleteTeamButton(props: { team: TeamDTO; hasSubTeams: boolean; directMemberCount: number }) {
+  const { team, hasSubTeams, directMemberCount } = props;
   const router = useRouter();
   const { pending, run } = useTeamAction();
 
@@ -219,7 +234,7 @@ function DeleteTeamButton(props: { team: TeamDTO; hasSubTeams: boolean }) {
                 <Text>This team has sub-teams. Delete or move them first.</Text>
               ) : (
                 <Text>
-                  The team is deleted and its {team.memberCount} member(s) are removed from it.
+                  The team is deleted and its {directMemberCount} member(s) are removed from it.
                   Their time logs are not affected.
                 </Text>
               )}
@@ -257,6 +272,8 @@ export default function TeamDetail(props: {
 }) {
   const { team, teams, members, users } = props;
   const hasSubTeams = teams.some(t => t.parentTeamId === team.id);
+  // Only a team without sub-teams can be deleted, so these are all its members
+  const directMemberCount = members.filter(m => m.direct).length;
 
   return (
     <Stack gap={4}>
@@ -264,7 +281,7 @@ export default function TeamDetail(props: {
         <Card.Header>
           <HStack justify="space-between">
             <Heading as="h2" size="md">{team.name}</Heading>
-            <DeleteTeamButton team={team} hasSubTeams={hasSubTeams} />
+            <DeleteTeamButton team={team} hasSubTeams={hasSubTeams} directMemberCount={directMemberCount} />
           </HStack>
         </Card.Header>
         <Card.Body>

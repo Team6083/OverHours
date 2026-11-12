@@ -3,12 +3,13 @@ import { auth, Role } from "@/auth";
 import { Prisma, Team } from "@/generated/prisma";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
-import { wouldCreateCycle } from "../team-tree";
+import { getTeamDescendants, wouldCreateCycle } from "../team-tree";
 
 export type TeamDTO = {
   id: string;
   name: string;
   parentTeamId?: string;
+  // Distinct users in this team or any of its sub-teams, like the member list
   memberCount: number;
 
   createdAt: Date;
@@ -20,6 +21,10 @@ export type TeamMemberDTO = {
   name: string;
   email: string;
   image?: string;
+  // In the team itself, so they can be removed here
+  direct: boolean;
+  // The sub-teams (at any depth) they are in, which also make them a member of this team
+  viaTeams: { id: string; name: string }[];
 }
 
 export class TeamError extends Error { }
@@ -48,31 +53,42 @@ export function toTeamError(error: unknown): TeamError | undefined {
   return undefined;
 }
 
+type TeamTreeEntry = { id: string; name: string; parentTeamId?: string };
+
+/** Every team's place in the tree, to work out sub-team membership. */
+async function getTeamTree(): Promise<TeamTreeEntry[]> {
+  const teams = await prisma.team.findMany({ select: { id: true, name: true, parentTeamId: true } });
+  return teams.map(team => ({ id: team.id, name: team.name, parentTeamId: team.parentTeamId ?? undefined }));
+}
+
 /**
- * Counts members from `User.teamIds`, the side the member list reads. `Team.userIds` may still hold ids of
- * users deleted before teams were cleaned up on user deletion.
+ * Counts the distinct members of each team, counting members of a sub-team as members of its ancestors too.
+ * Reads `User.teamIds`, the side the member list reads: `Team.userIds` may still hold ids of users deleted
+ * before teams were cleaned up on user deletion.
  */
-async function countMembers(teamIds: string[]): Promise<Map<string, number>> {
+async function countMembers(teamIds: string[], tree: TeamTreeEntry[]): Promise<Map<string, number>> {
   const counts = new Map<string, number>();
   if (teamIds.length === 0) {
     return counts;
   }
 
+  const subtrees = new Map(teamIds.map(id => [id, new Set([id, ...getTeamDescendants(tree, id).map(t => t.id)])]));
+  const allIds = Array.from(new Set(Array.from(subtrees.values()).flatMap(ids => Array.from(ids))));
+
   const users = await prisma.user.findMany({
-    where: { teamIds: { hasSome: teamIds } },
+    where: { teamIds: { hasSome: allIds } },
     select: { teamIds: true },
   });
-  for (const user of users) {
-    for (const teamId of user.teamIds) {
-      counts.set(teamId, (counts.get(teamId) ?? 0) + 1);
-    }
+  for (const [teamId, subtree] of subtrees) {
+    counts.set(teamId, users.filter(user => user.teamIds.some(id => subtree.has(id))).length);
   }
 
   return counts;
 }
 
-async function teamsToDTOs(teams: Team[]): Promise<TeamDTO[]> {
-  const counts = await countMembers(teams.map(team => team.id));
+/** `tree` is every team, when the caller already has it. */
+async function teamsToDTOs(teams: Team[], tree?: TeamTreeEntry[]): Promise<TeamDTO[]> {
+  const counts = await countMembers(teams.map(team => team.id), tree ?? await getTeamTree());
   return teams.map(team => prismaTeamToDTO(team, counts.get(team.id) ?? 0));
 }
 
@@ -130,7 +146,7 @@ export async function getAllTeamDTOs(): Promise<TeamDTO[]> {
   await requireAdmin();
 
   const teams = await prisma.team.findMany({ orderBy: { name: "asc" } });
-  return teamsToDTOs(teams);
+  return teamsToDTOs(teams, teams.map(team => ({ ...team, parentTeamId: team.parentTeamId ?? undefined })));
 }
 
 export async function getTeamsForUser(userId: string): Promise<TeamDTO[] | undefined> {
@@ -151,12 +167,17 @@ export async function getTeamsForUser(userId: string): Promise<TeamDTO[] | undef
   return teamsToDTOs(user.teams);
 }
 
+/**
+ * The members of a team: its own members and the members of its sub-teams at any depth. Sub-team members are
+ * managed on their sub-team, so they are not `direct` here.
+ */
 export async function getTeamMembers(teamId: string): Promise<TeamMemberDTO[]> {
   await requireAdmin();
   assertValidId(teamId);
 
+  const descendants = getTeamDescendants(await getTeamTree(), teamId);
   const users = await prisma.user.findMany({
-    where: { teamIds: { has: teamId } },
+    where: { teamIds: { hasSome: [teamId, ...descendants.map(team => team.id)] } },
     orderBy: { name: "asc" },
   });
 
@@ -165,6 +186,10 @@ export async function getTeamMembers(teamId: string): Promise<TeamMemberDTO[]> {
     name: user.name,
     email: user.email,
     image: user.image ?? undefined,
+    direct: user.teamIds.includes(teamId),
+    viaTeams: descendants
+      .filter(team => user.teamIds.includes(team.id))
+      .map(team => ({ id: team.id, name: team.name })),
   }));
 }
 
@@ -254,6 +279,17 @@ export async function removeTeamMember(teamId: string, userId: string) {
   await requireAdmin();
   assertValidId(teamId);
   assertValidId(userId);
+
+  // A member through a sub-team only is managed on that sub-team
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { teamIds: true } });
+  if (user && !user.teamIds.includes(teamId)) {
+    const viaTeams = getTeamDescendants(await getTeamTree(), teamId).filter(team => user.teamIds.includes(team.id));
+    if (viaTeams.length > 0) {
+      throw new TeamError(
+        `This user is a member through ${viaTeams.map(team => `"${team.name}"`).join(", ")}. Remove them from there instead.`,
+      );
+    }
+  }
 
   await prisma.team.update({
     where: { id: teamId },
