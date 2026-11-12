@@ -5,16 +5,10 @@ vi.mock("@/auth", () => ({
   auth: vi.fn(async () => ({ user: { id: "admin", role: "admin" } })),
   Role: { ADMIN: "admin", USER: "user" },
 }));
-const prismaMock = vi.hoisted(() => {
-  const mock = {
-    team: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
-    user: { findMany: vi.fn() },
-    $transaction: vi.fn(),
-  };
-  // Interactive transactions run against the same mock
-  mock.$transaction.mockImplementation((fn: (tx: typeof mock) => unknown) => fn(mock));
-  return mock;
-});
+const prismaMock = vi.hoisted(() => ({
+  team: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), create: vi.fn(), update: vi.fn() },
+  user: { findMany: vi.fn() },
+}));
 vi.mock("../prisma", () => ({ default: prismaMock }));
 
 import { TeamError, createTeam, getAllTeamDTOs, toTeamError, updateTeam } from "./team-dto";
@@ -22,7 +16,6 @@ import { TeamError, createTeam, getAllTeamDTOs, toTeamError, updateTeam } from "
 // Valid ObjectIds
 const A = "000000000000000000000001";
 const B = "000000000000000000000002";
-const C = "000000000000000000000003";
 
 const prismaError = (code: string) => Object.assign(new Error(code), { code });
 
@@ -30,20 +23,13 @@ const team = (id: string, parentTeamId: string | null = null, userIds: string[] 
   id, name: `Team ${id}`, parentTeamId, userIds, createdAt: new Date(0), updatedAt: new Date(0),
 });
 
-// Resolves `team.findMany` and `team.update` against these teams, and `team.updateMany` by matching ids
+// Resolves `team.findMany`, `team.count` and `team.update` against these teams
 function teamsAre(teams: ReturnType<typeof team>[]) {
   prismaMock.team.findMany.mockResolvedValue(teams);
+  prismaMock.team.count.mockImplementation(async ({ where }: { where: { id: string } }) =>
+    teams.filter(t => t.id === where.id).length);
   prismaMock.team.update.mockImplementation(async ({ where, data }: { where: { id: string }; data: object }) =>
     ({ ...teams.find(t => t.id === where.id)!, ...data }));
-  prismaMock.team.updateMany.mockImplementation(async ({ where }: { where: { id: { in: string[] } } }) =>
-    ({ count: where.id.in.filter(id => teams.some(t => t.id === id)).length }));
-}
-
-/** The ids of every team a move writes: the touched teams and the moved team itself. */
-function writtenTeamIds() {
-  const touched = prismaMock.team.updateMany.mock.calls.flatMap(([args]) => args.where.id.in as string[]);
-  const updated = prismaMock.team.update.mock.calls.map(([args]) => args.where.id as string);
-  return new Set([...touched, ...updated]);
 }
 
 beforeEach(() => {
@@ -52,14 +38,12 @@ beforeEach(() => {
 });
 
 describe("createTeam", () => {
-  it("writes the parent in the same transaction, so a concurrent delete of it conflicts", async () => {
+  it("creates a team under an existing parent", async () => {
     teamsAre([team(A)]);
     prismaMock.team.create.mockResolvedValue(team(B, A));
 
     await createTeam("New", A);
 
-    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
-    expect(prismaMock.team.updateMany).toHaveBeenCalledWith({ where: { id: { in: [A] } }, data: { updatedAt: expect.any(Date) } });
     expect(prismaMock.team.create).toHaveBeenCalledWith({ data: { name: "New", parentTeamId: A } });
   });
 
@@ -69,60 +53,15 @@ describe("createTeam", () => {
     await expect(createTeam("New", A)).rejects.toThrow(TeamError);
     expect(prismaMock.team.create).not.toHaveBeenCalled();
   });
-
-  it("does not touch any team for a top-level team", async () => {
-    prismaMock.team.create.mockResolvedValue(team(A));
-
-    await createTeam("New");
-
-    expect(prismaMock.team.updateMany).not.toHaveBeenCalled();
-  });
 });
 
 describe("updateTeam", () => {
-  it("writes the new parent and its ancestors with the move, in one transaction", async () => {
-    // C is under B, which is under A; move a fresh team under C
-    const D = "000000000000000000000004";
-    teamsAre([team(A), team(B, A), team(C, B), team(D)]);
+  it("moves a team under another team", async () => {
+    teamsAre([team(A), team(B)]);
 
-    await updateTeam(D, { parentTeamId: C });
-
-    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
-    expect(prismaMock.team.updateMany).toHaveBeenCalledWith({ where: { id: { in: [C, B, A] } }, data: { updatedAt: expect.any(Date) } });
-    expect(prismaMock.team.update).toHaveBeenCalledWith({ where: { id: D }, data: { name: undefined, parentTeamId: C } });
-  });
-
-  it("makes opposite concurrent moves write a common team, so one of them fails", async () => {
-    const snapshot = [team(A), team(B)];
-
-    teamsAre(snapshot);
-    await updateTeam(A, { parentTeamId: B });
-    const first = writtenTeamIds();
-
-    vi.clearAllMocks();
-    prismaMock.user.findMany.mockResolvedValue([]);
-    teamsAre(snapshot);
     await updateTeam(B, { parentTeamId: A });
-    const second = writtenTeamIds();
 
-    expect([...first].some(id => second.has(id))).toBe(true);
-  });
-
-  it("makes moves that close a longer cycle write a common team", async () => {
-    // B is under A. Moving A under C while C moves under B would form A -> C -> B -> A.
-    const snapshot = [team(A), team(B, A), team(C)];
-
-    teamsAre(snapshot);
-    await updateTeam(A, { parentTeamId: C });
-    const first = writtenTeamIds();
-
-    vi.clearAllMocks();
-    prismaMock.user.findMany.mockResolvedValue([]);
-    teamsAre(snapshot);
-    await updateTeam(C, { parentTeamId: B });
-    const second = writtenTeamIds();
-
-    expect([...first].some(id => second.has(id))).toBe(true);
+    expect(prismaMock.team.update).toHaveBeenCalledWith({ where: { id: B }, data: { name: undefined, parentTeamId: A } });
   });
 
   it("refuses to move a team under its own sub-team", async () => {
@@ -139,12 +78,11 @@ describe("updateTeam", () => {
     expect(prismaMock.team.update).not.toHaveBeenCalled();
   });
 
-  it("does not touch other teams for a rename", async () => {
+  it("renames a team", async () => {
     teamsAre([team(A)]);
 
     await updateTeam(A, { name: " Renamed " });
 
-    expect(prismaMock.team.updateMany).not.toHaveBeenCalled();
     expect(prismaMock.team.update).toHaveBeenCalledWith({ where: { id: A }, data: { name: "Renamed", parentTeamId: undefined } });
   });
 });
@@ -171,12 +109,9 @@ describe("toTeamError", () => {
     expect(toTeamError(prismaError("P2025"))?.message).toBe("The team or user no longer exists.");
   });
 
-  it("asks to retry after a write conflict", () => {
-    expect(toTeamError(prismaError("P2034"))?.message).toMatch(/try again/);
-  });
-
   it("leaves other errors alone", () => {
     expect(toTeamError(prismaError("P2002"))).toBeUndefined();
+    expect(toTeamError(prismaError("P2034"))).toBeUndefined();
     expect(toTeamError(new Error("boom"))).toBeUndefined();
   });
 });

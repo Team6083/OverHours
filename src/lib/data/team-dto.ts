@@ -3,7 +3,7 @@ import { auth, Role } from "@/auth";
 import { Prisma, Team } from "@/generated/prisma";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
-import { getTeamAncestors, wouldCreateCycle } from "../team-tree";
+import { wouldCreateCycle } from "../team-tree";
 
 export type TeamDTO = {
   id: string;
@@ -43,9 +43,6 @@ export function toTeamError(error: unknown): TeamError | undefined {
     // Record not found: another admin deleted the team or user in the meantime
     case "P2025":
       return new TeamError("The team or user no longer exists.");
-    // Transaction write conflict: another change to the same teams ran at the same time
-    case "P2034":
-      return new TeamError("The teams were changed at the same time by someone else. Please try again.");
   }
 
   return undefined;
@@ -171,27 +168,18 @@ export async function getTeamMembers(teamId: string): Promise<TeamMemberDTO[]> {
   }));
 }
 
-/** Bumps `updatedAt` so that a concurrent transaction writing the same teams fails with a write conflict. */
-async function touchTeams(tx: Prisma.TransactionClient, ids: string[]) {
-  const { count } = await tx.team.updateMany({ where: { id: { in: ids } }, data: { updatedAt: new Date() } });
-  return count;
-}
-
 export async function createTeam(name: string, parentTeamId?: string): Promise<TeamDTO> {
   await requireAdmin();
-  const teamName = normalizeName(name);
+
   if (parentTeamId) {
     assertValidId(parentTeamId);
-  }
-
-  // MongoDB transactions only conflict on writes, so the parent is written too: a concurrent delete of the
-  // parent then fails instead of leaving the new team under a deleted parent.
-  const team = await prisma.$transaction(async (tx) => {
-    if (parentTeamId && await touchTeams(tx, [parentTeamId]) === 0) {
+    if (await prisma.team.count({ where: { id: parentTeamId } }) === 0) {
       throw new TeamError("The parent team no longer exists.");
     }
+  }
 
-    return tx.team.create({ data: { name: teamName, parentTeamId } });
+  const team = await prisma.team.create({
+    data: { name: normalizeName(name), parentTeamId },
   });
 
   return prismaTeamToDTO(team, 0);
@@ -200,33 +188,27 @@ export async function createTeam(name: string, parentTeamId?: string): Promise<T
 export async function updateTeam(id: string, data: { name?: string; parentTeamId?: string | null }): Promise<TeamDTO> {
   await requireAdmin();
   assertValidId(id);
-  const name = data.name === undefined ? undefined : normalizeName(data.name);
-  const parentTeamId = data.parentTeamId;
-  if (parentTeamId) {
+
+  if (data.parentTeamId) {
+    const parentTeamId = data.parentTeamId;
     assertValidId(parentTeamId);
+
+    const teams = await prisma.team.findMany({ select: { id: true, parentTeamId: true } });
+    if (!teams.some(team => team.id === parentTeamId)) {
+      throw new TeamError("The parent team no longer exists.");
+    }
+    const tree = teams.map(team => ({ id: team.id, parentTeamId: team.parentTeamId ?? undefined }));
+    if (wouldCreateCycle(tree, id, parentTeamId)) {
+      throw new TeamError("A team cannot be moved under itself or one of its sub-teams.");
+    }
   }
 
-  const team = await prisma.$transaction(async (tx) => {
-    if (parentTeamId) {
-      const teams = await tx.team.findMany({ select: { id: true, parentTeamId: true } });
-      if (!teams.some(team => team.id === parentTeamId)) {
-        throw new TeamError("The parent team no longer exists.");
-      }
-      const tree = teams.map(team => ({ id: team.id, parentTeamId: team.parentTeamId ?? undefined }));
-      if (wouldCreateCycle(tree, id, parentTeamId)) {
-        throw new TeamError("A team cannot be moved under itself or one of its sub-teams.");
-      }
-
-      // MongoDB transactions only conflict on writes, so every team the cycle check relied on is written.
-      // Two moves that together would form a cycle (A under B, B under A) then both write the same team, and
-      // one of them fails with a write conflict instead of both committing.
-      const path = [parentTeamId, ...getTeamAncestors(tree, parentTeamId).map(team => team.id)];
-      if (await touchTeams(tx, path) !== path.length) {
-        throw new TeamError("The parent team no longer exists.");
-      }
-    }
-
-    return tx.team.update({ where: { id }, data: { name, parentTeamId } });
+  const team = await prisma.team.update({
+    where: { id },
+    data: {
+      name: data.name === undefined ? undefined : normalizeName(data.name),
+      parentTeamId: data.parentTeamId,
+    },
   });
 
   return (await teamsToDTOs([team]))[0];
