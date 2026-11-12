@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Badge, Button, ButtonGroup, HStack, IconButton, TreeView, createTreeCollection, useTreeView, useTreeViewContext } from "@chakra-ui/react";
+import { Badge, Button, ButtonGroup, HStack, IconButton, Text, TreeView, createTreeCollection, useTreeView, useTreeViewContext } from "@chakra-ui/react";
 import { LuPlus, LuSquareMinus, LuSquarePlus, LuUsers } from "react-icons/lu";
 
 import { toaster } from "@/components/ui/toaster";
@@ -118,10 +118,11 @@ export default function TeamsTree(props: { teams: TeamDTO[] }) {
     },
   });
 
-  const label = (node: Node) => <>
-    {node.name}
-    {node.memberCount > 0 && <Badge size="xs" variant="surface" ms={1}>{node.memberCount}</Badge>}
-  </>;
+  // A long name is cut off with an ellipsis (full name on hover), so the count badge stays beside it
+  const label = (node: Node) => <HStack gap="1" minW="0">
+    <Text as="span" truncate title={node.name}>{node.name}</Text>
+    {node.memberCount > 0 && <Badge size="xs" variant="surface" flexShrink="0">{node.memberCount}</Badge>}
+  </HStack>;
 
   return <TreeView.RootProvider value={store} size="md">
     <HStack justify="space-between">
@@ -135,13 +136,13 @@ export default function TeamsTree(props: { teams: TeamDTO[] }) {
           nodeState.isBranch ? (
             <TreeView.BranchControl>
               {nodeState.expanded ? <LuSquareMinus /> : <LuSquarePlus />}
-              <TreeView.BranchText flex="1">{label(node)}</TreeView.BranchText>
+              <TreeView.BranchText flex="1" minW="0">{label(node)}</TreeView.BranchText>
               <AddSubTeamButton node={node} />
             </TreeView.BranchControl>
           ) : (
             <TreeView.Item>
               <LuUsers />
-              <TreeView.ItemText flex="1">{label(node)}</TreeView.ItemText>
+              <TreeView.ItemText flex="1" minW="0">{label(node)}</TreeView.ItemText>
               <AddSubTeamButton node={node} />
             </TreeView.Item>
           )
