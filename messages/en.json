@@ -294,5 +294,8 @@
       "keepEditing": "Keep editing",
       "discard": "Discard and switch"
     }
+  },
+  "RankMedal": {
+    "label": "Rank {rank}"
   }
 }

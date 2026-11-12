@@ -294,5 +294,8 @@
       "keepEditing": "繼續編輯",
       "discard": "不儲存，換週"
     }
+  },
+  "RankMedal": {
+    "label": "第 {rank} 名"
   }
 }

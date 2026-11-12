@@ -1,10 +1,13 @@
-import { HStack, Avatar, Stack, Tag, Text } from "@chakra-ui/react";
+import { HStack, Stack, Tag, Text } from "@chakra-ui/react";
+
+import UserAvatar from "@/components/UserAvatar";
 
 export default function UserDisplay(props: {
   user: {
     id: string,
     name?: string,
     image?: string,
+    ranking?: number,
     teams: { id: string, name: string }[],
   }
 }) {
@@ -14,10 +17,12 @@ export default function UserDisplay(props: {
   return (
     <HStack gap={4}>
 
-      <Avatar.Root size={hasTeams ? { base: "sm", md: "xl" } : "xs"}>
-        <Avatar.Fallback name={user.name} />
-        <Avatar.Image src={user.image} />
-      </Avatar.Root>
+      <UserAvatar
+        name={user.name ?? ""}
+        image={user.image}
+        size={hasTeams ? { base: "sm", md: "xl" } : "xs"}
+        rank={user.ranking}
+      />
 
       <Stack gap={1}>
         <Text fontWeight="medium" fontSize="lg">{user.name}</Text>

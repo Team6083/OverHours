@@ -6,33 +6,20 @@ import {
 } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
+import { useRankOf } from "@/components/TopRanks";
+import UserAvatar from "@/components/UserAvatar";
 import { addMonths, DayStatus, monthDates, weekDates } from "@/lib/attendance";
 import { BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getPersonMonth } from "./actions";
 
 export const shortDate = (date: string) => date.slice(5).replace("-", "/");
 
-const AVATAR_PALETTES = ["blue", "teal", "purple", "orange", "pink", "cyan"];
 const MAX_AVATARS = 7;
-
-const paletteFor = (name: string) => AVATAR_PALETTES[
-  [...name].reduce((hash, char) => (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0, 0) % AVATAR_PALETTES.length
-];
-
-export function UserAvatar(props: { user: BoardUser; size: "xs" | "sm" }) {
-  const { user, size } = props;
-
-  return (
-    <Avatar.Root size={size} colorPalette={paletteFor(user.name)} title={user.name}>
-      {user.image && <Avatar.Image src={user.image} alt="" />}
-      <Avatar.Fallback name={user.name} />
-    </Avatar.Root>
-  );
-}
 
 export function NameGroup(props: { label: string; palette: string; users: BoardUser[]; onOpen: () => void }) {
   const { label, palette, users, onOpen } = props;
   const t = useTranslations("Attendance");
+  const rankOf = useRankOf();
 
   const shown = users.slice(0, MAX_AVATARS);
   const hiddenCount = users.length - shown.length;
@@ -56,7 +43,7 @@ export function NameGroup(props: { label: string; palette: string; users: BoardU
           onClick={onOpen}
         >
           <AvatarGroup gap={0} spaceX={-2}>
-            {shown.map(user => <UserAvatar key={user.id} user={user} size="xs" />)}
+            {shown.map(user => <UserAvatar key={user.id} name={user.name} image={user.image} size="xs" rank={rankOf(user.id)} />)}
             {hiddenCount > 0 && (
               <Avatar.Root size="xs" variant="solid" colorPalette="gray">
                 <Avatar.Fallback>+{hiddenCount}</Avatar.Fallback>
@@ -115,6 +102,7 @@ function PersonCalendar(props: {
 }) {
   const { user, month, today, onMonthChange, onSelectDate } = props;
   const t = useTranslations("Attendance");
+  const rankOf = useRankOf();
   const format = useFormatter();
 
   const { data: days, failed, retry } = useKeyedLoad(
@@ -140,7 +128,7 @@ function PersonCalendar(props: {
   return (
     <Stack gap={4}>
       <HStack gap={3} minW={0}>
-        <UserAvatar user={user} size="sm" />
+        <UserAvatar name={user.name} image={user.image} size="sm" rank={rankOf(user.id)} />
         <Stack gap={0} minW={0}>
           <Text fontWeight="medium" truncate>{user.name}</Text>
         </Stack>
@@ -218,6 +206,7 @@ function PersonCalendar(props: {
 function UserListView(props: { groups: UserGroup[]; onSelectUser: (user: BoardUser) => void }) {
   const { groups, onSelectUser } = props;
   const t = useTranslations("Attendance");
+  const rankOf = useRankOf();
   const [query, setQuery] = useState("");
   // Skip autofocus on touch devices, where it would raise the keyboard over the dialog.
   const [autoFocus] = useState(() => typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches);
@@ -258,7 +247,7 @@ function UserListView(props: { groups: UserGroup[]; onSelectUser: (user: BoardUs
                 justifyContent="flex-start"
                 onClick={() => onSelectUser(user)}
               >
-                <UserAvatar user={user} size="sm" />
+                <UserAvatar name={user.name} image={user.image} size="sm" rank={rankOf(user.id)} />
                 <Stack gap={0} minW={0} align="flex-start" fontWeight="normal">
                   <Text fontSize="sm" truncate maxW="full">{user.name}</Text>
                 </Stack>
