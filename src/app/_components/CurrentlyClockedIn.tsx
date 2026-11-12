@@ -3,7 +3,6 @@ import React, { createContext, useContext, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import {
-  Avatar,
   Badge, ButtonGroup, CloseButton, EmptyState, HStack, Icon, IconButton, Input, InputGroup,
   Menu, Pagination, Portal, Spinner, Stack, Table, useFilter, usePaginationContext, VStack
 } from "@chakra-ui/react";
@@ -12,7 +11,9 @@ import {
   LuEllipsisVertical, LuLock, LuSearchSlash, LuTrash2,
 } from "react-icons/lu";
 
+import { useRankOf } from "@/components/TopRanks";
 import { Tooltip } from "@/components/ui/tooltip";
+import UserAvatar from "@/components/UserAvatar";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 
 type CurrentlyClockedInTimeLog = {
@@ -133,6 +134,7 @@ export function CurrentlyClockedInTable(props: {
   const t = useTranslations("HomePage.currentlyInTable");
 
   const { filteredLogs, handleAction: ctxHandleAction } = useCurrentlyClockedInContext();
+  const rankOf = useRankOf();
 
   const [pendingAction, setActionPending] = useState<string | null>(null);
   const handleAction = async (action: "clockOut" | "lock" | "remove", id: string) => {
@@ -192,10 +194,7 @@ export function CurrentlyClockedInTable(props: {
                     <Table.Cell>
                       {showUserAvatar ?
                         <HStack>
-                          <Avatar.Root size="2xs">
-                            <Avatar.Fallback name={item.user.name || ""} />
-                            <Avatar.Image src={item.user.image} />
-                          </Avatar.Root>
+                          <UserAvatar name={item.user.name || ""} image={item.user.image} size="2xs" rank={rankOf(item.user.id)} />
                           {item.user.name || item.user.id}
                         </HStack>
                         : `${item.user.name || item.user.id}`}

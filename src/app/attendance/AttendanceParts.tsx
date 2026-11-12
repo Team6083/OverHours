@@ -5,70 +5,21 @@ import {
   Avatar, AvatarGroup, Box, Button, CloseButton, Dialog, HStack, IconButton, Input, Portal, SimpleGrid, Spinner, Stack, Text,
 } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
-import { TbMedal } from "react-icons/tb";
 
-import { getLeaderboardRankings } from "@/app/actions";
+import { useRankOf } from "@/components/TopRanks";
+import UserAvatar from "@/components/UserAvatar";
 import { addMonths, DayStatus, monthDates, weekDates } from "@/lib/attendance";
 import { BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getPersonMonth } from "./actions";
 
 export const shortDate = (date: string) => date.slice(5).replace("-", "/");
 
-const AVATAR_PALETTES = ["blue", "teal", "purple", "orange", "pink", "cyan"];
 const MAX_AVATARS = 7;
-
-const paletteFor = (name: string) => AVATAR_PALETTES[
-  [...name].reduce((hash, char) => (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0, 0) % AVATAR_PALETTES.length
-];
-
-// Gold, silver and bronze for the all-time top three, fetched once and shared by every avatar.
-const MEDAL_COLORS = ["#EF9F27", "#B4B2A9", "#D85A30"];
-let topThree: Promise<string[]> | null = null;
-
-/** 16px medal at the bottom right of an avatar inside a `position: relative` box; nothing below 3rd. */
-export function RankMedal(props: { rank: number }) {
-  const { rank } = props;
-  const color = MEDAL_COLORS[rank - 1];
-  if (!color) return null;
-
-  // Inline size so a surrounding Button's icon styles can't resize it.
-  return (
-    <Box position="absolute" right="-3px" bottom="-0.5" display="flex" color={color} title={`#${rank}`}>
-      <TbMedal style={{ width: 16, height: 16 }} />
-    </Box>
-  );
-}
-
-function TopMedal(props: { userId: string }) {
-  const [rank, setRank] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    topThree ??= getLeaderboardRankings().then(list => list.slice(0, 3).map(item => item.id)).catch(() => []);
-    topThree.then(ids => { if (active) setRank(ids.indexOf(props.userId) + 1); });
-    return () => { active = false; };
-  }, [props.userId]);
-
-  return <RankMedal rank={rank} />;
-}
-
-export function UserAvatar(props: { user: BoardUser; size: "xs" | "sm" }) {
-  const { user, size } = props;
-
-  return (
-    <Box position="relative" flexShrink={0}>
-      <Avatar.Root size={size} colorPalette={paletteFor(user.name)} title={user.name}>
-        {user.image && <Avatar.Image src={user.image} alt="" />}
-        <Avatar.Fallback name={user.name} />
-      </Avatar.Root>
-      <TopMedal userId={user.id} />
-    </Box>
-  );
-}
 
 export function NameGroup(props: { label: string; palette: string; users: BoardUser[]; onOpen: () => void }) {
   const { label, palette, users, onOpen } = props;
   const t = useTranslations("Attendance");
+  const rankOf = useRankOf();
 
   const shown = users.slice(0, MAX_AVATARS);
   const hiddenCount = users.length - shown.length;
@@ -92,7 +43,7 @@ export function NameGroup(props: { label: string; palette: string; users: BoardU
           onClick={onOpen}
         >
           <AvatarGroup gap={0} spaceX={-2}>
-            {shown.map(user => <UserAvatar key={user.id} user={user} size="xs" />)}
+            {shown.map(user => <UserAvatar key={user.id} name={user.name} image={user.image} size="xs" rank={rankOf(user.id)} />)}
             {hiddenCount > 0 && (
               <Avatar.Root size="xs" variant="solid" colorPalette="gray">
                 <Avatar.Fallback>+{hiddenCount}</Avatar.Fallback>
@@ -151,6 +102,7 @@ function PersonCalendar(props: {
 }) {
   const { user, month, today, onMonthChange, onSelectDate } = props;
   const t = useTranslations("Attendance");
+  const rankOf = useRankOf();
   const format = useFormatter();
 
   const { data: days, failed, retry } = useKeyedLoad(
@@ -176,7 +128,7 @@ function PersonCalendar(props: {
   return (
     <Stack gap={4}>
       <HStack gap={3} minW={0}>
-        <UserAvatar user={user} size="sm" />
+        <UserAvatar name={user.name} image={user.image} size="sm" rank={rankOf(user.id)} />
         <Stack gap={0} minW={0}>
           <Text fontWeight="medium" truncate>{user.name}</Text>
         </Stack>
@@ -254,6 +206,7 @@ function PersonCalendar(props: {
 function UserListView(props: { groups: UserGroup[]; onSelectUser: (user: BoardUser) => void }) {
   const { groups, onSelectUser } = props;
   const t = useTranslations("Attendance");
+  const rankOf = useRankOf();
   const [query, setQuery] = useState("");
   // Skip autofocus on touch devices, where it would raise the keyboard over the dialog.
   const [autoFocus] = useState(() => typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches);
@@ -294,7 +247,7 @@ function UserListView(props: { groups: UserGroup[]; onSelectUser: (user: BoardUs
                 justifyContent="flex-start"
                 onClick={() => onSelectUser(user)}
               >
-                <UserAvatar user={user} size="sm" />
+                <UserAvatar name={user.name} image={user.image} size="sm" rank={rankOf(user.id)} />
                 <Stack gap={0} minW={0} align="flex-start" fontWeight="normal">
                   <Text fontSize="sm" truncate maxW="full">{user.name}</Text>
                 </Stack>
@@ -351,7 +304,6 @@ function DialogContent(props: { title: string; groups: UserGroup[]; month: strin
   const format = useFormatter();
   const [stack, setStack] = useState<View[]>([{ type: "list" }]);
   const view = stack[stack.length - 1];
-  useEffect(() => () => { topThree = null; }, []);
 
   const push = (next: View) => setStack(prev => [...prev, next]);
   const pop = () => setStack(prev => prev.slice(0, -1));
