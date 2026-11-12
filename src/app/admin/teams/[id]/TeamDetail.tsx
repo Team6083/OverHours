@@ -159,9 +159,10 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
         </HStack>
       </HStack>
 
-      {members.some(member => !member.direct) && (
+      {members.some(member => member.viaTeams.length > 0) && (
         <Text textStyle="xs" color="fg.muted">
-          Members of sub-teams are members of this team too. Those marked &quot;via&quot; are managed on that sub-team.
+          Members of sub-teams are members of this team too: &quot;via&quot; shows those sub-teams, where that membership
+          is managed. Removing someone here keeps them listed while they are in a sub-team.
         </Text>
       )}
 
@@ -195,7 +196,13 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
                       colorPalette="red"
                       aria-label={`Remove ${member.name}`}
                       disabled={pending}
-                      onClick={() => run(() => removeTeamMemberAction(team.id, member.id))}
+                      onClick={() => run(
+                        () => removeTeamMemberAction(team.id, member.id),
+                        // They stay listed, so say why rather than look like the removal failed
+                        () => member.viaTeams.length > 0 && toaster.info({
+                          title: `${member.name} is still a member via ${member.viaTeams.map(via => via.name).join(", ")}.`,
+                        }),
+                      )}
                     >
                       <LuUserMinus />
                     </IconButton>

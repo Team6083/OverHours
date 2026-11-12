@@ -89,7 +89,7 @@ export default async function Home() {
         id: user.id,
         name: user.name,
         image: user.image || undefined,
-        teams: userTeams ? userTeams.map(team => ({ id: team.id, name: team.name })) : [],
+        teams: userTeams ?? [],
 
         lastLog: userLastLog || undefined,
         totalTimeSec: allUsersTotalTimeSec[user.id] || 0,

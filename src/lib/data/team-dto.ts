@@ -149,7 +149,8 @@ export async function getAllTeamDTOs(): Promise<TeamDTO[]> {
   return teamsToDTOs(teams, teams.map(team => ({ ...team, parentTeamId: team.parentTeamId ?? undefined })));
 }
 
-export async function getTeamsForUser(userId: string): Promise<TeamDTO[] | undefined> {
+/** The teams a user is directly in, by name. */
+export async function getTeamsForUser(userId: string): Promise<{ id: string; name: string }[] | undefined> {
   const session = await auth();
   if (!session || (session.user.id !== userId && session.user.role !== Role.ADMIN)) {
     return undefined;
@@ -157,14 +158,10 @@ export async function getTeamsForUser(userId: string): Promise<TeamDTO[] | undef
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: { teams: { orderBy: { name: "asc" } } },
+    select: { teams: { select: { id: true, name: true }, orderBy: { name: "asc" } } },
   });
 
-  if (!user) {
-    return undefined;
-  }
-
-  return teamsToDTOs(user.teams);
+  return user?.teams;
 }
 
 /**
