@@ -3,20 +3,30 @@ import { Avatar, Box } from "@chakra-ui/react";
 import { useTranslations } from "next-intl";
 import { PiCrownFill, PiMedalFill } from "react-icons/pi";
 
-// Gold, silver and bronze for 1st, 2nd and 3rd.
-const MEDAL_COLORS = ["#EF9F27", "#B4B2A9", "#915136"];
+// Gold, silver and bronze for 1st, 2nd and 3rd; the dark bronze is too dim on a dark page, so dark mode gets a lighter one.
+const MEDAL_COLORS = [
+  { base: "#EF9F27" },
+  { base: "#B4B2A9" },
+  { base: "#915136", _dark: "#C2774A" },
+];
 
 type AvatarSize = ComponentProps<typeof Avatar.Root>["size"];
+type AvatarSizeToken = Extract<NonNullable<AvatarSize>, string>;
 
-// Icon px per avatar size, about 40% of the avatar.
-const ICON_PX: Record<string, number> = { "2xs": 11, xs: 13, sm: 14, md: 16, lg: 17, xl: 19, "2xl": 24, full: 24 };
+// Chakra v3 avatar sizes in px; `full` has no fixed size, so it is treated like `md`.
+const AVATAR_PX: Record<AvatarSizeToken, number> = { "2xs": 24, xs: 32, sm: 36, md: 40, lg: 44, xl: 48, "2xl": 64, full: 40 };
+
+// 40% of the avatar, but never below 11px so it stays readable on the smallest avatars.
+const iconPx = (size: AvatarSizeToken) => Math.max(11, Math.round(AVATAR_PX[size] * 0.4));
 
 /** Maps a (possibly responsive) avatar size to a responsive style value. */
 function bySize(size: AvatarSize, f: (px: number) => string) {
-  const one = (s: unknown) => f(ICON_PX[String(s ?? "md")] ?? 16);
+  const one = (s: AvatarSizeToken | null | undefined) => f(iconPx(s ?? "md"));
   if (Array.isArray(size)) return size.map(one);
-  if (size && typeof size === "object") return Object.fromEntries(Object.entries(size).map(([k, v]) => [k, one(v)]));
-  return one(size);
+  if (size && typeof size === "object") {
+    return Object.fromEntries(Object.entries(size).map(([k, v]) => [k, one(v as AvatarSizeToken | null | undefined)]));
+  }
+  return one(size as AvatarSizeToken | null | undefined);
 }
 
 /** Crown on top of a `position: relative` avatar for 1st, a medal at the bottom right for 2nd and 3rd, sized to the avatar. */

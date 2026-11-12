@@ -9,7 +9,7 @@ const paletteFor = (name: string) => AVATAR_PALETTES[
   [...name].reduce((hash, char) => (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0, 0) % AVATAR_PALETTES.length
 ];
 
-/** Every user avatar in the app: one palette per name, initials as the fallback, and a medal for the top three. */
+/** Every user avatar in the app: one palette per name, initials as the fallback, a crown for 1st place and a medal for 2nd and 3rd. */
 export default function UserAvatar(props: {
   name: string;
   image?: string | null;
