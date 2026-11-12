@@ -68,7 +68,7 @@ export function validateConfig(env: Record<string, string | undefined> = process
   }
 
   if (autoLockTime && !cronSecret) {
-    warnings.push("AUTO_LOCK_TIME is set but CRON_SECRET is not: the auto-lock endpoint answers 503, so sessions are never locked");
+    warnings.push("AUTO_LOCK_TIME is set but CRON_SECRET is not: the auto-lock endpoint answers 503, so sessions nobody clocks out of are never locked");
   }
 
   const timeZone = tz || getTimeZone();

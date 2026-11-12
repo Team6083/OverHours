@@ -267,7 +267,7 @@ Endpoints:
 - `GET /api/admin/users/{id}` / `PUT /api/admin/users/{id}` / `DELETE /api/admin/users/{id}`
 - `GET /api/admin/timelogs` / `POST /api/admin/timelogs`
 - `GET /api/admin/timelogs/locked` — locked logs with user details, filtered by clock-in time; `?format=csv` for CSV
-- `POST /api/admin/jobs/auto-lock` — lock every session past the daily cut-off; for an external scheduler
+- `POST /api/admin/jobs/auto-lock` — lock every session past the daily cut-off; for an external scheduler; uses `CRON_SECRET`, not `ADMIN_API_KEY` (see [Auto-lock](#auto-lock))
 - `GET /api/admin/timelogs/{id}` / `PUT /api/admin/timelogs/{id}` / `DELETE /api/admin/timelogs/{id}`
 
 The full OpenAPI 3.0 schema is available at [`/openapi/admin-api.json`](public/openapi/admin-api.json).
