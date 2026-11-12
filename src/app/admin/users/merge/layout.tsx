@@ -1,11 +1,5 @@
-import { Container, Card } from "@chakra-ui/react";
+import { Container } from "@chakra-ui/react";
 
 export default function MergeUsersLayout({ children }: { children: React.ReactNode }) {
-  return <Container maxWidth="lg">
-    <Card.Root variant="elevated">
-      <Card.Body>
-        {children}
-      </Card.Body>
-    </Card.Root>
-  </Container>;
+  return <Container maxWidth="lg">{children}</Container>;
 }

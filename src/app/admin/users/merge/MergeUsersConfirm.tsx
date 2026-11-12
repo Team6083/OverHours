@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import {
-  Alert, Badge, Button, ButtonGroup, Checkbox, HStack, Heading, Icon, List, RadioGroup, Stack, Text,
+  Alert, Badge, Button, ButtonGroup, Card, Checkbox, HStack, Heading, Icon, List, RadioGroup, Stack, Text,
 } from "@chakra-ui/react";
 import { LuMerge } from "react-icons/lu";
 
@@ -101,80 +101,88 @@ export default function MergeUsersConfirm(props: {
     setError(state?.error);
   });
 
-  return <Stack gap={4}>
-    <Heading as="h2" size="md">Merge Users</Heading>
+  return <Card.Root variant="elevated">
+    <Card.Header>
+      <Card.Title asChild><Heading as="h2" size="md">Merge Users</Heading></Card.Title>
+      <Card.Description>
+        Choose the user to keep. The time logs of the other users are moved to it, then the other users are deleted.
+      </Card.Description>
+    </Card.Header>
 
-    <Text>Choose the user to keep. The time logs of the other users are moved to it, then the other users are deleted.</Text>
+    <Card.Body>
+      <Stack gap={4}>
+        <RadioGroup.Root value={targetId} onValueChange={(e) => setTargetId(e.value ?? targetId)}>
+          <Stack gap={2}>
+            {users.map(user => (
+              <RadioGroup.Item key={user.id} value={user.id}>
+                <RadioGroup.ItemHiddenInput />
+                <RadioGroup.ItemIndicator />
+                <RadioGroup.ItemText>
+                  <HStack flexWrap="wrap">
+                    <Text fontWeight="medium">{user.name}</Text>
+                    <Text color="fg.muted">{user.email}</Text>
+                    <Badge>{user.timeLogCount} time logs</Badge>
+                    {user.id === currentUserId && <Badge colorPalette="blue">You</Badge>}
+                    {user.id === targetId
+                      ? <Badge colorPalette="green">Keep</Badge>
+                      : <Badge colorPalette="red">Delete</Badge>}
+                  </HStack>
+                </RadioGroup.ItemText>
+              </RadioGroup.Item>
+            ))}
+          </Stack>
+        </RadioGroup.Root>
 
-    <RadioGroup.Root value={targetId} onValueChange={(e) => setTargetId(e.value ?? targetId)}>
-      <Stack gap={2}>
-        {users.map(user => (
-          <RadioGroup.Item key={user.id} value={user.id}>
-            <RadioGroup.ItemHiddenInput />
-            <RadioGroup.ItemIndicator />
-            <RadioGroup.ItemText>
-              <HStack flexWrap="wrap">
-                <Text fontWeight="medium">{user.name}</Text>
-                <Text color="fg.muted">{user.email}</Text>
-                <Badge>{user.timeLogCount} time logs</Badge>
-                {user.id === currentUserId && <Badge colorPalette="blue">You</Badge>}
-                {user.id === targetId
-                  ? <Badge colorPalette="green">Keep</Badge>
-                  : <Badge colorPalette="red">Delete</Badge>}
-              </HStack>
-            </RadioGroup.ItemText>
-          </RadioGroup.Item>
-        ))}
+        {teams.length > 0 && (
+          <MergeTeamsPicker teams={teams} nameById={nameById} dropTeamIds={dropTeamIds} onChange={setDropTeamIds} />
+        )}
+
+        <Text color="fg.muted">Linked sign-in accounts of the deleted users move to the kept user, so signing in with any of them reaches the kept user.</Text>
+
+        <Text color="fg.muted">{totalLogs} time logs will belong to the kept user. Its name and email stay unchanged. With several linked accounts its email no longer follows a provider; edit it on the user&apos;s page.</Text>
+
+        {hasConflicts && (
+          <Alert.Root status="error">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Overlapping time logs ({conflictCount})</Alert.Title>
+              <Alert.Description>
+                <Text mb={2}>Time logs of different users overlap, so these users cannot be merged. Fix or remove them first. A log that is still clocked in counts as lasting until now.</Text>
+                <List.Root>
+                  {conflicts.map(c => (
+                    <List.Item key={`${c.a.id}-${c.b.id}`}>
+                      {formatLog(c.a, nameById)} ↔ {formatLog(c.b, nameById)}
+                    </List.Item>
+                  ))}
+                </List.Root>
+                {conflictCount > conflicts.length && <Text mt={2}>… and {conflictCount - conflicts.length} more.</Text>}
+              </Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
+        )}
+
+        {mergesSelfAway && (
+          <Alert.Root status="warning">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Description>
+                You cannot merge your own account into another user. Choose your account as the one to keep.
+              </Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
+        )}
+
+        {error && (
+          <Alert.Root status="error">
+            <Alert.Indicator />
+            <Alert.Content><Alert.Description>{error}</Alert.Description></Alert.Content>
+          </Alert.Root>
+        )}
+
       </Stack>
-    </RadioGroup.Root>
+    </Card.Body>
 
-    {teams.length > 0 && (
-      <MergeTeamsPicker teams={teams} nameById={nameById} dropTeamIds={dropTeamIds} onChange={setDropTeamIds} />
-    )}
-
-    <Text color="fg.muted">Linked sign-in accounts of the deleted users move to the kept user, so signing in with any of them reaches the kept user.</Text>
-
-    <Text color="fg.muted">{totalLogs} time logs will belong to the kept user. Its name and email stay unchanged. With several linked accounts its email no longer follows a provider; edit it on the user&apos;s page.</Text>
-
-    {hasConflicts && (
-      <Alert.Root status="error">
-        <Alert.Indicator />
-        <Alert.Content>
-          <Alert.Title>Overlapping time logs ({conflictCount})</Alert.Title>
-          <Alert.Description>
-            <Text mb={2}>Time logs of different users overlap, so these users cannot be merged. Fix or remove them first. A log that is still clocked in counts as lasting until now.</Text>
-            <List.Root>
-              {conflicts.map(c => (
-                <List.Item key={`${c.a.id}-${c.b.id}`}>
-                  {formatLog(c.a, nameById)} ↔ {formatLog(c.b, nameById)}
-                </List.Item>
-              ))}
-            </List.Root>
-            {conflictCount > conflicts.length && <Text mt={2}>… and {conflictCount - conflicts.length} more.</Text>}
-          </Alert.Description>
-        </Alert.Content>
-      </Alert.Root>
-    )}
-
-    {mergesSelfAway && (
-      <Alert.Root status="warning">
-        <Alert.Indicator />
-        <Alert.Content>
-          <Alert.Description>
-            You cannot merge your own account into another user. Choose your account as the one to keep.
-          </Alert.Description>
-        </Alert.Content>
-      </Alert.Root>
-    )}
-
-    {error && (
-      <Alert.Root status="error">
-        <Alert.Indicator />
-        <Alert.Content><Alert.Description>{error}</Alert.Description></Alert.Content>
-      </Alert.Root>
-    )}
-
-    <HStack justify="flex-end">
+    <Card.Footer justifyContent="flex-end">
       <ButtonGroup size="sm" variant="subtle">
         <Button asChild><Link href="/admin/users">Cancel</Link></Button>
         <Button colorPalette="red" onClick={submit} loading={pending} disabled={hasConflicts || mergesSelfAway}>
@@ -182,6 +190,6 @@ export default function MergeUsersConfirm(props: {
           Merge
         </Button>
       </ButtonGroup>
-    </HStack>
-  </Stack>;
+    </Card.Footer>
+  </Card.Root>;
 }
