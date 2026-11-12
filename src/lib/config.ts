@@ -42,11 +42,13 @@ export function getAutoLockConfig(): AutoLockConfig | null {
 }
 
 /**
- * Checks the settings this module owns, returning every problem at once (empty when valid) and a
- * one-line summary of the effective values. Called at startup, which exits on errors.
+ * Checks the settings this module owns, returning every problem at once (empty when valid), warnings
+ * about settings that start but likely do not work as intended, and a one-line summary of the effective
+ * values. Called at startup, which exits on errors and logs warnings.
  */
-export function validateConfig(env: Record<string, string | undefined> = process.env): { errors: string[]; summary: string } {
+export function validateConfig(env: Record<string, string | undefined> = process.env): { errors: string[]; warnings: string[]; summary: string } {
   const errors: string[] = [];
+  const warnings: string[] = [];
 
   const tz = env.TZ?.trim();
   if (tz && !isValidTimeZone(tz)) {
@@ -58,8 +60,19 @@ export function validateConfig(env: Record<string, string | undefined> = process
     errors.push(`AUTO_LOCK_TIME "${autoLockTime}" is not a time of day (expected HH:mm, e.g. 23:00)`);
   }
 
+  // CRON_SECRET exists so the scheduler holds nothing that can change data; the same value as
+  // ADMIN_API_KEY would hand it the full Admin API again.
+  const cronSecret = env.CRON_SECRET;
+  if (cronSecret && cronSecret === env.ADMIN_API_KEY) {
+    errors.push("CRON_SECRET must differ from ADMIN_API_KEY");
+  }
+
+  if (autoLockTime && !cronSecret) {
+    warnings.push("AUTO_LOCK_TIME is set but CRON_SECRET is not: the auto-lock endpoint answers 503, so sessions nobody clocks out of are never locked");
+  }
+
   const timeZone = tz || getTimeZone();
   const summary = `config: TZ=${timeZone}${tz ? "" : " (unset)"} AUTO_LOCK_TIME=${autoLockTime || "off"}`;
 
-  return { errors, summary };
+  return { errors, warnings, summary };
 }
