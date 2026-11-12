@@ -121,9 +121,12 @@ function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
         <DataList.ItemLabel>
           Auto-join roles
           <InfoTip contentProps={{ maxW: "xs" }} buttonProps={{ "aria-label": "About auto-join roles" }}>
-            Comma-separated Keycloak roles, like ADMIN_ROLES: <code>role</code> for a realm role,{" "}
-            <code>client:role</code> for a client role. Users with any of them join at sign-in and leave when they
-            lose the role.
+            {/* One element: the tip's content is a flex column, which would put each piece on its own line */}
+            <Text>
+              Comma-separated Keycloak roles, like ADMIN_ROLES: <code>role</code> for a realm role,{" "}
+              <code>client:role</code> for a client role. Users with any of them join at sign-in and leave when they
+              lose the role.
+            </Text>
           </InfoTip>
         </DataList.ItemLabel>
         <DataList.ItemValue>
