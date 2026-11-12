@@ -43,7 +43,7 @@ function MergeTeamsPicker(props: {
 
   return <Stack gap={2}>
     <Heading as="h3" size="sm">Teams</Heading>
-    <Text color="fg.muted">
+    <Text as="p" fontSize="sm" color="fg.muted">
       Choose the teams the kept user stays in. Each keeps how it was joined: by hand, or by role when every user
       in it joined by role. A role team that is not kept is joined again at the next sign-in if the user still
       has the role. A team the users join after this page loaded is kept too.
@@ -137,9 +137,9 @@ export default function MergeUsersConfirm(props: {
           <MergeTeamsPicker teams={teams} nameById={nameById} dropTeamIds={dropTeamIds} onChange={setDropTeamIds} />
         )}
 
-        <Text color="fg.muted">Linked sign-in accounts of the deleted users move to the kept user, so signing in with any of them reaches the kept user.</Text>
+        <Text as="p" fontSize="sm" color="fg.muted">Linked sign-in accounts of the deleted users move to the kept user, so signing in with any of them reaches the kept user.</Text>
 
-        <Text color="fg.muted">{totalLogs} time logs will belong to the kept user. Its name and email stay unchanged. With several linked accounts its email no longer follows a provider; edit it on the user&apos;s page.</Text>
+        <Text as="p" fontSize="sm" color="fg.muted">{totalLogs} time logs will belong to the kept user. Its name and email stay unchanged. With several linked accounts its email no longer follows a provider; edit it on the user&apos;s page.</Text>
 
         {hasConflicts && (
           <Alert.Root status="error">
