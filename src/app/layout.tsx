@@ -11,7 +11,7 @@ import { getTranslations } from "next-intl/server";
 import { SessionProvider } from "next-auth/react";
 
 import { Avatar, Box, Button, CloseButton, Container, Drawer, Flex, Heading, HStack, Icon, IconButton, Menu, MenuSelectionDetails, Portal, Separator, Stack, Text } from "@chakra-ui/react";
-import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange, LuCalendarCheck } from "react-icons/lu";
+import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange, LuCalendarCheck, LuKeyRound } from "react-icons/lu";
 
 import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
@@ -154,6 +154,14 @@ async function NavBar(props: {
                 <Portal>
                   <Menu.Positioner>
                     <Menu.Content>
+                      {session.user.role === Role.ADMIN && (
+                        <Menu.Item value="api-keys" asChild>
+                          <Link href="/admin/api-keys">
+                            <LuKeyRound />
+                            {t("nav.apiKeys")}
+                          </Link>
+                        </Menu.Item>
+                      )}
                       <Menu.Item value="signout">
                         <LuLogOut />
                         {t("nav.signOut")}

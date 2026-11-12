@@ -136,3 +136,15 @@ model AttendanceEntry {
   @@unique([userId, date, slot])
   @@index([date])
 }
+
+// An Admin API key limited to the scopes it lists (see src/lib/api-scopes.ts), for external programs such as the
+// attendance spreadsheet. Only the SHA-256 of the key is stored; the key itself is shown once when it is created.
+model ApiKey {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  name    String
+  scopes  String[]
+  keyHash String   @unique
+}

@@ -186,7 +186,8 @@
       "statRanges": "Stat Ranges",
       "attendance": "Availability",
       "signIn": "Sign-In",
-      "signOut": "Sign-Out"
+      "signOut": "Sign-Out",
+      "apiKeys": "API keys"
     },
     "menu": "Menu"
   },
@@ -294,5 +295,29 @@
       "keepEditing": "Keep editing",
       "discard": "Discard and switch"
     }
+  },
+  "ApiKeys": {
+    "title": "API keys",
+    "description": "Keys for external programs, such as the attendance spreadsheet. Each key can only use the scopes ticked for it; every other Admin API call is refused.",
+    "newKey": "New key",
+    "name": "Name",
+    "namePlaceholder": "Attendance spreadsheet",
+    "scopes": "Scopes",
+    "scope": {
+      "attendance:read": "Read attendance",
+      "timelogs:read": "Read time logs",
+      "timelogs:write": "Change time logs",
+      "users:read": "Read users",
+      "users:write": "Change users",
+      "jobs:run": "Run auto-lock"
+    },
+    "create": "Create",
+    "shownOnce": "This is the new key and it is only shown once. Copy it now; it won't be visible after you leave this page.",
+    "empty": "No keys yet.",
+    "status": "Created {created}, last used: {lastUsed}",
+    "neverUsed": "never",
+    "revoke": "Revoke",
+    "confirmRevoke": "Programs using \"{name}\" will stop working right away. Revoke it?",
+    "failed": "That didn't work. Try again."
   }
 }

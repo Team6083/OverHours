@@ -237,6 +237,20 @@ external systems. Set `ADMIN_API_KEY` in the environment, then send it as a Bear
 curl -H "Authorization: Bearer $ADMIN_API_KEY" http://localhost:3000/api/admin/users
 ```
 
+`ADMIN_API_KEY` can call every endpoint. For a program that only needs part of the API, such as a spreadsheet that
+reads attendance, an admin can create a scoped key at `/admin/api-keys` (also in the avatar menu). Scoped keys start
+with `ohk_`, are shown once and stored only as a SHA-256 hash, and work even when `ADMIN_API_KEY` is unset. A scoped
+key used outside its scopes gets `403 forbidden`; an unknown or revoked key gets `401`.
+
+| Scope | Endpoints |
+| --- | --- |
+| `attendance:read` | `GET /api/admin/attendance` |
+| `timelogs:read` | `GET /api/admin/timelogs`, `GET /api/admin/timelogs/{id}`, `GET /api/admin/timelogs/locked` |
+| `timelogs:write` | `POST /api/admin/timelogs`, `PUT` / `DELETE /api/admin/timelogs/{id}` |
+| `users:read` | `GET /api/admin/users`, `GET /api/admin/users/{id}` |
+| `users:write` | `POST /api/admin/users`, `PUT` / `DELETE /api/admin/users/{id}` |
+| `jobs:run` | `POST /api/admin/jobs/auto-lock` |
+
 Endpoints:
 
 - `GET /api/admin/users` / `POST /api/admin/users`

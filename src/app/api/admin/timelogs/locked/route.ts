@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 
 import { apiError, withApiErrors } from "@/lib/api-error";
-import { verifyAdminApiKey } from "@/lib/admin-api-auth";
+import { verifyApiKey } from "@/lib/admin-api-auth";
 import { getTimeZone } from "@/lib/config";
 import { lockedCsvResponse, queryLockedTimeLogRows } from "@/lib/data/locked-export";
 
@@ -14,7 +14,7 @@ const querySchema = z.object({
 
 // Locked (abnormal clock-out) time logs with user details, for violation records.
 export const GET = withApiErrors(async (req: NextRequest) => {
-  const authError = verifyAdminApiKey(req);
+  const authError = await verifyApiKey(req, "timelogs:read");
   if (authError) return authError;
 
   const { searchParams } = req.nextUrl;

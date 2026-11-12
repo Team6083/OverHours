@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { apiError, withApiErrors } from "@/lib/api-error";
-import { verifyAdminApiKey } from "@/lib/admin-api-auth";
+import { verifyApiKey } from "@/lib/admin-api-auth";
 import { datesInRange, isCalendarDate, MAX_RANGE_DAYS } from "@/lib/attendance";
 import { adminGetAttendance } from "@/lib/data/attendance-dto";
 
 export const GET = withApiErrors(async (req: NextRequest) => {
-  const authError = verifyAdminApiKey(req);
+  const authError = await verifyApiKey(req, "attendance:read");
   if (authError) return authError;
 
   const start = req.nextUrl.searchParams.get("start") ?? "";
