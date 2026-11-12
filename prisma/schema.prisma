@@ -121,7 +121,9 @@ model StatRange {
   status    StatRangeStatus @default(Active)
 }
 
+// WillCome: promised to be there. Available: can come if needed. No row means not filled in.
 enum AttendanceStatus {
+  WillCome
   Available
   Unavailable
 }

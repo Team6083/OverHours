@@ -1,7 +1,11 @@
 import { toWallTime } from "./zoned-time";
 
-export type AttendanceStatus = "AVAILABLE" | "UNAVAILABLE";
+/** The answers in the order they are shown: will come (promised), can come (if needed), can't come. */
+export const ATTENDANCE_STATUSES = ["WILL_COME", "AVAILABLE", "UNAVAILABLE"] as const;
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 export type DayStatus = AttendanceStatus | "NOT_FILLED";
+
+export const STATUS_PALETTE: Record<AttendanceStatus, string> = { WILL_COME: "green", AVAILABLE: "yellow", UNAVAILABLE: "red" };
 
 export const MAX_RANGE_DAYS = 92;
 

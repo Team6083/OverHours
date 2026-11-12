@@ -271,18 +271,20 @@
     "searchPlaceholder": "Search name or ID",
     "noMatch": "No matching names",
     "status": {
-      "AVAILABLE": "Yes",
-      "UNAVAILABLE": "No",
+      "WILL_COME": "Will come",
+      "AVAILABLE": "If needed",
+      "UNAVAILABLE": "Can't",
       "NOT_FILLED": "Not filled"
     },
     "board": {
-      "available": "Coming ({count})",
-      "unavailable": "Not coming ({count})",
+      "WILL_COME": "Will come ({count})",
+      "AVAILABLE": "Can come ({count})",
+      "UNAVAILABLE": "Can't come ({count})",
       "everyone": "Everyone ({count})"
     },
     "week": {
       "heading": "My availability",
-      "help": "Fill in each day, then save. Pick a date to see who is coming that day. Past days can't be changed.",
+      "help": "\"Will come\" is a promise; \"If needed\" means you can come if asked. Fill in each day, then save. Pick a date to see who is coming that day. Past days can't be changed.",
       "previous": "Previous week",
       "next": "Next week",
       "thisWeek": "This week",

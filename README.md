@@ -211,12 +211,19 @@ whole days in `TZ`), or through `GET /api/admin/timelogs/locked` (JSON or `forma
 
 ## Attendance
 
-Members fill in each day on `/attendance` as available or unavailable, and can clear a day back to not filled
-in. A day without an entry counts as not filled in. Past days cannot be changed. Every member can see who is
-available and who is unavailable on each day, and how many people have filled it in; people who have not filled
-it in are not listed.
+Members answer each day on `/attendance` with one of three answers, and can clear a day back to not filled in:
 
-Run `npx prisma db push` once after deploying so the unique index exists. Set `TZ`, because "today" is worked
+| Answer | Meaning | Stored as |
+| --- | --- | --- |
+| Will come | Promised to be there | `WillCome` |
+| Can come | Can be there if needed | `Available` |
+| Can't come | Away | `Unavailable` |
+| Not filled | No answer; **not** the same as will come | no row |
+
+Past days cannot be changed. Every member can see who gave each answer on each day; people who have not filled
+it in are not listed. Rows saved before "will come" existed keep `Available` and show as can come.
+
+Run `npx prisma db push` once after deploying so the unique index exists and the `WillCome` value is accepted. Set `TZ`, because "today" is worked
 out in that zone.
 
 External programs, such as a Slack bot, read everyone's status through the Admin API:
@@ -226,7 +233,8 @@ curl -H "Authorization: Bearer $ADMIN_API_KEY" "https://overhours.example.com/ap
 # {"data":{"start":"2027-01-11","end":"2027-01-17","users":[{"id":"...","name":"...","email":"...","days":[{"date":"2027-01-11","status":"AVAILABLE"}]}]}}
 ```
 
-`status` is `AVAILABLE`, `UNAVAILABLE` or `NOT_FILLED`. A request covers at most 92 days.
+`status` is `AVAILABLE`, `UNAVAILABLE` or `NOT_FILLED`; "will come" is reported as `AVAILABLE` for now, so
+existing clients see no new value. A request covers at most 92 days.
 
 ## Teams
 

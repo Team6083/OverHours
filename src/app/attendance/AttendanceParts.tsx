@@ -8,8 +8,8 @@ import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 import { useRankOf } from "@/components/TopRanks";
 import UserAvatar from "@/components/UserAvatar";
-import { addMonths, DayStatus, monthDates, weekDates } from "@/lib/attendance";
-import { BoardUser } from "@/lib/data/attendance-dto";
+import { addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates, STATUS_PALETTE, weekDates } from "@/lib/attendance";
+import { BoardDay, BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getPersonMonth } from "./actions";
 
 export const shortDate = (date: string) => date.slice(5).replace("-", "/");
@@ -24,9 +24,10 @@ export function NameGroup(props: { label: string; palette: string; users: BoardU
   const shown = users.slice(0, MAX_AVATARS);
   const hiddenCount = users.length - shown.length;
 
+  // On phones the label sits beside the avatars, so three groups still fit on one screen.
   return (
-    <Stack gap={2}>
-      <HStack gap={2}>
+    <Stack direction={{ base: "row", md: "column" }} gap={2} align={{ base: "center", md: "stretch" }} justify="space-between" minH={8}>
+      <HStack gap={2} flexShrink={0}>
         <Box w={2} h={2} rounded="full" bg={`${palette}.solid`} />
         <Text fontSize="sm" fontWeight="medium">{label}</Text>
       </HStack>
@@ -91,7 +92,11 @@ export function useKeyedLoad<T>(key: string, load: (key: string) => Promise<T | 
 const matchesQuery = (user: BoardUser, needle: string) =>
   [user.name, user.id].some(field => field.toLowerCase().includes(needle));
 
-export type UserGroup = { key: "available" | "unavailable" | "everyone"; palette: string; users: BoardUser[] };
+export type UserGroup = { key: AttendanceStatus | "everyone"; palette: string; users: BoardUser[] };
+
+/** A day's will come / can come / can't come groups, in display order. */
+export const boardGroups = (day: BoardDay): UserGroup[] =>
+  ATTENDANCE_STATUSES.map(status => ({ key: status, palette: STATUS_PALETTE[status], users: day[status] }));
 
 function PersonCalendar(props: {
   user: BoardUser;
@@ -119,11 +124,9 @@ function PersonCalendar(props: {
     format.dateTime(new Date(`${date}T00:00:00Z`), { timeZone: "UTC", weekday: "narrow" }));
   const monthLabel = format.dateTime(new Date(`${month}-01T00:00:00Z`), { timeZone: "UTC", year: "numeric", month: "long" });
 
-  const cellStyle = (status: DayStatus | undefined) => status === "AVAILABLE"
-    ? { bg: "green.subtle", color: "green.fg" }
-    : status === "UNAVAILABLE"
-      ? { bg: "red.subtle", color: "red.fg" }
-      : { bg: "transparent", color: "fg.muted" };
+  const cellStyle = (status: DayStatus | undefined) => status && status !== "NOT_FILLED"
+    ? { bg: `${STATUS_PALETTE[status]}.subtle`, color: `${STATUS_PALETTE[status]}.fg` }
+    : { bg: "transparent", color: "fg.muted" };
 
   return (
     <Stack gap={4}>
@@ -185,7 +188,7 @@ function PersonCalendar(props: {
       )}
 
       <HStack gap={4} fontSize="xs" color="fg.muted" wrap="wrap">
-        {(["AVAILABLE", "UNAVAILABLE", "NOT_FILLED"] as const).map(status => (
+        {([...ATTENDANCE_STATUSES, "NOT_FILLED"] as const).map(status => (
           <HStack key={status} gap={1}>
             <Box
               w={3}
@@ -193,7 +196,7 @@ function PersonCalendar(props: {
               rounded="sm"
               borderWidth="1px"
               borderColor="border.muted"
-              bg={status === "AVAILABLE" ? "green.subtle" : status === "UNAVAILABLE" ? "red.subtle" : "transparent"}
+              bg={status === "NOT_FILLED" ? "transparent" : `${STATUS_PALETTE[status]}.subtle`}
             />
             {t(`status.${status}`)}
           </HStack>
@@ -283,13 +286,7 @@ function DayView(props: { date: string; onSelectUser: (user: BoardUser) => void 
   if (day === undefined) return <Spinner size="sm" />;
 
   return (
-    <UserListView
-      groups={[
-        { key: "available", palette: "green", users: day.available },
-        { key: "unavailable", palette: "red", users: day.unavailable },
-      ]}
-      onSelectUser={onSelectUser}
-    />
+    <UserListView groups={boardGroups(day)} onSelectUser={onSelectUser} />
   );
 }
 
