@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "OverHours Admin API",
-    "description": "Admin API for managing users and time logs. Authenticated with a Bearer token: the static ADMIN_API_KEY (every permission), or a Keycloak-issued access token whose roles grant the endpoint's permission (see README, Admin API).",
+    "description": "Admin API for managing users and time logs. Authenticated with a Bearer token: the static ADMIN_API_KEY (every permission), or a Keycloak-issued access token whose roles grant the endpoint's permission (see README, Admin API); the jobs endpoint uses its own secret (CRON_SECRET).",
     "version": "1.0.0"
   },
   "servers": [
@@ -335,7 +335,8 @@
       "post": {
         "tags": ["Jobs"],
         "summary": "Lock sessions past the daily cut-off",
-        "description": "Locks every CURRENTLY_IN time log that has passed the daily cut-off (AUTO_LOCK_TIME), with outTime set to the cut-off and lockReason AUTO_TIMEOUT. Meant for an external scheduler; idempotent. Does nothing when auto-lock is not configured (enabled: false).",
+        "description": "Locks every CURRENTLY_IN time log that has passed the daily cut-off (AUTO_LOCK_TIME), with outTime set to the cut-off and lockReason AUTO_TIMEOUT. Meant for an external scheduler; idempotent. Does nothing when auto-lock is not configured (enabled: false). Authenticated with CRON_SECRET; ADMIN_API_KEY is not accepted.",
+        "security": [{ "cronAuth": [] }],
         "responses": {
           "200": {
             "description": "Sweep result",
@@ -359,9 +360,9 @@
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "401": { "$ref": "#/components/responses/CronUnauthorized" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/CronNotConfigured" }
         }
       }
     },
@@ -468,6 +469,11 @@
         "type": "http",
         "scheme": "bearer",
         "description": "ADMIN_API_KEY, or a Keycloak access token whose aud contains API_TOKEN_AUDIENCE and whose roles grant the endpoint's permission (API_ROLES_* or ADMIN_ROLES)"
+      },
+      "cronAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Scheduler secret for /admin/jobs/*, set via the CRON_SECRET environment variable"
       }
     },
     "schemas": {
@@ -682,6 +688,24 @@
           "application/json": {
             "schema": { "$ref": "#/components/schemas/Error" },
             "example": { "error": { "code": "service_unavailable", "message": "Admin API is not configured" } }
+          }
+        }
+      },
+      "CronUnauthorized": {
+        "description": "Missing or invalid Bearer CRON_SECRET (ADMIN_API_KEY is not accepted here)",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": { "code": "unauthenticated", "message": "Unauthorized" } }
+          }
+        }
+      },
+      "CronNotConfigured": {
+        "description": "Jobs endpoint is not configured (CRON_SECRET not set)",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": { "code": "service_unavailable", "message": "Cron secret is not configured" } }
           }
         }
       }

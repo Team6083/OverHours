@@ -35,6 +35,18 @@ describe("validateConfig", () => {
   it.each(["23", "23:0", "24:00", "11pm", "23:00:00"])("rejects AUTO_LOCK_TIME %s", (value) => {
     expect(validateConfig({ AUTO_LOCK_TIME: value }).errors).toHaveLength(1);
   });
+
+  it("rejects a CRON_SECRET equal to ADMIN_API_KEY", () => {
+    const { errors } = validateConfig({ CRON_SECRET: "same", ADMIN_API_KEY: "same" });
+    expect(errors).toEqual([expect.stringContaining("CRON_SECRET")]);
+    expect(validateConfig({ CRON_SECRET: "cron", ADMIN_API_KEY: "admin" }).errors).toEqual([]);
+  });
+
+  it("warns when AUTO_LOCK_TIME is set without CRON_SECRET", () => {
+    expect(validateConfig({ AUTO_LOCK_TIME: "23:00" }).warnings).toEqual([expect.stringContaining("CRON_SECRET")]);
+    expect(validateConfig({ AUTO_LOCK_TIME: "23:00", CRON_SECRET: "cron" }).warnings).toEqual([]);
+    expect(validateConfig({}).warnings).toEqual([]);
+  });
 });
 
 describe("getAutoLockConfig", () => {

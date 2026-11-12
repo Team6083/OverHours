@@ -49,7 +49,8 @@ Variables are read at runtime unless noted otherwise.
 | `AUTH_TRUST_HOST` | No | Set to `true` to let Auth.js trust the `Host` header. Auth.js variable, not read by this repository's code; often needed behind a reverse proxy. |
 | `ADMIN_ROLES`, `ALLOWED_ROLES`, `AUTH_KEYCLOAK_ALGORITHMS`, `AUTH_KEYCLOAK_VERIFY_GRACE_SEC`, `AUTH_KEYCLOAK_ROLES_CLAIM` | No | Role and token verification settings; see [Auth configuration](#auth-configuration). |
 | `NEXT_MANUAL_SIG_HANDLE` | No | Disables the shutdown flag used by `/api/readyz`; see [Health checks](#health-checks). |
-| `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*` with every permission. Without it, only Keycloak tokens are accepted; see [Admin API](#admin-api). |
+| `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*` with every permission, except `/api/admin/jobs/*`. Without it, only Keycloak tokens are accepted; see [Admin API](#admin-api). |
+| `CRON_SECRET` | For auto-lock | Bearer token accepted by `/api/admin/jobs/*` and nothing else, for the scheduler (e.g. a Kubernetes CronJob). The jobs endpoint is rejected when it is unset (a startup warning is logged if `AUTO_LOCK_TIME` is set); `ADMIN_API_KEY` is not accepted there. Must differ from `ADMIN_API_KEY`, or the server refuses to start. |
 | `API_TOKEN_AUDIENCE`, `API_ROLES_*` | No | Which Keycloak tokens the Admin API accepts and what they may call; see [Admin API](#admin-api). |
 | `ORG_NAME` | No | Name of the organisation running this instance. Shown in the header, footer and page description. When unset, no organisation text is shown. |
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
@@ -195,11 +196,11 @@ time is the cut-off).
 
 The app checks this only at clock-out: clocking out (or an admin clocking someone out) after the cut-off
 locks the session instead and tells the user. A session whose user never clocks out stays "currently in"
-until something locks it, so run a scheduler (for example a Kubernetes CronJob) that calls the Admin API
-regularly, e.g. every few minutes:
+until something locks it, so run a scheduler (for example a Kubernetes CronJob) that calls the jobs endpoint
+regularly, e.g. every few minutes, with `CRON_SECRET` (not `ADMIN_API_KEY`):
 
 ```bash
-curl -X POST -H "Authorization: Bearer $ADMIN_API_KEY" https://overhours.example.com/api/admin/jobs/auto-lock
+curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://overhours.example.com/api/admin/jobs/auto-lock
 # {"data":{"enabled":true,"lockedCount":1,"lockedIds":["..."]}}
 ```
 
@@ -285,7 +286,7 @@ same syntax as `ADMIN_ROLES`, and a token with any of those roles gets the permi
 | `users:write` | `API_ROLES_USERS_WRITE` | `POST /api/admin/users`, `PUT` / `DELETE /api/admin/users/{id}` |
 
 A valid token without the permission gets `403 forbidden`; an invalid or expired token gets `401`, and `503` if
-Keycloak can't be reached to check it. `POST /api/admin/jobs/auto-lock` still takes `ADMIN_API_KEY` only.
+Keycloak can't be reached to check it. `POST /api/admin/jobs/auto-lock` takes `CRON_SECRET` only (see [Auto-lock](#auto-lock)).
 
 Endpoints:
 
@@ -293,7 +294,7 @@ Endpoints:
 - `GET /api/admin/users/{id}` / `PUT /api/admin/users/{id}` / `DELETE /api/admin/users/{id}`
 - `GET /api/admin/timelogs` / `POST /api/admin/timelogs`
 - `GET /api/admin/timelogs/locked` — locked logs with user details, filtered by clock-in time; `?format=csv` for CSV
-- `POST /api/admin/jobs/auto-lock` — lock every session past the daily cut-off; for an external scheduler
+- `POST /api/admin/jobs/auto-lock` — lock every session past the daily cut-off; for an external scheduler; uses `CRON_SECRET`, not `ADMIN_API_KEY` (see [Auto-lock](#auto-lock))
 - `GET /api/admin/timelogs/{id}` / `PUT /api/admin/timelogs/{id}` / `DELETE /api/admin/timelogs/{id}`
 
 The full OpenAPI 3.0 schema is available at [`/openapi/admin-api.json`](public/openapi/admin-api.json).

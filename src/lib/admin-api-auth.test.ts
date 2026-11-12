@@ -9,7 +9,7 @@ vi.mock("@/lib/api-token", async importOriginal => ({
   verifyApiToken,
 }));
 
-import { verifyApiKey } from "./admin-api-auth";
+import { verifyAdminApiKey, verifyApiKey, verifyCronSecret } from "./admin-api-auth";
 
 const JWT = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ4In0.c2ln";
 const ISSUER = "https://keycloak.example.test/realms/team";
@@ -95,5 +95,50 @@ describe("verifyApiKey with a Keycloak token", () => {
     vi.stubEnv("AUTH_KEYCLOAK_ISSUER", "");
     expect(await status(JWT)).toBe(503);
     expect(verifyApiToken).not.toHaveBeenCalled();
+  });
+});
+
+const secretRequest = (token?: string) => new NextRequest("http://localhost/api/admin/x", {
+  headers: token === undefined ? {} : { Authorization: `Bearer ${token}` },
+});
+
+describe("static secrets", () => {
+  beforeEach(() => {
+    vi.stubEnv("ADMIN_API_KEY", "admin-secret");
+    vi.stubEnv("CRON_SECRET", "cron-secret");
+  });
+
+  describe("verifyAdminApiKey", () => {
+    it("accepts ADMIN_API_KEY", () => {
+      expect(verifyAdminApiKey(secretRequest("admin-secret"))).toBeNull();
+    });
+
+    it("rejects CRON_SECRET, a wrong token and a missing header with 401", () => {
+      expect(verifyAdminApiKey(secretRequest("cron-secret"))?.status).toBe(401);
+      expect(verifyAdminApiKey(secretRequest("wrong"))?.status).toBe(401);
+      expect(verifyAdminApiKey(secretRequest())?.status).toBe(401);
+    });
+
+    it("is unavailable (503) when ADMIN_API_KEY is unset", () => {
+      vi.stubEnv("ADMIN_API_KEY", "");
+      expect(verifyAdminApiKey(secretRequest("admin-secret"))?.status).toBe(503);
+    });
+  });
+
+  describe("verifyCronSecret", () => {
+    it("accepts CRON_SECRET", () => {
+      expect(verifyCronSecret(secretRequest("cron-secret"))).toBeNull();
+    });
+
+    it("rejects ADMIN_API_KEY, a wrong token and a missing header with 401", () => {
+      expect(verifyCronSecret(secretRequest("admin-secret"))?.status).toBe(401);
+      expect(verifyCronSecret(secretRequest("wrong"))?.status).toBe(401);
+      expect(verifyCronSecret(secretRequest())?.status).toBe(401);
+    });
+
+    it("is unavailable (503) when CRON_SECRET is unset, even if ADMIN_API_KEY is set", () => {
+      vi.stubEnv("CRON_SECRET", "");
+      expect(verifyCronSecret(secretRequest("admin-secret"))?.status).toBe(503);
+    });
   });
 });
