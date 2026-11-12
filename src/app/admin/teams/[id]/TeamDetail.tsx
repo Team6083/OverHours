@@ -224,9 +224,9 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
             </Text>
           )}
 
-          {members.some(member => member.viaRole) && (
+          {members.some(member => member.direct && member.viaRole) && (
             <Text textStyle="xs" color="fg.muted">
-              Members marked &quot;Role&quot; joined because of an auto-join role. Removing one takes them off the team now;
+              Members marked &quot;Role&quot; joined because of an auto-join role. Removing one ends that membership now;
               if they still have the role, they rejoin at their next sign-in.
             </Text>
           )}
@@ -250,7 +250,7 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
                             <Link href={`/admin/teams/${via.id}`}>via {via.name}</Link>
                           </Badge>
                         ))}
-                        {member.viaRole && <Badge size="sm" colorPalette="purple">Role</Badge>}
+                        {member.direct && member.viaRole && <Badge size="sm" colorPalette="purple">Role</Badge>}
                       </HStack>
                     </Table.Cell>
                     <Table.Cell color="fg.muted" hideBelow="sm">{member.email}</Table.Cell>

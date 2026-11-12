@@ -61,8 +61,8 @@ export function toTeamError(error: unknown): TeamError | undefined {
 type TeamTreeEntry = { id: string; name: string; parentTeamId?: string };
 
 /** Every team's place in the tree, to work out sub-team membership. */
-async function getTeamTree(): Promise<TeamTreeEntry[]> {
-  const teams = await prisma.team.findMany({ select: { id: true, name: true, parentTeamId: true } });
+async function getTeamTree(db: Prisma.TransactionClient = prisma): Promise<TeamTreeEntry[]> {
+  const teams = await db.team.findMany({ select: { id: true, name: true, parentTeamId: true } });
   return teams.map(team => ({ id: team.id, name: team.name, parentTeamId: team.parentTeamId ?? undefined }));
 }
 
@@ -311,7 +311,7 @@ export async function removeTeamMember(teamId: string, userId: string) {
 
     // A member through a sub-team only is managed on that sub-team
     if (!user.teamIds.includes(teamId)) {
-      const viaTeams = getTeamDescendants(await getTeamTree(), teamId).filter(team => user.teamIds.includes(team.id));
+      const viaTeams = getTeamDescendants(await getTeamTree(tx), teamId).filter(team => user.teamIds.includes(team.id));
       if (viaTeams.length > 0) {
         throw new TeamError(
           `This user is a member through ${viaTeams.map(team => `"${team.name}"`).join(", ")}. Remove them from there instead.`,

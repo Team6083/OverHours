@@ -145,47 +145,6 @@ describe("getTeamMembers", () => {
   });
 });
 
-describe("removeTeamMember", () => {
-  it("removes a direct member", async () => {
-    teamsAre([team(A), team(B, A)]);
-    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [A, B], roleTeamIds: [B] });
-
-    await removeTeamMember(A, U);
-
-    expect(prismaMock.user.update).toHaveBeenCalledWith({
-      where: { id: U },
-      data: { teams: { disconnect: { id: A } }, roleTeamIds: [B] },
-    });
-  });
-
-  it("removes a member who joined by role, clearing the team from both lists", async () => {
-    teamsAre([team(A), team(B, A)]);
-    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [A, B], roleTeamIds: [A, B] });
-
-    await removeTeamMember(A, C);
-
-    expect(prismaMock.user.update).toHaveBeenCalledWith({
-      where: { id: C },
-      data: { teams: { disconnect: { id: A } }, roleTeamIds: [B] },
-    });
-  });
-
-  it("refuses a member who is only in a sub-team", async () => {
-    teamsAre([team(A), team(B, A)]);
-    prismaMock.user.findUnique.mockResolvedValue({ teamIds: [B], roleTeamIds: [] });
-
-    await expect(removeTeamMember(A, U)).rejects.toThrow(`member through "Team ${B}"`);
-    expect(prismaMock.user.update).not.toHaveBeenCalled();
-  });
-
-  it("reports a user that no longer exists", async () => {
-    prismaMock.user.findUnique.mockResolvedValue(null);
-
-    await expect(removeTeamMember(A, C)).rejects.toBeInstanceOf(TeamError);
-    expect(prismaMock.user.update).not.toHaveBeenCalled();
-  });
-});
-
 describe("toTeamError", () => {
   it("keeps a TeamError", () => {
     const error = new TeamError("x");
@@ -200,5 +159,66 @@ describe("toTeamError", () => {
     expect(toTeamError(prismaError("P2002"))).toBeUndefined();
     expect(toTeamError(prismaError("P2034"))).toBeUndefined();
     expect(toTeamError(new Error("boom"))).toBeUndefined();
+  });
+});
+describe("removeTeamMember", () => {
+  // A client of its own, so that reading or writing outside the transaction fails these tests
+  const tx = {
+    team: { findMany: vi.fn() },
+    user: { findUnique: vi.fn(), update: vi.fn() },
+  };
+
+  beforeEach(() => {
+    tx.team.findMany.mockResolvedValue([]);
+    prismaMock.$transaction.mockImplementationOnce((fn: (client: typeof tx) => unknown) => fn(tx));
+  });
+
+  function expectNoGlobalClientCalls() {
+    expect(prismaMock.team.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.user.update).not.toHaveBeenCalled();
+  }
+
+  it("removes a member who joined by role, clearing the team from both lists", async () => {
+    tx.user.findUnique.mockResolvedValue({ teamIds: [A, B], roleTeamIds: [A, B] });
+
+    await removeTeamMember(A, C);
+
+    expect(tx.user.update).toHaveBeenCalledWith({
+      where: { id: C },
+      data: { teams: { disconnect: { id: A } }, roleTeamIds: [B] },
+    });
+    expectNoGlobalClientCalls();
+  });
+
+  it("removes a member added by hand", async () => {
+    tx.user.findUnique.mockResolvedValue({ teamIds: [A, B], roleTeamIds: [B] });
+
+    await removeTeamMember(A, C);
+
+    expect(tx.user.update).toHaveBeenCalledWith({
+      where: { id: C },
+      data: { teams: { disconnect: { id: A } }, roleTeamIds: [B] },
+    });
+    expectNoGlobalClientCalls();
+  });
+
+  it("refuses a member who is only in a sub-team, even one who joined it by role", async () => {
+    // Only the transaction sees the sub-team, so a tree read through the global client finds none
+    tx.team.findMany.mockResolvedValue([team(A), team(B, A)]);
+    prismaMock.team.findMany.mockResolvedValue([team(A)]);
+    tx.user.findUnique.mockResolvedValue({ teamIds: [B], roleTeamIds: [B] });
+
+    await expect(removeTeamMember(A, U)).rejects.toThrow(`member through "Team ${B}"`);
+    expect(tx.user.update).not.toHaveBeenCalled();
+    expectNoGlobalClientCalls();
+  });
+
+  it("reports a user that no longer exists", async () => {
+    tx.user.findUnique.mockResolvedValue(null);
+
+    await expect(removeTeamMember(A, C)).rejects.toBeInstanceOf(TeamError);
+    expect(tx.user.update).not.toHaveBeenCalled();
+    expectNoGlobalClientCalls();
   });
 });
