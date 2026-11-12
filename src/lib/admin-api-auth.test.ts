@@ -1,73 +1,99 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const apiKey = vi.hoisted(() => ({ findUnique: vi.fn(), update: vi.fn() }));
+const verifyApiToken = vi.hoisted(() => vi.fn());
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/prisma", () => ({ default: { apiKey } }));
+vi.mock("@/lib/api-token", async importOriginal => ({
+  ...await importOriginal<typeof import("@/lib/api-token")>(),
+  verifyApiToken,
+}));
 
-import { generateApiKey, hashApiKey, verifyApiKey } from "./admin-api-auth";
+import { verifyApiKey } from "./admin-api-auth";
 
-const SCOPED = "ohk_attendance-only";
+const JWT = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ4In0.c2ln";
+const ISSUER = "https://keycloak.example.test/realms/team";
+
 const request = (key?: string) => new NextRequest("http://localhost/api/admin/attendance", {
   headers: key ? { Authorization: `Bearer ${key}` } : {},
 });
+const status = async (key: string | undefined, scope: Parameters<typeof verifyApiKey>[1] = "attendance:read") =>
+  (await verifyApiKey(request(key), scope))?.status ?? 200;
+
+const joseError = (code: string) => Object.assign(new Error(code), { code });
 
 beforeEach(() => {
   vi.stubEnv("ADMIN_API_KEY", "secret");
-  apiKey.findUnique.mockReset().mockImplementation(async ({ where }: { where: { keyHash: string } }) =>
-    where.keyHash === hashApiKey(SCOPED) ? { id: "k1", scopes: ["attendance:read"] } : null);
-  apiKey.update.mockReset().mockResolvedValue({});
+  vi.stubEnv("AUTH_KEYCLOAK_ISSUER", ISSUER);
+  vi.stubEnv("ADMIN_ROLES", "admin");
+  vi.stubEnv("API_ROLES_ATTENDANCE_READ", "overhours:attendance-reader");
+  verifyApiToken.mockReset().mockResolvedValue(["overhours:attendance-reader"]);
+  vi.spyOn(console, "error").mockImplementation(() => { });
 });
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.restoreAllMocks();
 });
 
-describe("verifyApiKey", () => {
-  it("lets ADMIN_API_KEY use every scope without a database lookup", async () => {
-    expect(await verifyApiKey(request("secret"), "users:write")).toBeNull();
-    expect(apiKey.findUnique).not.toHaveBeenCalled();
+describe("verifyApiKey with ADMIN_API_KEY", () => {
+  it("lets ADMIN_API_KEY use every scope without verifying a token", async () => {
+    expect(await status("secret", "users:write")).toBe(200);
+    expect(verifyApiToken).not.toHaveBeenCalled();
   });
 
-  it("rejects a missing or wrong admin key", async () => {
-    expect((await verifyApiKey(request(), "attendance:read"))?.status).toBe(401);
-    expect((await verifyApiKey(request("wrong"), "attendance:read"))?.status).toBe(401);
+  it("rejects a missing or wrong key", async () => {
+    expect(await status(undefined)).toBe(401);
+    expect(await status("wrong")).toBe(401);
   });
 
-  it("is unavailable without ADMIN_API_KEY for non-scoped keys", async () => {
+  it("is unavailable for a plain key when ADMIN_API_KEY is unset", async () => {
     vi.stubEnv("ADMIN_API_KEY", "");
-    expect((await verifyApiKey(request("secret"), "attendance:read"))?.status).toBe(503);
+    expect(await status("secret")).toBe(503);
+  });
+});
+
+describe("verifyApiKey with a Keycloak token", () => {
+  it("lets a token with a role configured for the scope through", async () => {
+    expect(await status(JWT)).toBe(200);
+    expect(verifyApiToken).toHaveBeenCalledWith(JWT, ISSUER);
   });
 
-  it("lets a scoped key use its scope and records the use", async () => {
-    expect(await verifyApiKey(request(SCOPED), "attendance:read")).toBeNull();
-    expect(apiKey.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "k1" } }));
-  });
-
-  it("works for scoped keys even without ADMIN_API_KEY", async () => {
+  it("works when ADMIN_API_KEY is unset", async () => {
     vi.stubEnv("ADMIN_API_KEY", "");
-    expect(await verifyApiKey(request(SCOPED), "attendance:read")).toBeNull();
+    expect(await status(JWT)).toBe(200);
   });
 
-  it("forbids a scoped key outside its scopes", async () => {
-    const response = await verifyApiKey(request(SCOPED), "users:read");
-    expect(response?.status).toBe(403);
-    expect(apiKey.update).not.toHaveBeenCalled();
+  it("refuses other scopes with 403", async () => {
+    expect(await status(JWT, "users:read")).toBe(403);
+    expect(await status(JWT, "timelogs:write")).toBe(403);
   });
 
-  it("rejects an unknown scoped key", async () => {
-    expect((await verifyApiKey(request("ohk_unknown"), "attendance:read"))?.status).toBe(401);
+  it("gives an admin role every scope", async () => {
+    verifyApiToken.mockResolvedValue(["admin"]);
+    expect(await status(JWT, "users:write")).toBe(200);
   });
 
-  it("looks scoped keys up by hash, never the key itself", async () => {
-    await verifyApiKey(request(SCOPED), "attendance:read");
-    expect(apiKey.findUnique.mock.calls[0][0].where).toEqual({ keyHash: hashApiKey(SCOPED) });
+  it("refuses everything when no roles are configured for the scope", async () => {
+    vi.stubEnv("API_ROLES_ATTENDANCE_READ", "");
+    expect(await status(JWT)).toBe(403);
   });
 
-  it("generates prefixed, random keys", () => {
-    const key = generateApiKey();
-    expect(key).toMatch(/^ohk_[A-Za-z0-9_-]{43}$/);
-    expect(generateApiKey()).not.toBe(key);
+  it("returns 401 for a token that fails verification", async () => {
+    for (const code of ["ERR_JWT_EXPIRED", "ERR_JWS_SIGNATURE_VERIFICATION_FAILED", "ERR_JWT_CLAIM_VALIDATION_FAILED"]) {
+      verifyApiToken.mockRejectedValueOnce(joseError(code));
+      expect(await status(JWT)).toBe(401);
+    }
+  });
+
+  it("returns 503 when Keycloak can't be reached", async () => {
+    verifyApiToken.mockRejectedValue(joseError("ERR_JWKS_TIMEOUT"));
+    expect(await status(JWT)).toBe(503);
+  });
+
+  it("is unavailable without AUTH_KEYCLOAK_ISSUER", async () => {
+    vi.stubEnv("AUTH_KEYCLOAK_ISSUER", "");
+    expect(await status(JWT)).toBe(503);
+    expect(verifyApiToken).not.toHaveBeenCalled();
   });
 });

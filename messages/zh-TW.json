@@ -187,8 +187,7 @@
       "statRanges": "統計範圍",
       "attendance": "可出席時間",
       "signIn": "登入",
-      "signOut": "登出",
-      "apiKeys": "API 金鑰"
+      "signOut": "登出"
     },
     "menu": "主選單"
   },
@@ -296,30 +295,6 @@
       "keepEditing": "繼續編輯",
       "discard": "不儲存，換週"
     }
-  },
-  "ApiKeys": {
-    "title": "API 金鑰",
-    "description": "給外部程式（例如出席表試算表）用的金鑰。每把金鑰只能用勾選的權限，其他 Admin API 都會被擋下。",
-    "newKey": "建立新金鑰",
-    "name": "名稱",
-    "namePlaceholder": "出席機器人試算表",
-    "scopes": "權限",
-    "scope": {
-      "attendance:read": "讀出席",
-      "timelogs:read": "讀打卡紀錄",
-      "timelogs:write": "改打卡紀錄",
-      "users:read": "讀使用者",
-      "users:write": "改使用者",
-      "jobs:run": "執行自動鎖定"
-    },
-    "create": "建立",
-    "shownOnce": "這是新金鑰，只會顯示這一次，請現在複製。離開這頁就看不到了。",
-    "empty": "還沒有任何金鑰。",
-    "status": "建立於 {created}，最後使用：{lastUsed}",
-    "neverUsed": "還沒用過",
-    "revoke": "撤銷",
-    "confirmRevoke": "撤銷「{name}」後，用到它的程式會立刻無法連線。確定嗎？",
-    "failed": "操作失敗，請再試一次"
   },
   "RankMedal": {
     "label": "第 {rank} 名"

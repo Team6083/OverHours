@@ -1,13 +1,25 @@
-/** What an Admin API key may do; `ADMIN_API_KEY` itself has every scope. */
+import { parseRoleList } from "@/lib/auth-roles";
+
+/** What an Admin API caller may do. `ADMIN_API_KEY` and tokens with an admin role have every scope. */
 export const API_SCOPES = [
   "attendance:read",
   "timelogs:read",
   "timelogs:write",
   "users:read",
   "users:write",
-  "jobs:run",
 ] as const;
 
 export type ApiScope = (typeof API_SCOPES)[number];
 
-export const isApiScope = (value: string): value is ApiScope => (API_SCOPES as readonly string[]).includes(value);
+/** `attendance:read` → `API_ROLES_ATTENDANCE_READ`. */
+export const scopeRolesEnvName = (scope: ApiScope) => `API_ROLES_${scope.replace(":", "_").toUpperCase()}`;
+
+/** Roles that grant `scope`, from its `API_ROLES_*` variable (same syntax as `ADMIN_ROLES`). */
+export function rolesForScope(scope: ApiScope, env: Record<string, string | undefined>): string[] {
+  return parseRoleList(env[scopeRolesEnvName(scope)]);
+}
+
+/** Whether a token with `tokenRoles` may use a scope: any admin role, or any of the roles configured for that scope. */
+export function rolesGrantScope(tokenRoles: string[], adminRoles: string[], scopeRoles: string[]): boolean {
+  return tokenRoles.some(role => adminRoles.includes(role) || scopeRoles.includes(role));
+}

@@ -13,6 +13,22 @@ export function parseRoleList(value: string | undefined): string[] {
     .filter((role) => role.length > 0);
 }
 
+// Accepted access token signature algorithms (Keycloak realms default to RS256). Asymmetric only.
+const ASYMMETRIC_ALGORITHM = /^(RS|PS|ES)(256|384|512)$|^EdDSA$/;
+
+/** AUTH_KEYCLOAK_ALGORITHMS, defaulting to RS256. Throws on anything that isn't an asymmetric algorithm. */
+export function parseTokenAlgorithms(value: string | undefined): string[] {
+  const algorithms = parseRoleList(value);
+  const invalid = algorithms.filter((alg) => !ASYMMETRIC_ALGORITHM.test(alg));
+  if (invalid.length > 0) {
+    throw new Error(
+      `AUTH_KEYCLOAK_ALGORITHMS contains unsupported algorithm(s): ${invalid.join(", ")}. ` +
+      "Only asymmetric algorithms (RS*, PS*, ES*, EdDSA) are allowed.",
+    );
+  }
+  return algorithms.length > 0 ? algorithms : ["RS256"];
+}
+
 /** ADMIN_ROLES, falling back to the legacy hard-coded "admin" realm role when unset or blank. */
 export function parseAdminRoles(value: string | undefined): string[] {
   const roles = parseRoleList(value);

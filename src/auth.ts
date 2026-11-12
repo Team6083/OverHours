@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 
 import { linkProviderAccount } from "./lib/data/user-account";
 import { syncUserRoleTeams } from "./lib/data/team-role-sync";
-import { evaluateAccess, extractRoles, parseAdminRoles, parseRoleList } from "./lib/auth-roles";
+import { evaluateAccess, extractRoles, parseAdminRoles, parseRoleList, parseTokenAlgorithms } from "./lib/auth-roles";
 import { describeError, describeErrorDescription, INVALID_TOKEN_ERROR_CODES, isVerifyGraceExpired, parseVerifyGraceSec } from "./lib/auth-errors";
 
 export enum Role {
@@ -46,19 +46,7 @@ declare module "next-auth/jwt" {
 // When set it REPLACES the default realm + client role lookup (as before ADMIN_ROLES existed).
 const LEGACY_ROLES_CLAIM_PATH = process.env.AUTH_KEYCLOAK_ROLES_CLAIM || undefined;
 
-// Accepted access token signature algorithms (Keycloak realms default to RS256). Asymmetric only.
-const ASYMMETRIC_ALGORITHM = /^(RS|PS|ES)(256|384|512)$|^EdDSA$/;
-const TOKEN_ALGORITHMS = (() => {
-  const algorithms = parseRoleList(process.env.AUTH_KEYCLOAK_ALGORITHMS);
-  const invalid = algorithms.filter((alg) => !ASYMMETRIC_ALGORITHM.test(alg));
-  if (invalid.length > 0) {
-    throw new Error(
-      `AUTH_KEYCLOAK_ALGORITHMS contains unsupported algorithm(s): ${invalid.join(", ")}. ` +
-      "Only asymmetric algorithms (RS*, PS*, ES*, EdDSA) are allowed.",
-    );
-  }
-  return algorithms.length > 0 ? algorithms : ["RS256"];
-})();
+const TOKEN_ALGORITHMS = parseTokenAlgorithms(process.env.AUTH_KEYCLOAK_ALGORITHMS);
 
 // Fail loudly once at startup if ADMIN_ROLES is set but unusable (it then falls back to the default).
 if (process.env.ADMIN_ROLES && parseRoleList(process.env.ADMIN_ROLES).length === 0) {

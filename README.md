@@ -49,7 +49,8 @@ Variables are read at runtime unless noted otherwise.
 | `AUTH_TRUST_HOST` | No | Set to `true` to let Auth.js trust the `Host` header. Auth.js variable, not read by this repository's code; often needed behind a reverse proxy. |
 | `ADMIN_ROLES`, `ALLOWED_ROLES`, `AUTH_KEYCLOAK_ALGORITHMS`, `AUTH_KEYCLOAK_VERIFY_GRACE_SEC`, `AUTH_KEYCLOAK_ROLES_CLAIM` | No | Role and token verification settings; see [Auth configuration](#auth-configuration). |
 | `NEXT_MANUAL_SIG_HANDLE` | No | Disables the shutdown flag used by `/api/readyz`; see [Health checks](#health-checks). |
-| `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*`. Admin API requests are rejected when it is unset. |
+| `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*` with every permission. Without it, only Keycloak tokens are accepted; see [Admin API](#admin-api). |
+| `API_TOKEN_AUDIENCE`, `API_ROLES_*` | No | Which Keycloak tokens the Admin API accepts and what they may call; see [Admin API](#admin-api). |
 | `ORG_NAME` | No | Name of the organisation running this instance. Shown in the header, footer and page description. When unset, no organisation text is shown. |
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
 | `AUTO_LOCK_TIME` | No | Daily cut-off as `HH:mm` in `TZ`. Sessions still clocked in at the cut-off are locked as abnormal clock-outs; see [Auto-lock](#auto-lock). Unset: no automatic locking. A malformed value stops the server from starting. |
@@ -260,19 +261,31 @@ external systems. Set `ADMIN_API_KEY` in the environment, then send it as a Bear
 curl -H "Authorization: Bearer $ADMIN_API_KEY" http://localhost:3000/api/admin/users
 ```
 
-`ADMIN_API_KEY` can call every endpoint. For a program that only needs part of the API, such as a spreadsheet that
-reads attendance, an admin can create a scoped key at `/admin/api-keys` (also in the avatar menu). Scoped keys start
-with `ohk_`, are shown once and stored only as a SHA-256 hash, and work even when `ADMIN_API_KEY` is unset. A scoped
-key used outside its scopes gets `403 forbidden`; an unknown or revoked key gets `401`.
+`ADMIN_API_KEY` can call every endpoint. A program that only needs part of the API, such as a spreadsheet that
+reads attendance, should instead use a token issued by Keycloak, for example from a service account client with the
+client credentials grant:
 
-| Scope | Endpoints |
-| --- | --- |
-| `attendance:read` | `GET /api/admin/attendance` |
-| `timelogs:read` | `GET /api/admin/timelogs`, `GET /api/admin/timelogs/{id}`, `GET /api/admin/timelogs/locked` |
-| `timelogs:write` | `POST /api/admin/timelogs`, `PUT` / `DELETE /api/admin/timelogs/{id}` |
-| `users:read` | `GET /api/admin/users`, `GET /api/admin/users/{id}` |
-| `users:write` | `POST /api/admin/users`, `PUT` / `DELETE /api/admin/users/{id}` |
-| `jobs:run` | `POST /api/admin/jobs/auto-lock` |
+```bash
+TOKEN=$(curl -s -d grant_type=client_credentials -d client_id=$CLIENT -d client_secret=$SECRET   "$AUTH_KEYCLOAK_ISSUER/protocol/openid-connect/token" | jq -r .access_token)
+curl -H "Authorization: Bearer $TOKEN" "http://localhost:3000/api/admin/attendance?start=2027-01-11&end=2027-01-17"
+```
+
+The token is verified against `AUTH_KEYCLOAK_ISSUER` (signature via its JWKS, `iss`, `exp`) and its `aud` must contain
+`API_TOKEN_AUDIENCE` (default `AUTH_KEYCLOAK_ID`; add an *Audience* mapper to the service account client so its tokens
+carry it). What it may call comes from its Keycloak roles: each permission below has an `API_ROLES_*` variable in the
+same syntax as `ADMIN_ROLES`, and a token with any of those roles gets the permission. A token with an admin role
+(`ADMIN_ROLES`) gets every permission; a role-less token gets none. Tokens work even when `ADMIN_API_KEY` is unset.
+
+| Permission | Roles from | Endpoints |
+| --- | --- | --- |
+| `attendance:read` | `API_ROLES_ATTENDANCE_READ` | `GET /api/admin/attendance` |
+| `timelogs:read` | `API_ROLES_TIMELOGS_READ` | `GET /api/admin/timelogs`, `GET /api/admin/timelogs/{id}`, `GET /api/admin/timelogs/locked` |
+| `timelogs:write` | `API_ROLES_TIMELOGS_WRITE` | `POST /api/admin/timelogs`, `PUT` / `DELETE /api/admin/timelogs/{id}` |
+| `users:read` | `API_ROLES_USERS_READ` | `GET /api/admin/users`, `GET /api/admin/users/{id}` |
+| `users:write` | `API_ROLES_USERS_WRITE` | `POST /api/admin/users`, `PUT` / `DELETE /api/admin/users/{id}` |
+
+A valid token without the permission gets `403 forbidden`; an invalid or expired token gets `401`, and `503` if
+Keycloak can't be reached to check it. `POST /api/admin/jobs/auto-lock` still takes `ADMIN_API_KEY` only.
 
 Endpoints:
 
