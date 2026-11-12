@@ -10,6 +10,7 @@ import {
 import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
 
 import UserCombobox from "@/components/UserCombobox";
+import { InfoTip } from "@/components/ui/toggle-tip";
 import { toaster } from "@/components/ui/toaster";
 import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
 import { parseAutoJoinRoles } from "@/lib/team-roles";
@@ -117,42 +118,42 @@ function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
       </DataList.Item>
 
       <DataList.Item>
-        <DataList.ItemLabel>Auto-join roles</DataList.ItemLabel>
+        <DataList.ItemLabel>
+          Auto-join roles
+          <InfoTip contentProps={{ maxW: "xs" }} buttonProps={{ "aria-label": "About auto-join roles" }}>
+            Comma-separated Keycloak roles, like ADMIN_ROLES: <code>role</code> for a realm role,{" "}
+            <code>client:role</code> for a client role. Users with any of them join at sign-in and leave when they
+            lose the role.
+          </InfoTip>
+        </DataList.ItemLabel>
         <DataList.ItemValue>
-          <Stack gap={1} w="full">
-            <Editable.Root
-              size="sm"
-              value={roles}
-              placeholder="None"
-              disabled={pending}
-              onValueChange={(e) => setRoles(e.value)}
-              onValueCommit={(e) => run(
-                () => setAutoJoinRolesAction(team.id, e.value),
-                // Show the list as the server saved it: trimmed, without blanks or duplicates
-                () => setRoles(parseAutoJoinRoles(e.value).join(", ")),
-                () => setRoles(savedRolesText),
-              )}
-            >
-              <Editable.Preview fontFamily="mono" />
-              <Editable.Input fontFamily="mono" />
-              <Editable.Control>
-                <Editable.EditTrigger asChild>
-                  <IconButton variant="ghost" size="xs" aria-label="Edit auto-join roles"><LuPencilLine /></IconButton>
-                </Editable.EditTrigger>
-                <Editable.CancelTrigger asChild>
-                  <IconButton variant="outline" size="xs" aria-label="Cancel"><LuX /></IconButton>
-                </Editable.CancelTrigger>
-                <Editable.SubmitTrigger asChild>
-                  <IconButton variant="outline" size="xs" aria-label="Save"><LuCheck /></IconButton>
-                </Editable.SubmitTrigger>
-              </Editable.Control>
-            </Editable.Root>
-            <Text textStyle="xs" color="fg.muted">
-              Comma-separated Keycloak roles, like ADMIN_ROLES: <code>role</code> for a realm role,{" "}
-              <code>client:role</code> for a client role. Users with any of them join at sign-in and leave when they
-              lose the role.
-            </Text>
-          </Stack>
+          <Editable.Root
+            size="sm"
+            value={roles}
+            placeholder="None"
+            disabled={pending}
+            onValueChange={(e) => setRoles(e.value)}
+            onValueCommit={(e) => run(
+              () => setAutoJoinRolesAction(team.id, e.value),
+              // Show the list as the server saved it: trimmed, without blanks or duplicates
+              () => setRoles(parseAutoJoinRoles(e.value).join(", ")),
+              () => setRoles(savedRolesText),
+            )}
+          >
+            <Editable.Preview fontFamily="mono" />
+            <Editable.Input fontFamily="mono" />
+            <Editable.Control>
+              <Editable.EditTrigger asChild>
+                <IconButton variant="ghost" size="xs" aria-label="Edit auto-join roles"><LuPencilLine /></IconButton>
+              </Editable.EditTrigger>
+              <Editable.CancelTrigger asChild>
+                <IconButton variant="outline" size="xs" aria-label="Cancel"><LuX /></IconButton>
+              </Editable.CancelTrigger>
+              <Editable.SubmitTrigger asChild>
+                <IconButton variant="outline" size="xs" aria-label="Save"><LuCheck /></IconButton>
+              </Editable.SubmitTrigger>
+            </Editable.Control>
+          </Editable.Root>
         </DataList.ItemValue>
       </DataList.Item>
 
