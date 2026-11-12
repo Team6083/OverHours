@@ -1,5 +1,5 @@
 import { isCalendarDate, weekStartOf } from "@/lib/attendance";
-import { getMyWeek, getToday, getWeekBoard } from "@/lib/data/attendance-dto";
+import { getMyPattern, getMyWeek, getToday, getWeekBoard } from "@/lib/data/attendance-dto";
 import AttendanceView from "./AttendanceView";
 
 export default async function AttendancePage(props: { searchParams: Promise<{ week?: string }> }) {
@@ -8,7 +8,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ we
   const today = getToday();
   const weekStart = weekStartOf(week && isCalendarDate(week) ? week : today);
 
-  const [board, mine] = await Promise.all([getWeekBoard(weekStart), getMyWeek(weekStart)]);
+  const [board, mine, pattern] = await Promise.all([getWeekBoard(weekStart), getMyWeek(weekStart), getMyPattern()]);
 
-  return <AttendanceView key={weekStart} weekStart={weekStart} today={today} board={board} mine={mine} />;
+  return <AttendanceView key={weekStart} weekStart={weekStart} today={today} board={board} mine={mine} pattern={pattern} />;
 }

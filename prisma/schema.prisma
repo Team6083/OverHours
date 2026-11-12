@@ -30,6 +30,14 @@ model User {
   timeLogs TimeLog[]
 
   attendanceEntries AttendanceEntry[]
+  // The member's usual week, applied to the week form on request. Weekdays not listed have no usual answer.
+  attendancePattern AttendancePatternDay[]
+}
+
+type AttendancePatternDay {
+  // 0 = Monday … 6 = Sunday
+  weekday Int
+  status  AttendanceStatus
 }
 
 // An identity provider (OIDC) account linked to a user, identified by the Auth.js provider id and `sub`

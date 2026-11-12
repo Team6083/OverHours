@@ -6,6 +6,7 @@ const db = vi.hoisted(() => ({
   session: null as { user: { id?: string } } | null,
   users: [] as Row[],
   entries: [] as Row[],
+  patterns: {} as Record<string, unknown[]>,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -18,8 +19,15 @@ const matches = (row: Row, where: Row = {}) => Object.entries(where).every(([key
 
 vi.mock("../prisma", () => {
   const prisma = {
-    user: { findMany: async () => db.users },
+    user: {
+      findMany: async () => db.users,
+      findUnique: async ({ where }: { where: { id: string } }) => ({ attendancePattern: db.patterns[where.id] ?? [] }),
+      update: async ({ where, data }: { where: { id: string }; data: { attendancePattern: { set: unknown[] } } }) => {
+        db.patterns[where.id] = data.attendancePattern.set;
+      },
+    },
     attendanceEntry: {
+      count: async ({ where }: { where: Row }) => db.entries.filter(row => matches(row, where)).length,
       findMany: async ({ where }: { where: Row }) => db.entries
         .filter(row => matches(row, where))
         .map(row => ({ ...row, user: db.users.find(user => user.id === row.userId) })),
@@ -31,7 +39,7 @@ vi.mock("../prisma", () => {
   return { default: prisma };
 });
 
-import { adminGetAttendance, getDayBoard, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
+import { countMyUnfilledDays, getMyPattern, saveMyPattern, adminGetAttendance, getDayBoard, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
 
 const entry = (userId: string, date: string, status = "Available") => ({ userId, date, status });
 
@@ -41,6 +49,7 @@ beforeEach(() => {
   db.session = { user: { id: "a" } };
   db.users = [{ id: "a", name: "A", email: "a@example.com" }, { id: "b", name: "B", email: "b@example.com" }];
   db.entries = [];
+  db.patterns = {};
 });
 
 describe("saveMyWeek", () => {
@@ -183,5 +192,27 @@ describe("adminGetAttendance", () => {
 
     const [user] = await adminGetAttendance(["d1"]);
     expect(user.days).toEqual([{ date: "d1", status: "AVAILABLE" }]);
+  });
+});
+
+describe("usual week", () => {
+  it("saves and reads back the signed-in user's usual week", async () => {
+    await saveMyPattern({ 0: "WILL_COME", 3: "UNAVAILABLE" });
+    expect(db.patterns.a).toEqual([{ weekday: 0, status: "WillCome" }, { weekday: 3, status: "Unavailable" }]);
+    await expect(getMyPattern()).resolves.toEqual({ 0: "WILL_COME", 3: "UNAVAILABLE" });
+  });
+
+  it("is empty for someone who never saved one", async () => {
+    await expect(getMyPattern()).resolves.toEqual({});
+  });
+});
+
+describe("countMyUnfilledDays", () => {
+  it("counts the next 7 days, today included, that the user hasn't answered", async () => {
+    db.entries = [
+      entry("a", "2027-01-13"), entry("a", "2027-01-19", "Unavailable"),
+      entry("a", "2027-01-12"), entry("a", "2027-01-20"), entry("b", "2027-01-14"),
+    ];
+    await expect(countMyUnfilledDays()).resolves.toBe(5);
   });
 });

@@ -1,7 +1,7 @@
 import "server-only";
 import { auth } from "@/auth";
 import { AttendanceEntry } from "@/generated/prisma";
-import { AttendanceStatus, calendarDateInZone, DayStatus, dayStatuses, monthDates, weekDates } from "../attendance";
+import { addDays, AttendanceStatus, calendarDateInZone, DayStatus, dayStatuses, monthDates, weekDates } from "../attendance";
 import { getTimeZone } from "../config";
 import prisma from "../prisma";
 
@@ -90,6 +90,29 @@ export async function getMyWeek(weekStart: string): Promise<Record<string, Atten
   });
 
   return Object.fromEntries(entries.map(entry => [entry.date, toStatus(entry.status)]));
+}
+
+/** The signed-in user's usual week, by weekday (0 = Monday). */
+export async function getMyPattern(): Promise<Partial<Record<number, AttendanceStatus>>> {
+  const userId = await requireUserId();
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { attendancePattern: true } });
+  return Object.fromEntries((user?.attendancePattern ?? []).map(day => [day.weekday, toStatus(day.status)]));
+}
+
+export async function saveMyPattern(pattern: Partial<Record<number, AttendanceStatus>>): Promise<void> {
+  const userId = await requireUserId();
+  const days = Object.entries(pattern).flatMap(([weekday, status]) =>
+    status ? [{ weekday: Number(weekday), status: STATUS_TO_DB[status] }] : []);
+  await prisma.user.update({ where: { id: userId }, data: { attendancePattern: { set: days } } });
+}
+
+/** How many of the next 7 days (today included) the signed-in user hasn't answered. */
+export async function countMyUnfilledDays(): Promise<number> {
+  const userId = await requireUserId();
+  const today = getToday();
+  const dates = Array.from({ length: 7 }, (_, i) => addDays(today, i));
+  const filled = await prisma.attendanceEntry.count({ where: { userId, date: { in: dates }, slot: "AllDay" } });
+  return dates.length - filled;
 }
 
 /** Replaces the user's entries for the days of the week that have not passed; a day left out is cleared. */

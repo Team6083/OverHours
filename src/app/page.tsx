@@ -13,7 +13,7 @@ import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
 import LeaderboardCard from "./_components/LeaderboardCard";
 import LeaderboardWithFilter from "./_components/LeaderboardWithFilter";
-import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
+import { countMyUnfilledDays, getDayBoard, getToday } from "@/lib/data/attendance-dto";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import {
   adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
@@ -32,6 +32,7 @@ import {
 } from "./_components/CurrentlyClockedIn";
 import HomePageSkeleton from "./home-skeleton";
 import DayAttendanceSection, { DayAttendanceProvider } from "./attendance/DayAttendanceSection";
+import UnfilledHint from "./attendance/UnfilledHint";
 
 type UserInfo = {
   id: string;
@@ -55,6 +56,12 @@ export default async function Home() {
   const todayBoardPromise = session?.user.id
     ? getDayBoard(today).catch((error) => {
       console.error("Failed to load today's attendance", error);
+      return undefined;
+    })
+    : Promise.resolve(undefined);
+  const unfilledPromise = session?.user.id
+    ? countMyUnfilledDays().catch((error) => {
+      console.error("Failed to count unfilled attendance days", error);
       return undefined;
     })
     : Promise.resolve(undefined);
@@ -99,6 +106,7 @@ export default async function Home() {
   }
 
   const todayBoard = await todayBoardPromise;
+  const unfilledDays = await unfilledPromise;
 
   // Get Currently In Logs
   const currentlyInLogs = (await getAllCurrentlyInTimelogDTOs()).map(log => ({
@@ -183,6 +191,7 @@ export default async function Home() {
         <GridItem colSpan={{ base: 1, md: 3 }}>
           {/* Attendance of the day */}
           {todayBoard && (<>
+            <UnfilledHint count={unfilledDays} />
             <DayAttendanceSection />
             <Separator my={4} />
           </>)}
@@ -228,6 +237,7 @@ export default async function Home() {
           </>)}
 
           {todayBoard && (<>
+            <UnfilledHint count={unfilledDays} />
             <DayAttendanceSection />
             <Separator my={4} />
           </>)}

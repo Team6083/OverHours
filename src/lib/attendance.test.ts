@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  addDays, addMonths, calendarDateInZone, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, weekDates, weekStartOf,
+  addDays, addMonths, applyPattern, calendarDateInZone, copyFromWeekBefore, weekdayOf, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, weekDates, weekStartOf,
 } from "./attendance";
 
 describe("isCalendarDate", () => {
@@ -107,5 +107,24 @@ describe("months", () => {
     expect(monthDates("2028-02")).toHaveLength(29);
     expect(monthDates("2027-02")).toHaveLength(28);
     expect(monthDates("2027-01")[30]).toBe("2027-01-31");
+  });
+});
+
+describe("quick fill", () => {
+  const week = ["2027-01-11", "2027-01-12", "2027-01-13", "2027-01-14", "2027-01-15", "2027-01-16", "2027-01-17"];
+
+  it("numbers weekdays from Monday", () => {
+    expect(week.map(weekdayOf)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  });
+
+  it("lays a usual week over the dates, skipping weekdays without an answer", () => {
+    expect(applyPattern(week.slice(2), { 0: "WILL_COME", 2: "AVAILABLE", 5: "UNAVAILABLE" }))
+      .toEqual({ "2027-01-13": "AVAILABLE", "2027-01-16": "UNAVAILABLE" });
+    expect(applyPattern(week, {})).toEqual({});
+  });
+
+  it("copies the same weekday a week earlier", () => {
+    expect(copyFromWeekBefore(week.slice(3), { "2027-01-07": "WILL_COME", "2027-01-08": "UNAVAILABLE", "2027-01-04": "AVAILABLE" }))
+      .toEqual({ "2027-01-14": "WILL_COME", "2027-01-15": "UNAVAILABLE" });
   });
 });
