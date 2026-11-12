@@ -6,6 +6,7 @@ const db = vi.hoisted(() => ({
   session: null as { user: { id?: string } } | null,
   users: [] as Row[],
   entries: [] as Row[],
+  logs: [] as { userId: string; inTime: Date }[],
 }));
 
 vi.mock("server-only", () => ({}));
@@ -18,7 +19,14 @@ const matches = (row: Row, where: Row = {}) => Object.entries(where).every(([key
 
 vi.mock("../prisma", () => {
   const prisma = {
-    user: { findMany: async () => db.users },
+    user: {
+      findMany: async ({ where }: { where?: { id?: { in: string[] } } } = {}) =>
+        where?.id ? db.users.filter(user => where.id!.in.includes(user.id as string)) : db.users,
+    },
+    timeLog: {
+      findMany: async ({ where }: { where: { inTime: { gte: Date; lt: Date } } }) =>
+        db.logs.filter(log => log.inTime >= where.inTime.gte && log.inTime < where.inTime.lt),
+    },
     attendanceEntry: {
       findMany: async ({ where }: { where: Row }) => db.entries
         .filter(row => matches(row, where))
@@ -31,7 +39,7 @@ vi.mock("../prisma", () => {
   return { default: prisma };
 });
 
-import { adminGetAttendance, getDayBoard, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
+import { adminGetAttendance, getDayBoard, getMyAccuracy, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
 
 const entry = (userId: string, date: string, status = "Available") => ({ userId, date, status });
 
@@ -41,6 +49,7 @@ beforeEach(() => {
   db.session = { user: { id: "a" } };
   db.users = [{ id: "a", name: "A", email: "a@example.com" }, { id: "b", name: "B", email: "b@example.com" }];
   db.entries = [];
+  db.logs = [];
 });
 
 describe("saveMyWeek", () => {
@@ -183,5 +192,30 @@ describe("adminGetAttendance", () => {
 
     const [user] = await adminGetAttendance(["d1"]);
     expect(user.days).toEqual([{ date: "d1", status: "AVAILABLE" }]);
+  });
+});
+
+describe("getMyAccuracy", () => {
+  const log = (userId: string, date: string) => ({ userId, inTime: new Date(`${date}T10:00:00Z`) });
+
+  it("only compares days that are over and that someone clocked in on", async () => {
+    db.entries = [entry("a", "2027-01-11", "WillCome"), entry("a", "2027-01-09", "WillCome"), entry("a", "2027-01-13", "WillCome")];
+    db.logs = [log("b", "2027-01-11"), log("b", "2027-01-12"), log("a", "2027-01-12"), log("b", "2027-01-13")];
+
+    const row = await getMyAccuracy(7);
+
+    expect(row).toMatchObject({
+      user: { id: "a" },
+      days: 2,
+      answered: 1,
+      brokenPromises: ["2027-01-11"],
+      silentAbsences: [],
+      unannounced: ["2027-01-12"],
+    });
+  });
+
+  it("has nothing to compare when the team never met", async () => {
+    db.entries = [entry("a", "2027-01-11", "WillCome")];
+    await expect(getMyAccuracy(7)).resolves.toBeNull();
   });
 });

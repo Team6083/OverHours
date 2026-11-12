@@ -91,41 +91,81 @@ export function rowsToReassign<T extends { id: string; userId: string }>(
   return ids;
 }
 
+/** What happened on one day: the answer, and whether the member clocked in. */
+export type Outcome = `${DayStatus}:${"came" | "absent"}`;
+
+/**
+ * How much each outcome counts toward the score, from 0 (bad) to 1 (fine). Only will come + absent and
+ * not filled + absent are the problems the answers are meant to catch; can come is a "maybe", so either way is fine.
+ */
+export const DEFAULT_WEIGHTS: Readonly<Record<Outcome, number>> = {
+  "WILL_COME:came": 1,
+  "WILL_COME:absent": 0,
+  "AVAILABLE:came": 1,
+  "AVAILABLE:absent": 1,
+  "UNAVAILABLE:came": 1,
+  "UNAVAILABLE:absent": 1,
+  "NOT_FILLED:came": 0.5,
+  "NOT_FILLED:absent": 0,
+};
+
+const isOutcome = (value: string): value is Outcome => value in DEFAULT_WEIGHTS;
+
+/** `ATTENDANCE_SCORE_WEIGHTS`, e.g. `NOT_FILLED:came=1,WILL_COME:absent=0`, over the defaults. Bad entries are returned, not used. */
+export function parseWeights(value: string | undefined): { weights: Record<Outcome, number>; invalid: string[] } {
+  const weights = { ...DEFAULT_WEIGHTS };
+  const invalid: string[] = [];
+
+  for (const item of (value ?? "").split(",").map(part => part.trim()).filter(Boolean)) {
+    const [key, raw] = item.split("=").map(part => part.trim());
+    const weight = Number(raw);
+    if (!isOutcome(key) || raw === undefined || raw === "" || !(weight >= 0 && weight <= 1)) invalid.push(item);
+    else weights[key] = weight;
+  }
+
+  return { weights, invalid };
+}
+
 export type AccuracySummary = {
-  /** Past days the user filled in and the time logs agree with. */
-  matched: number;
-  /** Past days the user filled in. */
-  filled: number;
-  /** Said available, no time log that day. */
-  noShows: string[];
-  /** Said unavailable, clocked in anyway. */
-  unexpected: string[];
-  /** Not filled in, clocked in anyway. */
+  /** Days compared: team days that are over. */
+  days: number;
+  /** Of those, days the member answered. */
+  answered: number;
+  /** Weighted average of the outcomes, 0–1; null when there were no days. */
+  score: number | null;
+  /** Said will come, no time log that day. */
+  brokenPromises: string[];
+  /** Not filled in and didn't come. */
+  silentAbsences: string[];
+  /** Not filled in, came anyway. */
   unannounced: string[];
 };
 
-/** Compares one user's answers with the days they clocked in. `dates` should only hold days that are over. */
+/**
+ * Compares one member's answers with the days they clocked in. `dates` should only hold days that are over and
+ * that the team met (someone clocked in), so days with nothing on don't count as missed.
+ */
 export function summarizeAccuracy(
   dates: string[],
   answers: { date: string; status: AttendanceStatus }[],
   attendedDates: Iterable<string>,
+  weights: Record<Outcome, number> = DEFAULT_WEIGHTS,
 ): AccuracySummary {
   const attended = new Set(attendedDates);
-  const summary: AccuracySummary = { matched: 0, filled: 0, noShows: [], unexpected: [], unannounced: [] };
+  const summary: AccuracySummary = { days: dates.length, answered: 0, score: null, brokenPromises: [], silentAbsences: [], unannounced: [] };
+  let total = 0;
 
   for (const { date, status } of dayStatuses(dates, answers)) {
-    const came = attended.has(date);
-    if (status === "NOT_FILLED") {
-      if (came) summary.unannounced.push(date);
-      continue;
-    }
+    const outcome: Outcome = `${status}:${attended.has(date) ? "came" : "absent"}`;
+    total += weights[outcome];
+    if (status !== "NOT_FILLED") summary.answered++;
 
-    summary.filled++;
-    if ((status === "AVAILABLE") === came) summary.matched++;
-    else if (came) summary.unexpected.push(date);
-    else summary.noShows.push(date);
+    if (outcome === "WILL_COME:absent") summary.brokenPromises.push(date);
+    else if (outcome === "NOT_FILLED:absent") summary.silentAbsences.push(date);
+    else if (outcome === "NOT_FILLED:came") summary.unannounced.push(date);
   }
 
+  summary.score = dates.length > 0 ? total / dates.length : null;
   return summary;
 }
 

@@ -1,21 +1,11 @@
-import { Badge, EmptyState, Heading, HStack, Stat, Table, Text, VStack } from "@chakra-ui/react";
+import { Badge, EmptyState, Heading, HStack, SimpleGrid, Stat, Table, Text, VStack } from "@chakra-ui/react";
 import { LuCalendarCheck } from "react-icons/lu";
 import { getTranslations } from "next-intl/server";
 
 import { addDays, datesInRange, isCalendarDate, MAX_RANGE_DAYS, shortDate } from "@/lib/attendance";
-import { AccuracyRow, getTeamAccuracy, getToday } from "@/lib/data/attendance-dto";
+import { getTeamAccuracy, getToday } from "@/lib/data/attendance-dto";
+import { scorePalette } from "../../attendance/MyAccuracy";
 import RangeForm from "./RangeForm";
-
-
-/** Share of filled-in days that matched, or null when nothing was filled in. */
-const accuracyOf = (row: AccuracyRow) => row.filled > 0 ? row.matched / row.filled : null;
-
-function accuracyPalette(accuracy: number | null) {
-  if (accuracy === null) return "gray";
-  if (accuracy >= 0.9) return "green";
-  if (accuracy >= 0.7) return "orange";
-  return "red";
-}
 
 function DateList(props: { dates: string[] }) {
   const { dates } = props;
@@ -39,12 +29,12 @@ export default async function AttendanceAccuracyReport(props: { searchParams: Pr
   const dates = datesInRange(start, end) ?? [];
 
   const rows = (await getTeamAccuracy(dates))
-    .sort((a, b) => (accuracyOf(a) ?? 2) - (accuracyOf(b) ?? 2) || b.noShows.length - a.noShows.length);
+    .sort((a, b) => (a.score ?? 2) - (b.score ?? 2) || b.brokenPromises.length - a.brokenPromises.length);
 
-  const filled = rows.reduce((sum, row) => sum + row.filled, 0);
-  const matched = rows.reduce((sum, row) => sum + row.matched, 0);
-  const noShows = rows.reduce((sum, row) => sum + row.noShows.length, 0);
-  const unannounced = rows.reduce((sum, row) => sum + row.unannounced.length, 0);
+  const sum = (pick: (row: (typeof rows)[number]) => number) => rows.reduce((total, row) => total + pick(row), 0);
+  const days = sum(row => row.days);
+  const score = days > 0 ? sum(row => (row.score ?? 0) * row.days) / days : null;
+  const fillRate = days > 0 ? sum(row => row.answered) / days : null;
   const percent = (value: number | null) => value === null ? "–" : `${Math.round(value * 100)}%`;
 
   return (<>
@@ -63,47 +53,50 @@ export default async function AttendanceAccuracyReport(props: { searchParams: Pr
         </EmptyState.Content>
       </EmptyState.Root>
     ) : <>
-      <HStack align="start" gap={4} mb={6}>
+      <SimpleGrid columns={{ base: 2, md: 4 }} gap={4} mb={6}>
         <Stat.Root>
-          <Stat.Label>{t("stats.accuracy")}</Stat.Label>
-          <Stat.ValueText>{percent(filled > 0 ? matched / filled : null)}</Stat.ValueText>
+          <Stat.Label>{t("stats.score")}</Stat.Label>
+          <Stat.ValueText>{percent(score)}</Stat.ValueText>
         </Stat.Root>
         <Stat.Root>
-          <Stat.Label>{t("noShows")}</Stat.Label>
-          <Stat.ValueText>{noShows}</Stat.ValueText>
+          <Stat.Label>{t("stats.fillRate")}</Stat.Label>
+          <Stat.ValueText>{percent(fillRate)}</Stat.ValueText>
         </Stat.Root>
         <Stat.Root>
-          <Stat.Label>{t("unannounced")}</Stat.Label>
-          <Stat.ValueText>{unannounced}</Stat.ValueText>
+          <Stat.Label>{t("brokenPromises")}</Stat.Label>
+          <Stat.ValueText>{sum(row => row.brokenPromises.length)}</Stat.ValueText>
         </Stat.Root>
-      </HStack>
+        <Stat.Root>
+          <Stat.Label>{t("silentAbsences")}</Stat.Label>
+          <Stat.ValueText>{sum(row => row.silentAbsences.length)}</Stat.ValueText>
+        </Stat.Root>
+      </SimpleGrid>
 
       <Table.ScrollArea borderWidth="1px" rounded="md">
         <Table.Root size="sm" stickyHeader>
           <Table.Header>
             <Table.Row>
               <Table.ColumnHeader>{t("columns.user")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("stats.accuracy")}</Table.ColumnHeader>
-              <Table.ColumnHeader>{t("noShows")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("stats.score")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("stats.fillRate")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("brokenPromises")}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t("silentAbsences")}</Table.ColumnHeader>
               <Table.ColumnHeader>{t("unannounced")}</Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {rows.map(row => {
-              const accuracy = accuracyOf(row);
-              return (
-                <Table.Row key={row.user.id}>
-                  <Table.Cell>{row.user.name}</Table.Cell>
-                  <Table.Cell>
-                    <Badge colorPalette={accuracyPalette(accuracy)} title={t("matchedOf", { matched: row.matched, filled: row.filled })}>
-                      {percent(accuracy)}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell><DateList dates={row.noShows} /></Table.Cell>
-                  <Table.Cell><DateList dates={row.unannounced} /></Table.Cell>
-                </Table.Row>
-              );
-            })}
+            {rows.map(row => (
+              <Table.Row key={row.user.id}>
+                <Table.Cell>{row.user.name}</Table.Cell>
+                <Table.Cell><Badge colorPalette={scorePalette(row.score)}>{percent(row.score)}</Badge></Table.Cell>
+                <Table.Cell title={t("answeredOf", { answered: row.answered, days: row.days })}>
+                  {percent(row.days > 0 ? row.answered / row.days : null)}
+                </Table.Cell>
+                <Table.Cell><DateList dates={row.brokenPromises} /></Table.Cell>
+                <Table.Cell><DateList dates={row.silentAbsences} /></Table.Cell>
+                <Table.Cell><DateList dates={row.unannounced} /></Table.Cell>
+              </Table.Row>
+            ))}
           </Table.Body>
         </Table.Root>
       </Table.ScrollArea>

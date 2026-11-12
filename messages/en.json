@@ -213,7 +213,7 @@
   "ReportMenu": {
     "compliance": "Compliance",
     "lockedLogs": "Locked Logs",
-    "attendanceAccuracy": "Attendance accuracy"
+    "attendanceAccuracy": "Attendance check"
   },
   "LockedReportPage": {
     "title": "Locked Logs",
@@ -252,10 +252,11 @@
   },
   "Attendance": {
     "accuracy": {
-      "title": "My attendance accuracy (last {days} days)",
-      "summary": "{matched} of the {filled} days you answered match your time logs",
-      "noShows": "Said yes, didn't come",
-      "unannounced": "Came without answering",
+      "title": "My attendance check (last {days} days)",
+      "summary": "You answered {answered} of the {days} days the team met",
+      "brokenPromises": "Said will come, didn't",
+      "silentAbsences": "No answer, didn't come",
+      "unannounced": "No answer, came anyway",
       "empty": "Nothing to compare yet"
     },
     "title": "Availability",
@@ -311,19 +312,21 @@
     "label": "Rank {rank}"
   },
   "AccuracyReport": {
-    "title": "Attendance accuracy",
+    "title": "Attendance check",
     "startDate": "Start date",
     "endDate": "End date",
-    "description": "Compares availability answers with time logs. Any time log that day counts as coming (locked logs included), and only days that are over count. Accuracy is the share of answered days that match the time logs.",
+    "description": "Compares availability answers with time logs. Only days that are over and that the team met (someone clocked in) count; any time log that day counts as coming, locked logs included. The score is the weighted average of each day's outcome: said will come but didn't, and no answer and didn't come, count 0; no answer but came counts half; everything else counts in full (adjustable with ATTENDANCE_SCORE_WEIGHTS). Fill rate is the share of days answered.",
     "stats": {
-      "accuracy": "Accuracy"
+      "score": "Score",
+      "fillRate": "Fill rate"
     },
     "columns": {
       "user": "Member"
     },
-    "noShows": "Said yes, didn't come",
-    "unannounced": "Came without answering",
-    "matchedOf": "{matched} of {filled} days matched",
+    "brokenPromises": "Said will come, didn't",
+    "silentAbsences": "No answer, didn't come",
+    "unannounced": "No answer, came anyway",
+    "answeredOf": "Answered {answered} of {days} days",
     "empty": "Nothing to compare in this range"
   }
 }

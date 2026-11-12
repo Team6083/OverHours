@@ -2,7 +2,7 @@ import "server-only";
 import { auth, Role } from "@/auth";
 import { AttendanceEntry } from "@/generated/prisma";
 import {
-  AccuracySummary, addDays, AttendanceStatus, calendarDateInZone, DayStatus, dayStatuses, monthDates, summarizeAccuracy, weekDates,
+  AccuracySummary, addDays, AttendanceStatus, calendarDateInZone, DayStatus, dayStatuses, monthDates, parseWeights, summarizeAccuracy, weekDates,
 } from "../attendance";
 import { getTimeZone } from "../config";
 import prisma from "../prisma";
@@ -137,35 +137,52 @@ export async function saveMyWeek(weekStart: string, entries: Record<string, Atte
   return true;
 }
 
-/** Answers against time logs for `dates`, for one user or (without `userId`) everyone who answered or clocked in. */
+let warnedWeights = false;
+
+function scoreWeights() {
+  const { weights, invalid } = parseWeights(process.env.ATTENDANCE_SCORE_WEIGHTS);
+  if (invalid.length > 0 && !warnedWeights) {
+    warnedWeights = true;
+    console.warn(`ATTENDANCE_SCORE_WEIGHTS: ignoring ${invalid.join(", ")}`);
+  }
+  return weights;
+}
+
+/**
+ * Answers against time logs for the days in `dates` that the team met (anyone clocked in), for one user or
+ * (without `userId`) everyone who answered or clocked in on those days.
+ */
 async function accuracyFor(dates: string[], userId?: string): Promise<AccuracyRow[]> {
   if (dates.length === 0) return [];
   const timeZone = getTimeZone();
+  const range = { gte: startOfDay(dates[0], 0), lt: startOfDay(dates[dates.length - 1], 1) };
 
-  const [entries, logs] = await Promise.all([
-    prisma.attendanceEntry.findMany({
-      where: { userId, date: { in: dates }, slot: "AllDay" },
-      select: { userId: true, date: true, status: true },
-    }),
-    prisma.timeLog.findMany({
-      where: { userId, inTime: { gte: startOfDay(dates[0], 0), lt: startOfDay(dates[dates.length - 1], 1) } },
-      select: { userId: true, inTime: true },
-    }),
-  ]);
+  const logs = await prisma.timeLog.findMany({ where: { inTime: range }, select: { userId: true, inTime: true } });
+  const logDates = logs.map(log => ({ userId: log.userId, date: calendarDateInZone(log.inTime, timeZone) }));
+  const teamDays = new Set(logDates.map(log => log.date));
+  const days = dates.filter(date => teamDays.has(date));
+  if (days.length === 0) return [];
 
-  const userIds = [...new Set([...entries.map(e => e.userId), ...logs.map(l => l.userId)])];
+  const entries = await prisma.attendanceEntry.findMany({
+    where: { userId, date: { in: days }, slot: "AllDay" },
+    select: { userId: true, date: true, status: true },
+  });
+
+  const userIds = userId ? [userId] : [...new Set([...entries.map(e => e.userId), ...logDates.map(l => l.userId)])];
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
     select: { id: true, name: true, image: true },
     orderBy: { name: "asc" },
   });
+  const weights = scoreWeights();
 
   return users.map(user => ({
     user: { id: user.id, name: user.name, image: user.image ?? null },
     ...summarizeAccuracy(
-      dates,
+      days,
       entries.filter(e => e.userId === user.id).map(e => ({ date: e.date, status: toStatus(e.status) })),
-      logs.filter(l => l.userId === user.id).map(l => calendarDateInZone(l.inTime, timeZone)),
+      logDates.filter(l => l.userId === user.id).map(l => l.date),
+      weights,
     ),
   }));
 }

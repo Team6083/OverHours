@@ -4,7 +4,10 @@ import { getTranslations } from "next-intl/server";
 import { AccuracyRow } from "@/lib/data/attendance-dto";
 import { shortDate } from "@/lib/attendance";
 
-function Line(props: { label: string; dates: string[]; palette: string }) {
+export const scorePalette = (score: number | null) =>
+  score === null ? "gray" : score >= 0.9 ? "green" : score >= 0.7 ? "orange" : "red";
+
+export function DateLine(props: { label: string; dates: string[]; palette: string }) {
   const { label, dates, palette } = props;
   return (
     <HStack gap={2} align="baseline" wrap="wrap">
@@ -17,22 +20,23 @@ function Line(props: { label: string; dates: string[]; palette: string }) {
 export default async function MyAccuracy(props: { row: AccuracyRow | null; days: number }) {
   const { row, days } = props;
   const t = await getTranslations("Attendance.accuracy");
-  const accuracy = row && row.filled > 0 ? Math.round(row.matched / row.filled * 100) : null;
+  const score = row?.score ?? null;
 
   return (
     <Card.Root size="sm" mt={6}>
       <Card.Header>
         <HStack justify="space-between">
           <Card.Title>{t("title", { days })}</Card.Title>
-          {accuracy !== null && <Badge size="lg" colorPalette={accuracy >= 90 ? "green" : accuracy >= 70 ? "orange" : "red"}>{accuracy}%</Badge>}
+          {score !== null && <Badge size="lg" colorPalette={scorePalette(score)}>{Math.round(score * 100)}%</Badge>}
         </HStack>
       </Card.Header>
       <Card.Body>
-        {row && (row.filled > 0 || row.unannounced.length > 0) ? (
+        {row && row.days > 0 ? (
           <Stack gap={2}>
-            <Text fontSize="sm" color="fg.muted">{t("summary", { matched: row.matched, filled: row.filled })}</Text>
-            <Line label={t("noShows")} dates={row.noShows} palette="red" />
-            <Line label={t("unannounced")} dates={row.unannounced} palette="orange" />
+            <Text fontSize="sm" color="fg.muted">{t("summary", { days: row.days, answered: row.answered })}</Text>
+            <DateLine label={t("brokenPromises")} dates={row.brokenPromises} palette="red" />
+            <DateLine label={t("silentAbsences")} dates={row.silentAbsences} palette="orange" />
+            <DateLine label={t("unannounced")} dates={row.unannounced} palette="yellow" />
           </Stack>
         ) : <Text fontSize="sm" color="fg.muted">{t("empty")}</Text>}
       </Card.Body>

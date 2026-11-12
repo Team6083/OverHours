@@ -213,7 +213,7 @@
   "ReportMenu": {
     "compliance": "合規",
     "lockedLogs": "鎖定紀錄",
-    "attendanceAccuracy": "出席準確度"
+    "attendanceAccuracy": "出席紀錄比對"
   },
   "LockedReportPage": {
     "title": "鎖定紀錄",
@@ -252,9 +252,10 @@
   },
   "Attendance": {
     "accuracy": {
-      "title": "我的出席準確度（近 {days} 天）",
-      "summary": "填寫的 {filled} 天中有 {matched} 天跟打卡紀錄相符",
-      "noShows": "說會來沒來",
+      "title": "我的出席紀錄比對（近 {days} 天）",
+      "summary": "團隊有活動的 {days} 天中，你填了 {answered} 天",
+      "brokenPromises": "說會來沒來",
+      "silentAbsences": "沒填也沒來",
       "unannounced": "沒填卻來了",
       "empty": "這段期間還沒有可以比對的紀錄"
     },
@@ -311,19 +312,21 @@
     "label": "第 {rank} 名"
   },
   "AccuracyReport": {
-    "title": "出席準確度",
+    "title": "出席紀錄比對",
     "startDate": "開始日期",
     "endDate": "結束日期",
-    "description": "比對可出席時間和打卡紀錄。當天有任何打卡就算有來（包含被鎖定的紀錄），只算已經過去的日子。準確度 = 填寫的日子中跟打卡紀錄相符的比例。",
+    "description": "比對可出席時間和打卡紀錄。只算已經過去、而且有人打卡的日子（團隊有活動的日子）；當天有任何打卡就算有來，包含被鎖定的紀錄。分數是每天結果的加權平均：說會來沒來、沒填也沒來算 0，沒填卻來了算一半，其他都算滿分（可以用 ATTENDANCE_SCORE_WEIGHTS 調整）。填寫率是有填的天數比例。",
     "stats": {
-      "accuracy": "準確度"
+      "score": "分數",
+      "fillRate": "填寫率"
     },
     "columns": {
       "user": "成員"
     },
-    "noShows": "說會來沒來",
+    "brokenPromises": "說會來沒來",
+    "silentAbsences": "沒填也沒來",
     "unannounced": "沒填卻來了",
-    "matchedOf": "{filled} 天中有 {matched} 天相符",
+    "answeredOf": "{days} 天中填了 {answered} 天",
     "empty": "這段期間沒有可以比對的資料"
   }
 }
