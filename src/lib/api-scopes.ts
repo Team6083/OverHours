@@ -7,6 +7,7 @@ export const API_SCOPES = [
   "timelogs:write",
   "users:read",
   "users:write",
+  "cards:tap",
 ] as const;
 
 export type ApiScope = (typeof API_SCOPES)[number];

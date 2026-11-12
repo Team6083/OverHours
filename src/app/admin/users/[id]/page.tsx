@@ -3,8 +3,10 @@ import { Button, Container, HStack, Icon, IconButton } from "@chakra-ui/react";
 import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
 
 import { getUserAccounts } from "@/lib/data/account-dto";
+import { getUserCards } from "@/lib/data/card-dto";
 import { getUserDTO } from "@/lib/data/user-dto";
 import UserForm from "./form";
+import Cards from "./Cards";
 import LinkedAccounts from "./LinkedAccounts";
 
 export default async function SingleUserPage(props: {
@@ -20,6 +22,7 @@ export default async function SingleUserPage(props: {
     return <Container maxWidth="lg">User not found</Container>;
   }
   const accounts = userDTO ? await getUserAccounts(userDTO.id) : [];
+  const cards = userDTO ? await getUserCards(userDTO.id) : [];
 
   return (<>
     <HStack mb={4} justifyContent="space-between">
@@ -38,6 +41,7 @@ export default async function SingleUserPage(props: {
     <Container>
       <UserForm isNew={isNew} user={userDTO ?? undefined} emailManaged={accounts.length === 1} />
       {userDTO && <LinkedAccounts userId={userDTO.id} accounts={accounts} />}
+      {userDTO && <Cards userId={userDTO.id} cards={cards} />}
     </Container>
   </>);
 }

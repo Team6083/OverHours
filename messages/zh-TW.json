@@ -335,5 +335,23 @@
     "brokenPromises": "說會來沒來",
     "unexpected": "說不能來卻來了",
     "empty": "這段期間沒有填答可以比對"
+  },
+  "CardBind": {
+    "title": "綁定學生證",
+    "signInRequired": "請先登入，再把這張卡綁到你的帳號。",
+    "signIn": "登入",
+    "card": "卡片 {card}",
+    "description": "綁定後，在簽到站刷這張卡就會幫你簽到或簽退。",
+    "bindToMe": "綁到我的帳號",
+    "adminHint": "管理員也可以把卡綁給其他成員：",
+    "chooseMember": "選擇成員",
+    "bindToMember": "綁給這位成員",
+    "done": "卡片 {card} 已綁定",
+    "doneHint": "可以關掉這個頁面，回簽到站刷卡了。",
+    "errors": {
+      "replaced": "這個 QR code 已經失效：有人刷了另一張還沒綁定的卡，或這張卡已經綁好了。請在簽到站重新刷卡。",
+      "taken": "這張卡已經綁給別人了。",
+      "failed": "綁定失敗，請再試一次。"
+    }
   }
 }

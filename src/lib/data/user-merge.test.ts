@@ -12,6 +12,7 @@ const prismaMock = vi.hoisted(() => {
     timeLog: { findMany: vi.fn(), updateMany: vi.fn() },
     attendanceEntry: { findMany: vi.fn(), updateMany: vi.fn() },
     account: { updateMany: vi.fn() },
+    card: { updateMany: vi.fn() },
     $transaction: vi.fn(),
   };
   mock.$transaction.mockImplementation((fn: (tx: typeof mock) => unknown) => fn(mock));
@@ -55,6 +56,11 @@ describe("mergeUsers teams", () => {
       },
     });
     expect(prismaMock.user.deleteMany).toHaveBeenCalledWith({ where: { id: { in: [MERGED] } } });
+  });
+
+  it("moves the merged user's cards to the kept user", async () => {
+    await mergeUsers(KEPT, [KEPT, MERGED], []);
+    expect(prismaMock.card.updateMany).toHaveBeenCalledWith({ where: { userId: { in: [MERGED] } }, data: { userId: KEPT } });
   });
 
   it("keeps a team the users joined after the page loaded", async () => {

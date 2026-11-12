@@ -304,6 +304,7 @@ same syntax as `ADMIN_ROLES`, and a token with any of those roles gets the permi
 | `timelogs:write` | `API_ROLES_TIMELOGS_WRITE` | `POST /api/admin/timelogs`, `PUT` / `DELETE /api/admin/timelogs/{id}` |
 | `users:read` | `API_ROLES_USERS_READ` | `GET /api/admin/users`, `GET /api/admin/users/{id}` |
 | `users:write` | `API_ROLES_USERS_WRITE` | `POST /api/admin/users`, `PUT` / `DELETE /api/admin/users/{id}` |
+| `cards:tap` | `API_ROLES_CARDS_TAP` | `POST /api/admin/cards/tap` (see [Card readers](#card-readers)) |
 
 A valid token without the permission gets `403 forbidden`; an invalid or expired token, or one that isn't an access token
 (an ID or refresh token), gets `401`. If Keycloak can't be reached to check it the answer is `503 upstream_unavailable`,
@@ -319,6 +320,37 @@ Endpoints:
 - `GET /api/admin/timelogs/{id}` / `PUT /api/admin/timelogs/{id}` / `DELETE /api/admin/timelogs/{id}`
 
 The full OpenAPI 3.0 schema is available at [`/openapi/admin-api.json`](public/openapi/admin-api.json).
+
+## Card readers
+
+Members can clock in and out by tapping an NFC card such as a student ID on a reader, for example a Raspberry Pi
+with an NFC module. The reader reads the card's UID and sends it with a Keycloak token that has the `cards:tap`
+permission (a service account client whose role is in `API_ROLES_CARDS_TAP`):
+
+```bash
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"uid":"04:A1:B2:C3:D4:E5:F6"}' https://overhours.example.com/api/admin/cards/tap
+# {"data":{"result":"clockedIn","user":{"id":"...","name":"..."}}}
+```
+
+`uid` is 4–10 bytes of hex, in any case and optionally split by spaces, colons or dashes. `result` is:
+
+| `result` | Meaning |
+| --- | --- |
+| `clockedIn` / `clockedOut` | The card's user was clocked in, or out if they were clocked in. |
+| `locked` | The clock-out came after the daily cut-off, so the session was locked instead (see [Auto-lock](#auto-lock)). |
+| `tooShort` | The session was shorter than `OVERHOURS_TIMELOG_MIN_DURATION_SEC` and was deleted. |
+| `tooSoon` | The same card was tapped less than 15 seconds ago; nothing changed. |
+| `unbound` | The card isn't linked to anyone. The response has a `bindUrl` (on `AUTH_URL`). |
+
+For `unbound`, the reader should show `bindUrl` as a QR code until the next unbound card replaces it; linked cards
+tapped in between just clock in or out and leave it on screen. Only the latest code works: each unbound tap replaces
+the one before, and a code stops working once used. Whoever opens it signed in can link the card to their own account,
+and an admin can also link it to any member. Admins see and remove a user's cards on
+`/admin/users/{id}`; merging users moves their cards to the kept user.
+
+Run `npx prisma db push` once after deploying so the `Card` and `CardBindRequest` collections and their unique
+indexes exist.
 
 ## Deployment
 

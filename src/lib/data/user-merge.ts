@@ -234,6 +234,12 @@ export async function mergeUsers(targetId: string, userIds: string[], dropTeamId
       data: { userId: targetId },
     });
 
+    // Cards are unique by UID, so each one simply moves to the kept user
+    await tx.card.updateMany({
+      where: { userId: { in: sourceIds } },
+      data: { userId: targetId },
+    });
+
     // The merged user keeps every sign-in account, or the next sign-in would create a new user again
     await tx.account.updateMany({
       where: { userId: { in: sourceIds } },
