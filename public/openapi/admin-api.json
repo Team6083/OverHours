@@ -352,9 +352,9 @@
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "401": { "$ref": "#/components/responses/CronUnauthorized" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/CronNotConfigured" }
         }
       }
     },
@@ -663,11 +663,29 @@
         }
       },
       "NotConfigured": {
-        "description": "Admin API is not configured (ADMIN_API_KEY not set; CRON_SECRET for the jobs endpoint)",
+        "description": "Admin API is not configured (ADMIN_API_KEY not set)",
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/Error" },
             "example": { "error": { "code": "service_unavailable", "message": "Admin API is not configured" } }
+          }
+        }
+      },
+      "CronUnauthorized": {
+        "description": "Missing or invalid Bearer CRON_SECRET (ADMIN_API_KEY is not accepted here)",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": { "code": "unauthenticated", "message": "Unauthorized" } }
+          }
+        }
+      },
+      "CronNotConfigured": {
+        "description": "Jobs endpoint is not configured (CRON_SECRET not set)",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": { "code": "service_unavailable", "message": "Cron secret is not configured" } }
           }
         }
       }

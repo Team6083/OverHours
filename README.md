@@ -50,7 +50,7 @@ Variables are read at runtime unless noted otherwise.
 | `ADMIN_ROLES`, `ALLOWED_ROLES`, `AUTH_KEYCLOAK_ALGORITHMS`, `AUTH_KEYCLOAK_VERIFY_GRACE_SEC`, `AUTH_KEYCLOAK_ROLES_CLAIM` | No | Role and token verification settings; see [Auth configuration](#auth-configuration). |
 | `NEXT_MANUAL_SIG_HANDLE` | No | Disables the shutdown flag used by `/api/readyz`; see [Health checks](#health-checks). |
 | `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*`, except `/api/admin/jobs/*`. Admin API requests are rejected when it is unset. |
-| `CRON_SECRET` | For auto-lock | Bearer token accepted by `/api/admin/jobs/*` and nothing else, for the scheduler (e.g. a Kubernetes CronJob). The jobs endpoint is rejected when it is unset; `ADMIN_API_KEY` is not accepted there. |
+| `CRON_SECRET` | For auto-lock | Bearer token accepted by `/api/admin/jobs/*` and nothing else, for the scheduler (e.g. a Kubernetes CronJob). The jobs endpoint is rejected when it is unset (a startup warning is logged if `AUTO_LOCK_TIME` is set); `ADMIN_API_KEY` is not accepted there. Must differ from `ADMIN_API_KEY`, or the server refuses to start. |
 | `ORG_NAME` | No | Name of the organisation running this instance. Shown in the header, footer and page description. When unset, no organisation text is shown. |
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
 | `AUTO_LOCK_TIME` | No | Daily cut-off as `HH:mm` in `TZ`. Sessions still clocked in at the cut-off are locked as abnormal clock-outs; see [Auto-lock](#auto-lock). Unset: no automatic locking. A malformed value stops the server from starting. |

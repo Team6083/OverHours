@@ -15,9 +15,8 @@ function safeCompare(a: string, b: string): boolean {
   return timingSafeEqual(bufA, bufB);
 }
 
-/** Lets a request through when its Bearer token equals the secret in `envName`; otherwise returns the error to send. */
-function verifyBearerSecret(req: NextRequest, envName: string, notConfigured: string): NextResponse | null {
-  const secret = process.env[envName];
+/** Lets a request through when its Bearer token equals `secret`; otherwise returns the error to send. */
+function verifyBearerSecret(req: NextRequest, secret: string | undefined, notConfigured: string): NextResponse | null {
   if (!secret) {
     return apiError("service_unavailable", notConfigured);
   }
@@ -33,10 +32,10 @@ function verifyBearerSecret(req: NextRequest, envName: string, notConfigured: st
 }
 
 export function verifyAdminApiKey(req: NextRequest): NextResponse | null {
-  return verifyBearerSecret(req, "ADMIN_API_KEY", "Admin API is not configured");
+  return verifyBearerSecret(req, process.env.ADMIN_API_KEY, "Admin API is not configured");
 }
 
 /** For the scheduler that calls the jobs endpoint. Deliberately separate from `ADMIN_API_KEY`, which can do far more. */
 export function verifyCronSecret(req: NextRequest): NextResponse | null {
-  return verifyBearerSecret(req, "CRON_SECRET", "Cron secret is not configured");
+  return verifyBearerSecret(req, process.env.CRON_SECRET, "Cron secret is not configured");
 }
