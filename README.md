@@ -49,7 +49,8 @@ Variables are read at runtime unless noted otherwise.
 | `AUTH_TRUST_HOST` | No | Set to `true` to let Auth.js trust the `Host` header. Auth.js variable, not read by this repository's code; often needed behind a reverse proxy. |
 | `ADMIN_ROLES`, `ALLOWED_ROLES`, `AUTH_KEYCLOAK_ALGORITHMS`, `AUTH_KEYCLOAK_VERIFY_GRACE_SEC`, `AUTH_KEYCLOAK_ROLES_CLAIM` | No | Role and token verification settings; see [Auth configuration](#auth-configuration). |
 | `NEXT_MANUAL_SIG_HANDLE` | No | Disables the shutdown flag used by `/api/readyz`; see [Health checks](#health-checks). |
-| `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*`. Admin API requests are rejected when it is unset. |
+| `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*`, except `/api/admin/jobs/*`. Admin API requests are rejected when it is unset. |
+| `CRON_SECRET` | For auto-lock | Bearer token accepted by `/api/admin/jobs/*` and nothing else, for the scheduler (e.g. a Kubernetes CronJob). The jobs endpoint is rejected when it is unset; `ADMIN_API_KEY` is not accepted there. |
 | `ORG_NAME` | No | Name of the organisation running this instance. Shown in the header, footer and page description. When unset, no organisation text is shown. |
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
 | `AUTO_LOCK_TIME` | No | Daily cut-off as `HH:mm` in `TZ`. Sessions still clocked in at the cut-off are locked as abnormal clock-outs; see [Auto-lock](#auto-lock). Unset: no automatic locking. A malformed value stops the server from starting. |
@@ -194,11 +195,11 @@ time is the cut-off).
 
 The app checks this only at clock-out: clocking out (or an admin clocking someone out) after the cut-off
 locks the session instead and tells the user. A session whose user never clocks out stays "currently in"
-until something locks it, so run a scheduler (for example a Kubernetes CronJob) that calls the Admin API
-regularly, e.g. every few minutes:
+until something locks it, so run a scheduler (for example a Kubernetes CronJob) that calls the jobs endpoint
+regularly, e.g. every few minutes, with `CRON_SECRET` (not `ADMIN_API_KEY`):
 
 ```bash
-curl -X POST -H "Authorization: Bearer $ADMIN_API_KEY" https://overhours.example.com/api/admin/jobs/auto-lock
+curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://overhours.example.com/api/admin/jobs/auto-lock
 # {"data":{"enabled":true,"lockedCount":1,"lockedIds":["..."]}}
 ```
 

@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "OverHours Admin API",
-    "description": "Admin API for managing users and time logs. Authenticated with a static Bearer API key (ADMIN_API_KEY).",
+    "description": "Admin API for managing users and time logs. Authenticated with a static Bearer API key (ADMIN_API_KEY); the jobs endpoint uses its own secret (CRON_SECRET).",
     "version": "1.0.0"
   },
   "servers": [
@@ -327,7 +327,8 @@
       "post": {
         "tags": ["Jobs"],
         "summary": "Lock sessions past the daily cut-off",
-        "description": "Locks every CURRENTLY_IN time log that has passed the daily cut-off (AUTO_LOCK_TIME), with outTime set to the cut-off and lockReason AUTO_TIMEOUT. Meant for an external scheduler; idempotent. Does nothing when auto-lock is not configured (enabled: false).",
+        "description": "Locks every CURRENTLY_IN time log that has passed the daily cut-off (AUTO_LOCK_TIME), with outTime set to the cut-off and lockReason AUTO_TIMEOUT. Meant for an external scheduler; idempotent. Does nothing when auto-lock is not configured (enabled: false). Authenticated with CRON_SECRET; ADMIN_API_KEY is not accepted.",
+        "security": [{ "cronAuth": [] }],
         "responses": {
           "200": {
             "description": "Sweep result",
@@ -457,6 +458,11 @@
         "type": "http",
         "scheme": "bearer",
         "description": "Static admin API key, set via the ADMIN_API_KEY environment variable"
+      },
+      "cronAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Scheduler secret for /admin/jobs/*, set via the CRON_SECRET environment variable"
       }
     },
     "schemas": {
@@ -657,7 +663,7 @@
         }
       },
       "NotConfigured": {
-        "description": "Admin API is not configured (ADMIN_API_KEY not set)",
+        "description": "Admin API is not configured (ADMIN_API_KEY not set; CRON_SECRET for the jobs endpoint)",
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/Error" },
