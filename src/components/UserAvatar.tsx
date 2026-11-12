@@ -24,7 +24,7 @@ export default function UserAvatar(props: {
         {image && <Avatar.Image src={image} alt="" />}
         <Avatar.Fallback name={name} />
       </Avatar.Root>
-      <RankMedal rank={rank} />
+      <RankMedal rank={rank} size={size} />
     </Box>
   );
 }
