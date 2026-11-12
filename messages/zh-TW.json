@@ -212,7 +212,8 @@
   },
   "ReportMenu": {
     "compliance": "合規",
-    "lockedLogs": "鎖定紀錄"
+    "lockedLogs": "鎖定紀錄",
+    "attendanceAccuracy": "出席準確度"
   },
   "LockedReportPage": {
     "title": "鎖定紀錄",
@@ -250,6 +251,13 @@
     "loadFailed": "載入失敗"
   },
   "Attendance": {
+    "accuracy": {
+      "title": "我的出席準確度（近 {days} 天）",
+      "summary": "填寫的 {filled} 天中有 {matched} 天跟打卡紀錄相符",
+      "noShows": "說會來沒來",
+      "unannounced": "沒填卻來了",
+      "empty": "這段期間還沒有可以比對的紀錄"
+    },
     "title": "可出席時間",
     "signInRequired": "請先登入才能填寫可出席時間。",
     "today": "今天",
@@ -257,6 +265,7 @@
     "findPerson": "查詢成員",
     "back": "返回",
     "calendar": {
+      "clockedIn": "有簽到",
       "previousMonth": "上個月",
       "nextMonth": "下個月",
       "loadFailed": "無法載入這個月份"
@@ -300,5 +309,21 @@
   },
   "RankMedal": {
     "label": "第 {rank} 名"
+  },
+  "AccuracyReport": {
+    "title": "出席準確度",
+    "startDate": "開始日期",
+    "endDate": "結束日期",
+    "description": "比對可出席時間和打卡紀錄。當天有任何打卡就算有來（包含被鎖定的紀錄），只算已經過去的日子。準確度 = 填寫的日子中跟打卡紀錄相符的比例。",
+    "stats": {
+      "accuracy": "準確度"
+    },
+    "columns": {
+      "user": "成員"
+    },
+    "noShows": "說會來沒來",
+    "unannounced": "沒填卻來了",
+    "matchedOf": "{filled} 天中有 {matched} 天相符",
+    "empty": "這段期間沒有可以比對的資料"
   }
 }

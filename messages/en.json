@@ -212,7 +212,8 @@
   },
   "ReportMenu": {
     "compliance": "Compliance",
-    "lockedLogs": "Locked Logs"
+    "lockedLogs": "Locked Logs",
+    "attendanceAccuracy": "Attendance accuracy"
   },
   "LockedReportPage": {
     "title": "Locked Logs",
@@ -250,6 +251,13 @@
     "loadFailed": "Failed to load"
   },
   "Attendance": {
+    "accuracy": {
+      "title": "My attendance accuracy (last {days} days)",
+      "summary": "{matched} of the {filled} days you answered match your time logs",
+      "noShows": "Said yes, didn't come",
+      "unannounced": "Came without answering",
+      "empty": "Nothing to compare yet"
+    },
     "title": "Availability",
     "signInRequired": "Sign in to fill in your availability.",
     "today": "Today",
@@ -257,6 +265,7 @@
     "findPerson": "Find person",
     "back": "Back",
     "calendar": {
+      "clockedIn": "Clocked in",
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
       "loadFailed": "Could not load this month"
@@ -300,5 +309,21 @@
   },
   "RankMedal": {
     "label": "Rank {rank}"
+  },
+  "AccuracyReport": {
+    "title": "Attendance accuracy",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "description": "Compares availability answers with time logs. Any time log that day counts as coming (locked logs included), and only days that are over count. Accuracy is the share of answered days that match the time logs.",
+    "stats": {
+      "accuracy": "Accuracy"
+    },
+    "columns": {
+      "user": "Member"
+    },
+    "noShows": "Said yes, didn't come",
+    "unannounced": "Came without answering",
+    "matchedOf": "{matched} of {filled} days matched",
+    "empty": "Nothing to compare in this range"
   }
 }

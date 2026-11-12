@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  addDays, addMonths, calendarDateInZone, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, weekDates, weekStartOf,
+  addDays, addMonths, calendarDateInZone, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, summarizeAccuracy, weekDates, weekStartOf,
 } from "./attendance";
 
 describe("isCalendarDate", () => {
@@ -107,5 +107,35 @@ describe("months", () => {
     expect(monthDates("2028-02")).toHaveLength(29);
     expect(monthDates("2027-02")).toHaveLength(28);
     expect(monthDates("2027-01")[30]).toBe("2027-01-31");
+  });
+});
+
+describe("summarizeAccuracy", () => {
+  const dates = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06"];
+
+  it("sorts each day into matched, no-show, unexpected or unannounced", () => {
+    const summary = summarizeAccuracy(
+      dates,
+      [
+        { date: "2026-11-02", status: "AVAILABLE" },
+        { date: "2026-11-03", status: "AVAILABLE" },
+        { date: "2026-11-04", status: "UNAVAILABLE" },
+        { date: "2026-11-05", status: "UNAVAILABLE" },
+      ],
+      ["2026-11-02", "2026-11-04", "2026-11-06"],
+    );
+
+    expect(summary).toEqual({
+      matched: 2,
+      filled: 4,
+      noShows: ["2026-11-03"],
+      unexpected: ["2026-11-04"],
+      unannounced: ["2026-11-06"],
+    });
+  });
+
+  it("ignores answers and time logs outside the dates", () => {
+    const summary = summarizeAccuracy(["2026-11-02"], [{ date: "2026-11-09", status: "AVAILABLE" }], ["2026-11-10"]);
+    expect(summary).toEqual({ matched: 0, filled: 0, noShows: [], unexpected: [], unannounced: [] });
   });
 });

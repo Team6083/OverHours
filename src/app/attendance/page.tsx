@@ -1,6 +1,9 @@
 import { isCalendarDate, weekStartOf } from "@/lib/attendance";
-import { getMyWeek, getToday, getWeekBoard } from "@/lib/data/attendance-dto";
+import { getMyAccuracy, getMyWeek, getToday, getWeekBoard } from "@/lib/data/attendance-dto";
 import AttendanceView from "./AttendanceView";
+import MyAccuracy from "./MyAccuracy";
+
+const ACCURACY_DAYS = 30;
 
 export default async function AttendancePage(props: { searchParams: Promise<{ week?: string }> }) {
   const { week } = await props.searchParams;
@@ -8,7 +11,12 @@ export default async function AttendancePage(props: { searchParams: Promise<{ we
   const today = getToday();
   const weekStart = weekStartOf(week && isCalendarDate(week) ? week : today);
 
-  const [board, mine] = await Promise.all([getWeekBoard(weekStart), getMyWeek(weekStart)]);
+  const [board, mine, accuracy] = await Promise.all([
+    getWeekBoard(weekStart), getMyWeek(weekStart), getMyAccuracy(ACCURACY_DAYS),
+  ]);
 
-  return <AttendanceView key={weekStart} weekStart={weekStart} today={today} board={board} mine={mine} />;
+  return (<>
+    <AttendanceView key={weekStart} weekStart={weekStart} today={today} board={board} mine={mine} />
+    <MyAccuracy row={accuracy} days={ACCURACY_DAYS} />
+  </>);
 }

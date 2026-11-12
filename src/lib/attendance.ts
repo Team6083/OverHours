@@ -90,3 +90,44 @@ export function rowsToReassign<T extends { id: string; userId: string }>(
 
   return ids;
 }
+
+export type AccuracySummary = {
+  /** Past days the user filled in and the time logs agree with. */
+  matched: number;
+  /** Past days the user filled in. */
+  filled: number;
+  /** Said available, no time log that day. */
+  noShows: string[];
+  /** Said unavailable, clocked in anyway. */
+  unexpected: string[];
+  /** Not filled in, clocked in anyway. */
+  unannounced: string[];
+};
+
+/** Compares one user's answers with the days they clocked in. `dates` should only hold days that are over. */
+export function summarizeAccuracy(
+  dates: string[],
+  answers: { date: string; status: AttendanceStatus }[],
+  attendedDates: Iterable<string>,
+): AccuracySummary {
+  const attended = new Set(attendedDates);
+  const summary: AccuracySummary = { matched: 0, filled: 0, noShows: [], unexpected: [], unannounced: [] };
+
+  for (const { date, status } of dayStatuses(dates, answers)) {
+    const came = attended.has(date);
+    if (status === "NOT_FILLED") {
+      if (came) summary.unannounced.push(date);
+      continue;
+    }
+
+    summary.filled++;
+    if ((status === "AVAILABLE") === came) summary.matched++;
+    else if (came) summary.unexpected.push(date);
+    else summary.noShows.push(date);
+  }
+
+  return summary;
+}
+
+/** `YYYY-MM-DD` → `MM/DD`. */
+export const shortDate = (date: string) => date.slice(5).replace("-", "/");
