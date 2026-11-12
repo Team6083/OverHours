@@ -10,15 +10,18 @@ import { getTranslations } from "next-intl/server";
 
 import { SessionProvider } from "next-auth/react";
 
-import { Avatar, Box, Button, CloseButton, Container, Drawer, Flex, Heading, HStack, Icon, IconButton, Menu, MenuSelectionDetails, Portal, Separator, Stack, Text } from "@chakra-ui/react";
-import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange, LuCalendarCheck, LuKeyRound } from "react-icons/lu";
+import { Box, Button, CloseButton, Container, Drawer, Flex, Heading, HStack, Icon, IconButton, Menu, MenuSelectionDetails, Portal, Separator, Stack, Text } from "@chakra-ui/react";
+import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange, LuCalendarCheck, LuKeyRound, LuNetwork } from "react-icons/lu";
 
 import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
 import { Provider } from "@/components/ui/provider"
 import { Toaster } from "@/components/ui/toaster";
 import AppVersionBadge from "@/components/AppVersionBadge";
+import { TopRanksProvider } from "@/components/TopRanks";
+import UserAvatar from "@/components/UserAvatar";
 import { getOrgName } from "@/lib/config";
+import { getTopUserIds } from "@/lib/data/timelog-dto";
 import DrawerNavLink from "./_components/DrawerNavLink";
 
 const geistSans = Geist({
@@ -50,6 +53,7 @@ export default async function RootLayout({
   const orgName = getOrgName();
   // Set by src/proxy.ts; next-themes' inline script needs it to run under the CSP.
   const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const topUserIds = await topUserIdsForSession();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -57,10 +61,12 @@ export default async function RootLayout({
         <NextIntlClientProvider>
           <Provider nonce={nonce}> {/* Chakra-UI provider */}
             <SessionProvider> {/* Auth.js provider, for useSession() hook */}
-              <Container maxWidth="5xl" fluid p={4} my={2}>
-                <NavBar mb={4} orgName={orgName} />
-                {children}
-              </Container>
+              <TopRanksProvider userIds={topUserIds}>
+                <Container maxWidth="5xl" fluid p={4} my={2}>
+                  <NavBar mb={4} orgName={orgName} topUserIds={topUserIds} />
+                  {children}
+                </Container>
+              </TopRanksProvider>
               <footer>
                 <Container maxWidth="5xl" fluid mb={8} textAlign={{ smDown: "center" }}>
                   <Stack flexDir={{ base: "column", sm: "row" }} justifyContent="space-between">
@@ -82,10 +88,17 @@ export default async function RootLayout({
   );
 }
 
+/** Medals only show to signed-in users, so the ranking query is skipped for everyone else. */
+async function topUserIdsForSession(): Promise<string[]> {
+  if (!(await auth())) return [];
+  return getTopUserIds().catch(() => []);
+}
+
 async function NavBar(props: {
   orgName: string;
+  topUserIds: string[];
 } & Omit<ComponentProps<typeof Box>, "children">) {
-  const { orgName, ...boxProps } = props;
+  const { orgName, topUserIds, ...boxProps } = props;
   const t = await getTranslations("AppNav");
 
   const session = await auth();
@@ -102,6 +115,7 @@ async function NavBar(props: {
     { href: "/attendance", label: t("nav.attendance"), icon: LuCalendarCheck, roles: [Role.USER, Role.ADMIN] },
     { href: "/report", label: t("nav.reports"), icon: LuChartNoAxesCombined, roles: [Role.ADMIN] },
     { href: "/admin/users", label: t("nav.users"), icon: LuUsers, roles: [Role.ADMIN] },
+    { href: "/admin/teams", label: t("nav.teams"), icon: LuNetwork, roles: [Role.ADMIN] },
     { href: "/admin/stat-ranges", label: t("nav.statRanges"), icon: LuCalendarRange, roles: [Role.ADMIN] },
   ];
 
@@ -145,10 +159,12 @@ async function NavBar(props: {
               ? <Menu.Root onSelect={handleUserAvatarMenuSelect}>
                 <Menu.Trigger asChild>
                   <Box cursor="pointer" mx={2}>
-                    <Avatar.Root size="sm" cursor="pointer">
-                      <Avatar.Fallback name={session.user.name || undefined} />
-                      <Avatar.Image src={session.user.image || undefined} />
-                    </Avatar.Root>
+                    <UserAvatar
+                      name={session.user.name ?? ""}
+                      image={session.user.image}
+                      size="sm"
+                      rank={topUserIds.indexOf(session.user.id ?? "") + 1}
+                    />
                   </Box>
                 </Menu.Trigger>
                 <Portal>

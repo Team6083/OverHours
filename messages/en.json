@@ -183,6 +183,7 @@
       "logs": "Logs",
       "reports": "Reports",
       "users": "Users",
+      "teams": "Teams",
       "statRanges": "Stat Ranges",
       "attendance": "Availability",
       "signIn": "Sign-In",
@@ -319,5 +320,8 @@
     "revoke": "Revoke",
     "confirmRevoke": "Programs using \"{name}\" will stop working right away. Revoke it?",
     "failed": "That didn't work. Try again."
+  },
+  "RankMedal": {
+    "label": "Rank {rank}"
   }
 }

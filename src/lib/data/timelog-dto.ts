@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { auth, Role } from "@/auth";
 import { Prisma, TimeLog } from "@/generated/prisma";
 import prisma from "../prisma";
@@ -215,6 +216,12 @@ export async function getAllUsersTotalTimeSec(opts?: {
 
   return {};
 }
+
+/** Ids of the all-time top three by total time, worked out once per request however many callers ask. */
+export const getTopUserIds = cache(async (): Promise<string[]> => {
+  const totals = await getAllUsersTotalTimeSec();
+  return Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id]) => id);
+});
 
 export async function getUserLastLogDTO(userId: string): Promise<TimeLogDTO | null> {
   const session = await auth();

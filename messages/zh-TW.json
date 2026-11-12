@@ -183,6 +183,7 @@
       "logs": "紀錄",
       "reports": "報告",
       "users": "使用者",
+      "teams": "團隊",
       "statRanges": "統計範圍",
       "attendance": "可出席時間",
       "signIn": "登入",
@@ -319,5 +320,8 @@
     "revoke": "撤銷",
     "confirmRevoke": "撤銷「{name}」後，用到它的程式會立刻無法連線。確定嗎？",
     "failed": "操作失敗，請再試一次"
+  },
+  "RankMedal": {
+    "label": "第 {rank} 名"
   }
 }

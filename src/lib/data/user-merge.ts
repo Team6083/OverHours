@@ -3,6 +3,8 @@ import { auth, Role } from "@/auth";
 import { rowsToReassign } from "../attendance";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
+import { planMergedTeams } from "../team-roles";
+import { removeUsersFromAllTeams } from "./team-dto";
 
 export type MergeUserSummary = {
   id: string;
@@ -10,6 +12,14 @@ export type MergeUserSummary = {
   name: string;
   createdAt: Date;
   timeLogCount: number;
+  teams: MergeUserTeam[];
+};
+
+export type MergeUserTeam = {
+  id: string;
+  name: string;
+  // Joined because of one of the team's auto-join roles
+  viaRole: boolean;
 };
 
 export type MergeConflict = {
@@ -133,6 +143,12 @@ export async function getMergePreview(ids: string[]): Promise<MergePreview | nul
 
   const { conflicts, count } = findConflicts(logs);
 
+  const teams = await prisma.team.findMany({
+    where: { id: { in: users.flatMap(user => user.teamIds) } },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+
   return {
     users: users.map(user => ({
       id: user.id,
@@ -140,13 +156,20 @@ export async function getMergePreview(ids: string[]): Promise<MergePreview | nul
       name: user.name,
       createdAt: user.createdAt,
       timeLogCount: countByUser.get(user.id) ?? 0,
+      teams: teams
+        .filter(team => user.teamIds.includes(team.id))
+        .map(team => ({ ...team, viaRole: user.roleTeamIds.includes(team.id) })),
     })),
     conflicts,
     conflictCount: count,
   };
 }
 
-export async function mergeUsers(targetId: string, userIds: string[]) {
+/**
+ * Merges `userIds` into `targetId`. The kept user ends up in every team any of the users is in when the merge
+ * runs, except those in `dropTeamIds`; each keeps how it was joined (see `planMergedTeams`).
+ */
+export async function mergeUsers(targetId: string, userIds: string[], dropTeamIds: string[]) {
   const session = await requireAdmin();
 
   const ids = Array.from(new Set(userIds));
@@ -162,14 +185,21 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
     throw new MergeUsersError("The target user must be one of the selected users.");
   }
 
+  if (!Array.isArray(dropTeamIds) || !areValidIds(dropTeamIds)) {
+    throw new MergeUsersError("Some of the teams to drop are not valid team ids.");
+  }
+
   const sourceIds = ids.filter(id => id !== targetId);
   if (session.user.id && sourceIds.includes(session.user.id)) {
     throw new MergeUsersError("You cannot merge your own account into another user. Choose your account as the target instead.");
   }
 
   await prisma.$transaction(async (tx) => {
-    const userCount = await tx.user.count({ where: { id: { in: ids } } });
-    if (userCount !== ids.length) {
+    const users = await tx.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, teamIds: true, roleTeamIds: true },
+    });
+    if (users.length !== ids.length) {
       throw new MergeUsersError("Some of the selected users no longer exist.");
     }
 
@@ -209,6 +239,31 @@ export async function mergeUsers(targetId: string, userIds: string[]) {
       where: { userId: { in: sourceIds } },
       data: { userId: targetId },
     });
+
+    // The kept user stays in every team the selected users are in now, read in this transaction so a team
+    // joined after the page loaded is kept, except the teams the admin unticked. Each is joined the way the
+    // selected users joined it. Stale ids of deleted teams in the users' teamIds are skipped, and an unticked
+    // team that is no longer a team of any selected user is ignored, as there is nothing to drop.
+    const existingTeamIds = new Set((await tx.team.findMany({
+      where: { id: { in: users.flatMap(user => user.teamIds) } },
+      select: { id: true },
+    })).map(team => team.id));
+    const plan = planMergedTeams(
+      users.map(user => ({ ...user, teamIds: user.teamIds.filter(id => existingTeamIds.has(id)) })),
+      targetId,
+      dropTeamIds,
+    );
+    await tx.user.update({
+      where: { id: targetId },
+      data: {
+        teams: {
+          connect: plan.connect.map(id => ({ id })),
+          disconnect: plan.disconnect.map(id => ({ id })),
+        },
+        roleTeamIds: plan.roleTeamIds,
+      },
+    });
+    await removeUsersFromAllTeams(tx, sourceIds);
 
     await tx.user.deleteMany({
       where: { id: { in: sourceIds } },

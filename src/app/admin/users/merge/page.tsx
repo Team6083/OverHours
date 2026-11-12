@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button, Container } from "@chakra-ui/react";
+import { Button, Card } from "@chakra-ui/react";
 
 import { auth } from "@/auth";
 import { getMergePreview } from "@/lib/data/user-merge";
@@ -13,10 +13,12 @@ export default async function MergeUsersPage(props: {
 
   const preview = ids.length >= 2 ? await getMergePreview(ids) : null;
   if (!preview) {
-    return <Container maxW="md">
-      Select at least two existing users to merge.
-      <Button size="sm" variant="outline" mt={4} asChild><Link href="/admin/users">Back to Users</Link></Button>
-    </Container>;
+    return <Card.Root variant="elevated">
+      <Card.Body>Select at least two existing users to merge.</Card.Body>
+      <Card.Footer>
+        <Button size="sm" variant="outline" asChild><Link href="/admin/users">Back to Users</Link></Button>
+      </Card.Footer>
+    </Card.Root>;
   }
 
   const session = await auth();

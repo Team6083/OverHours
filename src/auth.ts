@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { linkProviderAccount } from "./lib/data/user-account";
+import { syncUserRoleTeams } from "./lib/data/team-role-sync";
 import { evaluateAccess, extractRoles, parseAdminRoles, parseRoleList } from "./lib/auth-roles";
 import { describeError, describeErrorDescription, INVALID_TOKEN_ERROR_CODES, isVerifyGraceExpired, parseVerifyGraceSec } from "./lib/auth-errors";
 
@@ -101,7 +102,14 @@ async function getVerifiedRoles(accessToken: string): Promise<string[]> {
   return extractRoles(payload, LEGACY_ROLES_CLAIM_PATH);
 }
 
-function accessFromRoles(roles: string[]): { role: Role; allowed: boolean } {
+type Access = {
+  role: Role;
+  allowed: boolean;
+  // Roles from a verified token; absent when the token was rejected, so teams are left alone.
+  verifiedRoles?: string[];
+};
+
+function accessFromRoles(roles: string[]): Access {
   const { isAdmin, allowed } = evaluateAccess(
     roles,
     parseAdminRoles(process.env.ADMIN_ROLES),
@@ -115,13 +123,14 @@ function accessFromRoles(roles: string[]): { role: Role; allowed: boolean } {
  * An invalid token fails closed (no roles). Returns null when verification could not be performed
  * (e.g. Keycloak unreachable), in which case callers must keep the previous state and retry later.
  */
-async function resolveAccess(accessToken: string): Promise<{ role: Role; allowed: boolean } | null> {
+async function resolveAccess(accessToken: string): Promise<Access | null> {
   if (Date.now() < verifyBackoffUntil) {
     return null;
   }
 
   try {
-    return accessFromRoles(await getVerifiedRoles(accessToken));
+    const roles = await getVerifiedRoles(accessToken);
+    return { ...accessFromRoles(roles), verifiedRoles: roles };
   } catch (error) {
     const code = describeError(error);
     if (INVALID_TOKEN_ERROR_CODES.has(code)) {
@@ -132,6 +141,20 @@ async function resolveAccess(accessToken: string): Promise<{ role: Role; allowed
     verifyBackoffUntil = Date.now() + VERIFY_RETRY_BACKOFF_MS;
     console.error(`Could not verify access token (${code}), keeping previous roles`);
     return null;
+  }
+}
+
+/**
+ * Joins and leaves teams by role (Team.autoJoinRoles) from verified roles, at sign-in and on every access
+ * token refresh. A failure is logged and does not affect the session; the next refresh tries again.
+ */
+async function syncRoleTeams(userId: string, roles: string[] | undefined) {
+  if (!roles) return;
+
+  try {
+    await syncUserRoleTeams(userId, roles);
+  } catch (error) {
+    console.error(`Could not sync teams from roles for user ${userId}`, describeError(error));
   }
 }
 
@@ -310,6 +333,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.role = access.role;
           token.rolesVerified = true;
           delete token.verifyFailedSince;
+
+          await syncRoleTeams(token.userId, access.verifiedRoles);
         } else {
           // Verification unavailable: keep the previous role (least privilege if there is none) and
           // leave rolesVerified false so the next callback retries.

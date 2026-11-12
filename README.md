@@ -228,6 +228,29 @@ curl -H "Authorization: Bearer $ADMIN_API_KEY" "https://overhours.example.com/ap
 
 `status` is `AVAILABLE`, `UNAVAILABLE` or `NOT_FILLED`. A request covers at most 92 days.
 
+## Teams
+
+Admins manage teams on `/admin/teams`. Teams form a tree: a team can have sub-teams, and a team that still has
+sub-teams cannot be deleted. Members of a sub-team also count as members of every team above it: a team's member
+list and member count include its sub-teams' members, who are managed (and removed) on their own sub-team. A
+member's teams are shown on the home page; only the teams they are directly in are listed there.
+
+A team can list **auto-join roles**, in the same syntax as `ADMIN_ROLES` (`role` for a realm role, `client:role`
+for a client role). A user with any of them joins the team, and leaves it when they no longer have any. Roles are
+read from the verified access token at sign-in and on every token refresh, so a role change in Keycloak reaches an
+active user within one access token lifetime and other users at their next sign-in. Changing a team's roles works
+the same way: nobody is added or removed until they next sign in or refresh.
+
+Members added by hand are never removed by roles, even when they have none of the team's roles. A member who
+joined by role is marked "Role". Admins can still remove them by hand, for example someone who left long ago and
+never signs in again (role memberships are only updated at sign-in, so removing their role in Keycloak alone does
+not take them off the team). If they still have the role, they rejoin at their next sign-in or token refresh; to
+keep them out, remove the role in Keycloak or from the team as well. When users are merged, the admin chooses
+which of their teams the kept user stays in; each kept team keeps how it was joined (by hand or by role).
+
+The roles must be in the access token, which they are by default (`realm_access` and `resource_access`). Run
+`npx prisma db push` once after deploying.
+
 ## Admin API
 
 An API-key authenticated REST API is available for managing users and time logs from
