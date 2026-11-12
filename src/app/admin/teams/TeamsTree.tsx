@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Badge, Button, ButtonGroup, HStack, IconButton, Text, TreeView, createTreeCollection, useTreeView, useTreeViewContext } from "@chakra-ui/react";
+import { Badge, Button, ButtonGroup, Card, HStack, IconButton, Text, TreeView, createTreeCollection, useTreeView, useTreeViewContext } from "@chakra-ui/react";
 import { LuPlus, LuSquareMinus, LuSquarePlus, LuUsers } from "react-icons/lu";
 
 import { toaster } from "@/components/ui/toaster";
@@ -125,29 +125,36 @@ export default function TeamsTree(props: { teams: TeamDTO[] }) {
   </HStack>;
 
   return <TreeView.RootProvider value={store} size="md">
-    <HStack justify="space-between">
-      <TreeView.Label>Teams</TreeView.Label>
-      <TreeToolbar />
-    </HStack>
-    <TreeView.Tree>
-      <TreeView.Node<Node>
-        indentGuide={<TreeView.BranchIndentGuide />}
-        render={({ node, nodeState }) =>
-          nodeState.isBranch ? (
-            <TreeView.BranchControl>
-              {nodeState.expanded ? <LuSquareMinus /> : <LuSquarePlus />}
-              <TreeView.BranchText flex="1" minW="0">{label(node)}</TreeView.BranchText>
-              <AddSubTeamButton node={node} />
-            </TreeView.BranchControl>
-          ) : (
-            <TreeView.Item>
-              <LuUsers />
-              <TreeView.ItemText flex="1" minW="0">{label(node)}</TreeView.ItemText>
-              <AddSubTeamButton node={node} />
-            </TreeView.Item>
-          )
-        }
-      />
-    </TreeView.Tree>
+    {/* The provider wraps the card so the label in its header belongs to the tree */}
+    <Card.Root>
+      <Card.Header>
+        <HStack justify="space-between">
+          <Card.Title asChild><TreeView.Label>Teams</TreeView.Label></Card.Title>
+          <TreeToolbar />
+        </HStack>
+      </Card.Header>
+      <Card.Body>
+        <TreeView.Tree>
+          <TreeView.Node<Node>
+            indentGuide={<TreeView.BranchIndentGuide />}
+            render={({ node, nodeState }) =>
+              nodeState.isBranch ? (
+                <TreeView.BranchControl>
+                  {nodeState.expanded ? <LuSquareMinus /> : <LuSquarePlus />}
+                  <TreeView.BranchText flex="1" minW="0">{label(node)}</TreeView.BranchText>
+                  <AddSubTeamButton node={node} />
+                </TreeView.BranchControl>
+              ) : (
+                <TreeView.Item>
+                  <LuUsers />
+                  <TreeView.ItemText flex="1" minW="0">{label(node)}</TreeView.ItemText>
+                  <AddSubTeamButton node={node} />
+                </TreeView.Item>
+              )
+            }
+          />
+        </TreeView.Tree>
+      </Card.Body>
+    </Card.Root>
   </TreeView.RootProvider>;
 }

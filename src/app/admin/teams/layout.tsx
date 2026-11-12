@@ -10,9 +10,9 @@ export default async function TeamsLayout({ children }: { children: React.ReactN
   return (
     <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
       <GridItem>
-        <Card.Root>
-          <Card.Body>
-            {teams.length === 0 ? (
+        {teams.length === 0 ? (
+          <Card.Root>
+            <Card.Body>
               <EmptyState.Root>
                 <EmptyState.Content>
                   <EmptyState.Indicator>
@@ -27,11 +27,11 @@ export default async function TeamsLayout({ children }: { children: React.ReactN
                   </ButtonGroup>
                 </EmptyState.Content>
               </EmptyState.Root>
-            ) : (
-              <TeamsTree teams={teams} />
-            )}
-          </Card.Body>
-        </Card.Root>
+            </Card.Body>
+          </Card.Root>
+        ) : (
+          <TeamsTree teams={teams} />
+        )}
       </GridItem>
 
       <GridItem colSpan={{ base: 1, md: 2 }}>

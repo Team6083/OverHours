@@ -134,86 +134,91 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
   );
 
   return (
-    <Stack gap={3}>
-      <HStack justify="space-between" flexWrap="wrap">
-        <Heading as="h3" size="sm">Members ({members.length})</Heading>
-        <HStack>
-          <UserCombobox
-            users={candidates}
-            value={selectedUserId}
-            onValueChange={setSelectedUserId}
-            placeholder="Add a member"
-            size="sm"
-            minWidth="12rem"
-          />
-          <IconButton
-            size="sm"
-            variant="outline"
-            aria-label="Add member"
-            disabled={!selectedUserId}
-            loading={pending}
-            onClick={() => run(() => addTeamMembersAction(team.id, [selectedUserId]), () => setSelectedUserId(""))}
-          >
-            <LuUserPlus />
-          </IconButton>
+    <Card.Root>
+      <Card.Header>
+        <HStack justify="space-between" flexWrap="wrap">
+          <Card.Title asChild><Heading as="h3" size="sm">Members ({members.length})</Heading></Card.Title>
+          <HStack>
+            <UserCombobox
+              users={candidates}
+              value={selectedUserId}
+              onValueChange={setSelectedUserId}
+              placeholder="Add a member"
+              size="sm"
+              minWidth="12rem"
+            />
+            <IconButton
+              size="sm"
+              variant="outline"
+              aria-label="Add member"
+              disabled={!selectedUserId}
+              loading={pending}
+              onClick={() => run(() => addTeamMembersAction(team.id, [selectedUserId]), () => setSelectedUserId(""))}
+            >
+              <LuUserPlus />
+            </IconButton>
+          </HStack>
         </HStack>
-      </HStack>
+      </Card.Header>
+      <Card.Body>
+        <Stack gap={3}>
+          {members.some(member => member.viaTeams.length > 0) && (
+            <Text textStyle="xs" color="fg.muted">
+              Members of sub-teams are members of this team too: &quot;via&quot; shows those sub-teams, where that membership
+              is managed. Removing someone here keeps them listed while they are in a sub-team.
+            </Text>
+          )}
 
-      {members.some(member => member.viaTeams.length > 0) && (
-        <Text textStyle="xs" color="fg.muted">
-          Members of sub-teams are members of this team too: &quot;via&quot; shows those sub-teams, where that membership
-          is managed. Removing someone here keeps them listed while they are in a sub-team.
-        </Text>
-      )}
-
-      {members.length === 0 ? (
-        <Text color="fg.muted">This team has no members yet.</Text>
-      ) : (
-        <Table.Root size="sm">
-          <Table.Body>
-            {members.map(member => (
-              <Table.Row key={member.id}>
-                <Table.Cell>
-                  <HStack flexWrap="wrap">
-                    <Avatar.Root size="xs">
-                      <Avatar.Fallback name={member.name} />
-                      {member.image && <Avatar.Image src={member.image} />}
-                    </Avatar.Root>
-                    <Text>{member.name}</Text>
-                    {member.viaTeams.map(via => (
-                      <Badge key={via.id} asChild size="sm" variant="outline">
-                        <Link href={`/admin/teams/${via.id}`}>via {via.name}</Link>
-                      </Badge>
-                    ))}
-                  </HStack>
-                </Table.Cell>
-                <Table.Cell color="fg.muted" hideBelow="sm">{member.email}</Table.Cell>
-                <Table.Cell textAlign="end">
-                  {member.direct && (
-                    <IconButton
-                      size="xs"
-                      variant="ghost"
-                      colorPalette="red"
-                      aria-label={`Remove ${member.name}`}
-                      disabled={pending}
-                      onClick={() => run(
-                        () => removeTeamMemberAction(team.id, member.id),
-                        // They stay listed, so say why rather than look like the removal failed
-                        () => member.viaTeams.length > 0 && toaster.info({
-                          title: `${member.name} is still a member via ${member.viaTeams.map(via => via.name).join(", ")}.`,
-                        }),
+          {members.length === 0 ? (
+            <Text color="fg.muted">This team has no members yet.</Text>
+          ) : (
+            <Table.Root size="sm">
+              <Table.Body>
+                {members.map(member => (
+                  <Table.Row key={member.id}>
+                    <Table.Cell>
+                      <HStack flexWrap="wrap">
+                        <Avatar.Root size="xs">
+                          <Avatar.Fallback name={member.name} />
+                          {member.image && <Avatar.Image src={member.image} />}
+                        </Avatar.Root>
+                        <Text>{member.name}</Text>
+                        {member.viaTeams.map(via => (
+                          <Badge key={via.id} asChild size="sm" variant="outline">
+                            <Link href={`/admin/teams/${via.id}`}>via {via.name}</Link>
+                          </Badge>
+                        ))}
+                      </HStack>
+                    </Table.Cell>
+                    <Table.Cell color="fg.muted" hideBelow="sm">{member.email}</Table.Cell>
+                    <Table.Cell textAlign="end">
+                      {member.direct && (
+                        <IconButton
+                          size="xs"
+                          variant="ghost"
+                          colorPalette="red"
+                          aria-label={`Remove ${member.name}`}
+                          disabled={pending}
+                          onClick={() => run(
+                            () => removeTeamMemberAction(team.id, member.id),
+                            // They stay listed, so say why rather than look like the removal failed
+                            () => member.viaTeams.length > 0 && toaster.info({
+                              title: `${member.name} is still a member via ${member.viaTeams.map(via => via.name).join(", ")}.`,
+                            }),
+                          )}
+                        >
+                          <LuUserMinus />
+                        </IconButton>
                       )}
-                    >
-                      <LuUserMinus />
-                    </IconButton>
-                  )}
-                </Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
-      )}
-    </Stack>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+          )}
+        </Stack>
+      </Card.Body>
+    </Card.Root>
   );
 }
 
@@ -287,7 +292,7 @@ export default function TeamDetail(props: {
       <Card.Root>
         <Card.Header>
           <HStack justify="space-between">
-            <Heading as="h2" size="md">{team.name}</Heading>
+            <Card.Title asChild><Heading as="h2" size="md">{team.name}</Heading></Card.Title>
             <DeleteTeamButton team={team} hasSubTeams={hasSubTeams} directMemberCount={directMemberCount} />
           </HStack>
         </Card.Header>
@@ -296,11 +301,7 @@ export default function TeamDetail(props: {
         </Card.Body>
       </Card.Root>
 
-      <Card.Root>
-        <Card.Body>
-          <TeamMembers team={team} members={members} users={users} />
-        </Card.Body>
-      </Card.Root>
+      <TeamMembers team={team} members={members} users={users} />
     </Stack>
   );
 }
