@@ -7,7 +7,7 @@ vi.mock("@/auth", () => ({
 }));
 const prismaMock = vi.hoisted(() => {
   const mock = {
-    team: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    team: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), create: vi.fn(), update: vi.fn() },
     user: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     $transaction: vi.fn(),
   };
@@ -95,6 +95,24 @@ describe("updateTeam", () => {
 
     expect(prismaMock.team.update).toHaveBeenCalledWith({ where: { id: A }, data: { name: "Renamed", parentTeamId: undefined } });
   });
+
+  it("saves the auto-join roles", async () => {
+    teamsAre([team(A)]);
+
+    await updateTeam(A, { autoJoinRoles: "frc-ce, overhours:mentor, frc-ce" });
+
+    expect(prismaMock.team.update).toHaveBeenCalledWith({
+      where: { id: A },
+      data: { name: undefined, parentTeamId: undefined, autoJoinRoles: ["frc-ce", "overhours:mentor"] },
+    });
+  });
+
+  it("refuses an invalid auto-join role", async () => {
+    teamsAre([team(A)]);
+
+    await expect(updateTeam(A, { autoJoinRoles: ["bad role"] })).rejects.toThrow(TeamError);
+    expect(prismaMock.team.update).not.toHaveBeenCalled();
+  });
 });
 
 describe("memberCount", () => {
@@ -120,15 +138,17 @@ describe("memberCount", () => {
   });
 });
 
-const user = (id: string, name: string, teamIds: string[]) => ({ id, name, email: `${name}@x`, image: null, teamIds, roleTeamIds: [] as string[] });
+const user = (id: string, name: string, teamIds: string[], roleTeamIds: string[] = []) => ({
+  id, name, email: `${name}@x`, image: null, teamIds, roleTeamIds,
+});
 
 describe("getTeamMembers", () => {
-  it("lists direct members and members of sub-teams at any depth", async () => {
+  it("lists direct members and members of sub-teams at any depth, with role membership of this team only", async () => {
     teamsAre([team(A), team(B, A), team(C, B)]);
     prismaMock.user.findMany.mockResolvedValue([
-      user("u1", "Direct", [A]),
+      user("u1", "Direct", [A], [A]),
       user("u2", "Both", [A, B]),
-      user("u3", "Grandchild", [C]),
+      user("u3", "Grandchild", [C], [C]),
     ]);
 
     const members = await getTeamMembers(A);
@@ -137,10 +157,10 @@ describe("getTeamMembers", () => {
       where: { teamIds: { hasSome: [A, B, C] } },
       orderBy: { name: "asc" },
     });
-    expect(members.map(m => [m.id, m.direct, m.viaTeams.map(t => t.name)])).toEqual([
-      ["u1", true, []],
-      ["u2", true, [`Team ${B}`]],
-      ["u3", false, [`Team ${C}`]],
+    expect(members.map(m => [m.id, m.direct, m.viaRole, m.viaTeams.map(t => t.name)])).toEqual([
+      ["u1", true, true, []],
+      ["u2", true, false, [`Team ${B}`]],
+      ["u3", false, false, [`Team ${C}`]],
     ]);
   });
 });
@@ -161,6 +181,7 @@ describe("toTeamError", () => {
     expect(toTeamError(new Error("boom"))).toBeUndefined();
   });
 });
+
 describe("removeTeamMember", () => {
   // A client of its own, so that reading or writing outside the transaction fails these tests
   const tx = {

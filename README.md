@@ -231,7 +231,9 @@ curl -H "Authorization: Bearer $ADMIN_API_KEY" "https://overhours.example.com/ap
 ## Teams
 
 Admins manage teams on `/admin/teams`. Teams form a tree: a team can have sub-teams, and a team that still has
-sub-teams cannot be deleted. A member's teams are shown on the home page.
+sub-teams cannot be deleted. Members of a sub-team also count as members of every team above it: a team's member
+list and member count include its sub-teams' members, who are managed (and removed) on their own sub-team. A
+member's teams are shown on the home page; only the teams they are directly in are listed there.
 
 A team can list **auto-join roles**, in the same syntax as `ADMIN_ROLES` (`role` for a realm role, `client:role`
 for a client role). A user with any of them joins the team, and leaves it when they no longer have any. Roles are
