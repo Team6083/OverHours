@@ -212,7 +212,8 @@
   },
   "ReportMenu": {
     "compliance": "合規",
-    "lockedLogs": "鎖定紀錄"
+    "lockedLogs": "鎖定紀錄",
+    "answerReliability": "填答可靠度"
   },
   "LockedReportPage": {
     "title": "鎖定紀錄",
@@ -250,6 +251,14 @@
     "loadFailed": "載入失敗"
   },
   "Attendance": {
+    "reliability": {
+      "title": "我的填答可靠度（近 {days} 天）",
+      "description": "你有填的日子裡，實際有沒有來和填的一樣的比例。沒填的日子不算。",
+      "summary": "有填的 {answered} 天中，{matched} 天相符",
+      "brokenPromises": "說會來沒來",
+      "unexpected": "說不能來卻來了",
+      "empty": "這段期間還沒有填答可以比對"
+    },
     "title": "可出席時間",
     "signInRequired": "請先登入才能填寫可出席時間。",
     "today": "今天",
@@ -257,6 +266,7 @@
     "findPerson": "查詢成員",
     "back": "返回",
     "calendar": {
+      "clockedIn": "有簽到",
       "previousMonth": "上個月",
       "nextMonth": "下個月",
       "loadFailed": "無法載入這個月份"
@@ -278,7 +288,7 @@
     },
     "board": {
       "WILL_COME": "會來（{count}）",
-      "AVAILABLE": "可以來（{count}）",
+      "AVAILABLE": "可以（{count}）",
       "UNAVAILABLE": "不能來（{count}）",
       "everyone": "全部成員（{count}）"
     },
@@ -311,5 +321,19 @@
   },
   "RankMedal": {
     "label": "第 {rank} 名"
+  },
+  "ReliabilityReport": {
+    "title": "填答可靠度",
+    "startDate": "開始日期",
+    "endDate": "結束日期",
+    "description": "每位成員有填的日子裡，實際行動和填答相符的比例：說會來而且有打卡、說不能來而且沒打卡，或是填「可以」（一定算相符）。沒填的日子不算。只算已經過去的日子；當天有任何打卡就算有來，包含被鎖定的紀錄。",
+    "reliability": "可靠度",
+    "columns": {
+      "user": "成員",
+      "matched": "相符 / 有填"
+    },
+    "brokenPromises": "說會來沒來",
+    "unexpected": "說不能來卻來了",
+    "empty": "這段期間沒有填答可以比對"
   }
 }
