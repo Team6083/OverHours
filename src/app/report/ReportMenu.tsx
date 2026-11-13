@@ -30,6 +30,7 @@ export default function ReportMenu() {
       label: t("compliance"),
       items: [
         { label: t("lockedLogs"), value: "locked" },
+        { label: t("answerReliability"), value: "reliability" },
       ],
     },
   };
