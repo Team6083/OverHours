@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Field, HStack, Input, NativeSelect, SimpleGrid, Stack, Switch, Text } from "@chakra-ui/react";
+import { Button, Card, Field, HStack, Input, SimpleGrid, Stack, Switch, Text } from "@chakra-ui/react";
 import { useTranslations } from "next-intl";
 
 import { toaster } from "@/components/ui/toaster";
@@ -19,6 +19,8 @@ export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
   const router = useRouter();
   const [settings, setSettings] = useState<ReminderSettings>(reminder.settings);
   const [saving, startSaving] = useTransition();
+  const [daysText, setDaysText] = useState(String(reminder.settings.daysAhead));
+  const daysValid = /^\d+$/.test(daysText) && Number(daysText) >= 1 && Number(daysText) <= MAX_DAYS_AHEAD;
 
   const set = (patch: Partial<ReminderSettings>) => setSettings(current => ({ ...current, ...patch }));
   const toggleDay = (day: number) => set({
@@ -70,17 +72,15 @@ export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
             </Field.Root>
 
             <SimpleGrid columns={2} gap={4} maxW="md">
-              <Field.Root>
+              <Field.Root invalid={!daysValid}>
                 <Field.Label>{t("daysAhead")}</Field.Label>
-                <NativeSelect.Root size="sm">
-                  <NativeSelect.Field value={settings.daysAhead} onChange={e => set({ daysAhead: Number(e.target.value) })}>
-                    {Array.from({ length: MAX_DAYS_AHEAD }, (_, i) => i + 1).map(count => (
-                      <option key={count} value={count}>{t("days", { count })}</option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-                <Field.HelperText>{t("daysAheadHelp")}</Field.HelperText>
+                <Input size="sm" type="number" inputMode="numeric" min={1} max={MAX_DAYS_AHEAD} step={1} value={daysText}
+                  onChange={e => {
+                    setDaysText(e.target.value);
+                    const days = Number(e.target.value);
+                    if (Number.isInteger(days) && days >= 1 && days <= MAX_DAYS_AHEAD) set({ daysAhead: days });
+                  }} />
+                <Field.HelperText>{t("daysAheadHelp", { max: MAX_DAYS_AHEAD })}</Field.HelperText>
               </Field.Root>
 
               <Field.Root>
@@ -90,7 +90,7 @@ export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
               </Field.Root>
             </SimpleGrid>
 
-            <Button alignSelf="start" onClick={save} loading={saving} disabled={!changed}>{t("save")}</Button>
+            <Button alignSelf="start" onClick={save} loading={saving} disabled={!changed || !daysValid}>{t("save")}</Button>
           </Stack>
         </Card.Body>
       </Card.Root>
