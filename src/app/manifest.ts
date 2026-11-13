@@ -1,7 +1,5 @@
 import type { MetadataRoute } from "next";
 
-import { SIZES } from "./icon";
-
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "OverHours",
@@ -11,11 +9,9 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     background_color: "#09090b",
     theme_color: "#09090b",
-    icons: SIZES.flatMap(size => (["any", "maskable"] as const).map(purpose => ({
-      src: `/icon/${size}`,
-      sizes: `${size}x${size}`,
-      type: "image/png",
-      purpose,
-    }))),
+    icons: [192, 512].flatMap(size => [
+      { src: `/icons/icon-${size}.png`, sizes: `${size}x${size}`, type: "image/png", purpose: "any" as const },
+      { src: `/icons/maskable-${size}.png`, sizes: `${size}x${size}`, type: "image/png", purpose: "maskable" as const },
+    ]),
   };
 }
