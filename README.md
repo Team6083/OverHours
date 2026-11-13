@@ -225,7 +225,13 @@ Members answer each day on `/attendance` with one of three answers, and can clea
 Past days cannot be changed. Every member can see who gave each answer on each day; people who have not filled
 it in are not listed. Rows saved before "will come" existed keep `Available` and show as if needed.
 
-Run `npx prisma db push` once after deploying so the unique index exists and the `WillCome` value is accepted. Set `TZ`, because "today" is worked
+Run `npx prisma db push` once after deploying so the unique index exists and the `WillCome` value is accepted.
+
+Answer reliability compares answers with time logs: of the days a member answered, the share where what they did
+matched what they said. Will come matches a time log that day, can't come matches none, and if needed always
+matches. Days not answered aren't counted, and only days that are over count; any time log that day counts as
+coming, locked ones included. Members see their own last 30 days on `/attendance`; admins see everyone under
+**Report → Answer reliability**. Set `TZ`, because "today" is worked
 out in that zone.
 
 External programs, such as a Slack bot, read everyone's status through the Admin API:

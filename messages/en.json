@@ -212,7 +212,8 @@
   },
   "ReportMenu": {
     "compliance": "Compliance",
-    "lockedLogs": "Locked Logs"
+    "lockedLogs": "Locked Logs",
+    "answerReliability": "Answer reliability"
   },
   "LockedReportPage": {
     "title": "Locked Logs",
@@ -250,6 +251,14 @@
     "loadFailed": "Failed to load"
   },
   "Attendance": {
+    "reliability": {
+      "title": "My answer reliability (last {days} days)",
+      "description": "Of the days you answered, the share where what you did matched what you said. Days you didn't answer aren't counted.",
+      "summary": "{matched} of the {answered} days you answered matched",
+      "brokenPromises": "Said will come, didn't",
+      "unexpected": "Said can't come, came",
+      "empty": "No answered days to compare yet"
+    },
     "title": "Availability",
     "signInRequired": "Sign in to fill in your availability.",
     "today": "Today",
@@ -257,6 +266,7 @@
     "findPerson": "Find person",
     "back": "Back",
     "calendar": {
+      "clockedIn": "Clocked in",
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
       "loadFailed": "Could not load this month"
@@ -337,5 +347,19 @@
       "6": "Sat",
       "7": "Sun"
     }
+  },
+  "ReliabilityReport": {
+    "title": "Answer reliability",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "description": "For each member, of the days they answered, the share where what they did matched what they said: will come and clocked in, can't come and didn't, or if needed (always matches). Days they didn't answer aren't counted. Only days that are over count; any time log that day counts as coming, locked logs included.",
+    "reliability": "Reliability",
+    "columns": {
+      "user": "Member",
+      "matched": "Matched / answered"
+    },
+    "brokenPromises": "Said will come, didn't",
+    "unexpected": "Said can't come, came",
+    "empty": "No answers to compare in this range"
   }
 }
