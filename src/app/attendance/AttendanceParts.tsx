@@ -94,7 +94,7 @@ const matchesQuery = (user: BoardUser, needle: string) =>
 
 export type UserGroup = { key: AttendanceStatus | "everyone"; palette: string; users: BoardUser[] };
 
-/** A day's will come / can come / can't come groups, in display order. */
+/** A day's will come / if needed / can't come groups, in display order. */
 export const boardGroups = (day: BoardDay): UserGroup[] =>
   ATTENDANCE_STATUSES.map(status => ({ key: status, palette: STATUS_PALETTE[status], users: day[status] }));
 

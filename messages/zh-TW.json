@@ -288,7 +288,7 @@
     },
     "board": {
       "WILL_COME": "會來（{count}）",
-      "AVAILABLE": "可以來（{count}）",
+      "AVAILABLE": "可以（{count}）",
       "UNAVAILABLE": "不能來（{count}）",
       "everyone": "全部成員（{count}）"
     },
