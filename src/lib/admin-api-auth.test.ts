@@ -86,9 +86,16 @@ describe("verifyApiKey with a Keycloak token", () => {
     }
   });
 
-  it("returns 503 when Keycloak can't be reached", async () => {
-    verifyApiToken.mockRejectedValue(joseError("ERR_JWKS_TIMEOUT"));
-    expect(await status(JWT)).toBe(503);
+  it("returns upstream_unavailable (503) when Keycloak can't be reached, upstream_timeout (504) when it times out", async () => {
+    verifyApiToken.mockRejectedValueOnce(joseError("ERR_JOSE_GENERIC"));
+    const unavailable = await verifyApiKey(request(JWT), "users:read");
+    expect(unavailable?.status).toBe(503);
+    expect((await unavailable?.json()).error.code).toBe("upstream_unavailable");
+
+    verifyApiToken.mockRejectedValueOnce(joseError("ERR_JWKS_TIMEOUT"));
+    const timeout = await verifyApiKey(request(JWT), "users:read");
+    expect(timeout?.status).toBe(504);
+    expect((await timeout?.json()).error.code).toBe("upstream_timeout");
   });
 
   it("is unavailable without AUTH_KEYCLOAK_ISSUER", async () => {

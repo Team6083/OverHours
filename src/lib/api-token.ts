@@ -2,6 +2,7 @@ import "server-only";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 import { extractRoles, parseTokenAlgorithms } from "@/lib/auth-roles";
+import { getOidcAudience } from "@/lib/config";
 
 const CLOCK_TOLERANCE_SEC = 10;
 
@@ -12,8 +13,9 @@ let jwksIssuer: string | undefined;
 export const looksLikeJwt = (token: string) => /^[\w-]+\.[\w-]+\.[\w-]+$/.test(token);
 
 /**
- * Verifies a Keycloak-issued API token (signature via the issuer's JWKS, `iss`, `exp`, and `aud` containing
- * `API_TOKEN_AUDIENCE`, default our client id) and returns its realm and client roles. Throws if verification fails.
+ * Verifies a Keycloak-issued access token (signature via the issuer's JWKS, `iss`, `exp`, `sub`, `typ` Bearer, and `aud`
+ * containing `OIDC_AUDIENCE`, default our client id) and returns its realm and client roles. Throws if verification fails.
+ * The audience is checked at startup.
  * Unlike a user's sign-in token, `azp` is not checked: a service account's token is issued to its own client.
  */
 export async function verifyApiToken(token: string, issuer: string): Promise<string[]> {
@@ -22,17 +24,18 @@ export async function verifyApiToken(token: string, issuer: string): Promise<str
     jwksIssuer = issuer;
   }
 
-  const audience = process.env.API_TOKEN_AUDIENCE || process.env.AUTH_KEYCLOAK_ID;
-  if (!audience) {
-    throw new Error("API_TOKEN_AUDIENCE or AUTH_KEYCLOAK_ID must be set to accept API tokens");
-  }
-
   const { payload } = await jwtVerify(token, jwks, {
     issuer,
-    audience,
+    audience: getOidcAudience()!,
+    requiredClaims: ["sub"],
     algorithms: parseTokenAlgorithms(process.env.AUTH_KEYCLOAK_ALGORITHMS),
     clockTolerance: CLOCK_TOLERANCE_SEC,
   });
+
+  // An ID or refresh token issued to our client has the same aud, so only access tokens are accepted.
+  if (payload.typ !== "Bearer") {
+    throw Object.assign(new Error("Not an access token"), { code: "ERR_JWT_CLAIM_VALIDATION_FAILED" });
+  }
 
   return extractRoles(payload);
 }

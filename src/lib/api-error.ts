@@ -8,7 +8,9 @@ export type ApiErrorCode =
   | "not_found"
   | "conflict"
   | "internal_error"
-  | "service_unavailable";
+  | "service_unavailable"
+  | "upstream_unavailable"
+  | "upstream_timeout";
 
 const STATUS_BY_CODE: Record<ApiErrorCode, number> = {
   invalid_request: 400,
@@ -18,6 +20,8 @@ const STATUS_BY_CODE: Record<ApiErrorCode, number> = {
   conflict: 409,
   internal_error: 500,
   service_unavailable: 503,
+  upstream_unavailable: 503,
+  upstream_timeout: 504,
 };
 
 /** Standard error envelope: `{ error: { code, message, details? } }`. */

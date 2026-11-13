@@ -76,7 +76,9 @@ export async function verifyApiKey(req: NextRequest, scope: ApiScope): Promise<N
       return apiError("unauthenticated", "Unauthorized");
     }
     console.error(`Could not verify API token (${code})`);
-    return apiError("service_unavailable", "Could not verify the token, try again later");
+    return code === "ERR_JWKS_TIMEOUT"
+      ? apiError("upstream_timeout", "Keycloak did not answer in time, try again later")
+      : apiError("upstream_unavailable", "Could not verify the token, try again later");
   }
 
   if (!rolesGrantScope(roles, parseAdminRoles(process.env.ADMIN_ROLES), rolesForScope(scope, process.env))) {

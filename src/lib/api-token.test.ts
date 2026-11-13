@@ -12,7 +12,7 @@ const ISSUER = "https://keycloak.example.test/realms/team";
 beforeEach(() => {
   vi.stubEnv("AUTH_KEYCLOAK_ID", "overhours");
   jose.jwtVerify.mockReset().mockResolvedValue({
-    payload: { realm_access: { roles: ["reader"] }, resource_access: { overhours: { roles: ["attendance"] } } },
+    payload: { typ: "Bearer", sub: "service-account", realm_access: { roles: ["reader"] }, resource_access: { overhours: { roles: ["attendance"] } } },
   });
 });
 
@@ -28,19 +28,21 @@ describe("verifyApiToken", () => {
       issuer: ISSUER,
       audience: "overhours",
       algorithms: ["RS256"],
+      requiredClaims: ["sub"],
     }));
   });
 
-  it("uses API_TOKEN_AUDIENCE when set", async () => {
-    vi.stubEnv("API_TOKEN_AUDIENCE", "overhours-api");
+  it("uses OIDC_AUDIENCE when set", async () => {
+    vi.stubEnv("OIDC_AUDIENCE", "overhours-api");
     await verifyApiToken("a.b.c", ISSUER);
     expect(jose.jwtVerify).toHaveBeenCalledWith("a.b.c", "jwks", expect.objectContaining({ audience: "overhours-api" }));
   });
 
-  it("refuses to verify without an audience", async () => {
-    vi.stubEnv("AUTH_KEYCLOAK_ID", "");
-    await expect(verifyApiToken("a.b.c", ISSUER)).rejects.toThrow(/API_TOKEN_AUDIENCE/);
-    expect(jose.jwtVerify).not.toHaveBeenCalled();
+  it("rejects ID and refresh tokens as invalid", async () => {
+    for (const typ of ["ID", "Refresh", undefined]) {
+      jose.jwtVerify.mockResolvedValueOnce({ payload: { typ, sub: "user" } });
+      await expect(verifyApiToken("a.b.c", ISSUER)).rejects.toMatchObject({ code: "ERR_JWT_CLAIM_VALIDATION_FAILED" });
+    }
   });
 });
 
