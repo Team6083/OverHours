@@ -42,11 +42,19 @@ export async function getTeamReminder(teamId: string): Promise<TeamReminderDTO |
   const rule = await findTeamRule(teamId);
   let settings = DEFAULT_SETTINGS;
   let hasWebhook = false;
+  // A rule saved with values that no longer parse shows as unset rather than breaking the page; saving replaces it.
   if (rule) {
-    const condition = parseRuleCondition(rule);
-    const channel = parseRuleChannel(rule);
-    if (condition.kind === "unanswered") settings = { ...condition.config, enabled: rule.enabled, time: rule.sendTime };
-    hasWebhook = canDeliver(channel);
+    try {
+      const condition = parseRuleCondition(rule);
+      if (condition.kind === "unanswered") settings = { ...condition.config, enabled: rule.enabled, time: rule.sendTime };
+    } catch (error) {
+      console.error(`Reminder rule ${rule.id} has an invalid config`, error);
+    }
+    try {
+      hasWebhook = canDeliver(parseRuleChannel(rule));
+    } catch (error) {
+      console.error(`Reminder rule ${rule.id} has an invalid target`, error);
+    }
   }
 
   const today = calendarDateInZone(new Date(), getTimeZone());

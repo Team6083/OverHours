@@ -214,6 +214,13 @@ describe("getTeamReminder", () => {
     expect(JSON.stringify(reminder)).not.toContain("hooks.example.test");
   });
 
+  it("shows a rule that no longer parses as unset instead of failing", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    db.rules[0].target = { url: "http://hooks.example.test/robot" };
+    db.rules[0].config = { weekdays: [9], daysAhead: 7 };
+    expect(await getTeamReminder(PARENT)).toMatchObject({ settings: { enabled: false, weekdays: [] }, hasWebhook: false });
+  });
+
   it("has defaults for a team without a rule", async () => {
     db.rules = [];
     expect(await getTeamReminder(CHILD)).toMatchObject({ settings: { enabled: false, weekdays: [] }, hasWebhook: false });
