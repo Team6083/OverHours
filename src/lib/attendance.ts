@@ -1,7 +1,11 @@
 import { toWallTime } from "./zoned-time";
 
-export type AttendanceStatus = "AVAILABLE" | "UNAVAILABLE";
+/** The answers in the order they are shown: will come (promised), if needed, can't come. */
+export const ATTENDANCE_STATUSES = ["WILL_COME", "AVAILABLE", "UNAVAILABLE"] as const;
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 export type DayStatus = AttendanceStatus | "NOT_FILLED";
+
+export const STATUS_PALETTE: Record<AttendanceStatus, string> = { WILL_COME: "green", AVAILABLE: "cyan", UNAVAILABLE: "red" };
 
 export const MAX_RANGE_DAYS = 92;
 
@@ -86,3 +90,41 @@ export function rowsToReassign<T extends { id: string; userId: string }>(
 
   return ids;
 }
+
+export type ReliabilitySummary = {
+  /** Answered days compared. */
+  answered: number;
+  /** Of those, days where what the member did matched what they said. */
+  matched: number;
+  /** `matched / answered`; null without answered days. */
+  reliability: number | null;
+  /** Said will come, no time log that day. */
+  brokenPromises: string[];
+  /** Said can't come, clocked in anyway. */
+  unexpected: string[];
+};
+
+/**
+ * How reliable one member's answers were: will come should mean a time log that day, can't come should mean none,
+ * and if needed promises nothing, so it always matches. Days without an answer are not counted.
+ */
+export function summarizeReliability(
+  answers: { date: string; status: AttendanceStatus }[],
+  attendedDates: Iterable<string>,
+): ReliabilitySummary {
+  const attended = new Set(attendedDates);
+  const summary: ReliabilitySummary = { answered: answers.length, matched: 0, reliability: null, brokenPromises: [], unexpected: [] };
+
+  for (const { date, status } of [...answers].sort((a, b) => a.date.localeCompare(b.date))) {
+    const came = attended.has(date);
+    if (status === "WILL_COME" && !came) summary.brokenPromises.push(date);
+    else if (status === "UNAVAILABLE" && came) summary.unexpected.push(date);
+    else summary.matched++;
+  }
+
+  summary.reliability = summary.answered > 0 ? summary.matched / summary.answered : null;
+  return summary;
+}
+
+/** `YYYY-MM-DD` → `MM/DD`. */
+export const shortDate = (date: string) => date.slice(5).replace("-", "/");

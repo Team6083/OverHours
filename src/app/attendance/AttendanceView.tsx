@@ -8,18 +8,15 @@ import {
 } from "@chakra-ui/react";
 
 import { IconType } from "react-icons";
-import { LuCheck, LuUsers, LuX } from "react-icons/lu";
+import { LuCheck, LuCheckCheck, LuUsers, LuX } from "react-icons/lu";
 
 import { toaster } from "@/components/ui/toaster";
-import { addDays, AttendanceStatus, DayStatus, weekStartOf } from "@/lib/attendance";
+import { addDays, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, STATUS_PALETTE, weekStartOf } from "@/lib/attendance";
 import { BoardDay } from "@/lib/data/attendance-dto";
 import { saveWeek } from "./actions";
-import { NameGroup, shortDate, UserListDialog } from "./AttendanceParts";
+import { boardGroups, NameGroup, shortDate, UserListDialog } from "./AttendanceParts";
 
-const STATUS_OPTIONS: { value: "AVAILABLE" | "UNAVAILABLE"; palette: string; icon: IconType }[] = [
-  { value: "AVAILABLE", palette: "green", icon: LuCheck },
-  { value: "UNAVAILABLE", palette: "red", icon: LuX },
-];
+const STATUS_ICONS: Record<AttendanceStatus, IconType> = { WILL_COME: LuCheckCheck, AVAILABLE: LuCheck, UNAVAILABLE: LuX };
 
 function StatusButtons(props: {
   label: string;
@@ -33,8 +30,9 @@ function StatusButtons(props: {
   // Tapping the active option again clears it back to "not filled".
   return (
     <HStack gap={2} justify="flex-end">
-      {STATUS_OPTIONS.map(({ value, palette, icon: Icon }) => {
+      {ATTENDANCE_STATUSES.map(value => {
         const active = current === value;
+        const Icon = STATUS_ICONS[value];
         return (
           <Button
             key={value}
@@ -42,7 +40,7 @@ function StatusButtons(props: {
             rounded="full"
             px={{ base: 2.5, md: 3 }}
             variant={active ? "solid" : "outline"}
-            colorPalette={active ? palette : "gray"}
+            colorPalette={active ? STATUS_PALETTE[value] : "gray"}
             color={active ? undefined : "fg.muted"}
             disabled={disabled}
             aria-pressed={active}
@@ -107,7 +105,7 @@ export default function AttendanceView(props: {
   };
 
   const selectedDay = board.find(day => day.date === selected) ?? board[0];
-  const weekUsers = [...new Map(board.flatMap(day => [...day.available, ...day.unavailable]).map(user => [user.id, user])).values()]
+  const weekUsers = [...new Map(board.flatMap(day => ATTENDANCE_STATUSES.flatMap(status => day[status])).map(user => [user.id, user])).values()]
     .sort((a, b) => a.name.localeCompare(b.name));
   const dirty = board.some(({ date }) => entries[date] !== mine[date]);
   const editableDates = board.map(day => day.date).filter(date => date >= today);
@@ -170,9 +168,12 @@ export default function AttendanceView(props: {
                     {Number(day.date.slice(8))}
                   </Text>
                   <Text fontSize="2xs" fontWeight="semibold" whiteSpace="nowrap">
-                    <Text as="span" color="green.fg">{day.available.length}</Text>
-                    <Text as="span" color="fg.muted"> · </Text>
-                    <Text as="span" color="red.fg">{day.unavailable.length}</Text>
+                    {ATTENDANCE_STATUSES.map((status, index) => (
+                      <Text as="span" key={status}>
+                        {index > 0 && <Text as="span" color="fg.muted">·</Text>}
+                        <Text as="span" color={`${STATUS_PALETTE[status]}.fg`}>{day[status].length}</Text>
+                      </Text>
+                    ))}
                   </Text>
                 </Button>
               );
@@ -189,19 +190,16 @@ export default function AttendanceView(props: {
               </HStack>
             </Card.Header>
             <Card.Body>
-              <Stack gap={4}>
-                <NameGroup
-                  label={t("board.available", { count: selectedDay.available.length })}
-                  palette="green"
-                  users={selectedDay.available}
-                  onOpen={() => setDetails("day")}
-                />
-                <NameGroup
-                  label={t("board.unavailable", { count: selectedDay.unavailable.length })}
-                  palette="red"
-                  users={selectedDay.unavailable}
-                  onOpen={() => setDetails("day")}
-                />
+              <Stack gap={{ base: 3, md: 4 }}>
+                {boardGroups(selectedDay).map(group => (
+                  <NameGroup
+                    key={group.key}
+                    label={t(`board.${group.key}`, { count: group.users.length })}
+                    palette={group.palette}
+                    users={group.users}
+                    onOpen={() => setDetails("day")}
+                  />
+                ))}
               </Stack>
             </Card.Body>
           </Card.Root>
@@ -216,10 +214,7 @@ export default function AttendanceView(props: {
           onClose={() => setDetails(null)}
           groups={details === "week"
             ? [{ key: "everyone", palette: "blue", users: weekUsers }]
-            : [
-              { key: "available", palette: "green", users: selectedDay.available },
-              { key: "unavailable", palette: "red", users: selectedDay.unavailable },
-            ]}
+            : boardGroups(selectedDay)}
         />
       </GridItem>
 

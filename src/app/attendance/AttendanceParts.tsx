@@ -4,15 +4,15 @@ import { useFormatter, useTranslations } from "next-intl";
 import {
   Avatar, AvatarGroup, Box, Button, CloseButton, Dialog, HStack, IconButton, Input, Portal, SimpleGrid, Spinner, Stack, Text,
 } from "@chakra-ui/react";
-import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { LuCheck, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 import { useRankOf } from "@/components/TopRanks";
 import UserAvatar from "@/components/UserAvatar";
-import { addMonths, DayStatus, monthDates, weekDates } from "@/lib/attendance";
-import { BoardUser } from "@/lib/data/attendance-dto";
+import { addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates, shortDate, STATUS_PALETTE, weekDates } from "@/lib/attendance";
+import { BoardDay, BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getPersonMonth } from "./actions";
 
-export const shortDate = (date: string) => date.slice(5).replace("-", "/");
+export { shortDate };
 
 const MAX_AVATARS = 7;
 
@@ -24,9 +24,10 @@ export function NameGroup(props: { label: string; palette: string; users: BoardU
   const shown = users.slice(0, MAX_AVATARS);
   const hiddenCount = users.length - shown.length;
 
+  // On phones the label sits beside the avatars, so three groups still fit on one screen.
   return (
-    <Stack gap={2}>
-      <HStack gap={2}>
+    <Stack direction={{ base: "row", md: "column" }} gap={2} align={{ base: "center", md: "stretch" }} justify="space-between" minH={8}>
+      <HStack gap={2} flexShrink={0}>
         <Box w={2} h={2} rounded="full" bg={`${palette}.solid`} />
         <Text fontSize="sm" fontWeight="medium">{label}</Text>
       </HStack>
@@ -91,7 +92,11 @@ export function useKeyedLoad<T>(key: string, load: (key: string) => Promise<T | 
 const matchesQuery = (user: BoardUser, needle: string) =>
   [user.name, user.id].some(field => field.toLowerCase().includes(needle));
 
-export type UserGroup = { key: "available" | "unavailable" | "everyone"; palette: string; users: BoardUser[] };
+export type UserGroup = { key: AttendanceStatus | "everyone"; palette: string; users: BoardUser[] };
+
+/** A day's will come / if needed / can't come groups, in display order. */
+export const boardGroups = (day: BoardDay): UserGroup[] =>
+  ATTENDANCE_STATUSES.map(status => ({ key: status, palette: STATUS_PALETTE[status], users: day[status] }));
 
 function PersonCalendar(props: {
   user: BoardUser;
@@ -105,13 +110,14 @@ function PersonCalendar(props: {
   const rankOf = useRankOf();
   const format = useFormatter();
 
-  const { data: days, failed, retry } = useKeyedLoad(
+  const { data, failed, retry } = useKeyedLoad(
     month,
     async key => {
       const result = await getPersonMonth(user.id, key);
-      return result.ok ? result.days : null;
+      return result.ok ? { days: result.days, attended: new Set(result.attended) } : null;
     },
   );
+  const days = data?.days;
 
   const dates = monthDates(month);
   const offset = (new Date(`${dates[0]}T00:00:00Z`).getUTCDay() + 6) % 7;
@@ -119,11 +125,9 @@ function PersonCalendar(props: {
     format.dateTime(new Date(`${date}T00:00:00Z`), { timeZone: "UTC", weekday: "narrow" }));
   const monthLabel = format.dateTime(new Date(`${month}-01T00:00:00Z`), { timeZone: "UTC", year: "numeric", month: "long" });
 
-  const cellStyle = (status: DayStatus | undefined) => status === "AVAILABLE"
-    ? { bg: "green.subtle", color: "green.fg" }
-    : status === "UNAVAILABLE"
-      ? { bg: "red.subtle", color: "red.fg" }
-      : { bg: "transparent", color: "fg.muted" };
+  const cellStyle = (status: DayStatus | undefined) => status && status !== "NOT_FILLED"
+    ? { bg: `${STATUS_PALETTE[status]}.subtle`, color: `${STATUS_PALETTE[status]}.fg` }
+    : { bg: "transparent", color: "fg.muted" };
 
   return (
     <Stack gap={4}>
@@ -152,6 +156,8 @@ function PersonCalendar(props: {
         {dates.map(date => {
           const status = days?.[date];
           const style = cellStyle(status);
+          const came = data?.attended.has(date) ?? false;
+          const label = `${date} ${t(`status.${status ?? "NOT_FILLED"}`)}${came ? ` ${t("calendar.clockedIn")}` : ""}`;
 
           return (
             <Button
@@ -165,13 +171,19 @@ function PersonCalendar(props: {
               fontWeight={status ? "semibold" : "normal"}
               borderWidth={date === today ? "2px" : "1px"}
               borderColor={date === today ? "blue.solid" : "border.muted"}
-              title={`${date} ${t(`status.${status ?? "NOT_FILLED"}`)}`}
-              aria-label={`${date} ${t(`status.${status ?? "NOT_FILLED"}`)}`}
+              position="relative"
+              title={label}
+              aria-label={label}
               onClick={() => onSelectDate(date)}
               _hover={{ borderColor: "blue.solid" }}
               {...style}
             >
               {Number(date.slice(8))}
+              {came && (
+                <Box position="absolute" right="2px" bottom="1px" display="flex" aria-hidden>
+                  <LuCheck style={{ width: 10, height: 10 }} strokeWidth={3} />
+                </Box>
+              )}
             </Button>
           );
         })}
@@ -185,7 +197,7 @@ function PersonCalendar(props: {
       )}
 
       <HStack gap={4} fontSize="xs" color="fg.muted" wrap="wrap">
-        {(["AVAILABLE", "UNAVAILABLE", "NOT_FILLED"] as const).map(status => (
+        {([...ATTENDANCE_STATUSES, "NOT_FILLED"] as const).map(status => (
           <HStack key={status} gap={1}>
             <Box
               w={3}
@@ -193,11 +205,15 @@ function PersonCalendar(props: {
               rounded="sm"
               borderWidth="1px"
               borderColor="border.muted"
-              bg={status === "AVAILABLE" ? "green.subtle" : status === "UNAVAILABLE" ? "red.subtle" : "transparent"}
+              bg={status === "NOT_FILLED" ? "transparent" : `${STATUS_PALETTE[status]}.subtle`}
             />
             {t(`status.${status}`)}
           </HStack>
         ))}
+        <HStack gap={1}>
+          <LuCheck style={{ width: 12, height: 12 }} strokeWidth={3} />
+          {t("calendar.clockedIn")}
+        </HStack>
       </HStack>
     </Stack>
   );
@@ -283,13 +299,7 @@ function DayView(props: { date: string; onSelectUser: (user: BoardUser) => void 
   if (day === undefined) return <Spinner size="sm" />;
 
   return (
-    <UserListView
-      groups={[
-        { key: "available", palette: "green", users: day.available },
-        { key: "unavailable", palette: "red", users: day.unavailable },
-      ]}
-      onSelectUser={onSelectUser}
-    />
+    <UserListView groups={boardGroups(day)} onSelectUser={onSelectUser} />
   );
 }
 
