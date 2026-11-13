@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 
-import { setTeamLeaders, setTeamReminderWebhook } from "@/lib/data/team-reminder-dto";
+import { saveTeamReminder, setTeamReminderWebhook } from "@/lib/data/team-reminder-dto";
 import { addTeamMembers, createTeam, deleteTeam, removeTeamMember, toTeamError, updateTeam } from "@/lib/data/team-dto";
 
 export type TeamActionResult = {
@@ -54,8 +54,8 @@ export async function removeTeamMemberAction(teamId: string, userId: string) {
   return run(async () => { await removeTeamMember(teamId, userId); });
 }
 
-export async function setTeamLeadersAction(teamId: string, userIds: string[]) {
-  return run(async () => { await setTeamLeaders(teamId, userIds); });
+export async function saveTeamReminderAction(teamId: string, settings: unknown) {
+  return run(async () => { await saveTeamReminder(teamId, settings); });
 }
 
 export async function setTeamReminderWebhookAction(teamId: string, url: string | null) {

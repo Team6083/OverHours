@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { isoWeekday, isReminderDue, membersMissing, reminderSettingsSchema, requiredDates } from "./team-reminders";
+import { isoWeekday } from "./attendance";
+import { isReminderDue, membersMissing, reminderSettingsSchema, requiredDates } from "./team-reminders";
 
 describe("isoWeekday", () => {
   it("numbers Monday 1 to Sunday 7", () => {

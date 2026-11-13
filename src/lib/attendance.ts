@@ -31,9 +31,14 @@ export function calendarDateInZone(now: Date, timeZone: string): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+/** 1 (Monday) to 7 (Sunday). */
+export const isoWeekday = (date: string): number => ((toUtc(date).getUTCDay() + 6) % 7) + 1;
+
+/** `YYYY-MM-DD` → `MM/DD`. */
+export const shortDate = (date: string): string => date.slice(5).replace("-", "/");
+
 export function weekStartOf(date: string): string {
-  const daysSinceMonday = (toUtc(date).getUTCDay() + 6) % 7;
-  return addDays(date, -daysSinceMonday);
+  return addDays(date, 1 - isoWeekday(date));
 }
 
 export function weekDates(weekStart: string): string[] {

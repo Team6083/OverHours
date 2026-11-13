@@ -8,11 +8,10 @@ import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 import { useRankOf } from "@/components/TopRanks";
 import UserAvatar from "@/components/UserAvatar";
-import { addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates, STATUS_PALETTE, weekDates } from "@/lib/attendance";
+import { addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates, shortDate, STATUS_PALETTE, weekDates } from "@/lib/attendance";
 import { BoardDay, BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getPersonMonth } from "./actions";
 
-export const shortDate = (date: string) => date.slice(5).replace("-", "/");
 
 const MAX_AVATARS = 7;
 

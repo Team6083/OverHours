@@ -185,7 +185,6 @@
       "users": "使用者",
       "teams": "團隊",
       "statRanges": "統計範圍",
-      "teamReminders": "團隊提醒",
       "attendance": "可出席時間",
       "signIn": "登入",
       "signOut": "登出"
@@ -303,11 +302,6 @@
     "label": "第 {rank} 名"
   },
   "TeamReminders": {
-    "title": "團隊填寫提醒",
-    "intro": "每天到了設定的時間，團隊（包含底下各組）裡還沒填必填日子的人，會在團隊的 Slack 頻道被 tag。",
-    "empty": "你沒有帶任何團隊。",
-    "on": "開",
-    "off": "關",
     "enabled": "每天送提醒",
     "weekdays": "必填的日子",
     "weekdaysHelp": "只算這幾個星期幾。",
@@ -318,13 +312,9 @@
     "save": "儲存",
     "saved": "已儲存",
     "saveFailed": "儲存失敗",
-    "channel": "Slack 頻道",
-    "channelSet": "已設定",
-    "channelMissing": "還沒設定。請管理員設定團隊的 webhook，設定之前不會送出。",
     "preview": "如果現在送出",
     "previewNone": "沒有人會被提醒。",
     "previewNoDays": "往後看的天數內沒有必填的日子。",
-    "back": "所有團隊",
     "weekday": {
       "1": "一",
       "2": "二",

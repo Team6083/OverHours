@@ -2,7 +2,7 @@
 
 import * as z from "zod";
 
-import { addDays } from "./attendance";
+import { addDays, isoWeekday } from "./attendance";
 
 export const MAX_DAYS_AHEAD = 28;
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -15,9 +15,6 @@ export const reminderSettingsSchema = z.object({
 });
 
 export type ReminderSettings = z.output<typeof reminderSettingsSchema>;
-
-/** 1 (Monday) to 7 (Sunday) for a `YYYY-MM-DD`. */
-export const isoWeekday = (date: string): number => ((new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7) + 1;
 
 /** The days members have to have answered: from tomorrow, the next `daysAhead` days that fall on `weekdays`. */
 export function requiredDates(today: string, weekdays: number[], daysAhead: number): string[] {

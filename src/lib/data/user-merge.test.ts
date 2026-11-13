@@ -30,17 +30,14 @@ const T3 = "0000000000000000000000a3";
 const T4 = "0000000000000000000000a4";
 const OTHER = "0000000000000000000000a9";
 
-let leaders: { id: string; leaderIds: string[] }[] = [];
-
 beforeEach(() => {
   vi.clearAllMocks();
-  leaders = [];
   prismaMock.user.findMany.mockResolvedValue([
     { id: KEPT, teamIds: [T1, T2], roleTeamIds: [T2] },
     { id: MERGED, teamIds: [T2, T3], roleTeamIds: [T3] },
   ]);
-  prismaMock.team.findMany.mockImplementation(async ({ where }: { where: { id?: { in: string[] }; leaderIds?: unknown } }) =>
-    where.leaderIds ? leaders : (where.id?.in ?? [T1, T2, T3, T4]).filter(id => [T1, T2, T3, T4].includes(id)).map(id => ({ id, userIds: [] })));
+  prismaMock.team.findMany.mockImplementation(async ({ where }: { where: { id?: { in: string[] } } }) =>
+    (where.id?.in ?? [T1, T2, T3, T4]).filter(id => [T1, T2, T3, T4].includes(id)).map(id => ({ id, userIds: [] })));
   prismaMock.timeLog.findMany.mockResolvedValue([]);
   prismaMock.attendanceEntry.findMany.mockResolvedValue([]);
 });
@@ -110,15 +107,5 @@ describe("mergeUsers teams", () => {
   it("refuses team ids that are not ids", async () => {
     await expect(mergeUsers(KEPT, [KEPT, MERGED], ["nope"])).rejects.toBeInstanceOf(MergeUsersError);
     expect(prismaMock.$transaction).not.toHaveBeenCalled();
-  });
-});
-
-describe("mergeUsers leaders", () => {
-  it("makes the kept user a leader of the teams the merged user led", async () => {
-    leaders = [{ id: T1, leaderIds: [MERGED, OTHER] }];
-
-    await mergeUsers(KEPT, [KEPT, MERGED], []);
-
-    expect(prismaMock.team.update).toHaveBeenCalledWith({ where: { id: T1 }, data: { leaderIds: [OTHER, KEPT] } });
   });
 });

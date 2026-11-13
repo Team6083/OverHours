@@ -11,7 +11,7 @@ import { getTranslations } from "next-intl/server";
 import { SessionProvider } from "next-auth/react";
 
 import { Box, Button, CloseButton, Container, Drawer, Flex, Heading, HStack, Icon, IconButton, Menu, MenuSelectionDetails, Portal, Separator, Stack, Text } from "@chakra-ui/react";
-import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange, LuCalendarCheck, LuNetwork, LuBellRing } from "react-icons/lu";
+import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange, LuCalendarCheck, LuNetwork } from "react-icons/lu";
 
 import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
 import { ColorModeButton } from "@/components/ui/color-mode";
@@ -21,7 +21,6 @@ import AppVersionBadge from "@/components/AppVersionBadge";
 import { TopRanksProvider } from "@/components/TopRanks";
 import UserAvatar from "@/components/UserAvatar";
 import { getOrgName } from "@/lib/config";
-import { canSetTeamReminders } from "@/lib/data/team-reminder-dto";
 import { getTopUserIds } from "@/lib/data/timelog-dto";
 import DrawerNavLink from "./_components/DrawerNavLink";
 
@@ -103,7 +102,6 @@ async function NavBar(props: {
   const t = await getTranslations("AppNav");
 
   const session = await auth();
-  const showTeamReminders = await canSetTeamReminders().catch(() => false);
 
   const handleUserAvatarMenuSelect = async ({ value }: MenuSelectionDetails) => {
     "use server";
@@ -172,14 +170,6 @@ async function NavBar(props: {
                 <Portal>
                   <Menu.Positioner>
                     <Menu.Content>
-                      {showTeamReminders && (
-                        <Menu.Item value="teams" asChild>
-                          <Link href="/teams">
-                            <LuBellRing />
-                            {t("nav.teamReminders")}
-                          </Link>
-                        </Menu.Item>
-                      )}
                       <Menu.Item value="signout">
                         <LuLogOut />
                         {t("nav.signOut")}

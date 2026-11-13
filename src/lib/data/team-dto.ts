@@ -14,8 +14,6 @@ export type TeamDTO = {
   memberCount: number;
   // Users with any of these Keycloak roles join the team automatically
   autoJoinRoles: string[];
-  // Can change the team's fill-in reminder
-  leaderIds: string[];
   hasReminderWebhook: boolean;
 
   createdAt: Date;
@@ -61,10 +59,10 @@ export function toTeamError(error: unknown): TeamError | undefined {
   return undefined;
 }
 
-type TeamTreeEntry = { id: string; name: string; parentTeamId?: string };
+export type TeamTreeEntry = { id: string; name: string; parentTeamId?: string };
 
 /** Every team's place in the tree, to work out sub-team membership. */
-async function getTeamTree(db: Prisma.TransactionClient = prisma): Promise<TeamTreeEntry[]> {
+export async function getTeamTree(db: Prisma.TransactionClient = prisma): Promise<TeamTreeEntry[]> {
   const teams = await db.team.findMany({ select: { id: true, name: true, parentTeamId: true } });
   return teams.map(team => ({ id: team.id, name: team.name, parentTeamId: team.parentTeamId ?? undefined }));
 }
@@ -107,14 +105,13 @@ export function prismaTeamToDTO(team: Team, memberCount: number): TeamDTO {
     parentTeamId: team.parentTeamId ?? undefined,
     memberCount,
     autoJoinRoles: team.autoJoinRoles,
-    leaderIds: team.leaderIds ?? [],
     hasReminderWebhook: Boolean(team.reminderWebhookUrl),
     createdAt: team.createdAt,
     updatedAt: team.updatedAt,
   };
 }
 
-async function requireAdmin() {
+export async function requireAdmin() {
   const session = await auth();
 
   if (!session) {
@@ -351,29 +348,4 @@ export async function removeUsersFromAllTeams(tx: Prisma.TransactionClient, user
     });
   }
 
-  const ledTeams = await tx.team.findMany({
-    where: { leaderIds: { hasSome: userIds } },
-    select: { id: true, leaderIds: true },
-  });
-  for (const team of ledTeams) {
-    await tx.team.update({
-      where: { id: team.id },
-      data: { leaderIds: team.leaderIds.filter(id => !userIds.includes(id)) },
-    });
-  }
-}
-
-/** Makes `targetId` a leader of every team one of `sourceIds` leads, before those users are merged away. */
-export async function moveTeamLeadership(tx: Prisma.TransactionClient, sourceIds: string[], targetId: string) {
-  const teams = await tx.team.findMany({
-    where: { leaderIds: { hasSome: sourceIds } },
-    select: { id: true, leaderIds: true },
-  });
-
-  for (const team of teams) {
-    await tx.team.update({
-      where: { id: team.id },
-      data: { leaderIds: [...new Set([...team.leaderIds.filter(id => !sourceIds.includes(id)), targetId])] },
-    });
-  }
 }

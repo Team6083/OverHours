@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Card, Field, HStack, Input, NativeSelect, SimpleGrid, Stack, Switch, Text } from "@chakra-ui/react";
+import { Button, Card, Field, HStack, Input, NativeSelect, SimpleGrid, Stack, Switch, Text } from "@chakra-ui/react";
 import { useTranslations } from "next-intl";
 
 import { toaster } from "@/components/ui/toaster";
+import { shortDate } from "@/lib/attendance";
 import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";
 import { MAX_DAYS_AHEAD, ReminderSettings } from "@/lib/team-reminders";
 import { saveTeamReminderAction } from "../actions";
@@ -27,7 +28,7 @@ export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
 
   const save = () => startSaving(async () => {
     const result = await saveTeamReminderAction(reminder.team.id, settings);
-    if (result.ok) {
+    if (!result.error) {
       toaster.success({ title: t("saved") });
       router.refresh();
     } else toaster.error({ title: t("saveFailed") });
@@ -89,13 +90,6 @@ export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
               </Field.Root>
             </SimpleGrid>
 
-            <HStack gap={2}>
-              <Text fontSize="sm" fontWeight="medium">{t("channel")}</Text>
-              {reminder.hasWebhook
-                ? <Badge colorPalette="green">{t("channelSet")}</Badge>
-                : <Text fontSize="sm" color="fg.warning">{t("channelMissing")}</Text>}
-            </HStack>
-
             <Button alignSelf="start" onClick={save} loading={saving} disabled={!changed}>{t("save")}</Button>
           </Stack>
         </Card.Body>
@@ -115,7 +109,7 @@ export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
                   {reminder.missing.map(member => (
                     <HStack key={member.name + member.dates.join()} gap={2} wrap="wrap">
                       <Text fontSize="sm" fontWeight="medium">{member.name}</Text>
-                      <Text fontSize="xs" color="fg.muted">{member.dates.map(date => date.slice(5).replace("-", "/")).join("、")}</Text>
+                      <Text fontSize="xs" color="fg.muted">{member.dates.map(shortDate).join("、")}</Text>
                     </HStack>
                   ))}
                 </Stack>

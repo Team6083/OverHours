@@ -11,10 +11,10 @@ import { IconType } from "react-icons";
 import { LuCheck, LuCheckCheck, LuUsers, LuX } from "react-icons/lu";
 
 import { toaster } from "@/components/ui/toaster";
-import { addDays, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, STATUS_PALETTE, weekStartOf } from "@/lib/attendance";
+import { addDays, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, shortDate, STATUS_PALETTE, weekStartOf } from "@/lib/attendance";
 import { BoardDay } from "@/lib/data/attendance-dto";
 import { saveWeek } from "./actions";
-import { boardGroups, NameGroup, shortDate, UserListDialog } from "./AttendanceParts";
+import { boardGroups, NameGroup, UserListDialog } from "./AttendanceParts";
 
 const STATUS_ICONS: Record<AttendanceStatus, IconType> = { WILL_COME: LuCheckCheck, AVAILABLE: LuCheck, UNAVAILABLE: LuX };
 

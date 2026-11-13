@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type TeamRow = {
-  id: string; name: string; parentTeamId: string | null; leaderIds: string[]; reminderEnabled: boolean; reminderWeekdays: number[];
+  id: string; name: string; parentTeamId: string | null; reminderEnabled: boolean; reminderWeekdays: number[];
   reminderDaysAhead: number; reminderTime: string; reminderWebhookUrl: string | null; reminderSentOn: string | null;
 };
 
@@ -10,6 +10,7 @@ const db = vi.hoisted(() => ({
   teams: [] as TeamRow[],
   users: [] as { id: string; email: string; name: string; teamIds: string[] }[],
   entries: [] as { userId: string; date: string }[],
+  entriesFail: false,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -21,8 +22,6 @@ vi.mock("../prisma", () => {
       findMany: async ({ where }: { where?: { reminderEnabled?: boolean } } = {}) =>
         db.teams.filter(team => where?.reminderEnabled === undefined || team.reminderEnabled === where.reminderEnabled),
       findUnique: async ({ where }: { where: { id: string } }) => byId(where.id) ?? null,
-      count: async ({ where }: { where: { id: string; leaderIds: { has: string } } }) =>
-        byId(where.id)?.leaderIds.includes(where.leaderIds.has) ? 1 : 0,
       update: async ({ where, data }: { where: { id: string }; data: Partial<TeamRow> }) => Object.assign(byId(where.id)!, data),
       updateMany: async ({ where, data }: { where: { id: string }; data: Partial<TeamRow> }) => {
         const team = byId(where.id)!;
@@ -36,8 +35,10 @@ vi.mock("../prisma", () => {
         db.users.filter(user => user.teamIds.some(id => where.teamIds.hasSome.includes(id))),
     },
     attendanceEntry: {
-      findMany: async ({ where }: { where: { userId: { in: string[] }; date: { in: string[] } } }) =>
-        db.entries.filter(entry => where.userId.in.includes(entry.userId) && where.date.in.includes(entry.date)),
+      findMany: async ({ where }: { where: { userId: { in: string[] }; date: { in: string[] } } }) => {
+        if (db.entriesFail) throw new Error("connection reset");
+        return db.entries.filter(entry => where.userId.in.includes(entry.userId) && where.date.in.includes(entry.date));
+      },
     },
   };
   return { default: prisma };
@@ -48,7 +49,7 @@ import { saveTeamReminder, sendDueReminders, setTeamReminderWebhook } from "./te
 const PARENT = "0000000000000000000000a1";
 const CHILD = "0000000000000000000000a2";
 const team = (id: string, extra: Partial<TeamRow> = {}): TeamRow => ({
-  id, name: id === PARENT ? "Robot" : "Mech", parentTeamId: id === CHILD ? PARENT : null, leaderIds: [],
+  id, name: id === PARENT ? "Robot" : "Mech", parentTeamId: id === CHILD ? PARENT : null,
   reminderEnabled: true, reminderWeekdays: [6], reminderDaysAhead: 7, reminderTime: "20:00",
   reminderWebhookUrl: "https://hooks.example.test/robot", reminderSentOn: null, ...extra,
 });
@@ -59,7 +60,8 @@ beforeEach(() => {
   vi.stubEnv("TZ", "UTC");
   vi.stubGlobal("fetch", fetchMock);
   fetchMock.mockReset().mockResolvedValue({ ok: true, status: 200 });
-  db.session = { user: { id: "000000000000000000000001", role: "user" } };
+  db.session = { user: { id: "000000000000000000000001", role: "admin" } };
+  db.entriesFail = false;
   db.teams = [team(PARENT), team(CHILD, { reminderEnabled: false })];
   db.users = [
     { id: "u1", email: "one@example.test", name: "One", teamIds: [PARENT] },
@@ -113,6 +115,33 @@ describe("sendDueReminders", () => {
     expect(db.teams[0].reminderSentOn).toBeNull();
   });
 
+  it("releases the day when reading members fails, and goes on with the other teams", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    db.teams[1].reminderEnabled = true;
+    db.entriesFail = true;
+
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([
+      { teamId: PARENT, result: "failed" },
+      { teamId: CHILD, result: "failed" },
+    ]);
+    expect(db.teams.map(team => team.reminderSentOn)).toEqual([null, null]);
+  });
+
+  it("doesn't claim a team without a webhook, so adding one later the same day still sends", async () => {
+    db.teams[0].reminderWebhookUrl = null;
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ teamId: PARENT, result: "noWebhook" }]);
+    expect(db.teams[0].reminderSentOn).toBeNull();
+
+    db.teams[0].reminderWebhookUrl = "https://hooks.example.test/robot";
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ teamId: PARENT, result: "sent" }]);
+  });
+
+  it("escapes Slack control characters in the team name", async () => {
+    db.teams[0].name = "R&D <!channel>";
+    await sendDueReminders(evening, "https://x.test");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).text).toContain("*R&amp;D &lt;!channel&gt;*");
+  });
+
   it("writes in zh-TW when REMINDER_LOCALE says so", async () => {
     vi.stubEnv("REMINDER_LOCALE", "zh-TW");
     await sendDueReminders(evening, "https://x.test");
@@ -123,25 +152,24 @@ describe("sendDueReminders", () => {
 describe("saveTeamReminder", () => {
   const settings = { enabled: true, weekdays: [3], daysAhead: 3, time: "21:30" };
 
-  it("lets a leader change their team", async () => {
-    db.teams[1].leaderIds = [db.session!.user.id];
+  it("lets an admin change a team", async () => {
     await saveTeamReminder(CHILD, settings);
     expect(db.teams[1]).toMatchObject({ reminderEnabled: true, reminderWeekdays: [3], reminderDaysAhead: 3, reminderTime: "21:30" });
   });
 
-  it("refuses members who don't lead the team", async () => {
+  it("refuses members who aren't admins", async () => {
+    db.session = { user: { id: "000000000000000000000001", role: "user" } };
     await expect(saveTeamReminder(CHILD, settings)).rejects.toThrow("Forbidden");
   });
 
   it("refuses bad settings", async () => {
-    db.session = { user: { id: "000000000000000000000001", role: "admin" } };
     await expect(saveTeamReminder(CHILD, { ...settings, time: "25:00" })).rejects.toThrow("Invalid reminder settings.");
   });
 });
 
 describe("setTeamReminderWebhook", () => {
   it("is for admins only and needs https", async () => {
-    db.teams[1].leaderIds = [db.session!.user.id];
+    db.session = { user: { id: "000000000000000000000001", role: "user" } };
     await expect(setTeamReminderWebhook(CHILD, "https://hooks.example.test/mech")).rejects.toThrow("Forbidden");
 
     db.session = { user: { id: "000000000000000000000001", role: "admin" } };

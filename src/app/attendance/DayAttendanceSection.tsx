@@ -5,10 +5,10 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Badge, Button, Heading, HStack, IconButton, SimpleGrid, Spinner, Stack, Text } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
-import { addDays } from "@/lib/attendance";
+import { addDays, shortDate } from "@/lib/attendance";
 import { BoardDay } from "@/lib/data/attendance-dto";
 import { getBoardDay } from "./actions";
-import { boardGroups, NameGroup, shortDate, UserListDialog, useKeyedLoad } from "./AttendanceParts";
+import { boardGroups, NameGroup, UserListDialog, useKeyedLoad } from "./AttendanceParts";
 
 type DayAttendance = {
   date: string;

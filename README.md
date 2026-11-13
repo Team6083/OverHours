@@ -263,8 +263,8 @@ The roles must be in the access token, which they are by default (`realm_access`
 
 ### Team reminders
 
-Each team can remind its members in Slack to fill in their availability. Admins pick a team's **leaders** on
-`/admin/teams`; leaders (and admins) set the reminder on `/teams`, linked from the avatar menu:
+Each team can remind its members in Slack to fill in their availability. Admins set it on the team's page under
+`/admin/teams`:
 
 | Setting | Meaning |
 | --- | --- |
@@ -276,10 +276,10 @@ Each team can remind its members in Slack to fill in their availability. Admins 
 Every day after its time, the reminder tags each member of the team, sub-teams included, who hasn't answered one of
 those days, with the days missing. A team with nobody missing sends nothing. A big team's reminder covers everyone
 below it and goes to its own channel; a sub-team sets its own reminder for its own channel, and nothing is inherited.
-The settings page shows who would be reminded right now (names only).
+The settings show who would be reminded right now.
 
-The channel is an overlooking-bot webhook that only admins can set on `/admin/teams`, since it receives the emails
-of the members it tags. It is never shown again after saving. The request is `POST {"text": "..."}` with members
+The channel is the overlooking-bot webhook set on the same page. It receives the emails of the members it tags, and
+it is never shown again after saving. The request is `POST {"text": "..."}` with members
 tagged as `<@email>`, which the bot turns into Slack mentions. Text is in `REMINDER_LOCALE`.
 
 The reminders go out when a scheduler calls this endpoint with `CRON_SECRET`, like auto-lock. Call it every few
@@ -290,7 +290,8 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://overhours.example.c
 # {"data":{"runs":[{"teamId":"...","result":"sent"}]}}
 ```
 
-`result` is `sent`, `nobodyMissing`, `noWebhook` (on but no channel set; nothing is sent) or `failed` (logged). Run
+`result` is `sent`, `nobodyMissing`, `noWebhook` (on but no channel set; nothing is sent, and adding a webhook later
+that day still sends) or `failed` (logged; retried on the next call). Run
 `npx prisma db push` once after deploying.
 
 ## Admin API

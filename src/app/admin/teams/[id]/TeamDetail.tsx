@@ -7,18 +7,20 @@ import {
   Avatar, Badge, Button, ButtonGroup, Card, CloseButton, DataList, Dialog, Editable, HStack, Heading, IconButton,
   Input, NativeSelect, Portal, Stack, Table, Text,
 } from "@chakra-ui/react";
-import { LuBellRing, LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
+import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
 
 import UserCombobox from "@/components/UserCombobox";
 import { InfoTip } from "@/components/ui/toggle-tip";
 import { toaster } from "@/components/ui/toaster";
 import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
+import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";
 import { parseAutoJoinRoles } from "@/lib/team-roles";
 import { wouldCreateCycle } from "@/lib/team-tree";
 import {
   type TeamActionResult, addTeamMembersAction, deleteTeamAction, moveTeamAction, removeTeamMemberAction, renameTeamAction,
-  setAutoJoinRolesAction, setTeamLeadersAction, setTeamReminderWebhookAction,
+  setAutoJoinRolesAction, setTeamReminderWebhookAction,
 } from "../actions";
+import ReminderForm from "./ReminderForm";
 
 function useTeamAction() {
   const [pending, startTransition] = useTransition();
@@ -288,70 +290,19 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
   );
 }
 
-function TeamReminder(props: { team: TeamDTO; users: { id: string; name: string }[] }) {
-  const { team, users } = props;
+function TeamReminder(props: { team: TeamDTO; reminder: TeamReminderDTO }) {
+  const { team, reminder } = props;
   const { pending, run } = useTeamAction();
-  const [selectedUserId, setSelectedUserId] = useState("");
   const [webhook, setWebhook] = useState("");
-
-  const leaders = users.filter(u => team.leaderIds.includes(u.id));
-  const candidates = users.filter(u => !team.leaderIds.includes(u.id)).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <Card.Root>
       <Card.Header>
-        <HStack justify="space-between" flexWrap="wrap">
-          <Card.Title asChild><Heading as="h3" size="sm">Fill-in reminder</Heading></Card.Title>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/teams/${team.id}`}><LuBellRing />Reminder settings</Link>
-          </Button>
-        </HStack>
+        <Card.Title asChild><Heading as="h3" size="sm">Fill-in reminder</Heading></Card.Title>
       </Card.Header>
       <Card.Body>
         <Stack gap={5}>
-          <Stack gap={2}>
-            <HStack justify="space-between" flexWrap="wrap">
-              <Text fontWeight="medium">Leaders</Text>
-              <HStack>
-                <UserCombobox
-                  users={candidates}
-                  value={selectedUserId}
-                  onValueChange={setSelectedUserId}
-                  placeholder="Add a leader"
-                  size="sm"
-                  minWidth="12rem"
-                />
-                <IconButton
-                  size="sm"
-                  variant="outline"
-                  aria-label="Add leader"
-                  disabled={!selectedUserId}
-                  loading={pending}
-                  onClick={() => run(() => setTeamLeadersAction(team.id, [...team.leaderIds, selectedUserId]), () => setSelectedUserId(""))}
-                >
-                  <LuUserPlus />
-                </IconButton>
-              </HStack>
-            </HStack>
-            <Text textStyle="xs" color="fg.muted">
-              Leaders can change this team&apos;s reminder settings at /teams. They don&apos;t have to be members.
-            </Text>
-            {leaders.length === 0 ? <Text color="fg.muted" textStyle="sm">No leaders yet.</Text> : (
-              <HStack gap={2} flexWrap="wrap">
-                {leaders.map(leader => (
-                  <Badge key={leader.id} size="lg" variant="outline">
-                    {leader.name}
-                    <CloseButton
-                      size="2xs"
-                      aria-label={`Remove ${leader.name} as leader`}
-                      disabled={pending}
-                      onClick={() => run(() => setTeamLeadersAction(team.id, team.leaderIds.filter(id => id !== leader.id)))}
-                    />
-                  </Badge>
-                ))}
-              </HStack>
-            )}
-          </Stack>
+          <ReminderForm reminder={reminder} />
 
           <Stack gap={2}>
             <HStack gap={2}>
@@ -360,7 +311,7 @@ function TeamReminder(props: { team: TeamDTO; users: { id: string; name: string 
             </HStack>
             <Text textStyle="xs" color="fg.muted">
               The overlooking-bot webhook of the team&apos;s channel. It receives the emails of members who haven&apos;t
-              filled in, so only admins can set it, and it is never shown again.
+              filled in, and it is never shown again after saving. Nothing is sent until it is set.
             </Text>
             <HStack>
               <Input
@@ -448,8 +399,9 @@ export default function TeamDetail(props: {
   teams: TeamDTO[];
   members: TeamMemberDTO[];
   users: { id: string; name: string }[];
+  reminder: TeamReminderDTO;
 }) {
-  const { team, teams, members, users } = props;
+  const { team, teams, members, users, reminder } = props;
   const hasSubTeams = teams.some(t => t.parentTeamId === team.id);
   // Only a team without sub-teams can be deleted, so these are all its members
   const directMemberCount = members.filter(m => m.direct).length;
@@ -470,7 +422,7 @@ export default function TeamDetail(props: {
 
       <TeamMembers team={team} members={members} users={users} />
 
-      <TeamReminder team={team} users={users} />
+      <TeamReminder team={team} reminder={reminder} />
     </Stack>
   );
 }

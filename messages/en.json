@@ -185,7 +185,6 @@
       "users": "Users",
       "teams": "Teams",
       "statRanges": "Stat Ranges",
-      "teamReminders": "Team reminders",
       "attendance": "Availability",
       "signIn": "Sign-In",
       "signOut": "Sign-Out"
@@ -303,11 +302,6 @@
     "label": "Rank {rank}"
   },
   "TeamReminders": {
-    "title": "Team reminders",
-    "intro": "Each day at the set time, members of the team (sub-teams included) who haven't answered a required day yet are tagged in the team's Slack channel.",
-    "empty": "You don't lead any team.",
-    "on": "On",
-    "off": "Off",
     "enabled": "Send a reminder every day",
     "weekdays": "Days that must be filled in",
     "weekdaysHelp": "Only these days of the week count.",
@@ -318,13 +312,9 @@
     "save": "Save",
     "saved": "Saved",
     "saveFailed": "Could not save",
-    "channel": "Slack channel",
-    "channelSet": "Set",
-    "channelMissing": "Not set yet. Ask an admin to set the team's webhook; nothing is sent until then.",
     "preview": "If it went out now",
     "previewNone": "Nobody would be reminded.",
     "previewNoDays": "No required days in the look-ahead window.",
-    "back": "All teams",
     "weekday": {
       "1": "Mon",
       "2": "Tue",
