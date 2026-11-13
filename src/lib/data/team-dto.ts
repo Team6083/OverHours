@@ -14,7 +14,6 @@ export type TeamDTO = {
   memberCount: number;
   // Users with any of these Keycloak roles join the team automatically
   autoJoinRoles: string[];
-  hasReminderWebhook: boolean;
 
   createdAt: Date;
   updatedAt: Date;
@@ -105,7 +104,6 @@ export function prismaTeamToDTO(team: Team, memberCount: number): TeamDTO {
     parentTeamId: team.parentTeamId ?? undefined,
     memberCount,
     autoJoinRoles: team.autoJoinRoles,
-    hasReminderWebhook: Boolean(team.reminderWebhookUrl),
     createdAt: team.createdAt,
     updatedAt: team.updatedAt,
   };
@@ -282,6 +280,9 @@ export async function deleteTeam(id: string) {
       });
     }
 
+    const rules = await tx.reminderRule.findMany({ where: { teamId: id }, select: { id: true } });
+    await tx.reminderDelivery.deleteMany({ where: { ruleId: { in: rules.map(rule => rule.id) } } });
+    await tx.reminderRule.deleteMany({ where: { teamId: id } });
     await tx.team.delete({ where: { id } });
   });
 }

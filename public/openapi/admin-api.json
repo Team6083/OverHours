@@ -345,10 +345,11 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "ruleId": { "type": "string" },
                               "teamId": { "type": "string" },
                               "result": { "type": "string", "enum": ["sent", "nobodyMissing", "noWebhook", "failed"] }
                             },
-                            "required": ["teamId", "result"]
+                            "required": ["ruleId", "teamId", "result"]
                           }
                         }
                       },

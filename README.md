@@ -289,16 +289,21 @@ it is never shown again after saving. The request is `POST {"text": "..."}` with
 tagged as `<@email>`, which the bot turns into Slack mentions. Text is in `REMINDER_LOCALE`.
 
 The reminders go out when a scheduler calls this endpoint with `CRON_SECRET`, like auto-lock. Call it every few
-minutes; each team is sent at most once a day, and a failed send is retried on the next call:
+minutes; each reminder is sent at most once a day, and a failed send is retried on the next call:
 
 ```bash
 curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://overhours.example.com/api/admin/jobs/attendance-reminders
-# {"data":{"runs":[{"teamId":"...","result":"sent"}]}}
+# {"data":{"runs":[{"ruleId":"...","teamId":"...","result":"sent"}]}}
 ```
 
 `result` is `sent`, `nobodyMissing`, `noWebhook` (on but no channel set; nothing is sent, and adding a webhook later
-that day still sends) or `failed` (logged; retried on the next call). Run
-`npx prisma db push` once after deploying.
+that day still sends) or `failed` (logged; retried on the next call, or, for a rule with an unknown kind or channel,
+until it is fixed). Run `npx prisma db push` once after deploying.
+
+Each reminder is a `ReminderRule`: a `kind` with its `config` (only `unanswered`: the weekdays and look-ahead above)
+and a `channel` with its `target` (only `slack-webhook`: the URL), both JSON checked per kind and channel. The page edits
+one rule per team, but a team can hold several, and a new condition or channel needs no schema change. Each run is
+claimed by inserting a `ReminderDelivery` row, unique per rule and day, which is deleted again if sending fails.
 
 ## Admin API
 

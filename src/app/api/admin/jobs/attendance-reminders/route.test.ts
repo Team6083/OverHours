@@ -17,7 +17,7 @@ beforeEach(() => {
   vi.stubEnv("ADMIN_API_KEY", "admin-secret");
   vi.stubEnv("CRON_SECRET", "cron-secret");
   vi.stubEnv("AUTH_URL", "https://overhours.example.test/api/auth");
-  sendDueReminders.mockReset().mockResolvedValue([{ teamId: "t", result: "sent" }]);
+  sendDueReminders.mockReset().mockResolvedValue([{ ruleId: "r", teamId: "t", result: "sent" }]);
 });
 
 afterEach(() => {
@@ -29,7 +29,7 @@ describe("POST /api/admin/jobs/attendance-reminders", () => {
     const response = await call("cron-secret");
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ data: { runs: [{ teamId: "t", result: "sent" }] } });
+    await expect(response.json()).resolves.toEqual({ data: { runs: [{ ruleId: "r", teamId: "t", result: "sent" }] } });
     expect(sendDueReminders).toHaveBeenCalledWith(expect.any(Date), "https://overhours.example.test");
   });
 

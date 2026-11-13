@@ -95,7 +95,6 @@ export default function TeamsTree(props: { teams: TeamDTO[] }) {
       name: "",
       memberCount: 0,
       autoJoinRoles: [],
-      hasReminderWebhook: false,
       createdAt: new Date(0),
       updatedAt: new Date(0),
       children: buildTeamTree(teams),

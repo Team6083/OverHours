@@ -307,7 +307,7 @@ function TeamReminder(props: { team: TeamDTO; reminder: TeamReminderDTO }) {
           <Stack gap={2}>
             <HStack gap={2}>
               <Text fontWeight="medium">Slack webhook</Text>
-              {team.hasReminderWebhook ? <Badge colorPalette="green">Set</Badge> : <Badge>Not set</Badge>}
+              {reminder.hasWebhook ? <Badge colorPalette="green">Set</Badge> : <Badge>Not set</Badge>}
             </HStack>
             <Text textStyle="xs" color="fg.muted">
               The overlooking-bot webhook of the team&apos;s channel. It receives the emails of members who haven&apos;t
@@ -318,7 +318,7 @@ function TeamReminder(props: { team: TeamDTO; reminder: TeamReminderDTO }) {
                 size="sm"
                 type="password"
                 autoComplete="off"
-                placeholder={team.hasReminderWebhook ? "Enter a new URL to replace it" : "https://…"}
+                placeholder={reminder.hasWebhook ? "Enter a new URL to replace it" : "https://…"}
                 value={webhook}
                 onChange={e => setWebhook(e.target.value)}
               />
@@ -326,7 +326,7 @@ function TeamReminder(props: { team: TeamDTO; reminder: TeamReminderDTO }) {
                 onClick={() => run(() => setTeamReminderWebhookAction(team.id, webhook), () => setWebhook(""))}>
                 Save
               </Button>
-              {team.hasReminderWebhook && (
+              {reminder.hasWebhook && (
                 <Button size="sm" variant="ghost" colorPalette="red" disabled={pending}
                   onClick={() => run(() => setTeamReminderWebhookAction(team.id, null))}>
                   Remove

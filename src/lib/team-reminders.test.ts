@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { isoWeekday } from "./attendance";
-import { isReminderDue, membersMissing, reminderSettingsSchema, requiredDates } from "./team-reminders";
+import {
+  isReminderDue, membersMissing, parseRuleChannel, parseRuleCondition, reminderSettingsSchema, requiredDates,
+} from "./team-reminders";
 
 describe("isoWeekday", () => {
   it("numbers Monday 1 to Sunday 7", () => {
@@ -24,18 +26,31 @@ describe("requiredDates", () => {
 });
 
 describe("isReminderDue", () => {
-  const team = { reminderEnabled: true, reminderTime: "20:00", reminderSentOn: "2026-11-12" };
-  const now = { date: "2026-11-13", time: "20:05" };
+  const rule = { enabled: true, sendTime: "20:00" };
 
-  it("is due once its time has passed and it hasn't gone out today", () => {
-    expect(isReminderDue(team, now)).toBe(true);
-    expect(isReminderDue({ ...team, reminderSentOn: null }, now)).toBe(true);
+  it("is due once its time has passed, and not when off", () => {
+    expect(isReminderDue(rule, "20:05")).toBe(true);
+    expect(isReminderDue(rule, "20:00")).toBe(true);
+    expect(isReminderDue(rule, "19:59")).toBe(false);
+    expect(isReminderDue({ ...rule, enabled: false }, "20:05")).toBe(false);
+    expect(isReminderDue({ ...rule, sendTime: "8:00" }, "20:05")).toBe(false);
+  });
+});
+
+describe("parseRuleCondition and parseRuleChannel", () => {
+  it("parse the known kind and channel", () => {
+    expect(parseRuleCondition({ kind: "unanswered", config: { weekdays: [6, 3], daysAhead: 7 } }))
+      .toEqual({ kind: "unanswered", config: { weekdays: [3, 6], daysAhead: 7 } });
+    expect(parseRuleChannel({ channel: "slack-webhook", target: { url: "https://hooks.example.test/a" } }))
+      .toEqual({ channel: "slack-webhook", target: { url: "https://hooks.example.test/a" } });
+    expect(parseRuleChannel({ channel: "slack-webhook", target: {} })).toEqual({ channel: "slack-webhook", target: {} });
   });
 
-  it("waits for its time, skips a day already handled, and stays quiet when off", () => {
-    expect(isReminderDue(team, { ...now, time: "19:59" })).toBe(false);
-    expect(isReminderDue({ ...team, reminderSentOn: "2026-11-13" }, now)).toBe(false);
-    expect(isReminderDue({ ...team, reminderEnabled: false }, now)).toBe(false);
+  it("throw on an unknown kind or channel, or a value that doesn't fit", () => {
+    expect(() => parseRuleCondition({ kind: "late", config: {} })).toThrow();
+    expect(() => parseRuleCondition({ kind: "unanswered", config: { weekdays: [9], daysAhead: 7 } })).toThrow();
+    expect(() => parseRuleChannel({ channel: "email", target: {} })).toThrow();
+    expect(() => parseRuleChannel({ channel: "slack-webhook", target: { url: "http://hooks.example.test/a" } })).toThrow();
   });
 });
 

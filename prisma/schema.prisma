@@ -103,18 +103,40 @@ model Team {
   // Users with any of these roles join the team automatically. Same syntax as ADMIN_ROLES: realm roles
   // as-is, client roles as `client:role`.
   autoJoinRoles String[] @default([])
+}
 
-  // Daily Slack reminder to members (sub-teams included) who haven't answered a required day yet.
-  // Weekdays are 1 (Monday) to 7 (Sunday); the next `reminderDaysAhead` days from tomorrow are checked.
-  reminderEnabled    Boolean  @default(false)
-  reminderWeekdays   Int[]    @default([])
-  reminderDaysAhead  Int      @default(7)
+// A team's reminder. The admin page edits one "unanswered" rule per team; the model leaves room for more rules,
+// conditions and channels without a schema change.
+model ReminderRule {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teamId   String  @db.ObjectId
+  enabled  Boolean @default(false)
+  // Checked with zod per kind; only "unanswered" ({ weekdays, daysAhead }) for now
+  kind     String
+  config   Json
   // `HH:mm` in `TZ`
-  reminderTime       String   @default("20:00")
-  // The channel's overlooking-bot webhook; it receives member emails
-  reminderWebhookUrl String?
-  // `YYYY-MM-DD` in `TZ` of the last day the reminder was handled, so it goes out once a day
-  reminderSentOn     String?
+  sendTime String
+  // Checked with zod per channel; only "slack-webhook" ({ url? }) for now. Never sent to the browser.
+  channel  String
+  target   Json
+
+  @@index([teamId])
+}
+
+// One row per rule and run, inserted to claim the run so it goes out once.
+model ReminderDelivery {
+  id     String   @id @default(auto()) @map("_id") @db.ObjectId
+  ruleId String   @db.ObjectId
+  // The date (`YYYY-MM-DD` in `TZ`) for a daily rule
+  runKey String
+  // "claimed" while sending, then "sent" or "nobodyMissing"
+  result String
+  sentAt DateTime @default(now())
+
+  @@unique([ruleId, runKey])
 }
 
 enum StatRangeStatus {

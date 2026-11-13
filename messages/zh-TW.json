@@ -336,7 +336,7 @@
     }
   },
   "TeamReminder": {
-    "heading": "*{team}*：下面的人還沒填可出席時間",
+    "heading": "下面的人還沒填可出席時間：",
     "footer": "到這裡填寫：{url}",
     "weekday": {
       "1": "一",

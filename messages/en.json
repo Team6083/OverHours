@@ -336,7 +336,7 @@
     }
   },
   "TeamReminder": {
-    "heading": "*{team}*: these members haven't filled in their availability yet",
+    "heading": "These members haven't filled in their availability yet:",
     "footer": "Fill it in at {url}",
     "weekday": {
       "1": "Mon",
