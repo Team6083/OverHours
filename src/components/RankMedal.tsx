@@ -77,7 +77,8 @@ export function RankHalo(props: { rank?: number }) {
   const [start, end] = HALO_GAPS[rank - 1];
   return (
     <Box position="absolute" inset="-10%" color={color} pointerEvents="none" aria-hidden>
-      <svg viewBox="0 0 120 120" width="100%" height="100%" style={{ display: "block" }}>
+      {/* Inline size, like the medal, so a surrounding Button's icon styles can't shrink it */}
+      <svg viewBox="0 0 120 120" style={{ display: "block", width: "100%", height: "100%" }}>
         <path d={`M ${point(end + CAP)} A ${R} ${R} 0 1 1 ${point(start - CAP)}`} fill="none" stroke="currentColor"
           strokeWidth={5} strokeLinecap="round" />
       </svg>
