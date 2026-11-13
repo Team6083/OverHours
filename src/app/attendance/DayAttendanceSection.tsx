@@ -8,7 +8,7 @@ import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { addDays } from "@/lib/attendance";
 import { BoardDay } from "@/lib/data/attendance-dto";
 import { getBoardDay } from "./actions";
-import { NameGroup, shortDate, UserListDialog, useKeyedLoad } from "./AttendanceParts";
+import { boardGroups, NameGroup, shortDate, UserListDialog, useKeyedLoad } from "./AttendanceParts";
 
 type DayAttendance = {
   date: string;
@@ -52,10 +52,7 @@ export function DayAttendanceProvider(props: { initialDay: BoardDay; today: stri
           month={date.slice(0, 7)}
           today={today}
           onClose={() => setOpen(false)}
-          groups={[
-            { key: "available", palette: "green", users: day.available },
-            { key: "unavailable", palette: "red", users: day.unavailable },
-          ]}
+          groups={boardGroups(day)}
         />
       )}
     </DayAttendanceContext.Provider>
@@ -105,19 +102,16 @@ export default function DayAttendanceSection() {
       </HStack>
 
       {day ? (
-        <SimpleGrid columns={{ base: 1, sm: 2 }} gap={4} minH={16}>
-          <NameGroup
-            label={t("board.available", { count: day.available.length })}
-            palette="green"
-            users={day.available}
-            onOpen={openDialog}
-          />
-          <NameGroup
-            label={t("board.unavailable", { count: day.unavailable.length })}
-            palette="red"
-            users={day.unavailable}
-            onOpen={openDialog}
-          />
+        <SimpleGrid columns={{ base: 1, sm: 3 }} gap={4} minH={16}>
+          {boardGroups(day).map(group => (
+            <NameGroup
+              key={group.key}
+              label={t(`board.${group.key}`, { count: group.users.length })}
+              palette={group.palette}
+              users={group.users}
+              onOpen={openDialog}
+            />
+          ))}
         </SimpleGrid>
       ) : (
         <HStack minH={16} gap={2}>

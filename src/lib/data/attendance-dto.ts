@@ -7,16 +7,29 @@ import prisma from "../prisma";
 
 /** Deliberately without email: emails are only visible to admins elsewhere. */
 export type BoardUser = { id: string; name: string; image: string | null };
-export type BoardDay = { date: string; available: BoardUser[]; unavailable: BoardUser[] };
+export type BoardDay = { date: string } & Record<AttendanceStatus, BoardUser[]>;
+/** The Admin API keeps its two answers until its design is settled (#132): will come is reported as AVAILABLE. */
+export type ApiDayStatus = "AVAILABLE" | "UNAVAILABLE" | "NOT_FILLED";
 export type AdminAttendanceUser = {
   id: string;
   name: string;
   email: string;
-  days: { date: string; status: DayStatus }[];
+  days: { date: string; status: ApiDayStatus }[];
 };
 
-const toStatus = (status: AttendanceEntry["status"]): AttendanceStatus =>
-  status === "Available" ? "AVAILABLE" : "UNAVAILABLE";
+const STATUS_FROM_DB: Record<AttendanceEntry["status"], AttendanceStatus> = {
+  WillCome: "WILL_COME",
+  Available: "AVAILABLE",
+  Unavailable: "UNAVAILABLE",
+};
+const STATUS_TO_DB: Record<AttendanceStatus, AttendanceEntry["status"]> = {
+  WILL_COME: "WillCome",
+  AVAILABLE: "Available",
+  UNAVAILABLE: "Unavailable",
+};
+
+const toStatus = (status: AttendanceEntry["status"]): AttendanceStatus => STATUS_FROM_DB[status];
+const toApiStatus = (status: DayStatus): ApiDayStatus => status === "WILL_COME" ? "AVAILABLE" : status;
 
 export function getToday(): string {
   return calendarDateInZone(new Date(), getTimeZone());
@@ -37,11 +50,16 @@ async function boardFor(dates: string[]): Promise<BoardDay[]> {
     orderBy: { user: { name: "asc" } },
   });
 
-  const users = (date: string, status: AttendanceEntry["status"]): BoardUser[] => entries
-    .filter(entry => entry.date === date && entry.status === status)
+  const users = (date: string, status: AttendanceStatus): BoardUser[] => entries
+    .filter(entry => entry.date === date && toStatus(entry.status) === status)
     .map(({ user }) => ({ id: user.id, name: user.name, image: user.image ?? null }));
 
-  return dates.map(date => ({ date, available: users(date, "Available"), unavailable: users(date, "Unavailable") }));
+  return dates.map(date => ({
+    date,
+    WILL_COME: users(date, "WILL_COME"),
+    AVAILABLE: users(date, "AVAILABLE"),
+    UNAVAILABLE: users(date, "UNAVAILABLE"),
+  }));
 }
 
 export const getWeekBoard = (weekStart: string): Promise<BoardDay[]> => boardFor(weekDates(weekStart));
@@ -85,7 +103,7 @@ export async function saveMyWeek(weekStart: string, entries: Record<string, Atte
   const rows = dates.flatMap(date => {
     const status = entries[date];
     if (!status) return [];
-    return [{ userId, date, status: status === "AVAILABLE" ? "Available" as const : "Unavailable" as const }];
+    return [{ userId, date, status: STATUS_TO_DB[status] }];
   });
 
   await prisma.$transaction(async (tx) => {
@@ -114,6 +132,6 @@ export async function adminGetAttendance(dates: string[]): Promise<AdminAttendan
     days: dayStatuses(
       dates,
       entries.filter(entry => entry.userId === user.id).map(entry => ({ date: entry.date, status: toStatus(entry.status) })),
-    ),
+    ).map(day => ({ date: day.date, status: toApiStatus(day.status) })),
   }));
 }

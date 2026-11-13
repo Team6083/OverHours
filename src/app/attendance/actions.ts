@@ -2,13 +2,13 @@
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
 
-import { AttendanceStatus, isCalendarDate, isMonth, weekStartOf } from "@/lib/attendance";
+import { ATTENDANCE_STATUSES, AttendanceStatus, isCalendarDate, isMonth, weekStartOf } from "@/lib/attendance";
 import { BoardDay, getDayBoard, getUserMonth, saveMyWeek } from "@/lib/data/attendance-dto";
 
 const calendarDate = z.string().refine(isCalendarDate);
 const schema = z.object({
   weekStart: calendarDate.refine(date => weekStartOf(date) === date),
-  entries: z.record(calendarDate, z.enum(["AVAILABLE", "UNAVAILABLE"])),
+  entries: z.record(calendarDate, z.enum(ATTENDANCE_STATUSES)),
 });
 
 export async function saveWeek(weekStart: string, entries: Record<string, AttendanceStatus>): Promise<{ ok: boolean }> {
