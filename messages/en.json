@@ -353,5 +353,27 @@
       "taken": "This card is already linked to someone else.",
       "failed": "Couldn't link the card. Try again."
     }
+  },
+  "Kiosk": {
+    "title": "Card reader",
+    "signInRequired": "Sign in with the card reader account to turn this device into a card reader.",
+    "notAllowed": "This account can't be used as a card reader. Sign in with an account that may tap cards.",
+    "signIn": "Sign in",
+    "readerInput": "Card reader input",
+    "prompt": "Tap your card",
+    "linked": "Card {card} is linked. Tap it again to clock in.",
+    "newCard": "New card {card}",
+    "scanToLink": "Scan with your phone and sign in to link this card to your account",
+    "useDeviceNfc": "Use this device's NFC",
+    "results": {
+      "clockedIn": "Clocked in",
+      "clockedOut": "Clocked out",
+      "locked": "Past today's cut-off, so this session was locked",
+      "tooShort": "Too short, so this session wasn't kept",
+      "tooSoon": "Already tapped just now",
+      "invalid": "Couldn't read the card. Try again.",
+      "forbidden": "This account can't be used as a card reader",
+      "failed": "Something went wrong. Try again."
+    }
   }
 }

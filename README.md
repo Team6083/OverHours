@@ -349,6 +349,15 @@ the one before, and a code stops working once used. Whoever opens it signed in c
 and an admin can also link it to any member. Admins see and remove a user's cards on
 `/admin/users/{id}`; merging users moves their cards to the kept user.
 
+### Kiosk page
+
+Instead of a program calling the API, a tablet can be the reader: open `/kiosk` in a browser signed in with an
+account that may tap cards (an admin, or a role in `API_ROLES_CARDS_TAP`, checked at sign-in and on each token
+refresh). The page fills the screen and takes card UIDs typed by a USB reader in keyboard mode (UID then Enter); on
+Android Chrome it can also read cards with the device's own NFC (Web NFC). It shows who was clocked in or out, and
+the QR code for an unlinked card until the card is linked or another unlinked card replaces it. Use one kind of
+reader: a keyboard-mode reader and Web NFC may report the same card's UID differently.
+
 Run `npx prisma db push` once after deploying so the `Card` and `CardBindRequest` collections and their unique
 indexes exist.
 

@@ -4,7 +4,7 @@ type CardRow = { id: string; uid: string; userId: string; lastUsedAt: Date | nul
 type RequestRow = { id: string; uid: string; code: string };
 
 const db = vi.hoisted(() => ({
-  session: null as { user: { id?: string; role?: string } } | null,
+  session: null as { user: { id?: string; role?: string; canTapCards?: boolean } } | null,
   cards: [] as CardRow[],
   requests: [] as RequestRow[],
   currentlyIn: new Set<string>(),
@@ -46,6 +46,7 @@ vi.mock("../prisma", () => {
         db.requests.push({ id: `r${db.requests.length + 1}`, ...data });
       },
       findUnique: async ({ where }: { where: { code: string } }) => db.requests.find(r => r.code === where.code) ?? null,
+      count: async ({ where }: { where: { code: string } }) => db.requests.filter(r => r.code === where.code).length,
       delete: async ({ where }: { where: { id: string } }) => {
         db.requests = db.requests.filter(r => r.id !== where.id);
       },
@@ -59,7 +60,7 @@ vi.mock("../prisma", () => {
 });
 
 import { AutoLockedError } from "./timelog-dto";
-import { bindCard, getBindRequest, removeCard, tapCard } from "./card-dto";
+import { bindCard, getBindRequest, isCurrentBindCode, removeCard, tapCard } from "./card-dto";
 
 const NOW = new Date("2027-01-13T09:00:00Z");
 const later = (ms: number) => new Date(NOW.getTime() + ms);
@@ -162,5 +163,17 @@ describe("removeCard", () => {
     db.session = { user: { id: "b", role: "user" } };
     await removeCard("c1");
     expect(db.cards).toEqual([]);
+  });
+});
+
+describe("isCurrentBindCode", () => {
+  it("is true until the code is used, and only for kiosk accounts", async () => {
+    db.requests = [{ id: "r1", uid: "04A1B2C3", code: "code" }];
+    await expect(isCurrentBindCode("code")).rejects.toThrow("Unauthorized");
+
+    db.session = { user: { id: "k", canTapCards: true } };
+    await expect(isCurrentBindCode("code")).resolves.toBe(true);
+    db.requests = [];
+    await expect(isCurrentBindCode("code")).resolves.toBe(false);
   });
 });

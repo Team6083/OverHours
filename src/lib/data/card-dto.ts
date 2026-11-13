@@ -59,6 +59,13 @@ export async function getBindRequest(code: string): Promise<BindRequestDTO | nul
   return prisma.cardBindRequest.findUnique({ where: { code }, select: { uid: true } });
 }
 
+/** Whether the code a kiosk is showing can still be used; false once it was used. For signed-in kiosk accounts. */
+export async function isCurrentBindCode(code: string): Promise<boolean> {
+  const session = await auth();
+  if (!session?.user.canTapCards) throw new Error("Unauthorized");
+  return (await prisma.cardBindRequest.count({ where: { code } })) > 0;
+}
+
 export class CardBindError extends Error {
   constructor(public reason: "replaced" | "taken") {
     super(reason === "replaced" ? "The bind link was replaced or already used" : "The card is already bound");

@@ -353,5 +353,27 @@
       "taken": "這張卡已經綁給別人了。",
       "failed": "綁定失敗，請再試一次。"
     }
+  },
+  "Kiosk": {
+    "title": "簽到站",
+    "signInRequired": "用簽到站帳號登入後，這台裝置就會變成刷卡簽到站。",
+    "notAllowed": "這個帳號不能當簽到站。請用有刷卡權限的帳號登入。",
+    "signIn": "登入",
+    "readerInput": "讀卡機輸入",
+    "prompt": "請刷學生證",
+    "linked": "卡片 {card} 綁定好了，再刷一次就能簽到",
+    "newCard": "新卡片 {card}",
+    "scanToLink": "用手機掃描並登入，就能把這張卡綁到你的帳號",
+    "useDeviceNfc": "使用這台裝置的 NFC",
+    "results": {
+      "clockedIn": "已簽到",
+      "clockedOut": "已簽退",
+      "locked": "超過當天截止時間，這次紀錄已鎖定",
+      "tooShort": "時間太短，這次紀錄沒有保留",
+      "tooSoon": "剛剛刷過了",
+      "invalid": "讀不到卡號，請再刷一次",
+      "forbidden": "這個帳號不能當簽到站",
+      "failed": "出了點問題，請再刷一次"
+    }
   }
 }
