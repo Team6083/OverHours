@@ -44,7 +44,7 @@ export function NameGroup(props: { label: string; palette: string; users: BoardU
           onClick={onOpen}
         >
           <AvatarGroup gap={0} spaceX={-2}>
-            {shown.map(user => <UserAvatar key={user.id} name={user.name} image={user.image} size="xs" rank={rankOf(user.id)} />)}
+            {shown.map(user => <UserAvatar key={user.id} name={user.name} image={user.image} size="xs" rank={rankOf(user.id)} halo={false} />)}
             {hiddenCount > 0 && (
               <Avatar.Root size="xs" variant="solid" colorPalette="gray">
                 <Avatar.Fallback>+{hiddenCount}</Avatar.Fallback>

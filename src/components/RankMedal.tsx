@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { PiCrownFill, PiMedalFill } from "react-icons/pi";
 
 // Gold, silver and bronze for 1st, 2nd and 3rd; the dark bronze is too dim on a dark page, so dark mode gets a lighter one.
-const MEDAL_COLORS = [
+export const MEDAL_COLORS = [
   { base: "#EF9F27" },
   { base: "#B4B2A9" },
   { base: "#915136", _dark: "#C2774A" },
@@ -56,6 +56,31 @@ export default function RankMedal(props: { rank?: number; size?: AvatarSize }) {
         : { right: bySize(size, px => `-${Math.round(px * 0.2)}px`), bottom: "-2px" })}
     >
       <Icon aria-hidden style={{ width: "100%", height: "100%" }} />
+    </Box>
+  );
+}
+
+// Where the crown and medal, grown by about 3px, cross the ring: degrees clockwise from 3 o'clock (the same at every avatar size).
+const HALO_GAPS = [[242, 294], [15, 69], [15, 69]];
+
+// In units of 1% of the avatar: a 5% gap, then a 5% ring, drawn as one arc with round ends clear of the icon
+const R = 57.5;
+const point = (deg: number) => `${60 + R * Math.cos((deg * Math.PI) / 180)} ${60 + R * Math.sin((deg * Math.PI) / 180)}`;
+const CAP = (2.5 / R) * (180 / Math.PI);
+
+/** A thin gold, silver or bronze ring around a top-three avatar, broken where the crown or medal sits. */
+export function RankHalo(props: { rank?: number }) {
+  const { rank = 0 } = props;
+  const color = MEDAL_COLORS[rank - 1];
+  if (!color) return null;
+
+  const [start, end] = HALO_GAPS[rank - 1];
+  return (
+    <Box position="absolute" inset="-10%" color={color} pointerEvents="none" aria-hidden>
+      <svg viewBox="0 0 120 120" width="100%" height="100%" style={{ display: "block" }}>
+        <path d={`M ${point(end + CAP)} A ${R} ${R} 0 1 1 ${point(start - CAP)}`} fill="none" stroke="currentColor"
+          strokeWidth={5} strokeLinecap="round" />
+      </svg>
     </Box>
   );
 }

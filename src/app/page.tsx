@@ -11,6 +11,7 @@ import { LuChevronsRight, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
+import { MEDAL_COLORS } from "@/components/RankMedal";
 import LeaderboardCard from "./_components/LeaderboardCard";
 import LeaderboardWithFilter from "./_components/LeaderboardWithFilter";
 import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
@@ -43,6 +44,12 @@ type UserInfo = {
   totalTimeSec: number;
   ranking?: number;
 }
+
+/** A thin gold, silver or bronze border on the signed-in user's card while they are in the top three. */
+const rankBorder = (ranking?: number) => {
+  const color = ranking ? MEDAL_COLORS[ranking - 1] : undefined;
+  return color ? { borderWidth: "1.5px", borderColor: color } : {};
+};
 
 export default async function Home() {
   const t = await getTranslations("HomePage");
@@ -148,7 +155,7 @@ export default async function Home() {
 
             {/* User Info Card */}
             {userInfo && (
-              <Card.Root w="full" size="sm">
+              <Card.Root w="full" size="sm" {...rankBorder(userInfo.ranking)}>
                 <Card.Body>
 
                   <HStack w="full" justify="flex-end" mb={2}>
