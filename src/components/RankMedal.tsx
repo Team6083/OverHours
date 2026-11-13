@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { PiCrownFill, PiMedalFill } from "react-icons/pi";
 
 // Gold, silver and bronze for 1st, 2nd and 3rd; the dark bronze is too dim on a dark page, so dark mode gets a lighter one.
-export const MEDAL_COLORS = [
+const MEDAL_COLORS = [
   { base: "#EF9F27" },
   { base: "#B4B2A9" },
   { base: "#915136", _dark: "#C2774A" },
