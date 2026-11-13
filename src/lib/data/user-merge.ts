@@ -4,7 +4,7 @@ import { rowsToReassign } from "../attendance";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
 import { planMergedTeams } from "../team-roles";
-import { removeUsersFromAllTeams } from "./team-dto";
+import { moveTeamLeadership, removeUsersFromAllTeams } from "./team-dto";
 
 export type MergeUserSummary = {
   id: string;
@@ -263,6 +263,7 @@ export async function mergeUsers(targetId: string, userIds: string[], dropTeamId
         roleTeamIds: plan.roleTeamIds,
       },
     });
+    await moveTeamLeadership(tx, sourceIds, targetId);
     await removeUsersFromAllTeams(tx, sourceIds);
 
     await tx.user.deleteMany({

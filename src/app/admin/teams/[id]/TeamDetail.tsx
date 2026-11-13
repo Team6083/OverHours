@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Avatar, Badge, Button, ButtonGroup, Card, CloseButton, DataList, Dialog, Editable, HStack, Heading, IconButton,
-  NativeSelect, Portal, Stack, Table, Text,
+  Input, NativeSelect, Portal, Stack, Table, Text,
 } from "@chakra-ui/react";
-import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
+import { LuBellRing, LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
 
 import UserCombobox from "@/components/UserCombobox";
 import { InfoTip } from "@/components/ui/toggle-tip";
@@ -17,7 +17,7 @@ import { parseAutoJoinRoles } from "@/lib/team-roles";
 import { wouldCreateCycle } from "@/lib/team-tree";
 import {
   type TeamActionResult, addTeamMembersAction, deleteTeamAction, moveTeamAction, removeTeamMemberAction, renameTeamAction,
-  setAutoJoinRolesAction,
+  setAutoJoinRolesAction, setTeamLeadersAction, setTeamReminderWebhookAction,
 } from "../actions";
 
 function useTeamAction() {
@@ -288,6 +288,107 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
   );
 }
 
+function TeamReminder(props: { team: TeamDTO; users: { id: string; name: string }[] }) {
+  const { team, users } = props;
+  const { pending, run } = useTeamAction();
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [webhook, setWebhook] = useState("");
+
+  const leaders = users.filter(u => team.leaderIds.includes(u.id));
+  const candidates = users.filter(u => !team.leaderIds.includes(u.id)).sort((a, b) => a.name.localeCompare(b.name));
+
+  return (
+    <Card.Root>
+      <Card.Header>
+        <HStack justify="space-between" flexWrap="wrap">
+          <Card.Title asChild><Heading as="h3" size="sm">Fill-in reminder</Heading></Card.Title>
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/teams/${team.id}`}><LuBellRing />Reminder settings</Link>
+          </Button>
+        </HStack>
+      </Card.Header>
+      <Card.Body>
+        <Stack gap={5}>
+          <Stack gap={2}>
+            <HStack justify="space-between" flexWrap="wrap">
+              <Text fontWeight="medium">Leaders</Text>
+              <HStack>
+                <UserCombobox
+                  users={candidates}
+                  value={selectedUserId}
+                  onValueChange={setSelectedUserId}
+                  placeholder="Add a leader"
+                  size="sm"
+                  minWidth="12rem"
+                />
+                <IconButton
+                  size="sm"
+                  variant="outline"
+                  aria-label="Add leader"
+                  disabled={!selectedUserId}
+                  loading={pending}
+                  onClick={() => run(() => setTeamLeadersAction(team.id, [...team.leaderIds, selectedUserId]), () => setSelectedUserId(""))}
+                >
+                  <LuUserPlus />
+                </IconButton>
+              </HStack>
+            </HStack>
+            <Text textStyle="xs" color="fg.muted">
+              Leaders can change this team&apos;s reminder settings at /teams. They don&apos;t have to be members.
+            </Text>
+            {leaders.length === 0 ? <Text color="fg.muted" textStyle="sm">No leaders yet.</Text> : (
+              <HStack gap={2} flexWrap="wrap">
+                {leaders.map(leader => (
+                  <Badge key={leader.id} size="lg" variant="outline">
+                    {leader.name}
+                    <CloseButton
+                      size="2xs"
+                      aria-label={`Remove ${leader.name} as leader`}
+                      disabled={pending}
+                      onClick={() => run(() => setTeamLeadersAction(team.id, team.leaderIds.filter(id => id !== leader.id)))}
+                    />
+                  </Badge>
+                ))}
+              </HStack>
+            )}
+          </Stack>
+
+          <Stack gap={2}>
+            <HStack gap={2}>
+              <Text fontWeight="medium">Slack webhook</Text>
+              {team.hasReminderWebhook ? <Badge colorPalette="green">Set</Badge> : <Badge>Not set</Badge>}
+            </HStack>
+            <Text textStyle="xs" color="fg.muted">
+              The overlooking-bot webhook of the team&apos;s channel. It receives the emails of members who haven&apos;t
+              filled in, so only admins can set it, and it is never shown again.
+            </Text>
+            <HStack>
+              <Input
+                size="sm"
+                type="password"
+                autoComplete="off"
+                placeholder={team.hasReminderWebhook ? "Enter a new URL to replace it" : "https://…"}
+                value={webhook}
+                onChange={e => setWebhook(e.target.value)}
+              />
+              <Button size="sm" disabled={!webhook.trim()} loading={pending}
+                onClick={() => run(() => setTeamReminderWebhookAction(team.id, webhook), () => setWebhook(""))}>
+                Save
+              </Button>
+              {team.hasReminderWebhook && (
+                <Button size="sm" variant="ghost" colorPalette="red" disabled={pending}
+                  onClick={() => run(() => setTeamReminderWebhookAction(team.id, null))}>
+                  Remove
+                </Button>
+              )}
+            </HStack>
+          </Stack>
+        </Stack>
+      </Card.Body>
+    </Card.Root>
+  );
+}
+
 function DeleteTeamButton(props: { team: TeamDTO; hasSubTeams: boolean; directMemberCount: number }) {
   const { team, hasSubTeams, directMemberCount } = props;
   const router = useRouter();
@@ -368,6 +469,8 @@ export default function TeamDetail(props: {
       </Card.Root>
 
       <TeamMembers team={team} members={members} users={users} />
+
+      <TeamReminder team={team} users={users} />
     </Stack>
   );
 }

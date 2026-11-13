@@ -103,6 +103,21 @@ model Team {
   // Users with any of these roles join the team automatically. Same syntax as ADMIN_ROLES: realm roles
   // as-is, client roles as `client:role`.
   autoJoinRoles String[] @default([])
+
+  // Leaders can change the team's fill-in reminder. Plain ids, like a deleted user's are removed in code.
+  leaderIds String[] @default([]) @db.ObjectId
+
+  // Daily Slack reminder to members (sub-teams included) who haven't answered a required day yet.
+  // Weekdays are 1 (Monday) to 7 (Sunday); the next `reminderDaysAhead` days from tomorrow are checked.
+  reminderEnabled    Boolean  @default(false)
+  reminderWeekdays   Int[]    @default([])
+  reminderDaysAhead  Int      @default(7)
+  // `HH:mm` in `TZ`
+  reminderTime       String   @default("20:00")
+  // Set by admins only: the channel's webhook gets member emails
+  reminderWebhookUrl String?
+  // `YYYY-MM-DD` in `TZ` of the last day the reminder was handled, so it goes out once a day
+  reminderSentOn     String?
 }
 
 enum StatRangeStatus {

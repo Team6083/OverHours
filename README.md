@@ -50,10 +50,11 @@ Variables are read at runtime unless noted otherwise.
 | `ADMIN_ROLES`, `ALLOWED_ROLES`, `AUTH_KEYCLOAK_ALGORITHMS`, `AUTH_KEYCLOAK_VERIFY_GRACE_SEC`, `AUTH_KEYCLOAK_ROLES_CLAIM` | No | Role and token verification settings; see [Auth configuration](#auth-configuration). |
 | `NEXT_MANUAL_SIG_HANDLE` | No | Disables the shutdown flag used by `/api/readyz`; see [Health checks](#health-checks). |
 | `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*`, except `/api/admin/jobs/*`. Admin API requests are rejected when it is unset. |
-| `CRON_SECRET` | For auto-lock | Bearer token accepted by `/api/admin/jobs/*` and nothing else, for the scheduler (e.g. a Kubernetes CronJob). The jobs endpoint is rejected when it is unset (a startup warning is logged if `AUTO_LOCK_TIME` is set); `ADMIN_API_KEY` is not accepted there. Must differ from `ADMIN_API_KEY`, or the server refuses to start. |
+| `CRON_SECRET` | For auto-lock and team reminders | Bearer token accepted by `/api/admin/jobs/*` and nothing else, for the scheduler (e.g. a Kubernetes CronJob). The jobs endpoint is rejected when it is unset (a startup warning is logged if `AUTO_LOCK_TIME` is set); `ADMIN_API_KEY` is not accepted there. Must differ from `ADMIN_API_KEY`, or the server refuses to start. |
 | `ORG_NAME` | No | Name of the organisation running this instance. Shown in the header, footer and page description. When unset, no organisation text is shown. |
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
 | `AUTO_LOCK_TIME` | No | Daily cut-off as `HH:mm` in `TZ`. Sessions still clocked in at the cut-off are locked as abnormal clock-outs; see [Auto-lock](#auto-lock). Unset: no automatic locking. A malformed value stops the server from starting. |
+| `REMINDER_LOCALE` | No | Language of the team reminders sent to Slack: `en` (default) or `zh-TW`. See [Team reminders](#team-reminders). |
 | `TZ` | No | IANA time zone (e.g. `Asia/Taipei`) of the server, used for `AUTO_LOCK_TIME` and for times in locked-log reports and CSV exports. Default: the container's zone, usually UTC, so set it whenever auto-lock is enabled. An invalid zone stops the server from starting. |
 | `SENTRY_DSN` | No | Sentry DSN for the server and edge runtimes. |
 | `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN for the browser. Inlined at build time. |
@@ -260,6 +261,38 @@ which of their teams the kept user stays in; each kept team keeps how it was joi
 The roles must be in the access token, which they are by default (`realm_access` and `resource_access`). Run
 `npx prisma db push` once after deploying.
 
+### Team reminders
+
+Each team can remind its members in Slack to fill in their availability. Admins pick a team's **leaders** on
+`/admin/teams`; leaders (and admins) set the reminder on `/teams`, linked from the avatar menu:
+
+| Setting | Meaning |
+| --- | --- |
+| On / off | Whether the team's reminder goes out |
+| Days that must be filled in | Weekdays that count, e.g. only Wednesday and Saturday |
+| Look ahead | From tomorrow, how many days ahead those weekdays must already be answered (1–28) |
+| Send at | Time of day in `TZ` |
+
+Every day after its time, the reminder tags each member of the team, sub-teams included, who hasn't answered one of
+those days, with the days missing. A team with nobody missing sends nothing. A big team's reminder covers everyone
+below it and goes to its own channel; a sub-team sets its own reminder for its own channel, and nothing is inherited.
+The settings page shows who would be reminded right now (names only).
+
+The channel is an overlooking-bot webhook that only admins can set on `/admin/teams`, since it receives the emails
+of the members it tags. It is never shown again after saving. The request is `POST {"text": "..."}` with members
+tagged as `<@email>`, which the bot turns into Slack mentions. Text is in `REMINDER_LOCALE`.
+
+The reminders go out when a scheduler calls this endpoint with `CRON_SECRET`, like auto-lock. Call it every few
+minutes; each team is sent at most once a day, and a failed send is retried on the next call:
+
+```bash
+curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://overhours.example.com/api/admin/jobs/attendance-reminders
+# {"data":{"runs":[{"teamId":"...","result":"sent"}]}}
+```
+
+`result` is `sent`, `nobodyMissing`, `noWebhook` (on but no channel set; nothing is sent) or `failed` (logged). Run
+`npx prisma db push` once after deploying.
+
 ## Admin API
 
 An API-key authenticated REST API is available for managing users and time logs from
@@ -276,6 +309,7 @@ Endpoints:
 - `GET /api/admin/timelogs` / `POST /api/admin/timelogs`
 - `GET /api/admin/timelogs/locked` — locked logs with user details, filtered by clock-in time; `?format=csv` for CSV
 - `POST /api/admin/jobs/auto-lock` — lock every session past the daily cut-off; for an external scheduler; uses `CRON_SECRET`, not `ADMIN_API_KEY` (see [Auto-lock](#auto-lock))
+- `POST /api/admin/jobs/attendance-reminders` — send each team's daily Slack reminder once its time has passed; uses `CRON_SECRET` (see [Team reminders](#team-reminders))
 - `GET /api/admin/timelogs/{id}` / `PUT /api/admin/timelogs/{id}` / `DELETE /api/admin/timelogs/{id}`
 
 The full OpenAPI 3.0 schema is available at [`/openapi/admin-api.json`](public/openapi/admin-api.json).

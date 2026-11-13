@@ -14,6 +14,9 @@ export type TeamDTO = {
   memberCount: number;
   // Users with any of these Keycloak roles join the team automatically
   autoJoinRoles: string[];
+  // Can change the team's fill-in reminder
+  leaderIds: string[];
+  hasReminderWebhook: boolean;
 
   createdAt: Date;
   updatedAt: Date;
@@ -104,6 +107,8 @@ export function prismaTeamToDTO(team: Team, memberCount: number): TeamDTO {
     parentTeamId: team.parentTeamId ?? undefined,
     memberCount,
     autoJoinRoles: team.autoJoinRoles,
+    leaderIds: team.leaderIds ?? [],
+    hasReminderWebhook: Boolean(team.reminderWebhookUrl),
     createdAt: team.createdAt,
     updatedAt: team.updatedAt,
   };
@@ -343,6 +348,32 @@ export async function removeUsersFromAllTeams(tx: Prisma.TransactionClient, user
     await tx.team.update({
       where: { id: team.id },
       data: { userIds: team.userIds.filter(id => !userIds.includes(id)) },
+    });
+  }
+
+  const ledTeams = await tx.team.findMany({
+    where: { leaderIds: { hasSome: userIds } },
+    select: { id: true, leaderIds: true },
+  });
+  for (const team of ledTeams) {
+    await tx.team.update({
+      where: { id: team.id },
+      data: { leaderIds: team.leaderIds.filter(id => !userIds.includes(id)) },
+    });
+  }
+}
+
+/** Makes `targetId` a leader of every team one of `sourceIds` leads, before those users are merged away. */
+export async function moveTeamLeadership(tx: Prisma.TransactionClient, sourceIds: string[], targetId: string) {
+  const teams = await tx.team.findMany({
+    where: { leaderIds: { hasSome: sourceIds } },
+    select: { id: true, leaderIds: true },
+  });
+
+  for (const team of teams) {
+    await tx.team.update({
+      where: { id: team.id },
+      data: { leaderIds: [...new Set([...team.leaderIds.filter(id => !sourceIds.includes(id)), targetId])] },
     });
   }
 }
