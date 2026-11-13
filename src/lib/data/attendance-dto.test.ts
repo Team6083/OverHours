@@ -6,6 +6,7 @@ const db = vi.hoisted(() => ({
   session: null as { user: { id?: string } } | null,
   users: [] as Row[],
   entries: [] as Row[],
+  patterns: {} as Record<string, unknown[]>,
   logs: [] as { userId: string; inTime: Date }[],
 }));
 
@@ -22,12 +23,17 @@ vi.mock("../prisma", () => {
     user: {
       findMany: async ({ where }: { where?: { id?: { in: string[] } } } = {}) =>
         where?.id ? db.users.filter(user => where.id!.in.includes(user.id as string)) : db.users,
+      findUnique: async ({ where }: { where: { id: string } }) => ({ attendancePattern: db.patterns[where.id] ?? [] }),
+      update: async ({ where, data }: { where: { id: string }; data: { attendancePattern: { set: unknown[] } } }) => {
+        db.patterns[where.id] = data.attendancePattern.set;
+      },
     },
     timeLog: {
       findMany: async ({ where }: { where: { userId?: { in: string[] }; inTime: { gte: Date; lt: Date } } }) => db.logs.filter(log =>
         (!where.userId || where.userId.in.includes(log.userId)) && log.inTime >= where.inTime.gte && log.inTime < where.inTime.lt),
     },
     attendanceEntry: {
+      count: async ({ where }: { where: Row }) => db.entries.filter(row => matches(row, where)).length,
       findMany: async ({ where }: { where: Row }) => db.entries
         .filter(row => matches(row, where))
         .map(row => ({ ...row, user: db.users.find(user => user.id === row.userId) })),
@@ -39,7 +45,7 @@ vi.mock("../prisma", () => {
   return { default: prisma };
 });
 
-import { adminGetAttendance, getDayBoard, getMyReliability, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
+import { adminGetAttendance, getDayBoard, getMyPattern, getMyReliability, getMyWeek, getUserMonth, getWeekBoard, saveMyPattern, saveMyWeek } from "./attendance-dto";
 
 const entry = (userId: string, date: string, status = "Available") => ({ userId, date, status });
 
@@ -49,6 +55,7 @@ beforeEach(() => {
   db.session = { user: { id: "a" } };
   db.users = [{ id: "a", name: "A", email: "a@example.com" }, { id: "b", name: "B", email: "b@example.com" }];
   db.entries = [];
+  db.patterns = {};
   db.logs = [];
 });
 
@@ -192,6 +199,18 @@ describe("adminGetAttendance", () => {
 
     const [user] = await adminGetAttendance(["d1"]);
     expect(user.days).toEqual([{ date: "d1", status: "AVAILABLE" }]);
+  });
+});
+
+describe("usual week", () => {
+  it("saves and reads back the signed-in user's usual week", async () => {
+    await saveMyPattern({ 0: "WILL_COME", 3: "UNAVAILABLE" });
+    expect(db.patterns.a).toEqual([{ weekday: 0, status: "WillCome" }, { weekday: 3, status: "Unavailable" }]);
+    await expect(getMyPattern()).resolves.toEqual({ 0: "WILL_COME", 3: "UNAVAILABLE" });
+  });
+
+  it("is empty for someone who never saved one", async () => {
+    await expect(getMyPattern()).resolves.toEqual({});
   });
 });
 

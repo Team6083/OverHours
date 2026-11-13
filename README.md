@@ -225,6 +225,10 @@ Members answer each day on `/attendance` with one of three answers, and can clea
 Past days cannot be changed. Every member can see who gave each answer on each day; people who have not filled
 it in are not listed. Rows saved before "will come" existed keep `Available` and show as if needed.
 
+To save typing, the week form's quick fill menu (next to **All days**) can copy last week's answers or apply the
+member's usual week, and save the current week as their usual week (`User.attendancePattern`, one answer per
+weekday). Both only fill days that can still be changed and only change the form; the member still saves.
+
 Run `npx prisma db push` once after deploying so the unique index exists and the `WillCome` value is accepted.
 
 Answer reliability compares answers with time logs: of the days a member answered, the share where what they did

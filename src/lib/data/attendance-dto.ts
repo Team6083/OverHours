@@ -113,6 +113,20 @@ export async function getMyWeek(weekStart: string): Promise<Record<string, Atten
   return Object.fromEntries(entries.map(entry => [entry.date, toStatus(entry.status)]));
 }
 
+/** The signed-in user's usual week, by weekday (0 = Monday). */
+export async function getMyPattern(): Promise<Partial<Record<number, AttendanceStatus>>> {
+  const userId = await requireUserId();
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { attendancePattern: true } });
+  return Object.fromEntries((user?.attendancePattern ?? []).map(day => [day.weekday, toStatus(day.status)]));
+}
+
+export async function saveMyPattern(pattern: Partial<Record<number, AttendanceStatus>>): Promise<void> {
+  const userId = await requireUserId();
+  const days = Object.entries(pattern).flatMap(([weekday, status]) =>
+    status ? [{ weekday: Number(weekday), status: STATUS_TO_DB[status] }] : []);
+  await prisma.user.update({ where: { id: userId }, data: { attendancePattern: { set: days } } });
+}
+
 /** Replaces the user's entries for the days of the week that have not passed; a day left out is cleared. */
 export async function saveMyWeek(weekStart: string, entries: Record<string, AttendanceStatus>): Promise<boolean> {
   const userId = await requireUserId();

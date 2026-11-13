@@ -292,6 +292,17 @@
       "UNAVAILABLE": "不能來（{count}）",
       "everyone": "全部成員（{count}）"
     },
+    "quickFill": {
+      "title": "快速填寫",
+      "lastWeek": "套用上週",
+      "pattern": "套用固定課表",
+      "savePattern": "把這週存成固定課表",
+      "applied": "已填入 {count} 天，記得儲存",
+      "lastWeekEmpty": "上週沒有可以套用的回答",
+      "patternEmpty": "還沒有固定課表，先把一週存成固定課表",
+      "patternSaved": "已存成固定課表",
+      "failed": "操作失敗，請再試一次"
+    },
     "week": {
       "heading": "我的可出席時間",
       "help": "「會來」是答應會到，「可以」是需要時能來。逐日填寫後儲存，點日期可以看當天誰能來。過去的日期不能修改。",

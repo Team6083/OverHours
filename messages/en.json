@@ -292,6 +292,17 @@
       "UNAVAILABLE": "Can't come ({count})",
       "everyone": "Everyone ({count})"
     },
+    "quickFill": {
+      "title": "Quick fill",
+      "lastWeek": "Copy last week",
+      "pattern": "Apply my usual week",
+      "savePattern": "Save this week as my usual week",
+      "applied": "Filled in {count} days. Remember to save.",
+      "lastWeekEmpty": "Nothing to copy from last week",
+      "patternEmpty": "No usual week yet. Save a week as your usual week first.",
+      "patternSaved": "Saved as your usual week",
+      "failed": "Something went wrong. Try again."
+    },
     "week": {
       "heading": "My availability",
       "help": "\"Will come\" is a promise; \"If needed\" means you can come if asked. Fill in each day, then save. Pick a date to see who is coming that day. Past days can't be changed.",
