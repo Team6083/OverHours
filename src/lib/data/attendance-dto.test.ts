@@ -39,7 +39,7 @@ vi.mock("../prisma", () => {
   return { default: prisma };
 });
 
-import { countMyUnfilledDays, getMyPattern, saveMyPattern, adminGetAttendance, getDayBoard, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
+import { getMyPattern, saveMyPattern, adminGetAttendance, getDayBoard, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
 
 const entry = (userId: string, date: string, status = "Available") => ({ userId, date, status });
 
@@ -204,15 +204,5 @@ describe("usual week", () => {
 
   it("is empty for someone who never saved one", async () => {
     await expect(getMyPattern()).resolves.toEqual({});
-  });
-});
-
-describe("countMyUnfilledDays", () => {
-  it("counts the next 7 days, today included, that the user hasn't answered", async () => {
-    db.entries = [
-      entry("a", "2027-01-13"), entry("a", "2027-01-19", "Unavailable"),
-      entry("a", "2027-01-12"), entry("a", "2027-01-20"), entry("b", "2027-01-14"),
-    ];
-    await expect(countMyUnfilledDays()).resolves.toBe(5);
   });
 });

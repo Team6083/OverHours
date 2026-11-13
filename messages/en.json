@@ -293,7 +293,6 @@
       "patternSaved": "Saved as your usual week",
       "failed": "Something went wrong. Try again."
     },
-    "unfilledHint": "{count, plural, one {# day} other {# days}} in the next 7 not filled in",
     "week": {
       "heading": "My availability",
       "help": "\"Will come\" is a promise; \"If needed\" means you can come if asked. Fill in each day, then save. Pick a date to see who is coming that day. Past days can't be changed.",

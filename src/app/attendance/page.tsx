@@ -8,7 +8,14 @@ export default async function AttendancePage(props: { searchParams: Promise<{ we
   const today = getToday();
   const weekStart = weekStartOf(week && isCalendarDate(week) ? week : today);
 
-  const [board, mine, pattern] = await Promise.all([getWeekBoard(weekStart), getMyWeek(weekStart), getMyPattern()]);
+  const [board, mine, pattern] = await Promise.all([
+    getWeekBoard(weekStart),
+    getMyWeek(weekStart),
+    getMyPattern().catch((error) => {
+      console.error("Failed to load the usual week", error);
+      return {};
+    }),
+  ]);
 
   return <AttendanceView key={weekStart} weekStart={weekStart} today={today} board={board} mine={mine} pattern={pattern} />;
 }

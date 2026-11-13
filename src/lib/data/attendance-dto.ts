@@ -106,15 +106,6 @@ export async function saveMyPattern(pattern: Partial<Record<number, AttendanceSt
   await prisma.user.update({ where: { id: userId }, data: { attendancePattern: { set: days } } });
 }
 
-/** How many of the next 7 days (today included) the signed-in user hasn't answered. */
-export async function countMyUnfilledDays(): Promise<number> {
-  const userId = await requireUserId();
-  const today = getToday();
-  const dates = Array.from({ length: 7 }, (_, i) => addDays(today, i));
-  const filled = await prisma.attendanceEntry.count({ where: { userId, date: { in: dates }, slot: "AllDay" } });
-  return dates.length - filled;
-}
-
 /** Replaces the user's entries for the days of the week that have not passed; a day left out is cleared. */
 export async function saveMyWeek(weekStart: string, entries: Record<string, AttendanceStatus>): Promise<boolean> {
   const userId = await requireUserId();

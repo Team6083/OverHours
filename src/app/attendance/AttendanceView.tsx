@@ -79,6 +79,7 @@ export default function AttendanceView(props: {
   const [details, setDetails] = useState<"day" | "week" | null>(null);
   const [pattern, setPattern] = useState(props.pattern);
   const [filling, setFilling] = useState(false);
+  const hasAnswers = board.some(({ date }) => entries[date]);
 
   const dayLabel = (date: string) => {
     const weekday = format.dateTime(new Date(`${date}T00:00:00Z`), { timeZone: "UTC", weekday: "short" });
@@ -296,7 +297,7 @@ export default function AttendanceView(props: {
                               <Menu.Item value="pattern" disabled={editableDates.length === 0}><LuCalendarSync />{t("quickFill.pattern")}</Menu.Item>
                             </Menu.ItemGroup>
                             <Menu.Separator />
-                            <Menu.Item value="savePattern"><LuSave />{t("quickFill.savePattern")}</Menu.Item>
+                            <Menu.Item value="savePattern" disabled={!hasAnswers}><LuSave />{t("quickFill.savePattern")}</Menu.Item>
                           </Menu.Content>
                         </Menu.Positioner>
                       </Portal>
