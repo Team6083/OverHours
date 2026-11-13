@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 
 import { apiError, withApiErrors } from "@/lib/api-error";
-import { verifyAdminApiKey } from "@/lib/admin-api-auth";
+import { verifyApiKey } from "@/lib/admin-api-auth";
 import { adminDeleteUser, adminGetUser, adminUpdateUser, EmailManagedByProviderError } from "@/lib/data/user-dto";
 import { objectIdSchema } from "@/lib/objectid";
 
@@ -18,7 +18,7 @@ function invalidIdResponse() {
 }
 
 export const GET = withApiErrors(async (req: NextRequest, { params }: RouteParams) => {
-  const authError = verifyAdminApiKey(req);
+  const authError = await verifyApiKey(req, "users:read");
   if (authError) return authError;
 
   const { id } = await params;
@@ -36,7 +36,7 @@ export const GET = withApiErrors(async (req: NextRequest, { params }: RouteParam
 });
 
 export const PUT = withApiErrors(async (req: NextRequest, { params }: RouteParams) => {
-  const authError = verifyAdminApiKey(req);
+  const authError = await verifyApiKey(req, "users:write");
   if (authError) return authError;
 
   const { id } = await params;
@@ -83,7 +83,7 @@ export const PUT = withApiErrors(async (req: NextRequest, { params }: RouteParam
 });
 
 export const DELETE = withApiErrors(async (req: NextRequest, { params }: RouteParams) => {
-  const authError = verifyAdminApiKey(req);
+  const authError = await verifyApiKey(req, "users:write");
   if (authError) return authError;
 
   const { id } = await params;

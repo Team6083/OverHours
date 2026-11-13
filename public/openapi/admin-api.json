@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "OverHours Admin API",
-    "description": "Admin API for managing users and time logs. Authenticated with a static Bearer API key (ADMIN_API_KEY); the jobs endpoint uses its own secret (CRON_SECRET).",
+    "description": "Admin API for managing users and time logs. Authenticated with a Bearer token: the static ADMIN_API_KEY (every permission), or a Keycloak-issued access token whose roles grant the endpoint's permission (see README, Admin API); the jobs endpoint uses its own secret (CRON_SECRET).",
     "version": "1.0.0"
   },
   "servers": [
@@ -51,8 +51,10 @@
             }
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       },
       "post": {
@@ -83,9 +85,11 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       }
     },
@@ -118,9 +122,11 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       },
       "put": {
@@ -152,10 +158,12 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       },
       "delete": {
@@ -178,9 +186,11 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       }
     },
@@ -236,8 +246,10 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       },
       "post": {
@@ -268,8 +280,10 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       }
     },
@@ -318,8 +332,10 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       }
     },
@@ -387,9 +403,11 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       },
       "put": {
@@ -420,9 +438,11 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       },
       "delete": {
@@ -445,9 +465,11 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "500": { "$ref": "#/components/responses/InternalError" },
-          "503": { "$ref": "#/components/responses/NotConfigured" }
+          "503": { "$ref": "#/components/responses/NotConfigured" },
+          "504": { "$ref": "#/components/responses/UpstreamTimeout" }
         }
       }
     }
@@ -457,7 +479,7 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Static admin API key, set via the ADMIN_API_KEY environment variable"
+        "description": "ADMIN_API_KEY, or a Keycloak access token whose aud contains OIDC_AUDIENCE and whose roles grant the endpoint's permission (API_ROLES_* or ADMIN_ROLES)"
       },
       "cronAuth": {
         "type": "http",
@@ -592,8 +614,11 @@
                   "unauthenticated",
                   "not_found",
                   "conflict",
+                  "forbidden",
                   "internal_error",
-                  "service_unavailable"
+                  "service_unavailable",
+                  "upstream_unavailable",
+                  "upstream_timeout"
                 ]
               },
               "message": { "type": "string", "description": "Human-readable description" },
@@ -662,12 +687,33 @@
           }
         }
       },
-      "NotConfigured": {
-        "description": "Admin API is not configured (ADMIN_API_KEY not set)",
+      "Forbidden": {
+        "description": "The Keycloak token is valid but its roles don't grant this endpoint's permission",
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/Error" },
-            "example": { "error": { "code": "service_unavailable", "message": "Admin API is not configured" } }
+            "example": { "error": { "code": "forbidden", "message": "This token does not have the users:read permission" } }
+          }
+        }
+      },
+      "NotConfigured": {
+        "description": "Admin API is not configured (service_unavailable: ADMIN_API_KEY not set for a static key, or AUTH_KEYCLOAK_ISSUER not set for a token), or Keycloak could not be reached to verify a token (upstream_unavailable)",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "examples": {
+              "notConfigured": { "value": { "error": { "code": "service_unavailable", "message": "Admin API is not configured" } } },
+              "keycloak": { "value": { "error": { "code": "upstream_unavailable", "message": "Could not verify the token, try again later" } } }
+            }
+          }
+        }
+      },
+      "UpstreamTimeout": {
+        "description": "Keycloak did not answer in time while verifying a token",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": { "code": "upstream_timeout", "message": "Keycloak did not answer in time, try again later" } }
           }
         }
       },
