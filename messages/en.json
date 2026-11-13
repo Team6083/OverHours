@@ -278,7 +278,7 @@
     },
     "board": {
       "WILL_COME": "Will come ({count})",
-      "AVAILABLE": "Can come ({count})",
+      "AVAILABLE": "If needed ({count})",
       "UNAVAILABLE": "Can't come ({count})",
       "everyone": "Everyone ({count})"
     },

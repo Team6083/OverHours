@@ -216,12 +216,12 @@ Members answer each day on `/attendance` with one of three answers, and can clea
 | Answer | Meaning | Stored as |
 | --- | --- | --- |
 | Will come | Promised to be there | `WillCome` |
-| Can come | Can be there if needed | `Available` |
+| If needed | Can be there if asked | `Available` |
 | Can't come | Away | `Unavailable` |
 | Not filled | No answer; **not** the same as will come | no row |
 
 Past days cannot be changed. Every member can see who gave each answer on each day; people who have not filled
-it in are not listed. Rows saved before "will come" existed keep `Available` and show as can come.
+it in are not listed. Rows saved before "will come" existed keep `Available` and show as if needed.
 
 Run `npx prisma db push` once after deploying so the unique index exists and the `WillCome` value is accepted. Set `TZ`, because "today" is worked
 out in that zone.
