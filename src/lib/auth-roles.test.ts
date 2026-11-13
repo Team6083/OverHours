@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { evaluateAccess, extractRoles, parseAdminRoles, parseRoleList } from "./auth-roles";
+import { evaluateAccess, extractRoles, parseAdminRoles, parseRoleList, parseTokenAlgorithms } from "./auth-roles";
 
 describe("parseRoleList", () => {
   it("returns an empty list for undefined and empty input", () => {
@@ -275,5 +275,17 @@ describe("end to end: token payload to access decision", () => {
   it("a malformed token payload yields no roles: not admin, and denied when ALLOWED_ROLES is set", () => {
     expect(decide("garbage", undefined, "staff")).toEqual({ isAdmin: false, allowed: false });
     expect(decide({ realm_access: { roles: "admin" } })).toEqual({ isAdmin: false, allowed: true });
+  });
+});
+
+describe("parseTokenAlgorithms", () => {
+  it("defaults to RS256 and accepts asymmetric algorithms", () => {
+    expect(parseTokenAlgorithms(undefined)).toEqual(["RS256"]);
+    expect(parseTokenAlgorithms("RS256, ES384,EdDSA")).toEqual(["RS256", "ES384", "EdDSA"]);
+  });
+
+  it("refuses symmetric or unknown algorithms", () => {
+    expect(() => parseTokenAlgorithms("HS256")).toThrow(/HS256/);
+    expect(() => parseTokenAlgorithms("none")).toThrow();
   });
 });
