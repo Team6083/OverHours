@@ -162,7 +162,7 @@ export default function KioskScreen() {
             </>) : (<>
               <Box color="fg.muted"><LuNfc size={96} /></Box>
               <Heading size={{ base: "3xl", md: "5xl" }}>{t("prompt")}</Heading>
-              <Text fontSize={{ base: "2xl", md: "4xl" }} fontVariantNumeric="tabular-nums" color="fg.muted">
+              <Text fontSize={{ base: "2xl", md: "4xl" }} fontVariantNumeric="tabular-nums" color="fg.muted" suppressHydrationWarning>
                 {format.dateTime(now, { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
               </Text>
               {linked && <Text fontSize="lg" color="green.fg">{t("linked", { card: linked })}</Text>}
