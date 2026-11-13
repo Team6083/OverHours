@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 
 export default function RangeForm(props: { start: string; end: string; max: string }) {
   const { start, end, max } = props;
-  const t = useTranslations("AccuracyReport");
+  const t = useTranslations("ReliabilityReport");
   const router = useRouter();
   const pathname = usePathname();
 

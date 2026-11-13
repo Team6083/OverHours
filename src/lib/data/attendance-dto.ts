@@ -2,7 +2,7 @@ import "server-only";
 import { auth, Role } from "@/auth";
 import { AttendanceEntry } from "@/generated/prisma";
 import {
-  AccuracySummary, addDays, AttendanceStatus, calendarDateInZone, DayStatus, dayStatuses, monthDates, parseWeights, summarizeAccuracy, weekDates,
+  addDays, AttendanceStatus, calendarDateInZone, DayStatus, dayStatuses, monthDates, ReliabilitySummary, summarizeReliability, weekDates,
 } from "../attendance";
 import { getTimeZone } from "../config";
 import prisma from "../prisma";
@@ -13,7 +13,7 @@ export type BoardUser = { id: string; name: string; image: string | null };
 export type BoardDay = { date: string } & Record<AttendanceStatus, BoardUser[]>;
 /** The Admin API keeps its two answers until its design is settled (#132): will come is reported as AVAILABLE. */
 export type ApiDayStatus = "AVAILABLE" | "UNAVAILABLE" | "NOT_FILLED";
-export type AccuracyRow = AccuracySummary & { user: BoardUser };
+export type ReliabilityRow = ReliabilitySummary & { user: BoardUser };
 export type AdminAttendanceUser = {
   id: string;
   name: string;
@@ -137,52 +137,42 @@ export async function saveMyWeek(weekStart: string, entries: Record<string, Atte
   return true;
 }
 
-let warnedWeights = false;
-
-function scoreWeights() {
-  const { weights, invalid } = parseWeights(process.env.ATTENDANCE_SCORE_WEIGHTS);
-  if (invalid.length > 0 && !warnedWeights) {
-    warnedWeights = true;
-    console.warn(`ATTENDANCE_SCORE_WEIGHTS: ignoring ${invalid.join(", ")}`);
-  }
-  return weights;
-}
-
 /**
- * Answers against time logs for the days in `dates` that the team met (anyone clocked in), for one user or
- * (without `userId`) everyone who answered or clocked in on those days.
+ * Answers against time logs on the answered days in `dates`, for one user or (without `userId`) everyone who
+ * answered. Only the answering members' own logs on those days are read.
  */
-async function accuracyFor(dates: string[], userId?: string): Promise<AccuracyRow[]> {
+async function reliabilityFor(dates: string[], userId?: string): Promise<ReliabilityRow[]> {
   if (dates.length === 0) return [];
-  const timeZone = getTimeZone();
-  const range = { gte: startOfDay(dates[0], 0), lt: startOfDay(dates[dates.length - 1], 1) };
-
-  const logs = await prisma.timeLog.findMany({ where: { inTime: range }, select: { userId: true, inTime: true } });
-  const logDates = logs.map(log => ({ userId: log.userId, date: calendarDateInZone(log.inTime, timeZone) }));
-  const teamDays = new Set(logDates.map(log => log.date));
-  const days = dates.filter(date => teamDays.has(date));
-  if (days.length === 0) return [];
 
   const entries = await prisma.attendanceEntry.findMany({
-    where: { userId, date: { in: days }, slot: "AllDay" },
+    where: { userId, date: { in: dates }, slot: "AllDay" },
     select: { userId: true, date: true, status: true },
   });
+  if (entries.length === 0) return [];
 
-  const userIds = userId ? [userId] : [...new Set([...entries.map(e => e.userId), ...logDates.map(l => l.userId)])];
-  const users = await prisma.user.findMany({
-    where: { id: { in: userIds } },
-    select: { id: true, name: true, image: true },
-    orderBy: { name: "asc" },
-  });
-  const weights = scoreWeights();
+  const answeredDates = [...new Set(entries.map(e => e.date))].sort();
+  const userIds = [...new Set(entries.map(e => e.userId))];
+  const timeZone = getTimeZone();
+  const [logs, users] = await Promise.all([
+    prisma.timeLog.findMany({
+      where: {
+        userId: { in: userIds },
+        inTime: { gte: startOfDay(answeredDates[0], 0), lt: startOfDay(answeredDates[answeredDates.length - 1], 1) },
+      },
+      select: { userId: true, inTime: true },
+    }),
+    prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, image: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   return users.map(user => ({
     user: { id: user.id, name: user.name, image: user.image ?? null },
-    ...summarizeAccuracy(
-      days,
+    ...summarizeReliability(
       entries.filter(e => e.userId === user.id).map(e => ({ date: e.date, status: toStatus(e.status) })),
-      logDates.filter(l => l.userId === user.id).map(l => l.date),
-      weights,
+      logs.filter(l => l.userId === user.id).map(l => calendarDateInZone(l.inTime, timeZone)),
     ),
   }));
 }
@@ -193,18 +183,18 @@ export const pastDates = (dates: string[]): string[] => {
   return dates.filter(date => date < today);
 };
 
-export async function getMyAccuracy(days = 30): Promise<AccuracyRow | null> {
+export async function getMyReliability(days = 30): Promise<ReliabilityRow | null> {
   const userId = await requireUserId();
   const yesterday = addDays(getToday(), -1);
   const dates = Array.from({ length: days }, (_, i) => addDays(yesterday, i - days + 1));
-  const [row] = await accuracyFor(dates, userId);
+  const [row] = await reliabilityFor(dates, userId);
   return row ?? null;
 }
 
-export async function getTeamAccuracy(dates: string[]): Promise<AccuracyRow[]> {
+export async function getTeamReliability(dates: string[]): Promise<ReliabilityRow[]> {
   const session = await auth();
   if (session?.user.role !== Role.ADMIN) throw new Error("Forbidden");
-  return accuracyFor(pastDates(dates));
+  return reliabilityFor(pastDates(dates));
 }
 
 // For the API-key authenticated Admin API, which gates access in the route handler.

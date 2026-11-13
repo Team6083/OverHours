@@ -213,7 +213,7 @@
   "ReportMenu": {
     "compliance": "合規",
     "lockedLogs": "鎖定紀錄",
-    "attendanceAccuracy": "出席紀錄比對"
+    "answerReliability": "填答可靠度"
   },
   "LockedReportPage": {
     "title": "鎖定紀錄",
@@ -251,13 +251,13 @@
     "loadFailed": "載入失敗"
   },
   "Attendance": {
-    "accuracy": {
-      "title": "我的出席紀錄比對（近 {days} 天）",
-      "summary": "團隊有活動的 {days} 天中，你填了 {answered} 天",
+    "reliability": {
+      "title": "我的填答可靠度（近 {days} 天）",
+      "description": "你有填的日子裡，實際有沒有來和填的一樣的比例。沒填的日子不算。",
+      "summary": "有填的 {answered} 天中，{matched} 天相符",
       "brokenPromises": "說會來沒來",
-      "silentAbsences": "沒填也沒來",
-      "unannounced": "沒填卻來了",
-      "empty": "這段期間還沒有可以比對的紀錄"
+      "unexpected": "說不能來卻來了",
+      "empty": "這段期間還沒有填答可以比對"
     },
     "title": "可出席時間",
     "signInRequired": "請先登入才能填寫可出席時間。",
@@ -311,22 +311,18 @@
   "RankMedal": {
     "label": "第 {rank} 名"
   },
-  "AccuracyReport": {
-    "title": "出席紀錄比對",
+  "ReliabilityReport": {
+    "title": "填答可靠度",
     "startDate": "開始日期",
     "endDate": "結束日期",
-    "description": "比對可出席時間和打卡紀錄。只算已經過去、而且有人打卡的日子（團隊有活動的日子）；當天有任何打卡就算有來，包含被鎖定的紀錄。分數是每天結果的加權平均：說會來沒來、沒填也沒來算 0，沒填卻來了算一半，其他都算滿分（可以用 ATTENDANCE_SCORE_WEIGHTS 調整）。填寫率是有填的天數比例。",
-    "stats": {
-      "score": "分數",
-      "fillRate": "填寫率"
-    },
+    "description": "每位成員有填的日子裡，實際行動和填答相符的比例：說會來而且有打卡、說不能來而且沒打卡，或是填「可以」（一定算相符）。沒填的日子不算。只算已經過去的日子；當天有任何打卡就算有來，包含被鎖定的紀錄。",
+    "reliability": "可靠度",
     "columns": {
-      "user": "成員"
+      "user": "成員",
+      "matched": "相符 / 有填"
     },
     "brokenPromises": "說會來沒來",
-    "silentAbsences": "沒填也沒來",
-    "unannounced": "沒填卻來了",
-    "answeredOf": "{days} 天中填了 {answered} 天",
-    "empty": "這段期間沒有可以比對的資料"
+    "unexpected": "說不能來卻來了",
+    "empty": "這段期間沒有填答可以比對"
   }
 }

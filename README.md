@@ -48,7 +48,6 @@ Variables are read at runtime unless noted otherwise.
 | `AUTH_URL` | No | Canonical public URL of the app. Also used by sign-out to build the origin; may be needed behind a reverse proxy. |
 | `AUTH_TRUST_HOST` | No | Set to `true` to let Auth.js trust the `Host` header. Auth.js variable, not read by this repository's code; often needed behind a reverse proxy. |
 | `ADMIN_ROLES`, `ALLOWED_ROLES`, `AUTH_KEYCLOAK_ALGORITHMS`, `AUTH_KEYCLOAK_VERIFY_GRACE_SEC`, `AUTH_KEYCLOAK_ROLES_CLAIM` | No | Role and token verification settings; see [Auth configuration](#auth-configuration). |
-| `ATTENDANCE_SCORE_WEIGHTS` | No | Weights for comparing availability answers with time logs; see [Attendance](#attendance). |
 | `NEXT_MANUAL_SIG_HANDLE` | No | Disables the shutdown flag used by `/api/readyz`; see [Health checks](#health-checks). |
 | `ADMIN_API_KEY` | For the Admin API | Bearer token accepted by `/api/admin/*`, except `/api/admin/jobs/*`. Admin API requests are rejected when it is unset. |
 | `CRON_SECRET` | For auto-lock | Bearer token accepted by `/api/admin/jobs/*` and nothing else, for the scheduler (e.g. a Kubernetes CronJob). The jobs endpoint is rejected when it is unset (a startup warning is logged if `AUTO_LOCK_TIME` is set); `ADMIN_API_KEY` is not accepted there. Must differ from `ADMIN_API_KEY`, or the server refuses to start. |
@@ -227,21 +226,11 @@ it in are not listed. Rows saved before "will come" existed keep `Available` and
 
 Run `npx prisma db push` once after deploying so the unique index exists and the `WillCome` value is accepted.
 
-Answers are compared with time logs on days that are over and that the team met (anyone clocked in); any time log
-that day counts as coming, locked ones included. Members see their own last 30 days on `/attendance`; admins see
-everyone under **Report → Attendance check**. Each day gets one outcome, weighted from 0 to 1, and the score is
-their average:
-
-| Answer | Came | Didn't come |
-| --- | --- | --- |
-| Will come | 1 | **0** (said will come, didn't) |
-| Can come | 1 | 1 |
-| Can't come | 1 | 1 |
-| Not filled | 0.5 (came without answering) | **0** (no answer, didn't come) |
-
-Override any of them with `ATTENDANCE_SCORE_WEIGHTS`, e.g. `NOT_FILLED:came=1,AVAILABLE:absent=0.5` (outcome
-`<ANSWER>:came` or `<ANSWER>:absent`, weight 0–1; bad entries are ignored with a warning). The fill rate is the
-share of those days answered. Set `TZ`, because "today" is worked
+Answer reliability compares answers with time logs: of the days a member answered, the share where what they did
+matched what they said. Will come matches a time log that day, can't come matches none, and if needed always
+matches. Days not answered aren't counted, and only days that are over count; any time log that day counts as
+coming, locked ones included. Members see their own last 30 days on `/attendance`; admins see everyone under
+**Report → Answer reliability**. Set `TZ`, because "today" is worked
 out in that zone.
 
 External programs, such as a Slack bot, read everyone's status through the Admin API:

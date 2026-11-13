@@ -91,81 +91,38 @@ export function rowsToReassign<T extends { id: string; userId: string }>(
   return ids;
 }
 
-/** What happened on one day: the answer, and whether the member clocked in. */
-export type Outcome = `${DayStatus}:${"came" | "absent"}`;
-
-/**
- * How much each outcome counts toward the score, from 0 (bad) to 1 (fine). Only will come + absent and
- * not filled + absent are the problems the answers are meant to catch; can come is a "maybe", so either way is fine.
- */
-export const DEFAULT_WEIGHTS: Readonly<Record<Outcome, number>> = {
-  "WILL_COME:came": 1,
-  "WILL_COME:absent": 0,
-  "AVAILABLE:came": 1,
-  "AVAILABLE:absent": 1,
-  "UNAVAILABLE:came": 1,
-  "UNAVAILABLE:absent": 1,
-  "NOT_FILLED:came": 0.5,
-  "NOT_FILLED:absent": 0,
-};
-
-const isOutcome = (value: string): value is Outcome => value in DEFAULT_WEIGHTS;
-
-/** `ATTENDANCE_SCORE_WEIGHTS`, e.g. `NOT_FILLED:came=1,WILL_COME:absent=0`, over the defaults. Bad entries are returned, not used. */
-export function parseWeights(value: string | undefined): { weights: Record<Outcome, number>; invalid: string[] } {
-  const weights = { ...DEFAULT_WEIGHTS };
-  const invalid: string[] = [];
-
-  for (const item of (value ?? "").split(",").map(part => part.trim()).filter(Boolean)) {
-    const [key, raw] = item.split("=").map(part => part.trim());
-    const weight = Number(raw);
-    if (!isOutcome(key) || raw === undefined || raw === "" || !(weight >= 0 && weight <= 1)) invalid.push(item);
-    else weights[key] = weight;
-  }
-
-  return { weights, invalid };
-}
-
-export type AccuracySummary = {
-  /** Days compared: team days that are over. */
-  days: number;
-  /** Of those, days the member answered. */
+export type ReliabilitySummary = {
+  /** Answered days compared. */
   answered: number;
-  /** Weighted average of the outcomes, 0–1; null when there were no days. */
-  score: number | null;
+  /** Of those, days where what the member did matched what they said. */
+  matched: number;
+  /** `matched / answered`; null without answered days. */
+  reliability: number | null;
   /** Said will come, no time log that day. */
   brokenPromises: string[];
-  /** Not filled in and didn't come. */
-  silentAbsences: string[];
-  /** Not filled in, came anyway. */
-  unannounced: string[];
+  /** Said can't come, clocked in anyway. */
+  unexpected: string[];
 };
 
 /**
- * Compares one member's answers with the days they clocked in. `dates` should only hold days that are over and
- * that the team met (someone clocked in), so days with nothing on don't count as missed.
+ * How reliable one member's answers were: will come should mean a time log that day, can't come should mean none,
+ * and if needed promises nothing, so it always matches. Days without an answer are not counted.
  */
-export function summarizeAccuracy(
-  dates: string[],
+export function summarizeReliability(
   answers: { date: string; status: AttendanceStatus }[],
   attendedDates: Iterable<string>,
-  weights: Record<Outcome, number> = DEFAULT_WEIGHTS,
-): AccuracySummary {
+): ReliabilitySummary {
   const attended = new Set(attendedDates);
-  const summary: AccuracySummary = { days: dates.length, answered: 0, score: null, brokenPromises: [], silentAbsences: [], unannounced: [] };
-  let total = 0;
+  const summary: ReliabilitySummary = { answered: answers.length, matched: 0, reliability: null, brokenPromises: [], unexpected: [] };
 
-  for (const { date, status } of dayStatuses(dates, answers)) {
-    const outcome: Outcome = `${status}:${attended.has(date) ? "came" : "absent"}`;
-    total += weights[outcome];
-    if (status !== "NOT_FILLED") summary.answered++;
-
-    if (outcome === "WILL_COME:absent") summary.brokenPromises.push(date);
-    else if (outcome === "NOT_FILLED:absent") summary.silentAbsences.push(date);
-    else if (outcome === "NOT_FILLED:came") summary.unannounced.push(date);
+  for (const { date, status } of [...answers].sort((a, b) => a.date.localeCompare(b.date))) {
+    const came = attended.has(date);
+    if (status === "WILL_COME" && !came) summary.brokenPromises.push(date);
+    else if (status === "UNAVAILABLE" && came) summary.unexpected.push(date);
+    else summary.matched++;
   }
 
-  summary.score = dates.length > 0 ? total / dates.length : null;
+  summary.reliability = summary.answered > 0 ? summary.matched / summary.answered : null;
   return summary;
 }
 

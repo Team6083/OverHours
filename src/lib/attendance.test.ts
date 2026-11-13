@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  addDays, addMonths, calendarDateInZone, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, summarizeAccuracy, weekDates, weekStartOf,
-  DEFAULT_WEIGHTS, parseWeights,
+  addDays, addMonths, calendarDateInZone, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, summarizeReliability, weekDates, weekStartOf,
 } from "./attendance";
 
 describe("isCalendarDate", () => {
@@ -111,11 +110,10 @@ describe("months", () => {
   });
 });
 
-describe("summarizeAccuracy", () => {
-  const dates = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06", "2026-11-07", "2026-11-08", "2026-11-09"];
+describe("summarizeReliability", () => {
   const answers = [
-    { date: "2026-11-02", status: "WILL_COME" as const },
     { date: "2026-11-03", status: "WILL_COME" as const },
+    { date: "2026-11-02", status: "WILL_COME" as const },
     { date: "2026-11-04", status: "AVAILABLE" as const },
     { date: "2026-11-05", status: "AVAILABLE" as const },
     { date: "2026-11-06", status: "UNAVAILABLE" as const },
@@ -123,41 +121,17 @@ describe("summarizeAccuracy", () => {
   ];
   const came = ["2026-11-02", "2026-11-04", "2026-11-06", "2026-11-08"];
 
-  it("sorts each day by answer and time log, and scores it with the default weights", () => {
-    expect(summarizeAccuracy(dates, answers, came)).toEqual({
-      days: 8,
+  it("counts will come + came, can't come + absent and every if needed as matching", () => {
+    expect(summarizeReliability(answers, came)).toEqual({
       answered: 6,
-      score: (1 + 0 + 1 + 1 + 1 + 1 + 0.5 + 0) / 8,
+      matched: 4,
+      reliability: 4 / 6,
       brokenPromises: ["2026-11-03"],
-      silentAbsences: ["2026-11-09"],
-      unannounced: ["2026-11-08"],
+      unexpected: ["2026-11-06"],
     });
   });
 
-  it("uses the weights it is given", () => {
-    const { weights } = parseWeights("NOT_FILLED:came=1,AVAILABLE:absent=0");
-    expect(summarizeAccuracy(dates, answers, came, weights).score).toBe((1 + 0 + 1 + 0 + 1 + 1 + 1 + 0) / 8);
-  });
-
-  it("has no score without days, and ignores answers and logs outside the dates", () => {
-    expect(summarizeAccuracy([], answers, came).score).toBeNull();
-    expect(summarizeAccuracy(["2026-11-10"], answers, came)).toEqual({
-      days: 1, answered: 0, score: 0, brokenPromises: [], silentAbsences: ["2026-11-10"], unannounced: [],
-    });
-  });
-});
-
-describe("parseWeights", () => {
-  it("starts from the defaults and overrides the listed outcomes", () => {
-    const { weights, invalid } = parseWeights(" WILL_COME:absent = 0.25 , NOT_FILLED:came=1");
-    expect(weights).toEqual({ ...DEFAULT_WEIGHTS, "WILL_COME:absent": 0.25, "NOT_FILLED:came": 1 });
-    expect(invalid).toEqual([]);
-    expect(parseWeights(undefined).weights).toEqual(DEFAULT_WEIGHTS);
-  });
-
-  it("returns entries it can't use instead of applying them", () => {
-    const { weights, invalid } = parseWeights("MAYBE:came=1,WILL_COME:absent=2,AVAILABLE:came=,UNAVAILABLE:absent");
-    expect(weights).toEqual(DEFAULT_WEIGHTS);
-    expect(invalid).toEqual(["MAYBE:came=1", "WILL_COME:absent=2", "AVAILABLE:came=", "UNAVAILABLE:absent"]);
+  it("ignores time logs on days without an answer, and has no figure without answers", () => {
+    expect(summarizeReliability([], came)).toEqual({ answered: 0, matched: 0, reliability: null, brokenPromises: [], unexpected: [] });
   });
 });

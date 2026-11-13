@@ -213,7 +213,7 @@
   "ReportMenu": {
     "compliance": "Compliance",
     "lockedLogs": "Locked Logs",
-    "attendanceAccuracy": "Attendance check"
+    "answerReliability": "Answer reliability"
   },
   "LockedReportPage": {
     "title": "Locked Logs",
@@ -251,13 +251,13 @@
     "loadFailed": "Failed to load"
   },
   "Attendance": {
-    "accuracy": {
-      "title": "My attendance check (last {days} days)",
-      "summary": "You answered {answered} of the {days} days the team met",
+    "reliability": {
+      "title": "My answer reliability (last {days} days)",
+      "description": "Of the days you answered, the share where what you did matched what you said. Days you didn't answer aren't counted.",
+      "summary": "{matched} of the {answered} days you answered matched",
       "brokenPromises": "Said will come, didn't",
-      "silentAbsences": "No answer, didn't come",
-      "unannounced": "No answer, came anyway",
-      "empty": "Nothing to compare yet"
+      "unexpected": "Said can't come, came",
+      "empty": "No answered days to compare yet"
     },
     "title": "Availability",
     "signInRequired": "Sign in to fill in your availability.",
@@ -311,22 +311,18 @@
   "RankMedal": {
     "label": "Rank {rank}"
   },
-  "AccuracyReport": {
-    "title": "Attendance check",
+  "ReliabilityReport": {
+    "title": "Answer reliability",
     "startDate": "Start date",
     "endDate": "End date",
-    "description": "Compares availability answers with time logs. Only days that are over and that the team met (someone clocked in) count; any time log that day counts as coming, locked logs included. The score is the weighted average of each day's outcome: said will come but didn't, and no answer and didn't come, count 0; no answer but came counts half; everything else counts in full (adjustable with ATTENDANCE_SCORE_WEIGHTS). Fill rate is the share of days answered.",
-    "stats": {
-      "score": "Score",
-      "fillRate": "Fill rate"
-    },
+    "description": "For each member, of the days they answered, the share where what they did matched what they said: will come and clocked in, can't come and didn't, or if needed (always matches). Days they didn't answer aren't counted. Only days that are over count; any time log that day counts as coming, locked logs included.",
+    "reliability": "Reliability",
     "columns": {
-      "user": "Member"
+      "user": "Member",
+      "matched": "Matched / answered"
     },
     "brokenPromises": "Said will come, didn't",
-    "silentAbsences": "No answer, didn't come",
-    "unannounced": "No answer, came anyway",
-    "answeredOf": "Answered {answered} of {days} days",
-    "empty": "Nothing to compare in this range"
+    "unexpected": "Said can't come, came",
+    "empty": "No answers to compare in this range"
   }
 }

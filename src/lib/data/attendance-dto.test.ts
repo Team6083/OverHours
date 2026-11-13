@@ -24,8 +24,8 @@ vi.mock("../prisma", () => {
         where?.id ? db.users.filter(user => where.id!.in.includes(user.id as string)) : db.users,
     },
     timeLog: {
-      findMany: async ({ where }: { where: { inTime: { gte: Date; lt: Date } } }) =>
-        db.logs.filter(log => log.inTime >= where.inTime.gte && log.inTime < where.inTime.lt),
+      findMany: async ({ where }: { where: { userId?: { in: string[] }; inTime: { gte: Date; lt: Date } } }) => db.logs.filter(log =>
+        (!where.userId || where.userId.in.includes(log.userId)) && log.inTime >= where.inTime.gte && log.inTime < where.inTime.lt),
     },
     attendanceEntry: {
       findMany: async ({ where }: { where: Row }) => db.entries
@@ -39,7 +39,7 @@ vi.mock("../prisma", () => {
   return { default: prisma };
 });
 
-import { adminGetAttendance, getDayBoard, getMyAccuracy, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
+import { adminGetAttendance, getDayBoard, getMyReliability, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
 
 const entry = (userId: string, date: string, status = "Available") => ({ userId, date, status });
 
@@ -195,27 +195,27 @@ describe("adminGetAttendance", () => {
   });
 });
 
-describe("getMyAccuracy", () => {
+describe("getMyReliability", () => {
   const log = (userId: string, date: string) => ({ userId, inTime: new Date(`${date}T10:00:00Z`) });
 
-  it("only compares days that are over and that someone clocked in on", async () => {
-    db.entries = [entry("a", "2027-01-11", "WillCome"), entry("a", "2027-01-09", "WillCome"), entry("a", "2027-01-13", "WillCome")];
-    db.logs = [log("b", "2027-01-11"), log("b", "2027-01-12"), log("a", "2027-01-12"), log("b", "2027-01-13")];
+  it("compares the member's own answered days that are over with their own time logs", async () => {
+    db.entries = [
+      entry("a", "2027-01-11", "WillCome"), entry("a", "2027-01-12", "Unavailable"), entry("a", "2027-01-10", "Available"),
+      entry("a", "2027-01-13", "WillCome"), entry("b", "2027-01-11", "WillCome"),
+    ];
+    db.logs = [log("b", "2027-01-11"), log("a", "2027-01-12"), log("a", "2027-01-09")];
 
-    const row = await getMyAccuracy(7);
-
-    expect(row).toMatchObject({
+    expect(await getMyReliability(7)).toMatchObject({
       user: { id: "a" },
-      days: 2,
-      answered: 1,
+      answered: 3,
+      matched: 1,
       brokenPromises: ["2027-01-11"],
-      silentAbsences: [],
-      unannounced: ["2027-01-12"],
+      unexpected: ["2027-01-12"],
     });
   });
 
-  it("has nothing to compare when the team never met", async () => {
-    db.entries = [entry("a", "2027-01-11", "WillCome")];
-    await expect(getMyAccuracy(7)).resolves.toBeNull();
+  it("has nothing to compare without answers", async () => {
+    db.logs = [log("a", "2027-01-11")];
+    await expect(getMyReliability(7)).resolves.toBeNull();
   });
 });

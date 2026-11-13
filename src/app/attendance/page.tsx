@@ -1,9 +1,9 @@
 import { isCalendarDate, weekStartOf } from "@/lib/attendance";
-import { getMyAccuracy, getMyWeek, getToday, getWeekBoard } from "@/lib/data/attendance-dto";
+import { getMyReliability, getMyWeek, getToday, getWeekBoard } from "@/lib/data/attendance-dto";
 import AttendanceView from "./AttendanceView";
-import MyAccuracy from "./MyAccuracy";
+import MyReliability from "./MyReliability";
 
-const ACCURACY_DAYS = 30;
+const RELIABILITY_DAYS = 30;
 
 export default async function AttendancePage(props: { searchParams: Promise<{ week?: string }> }) {
   const { week } = await props.searchParams;
@@ -11,12 +11,17 @@ export default async function AttendancePage(props: { searchParams: Promise<{ we
   const today = getToday();
   const weekStart = weekStartOf(week && isCalendarDate(week) ? week : today);
 
-  const [board, mine, accuracy] = await Promise.all([
-    getWeekBoard(weekStart), getMyWeek(weekStart), getMyAccuracy(ACCURACY_DAYS),
+  const [board, mine, reliability] = await Promise.all([
+    getWeekBoard(weekStart),
+    getMyWeek(weekStart),
+    getMyReliability(RELIABILITY_DAYS).catch((error) => {
+      console.error("Failed to load answer reliability", error);
+      return null;
+    }),
   ]);
 
   return (<>
     <AttendanceView key={weekStart} weekStart={weekStart} today={today} board={board} mine={mine} />
-    <MyAccuracy row={accuracy} days={ACCURACY_DAYS} />
+    <MyReliability row={reliability} days={RELIABILITY_DAYS} />
   </>);
 }
