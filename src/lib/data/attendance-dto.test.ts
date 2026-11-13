@@ -6,6 +6,7 @@ const db = vi.hoisted(() => ({
   session: null as { user: { id?: string } } | null,
   users: [] as Row[],
   entries: [] as Row[],
+  logs: [] as { userId: string; inTime: Date }[],
 }));
 
 vi.mock("server-only", () => ({}));
@@ -18,7 +19,14 @@ const matches = (row: Row, where: Row = {}) => Object.entries(where).every(([key
 
 vi.mock("../prisma", () => {
   const prisma = {
-    user: { findMany: async () => db.users },
+    user: {
+      findMany: async ({ where }: { where?: { id?: { in: string[] } } } = {}) =>
+        where?.id ? db.users.filter(user => where.id!.in.includes(user.id as string)) : db.users,
+    },
+    timeLog: {
+      findMany: async ({ where }: { where: { userId?: { in: string[] }; inTime: { gte: Date; lt: Date } } }) => db.logs.filter(log =>
+        (!where.userId || where.userId.in.includes(log.userId)) && log.inTime >= where.inTime.gte && log.inTime < where.inTime.lt),
+    },
     attendanceEntry: {
       findMany: async ({ where }: { where: Row }) => db.entries
         .filter(row => matches(row, where))
@@ -31,7 +39,7 @@ vi.mock("../prisma", () => {
   return { default: prisma };
 });
 
-import { adminGetAttendance, getDayBoard, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
+import { adminGetAttendance, getDayBoard, getMyReliability, getMyWeek, getUserMonth, getWeekBoard, saveMyWeek } from "./attendance-dto";
 
 const entry = (userId: string, date: string, status = "Available") => ({ userId, date, status });
 
@@ -41,6 +49,7 @@ beforeEach(() => {
   db.session = { user: { id: "a" } };
   db.users = [{ id: "a", name: "A", email: "a@example.com" }, { id: "b", name: "B", email: "b@example.com" }];
   db.entries = [];
+  db.logs = [];
 });
 
 describe("saveMyWeek", () => {
@@ -183,5 +192,30 @@ describe("adminGetAttendance", () => {
 
     const [user] = await adminGetAttendance(["d1"]);
     expect(user.days).toEqual([{ date: "d1", status: "AVAILABLE" }]);
+  });
+});
+
+describe("getMyReliability", () => {
+  const log = (userId: string, date: string) => ({ userId, inTime: new Date(`${date}T10:00:00Z`) });
+
+  it("compares the member's own answered days that are over with their own time logs", async () => {
+    db.entries = [
+      entry("a", "2027-01-11", "WillCome"), entry("a", "2027-01-12", "Unavailable"), entry("a", "2027-01-10", "Available"),
+      entry("a", "2027-01-13", "WillCome"), entry("b", "2027-01-11", "WillCome"),
+    ];
+    db.logs = [log("b", "2027-01-11"), log("a", "2027-01-12"), log("a", "2027-01-09")];
+
+    expect(await getMyReliability(7)).toMatchObject({
+      user: { id: "a" },
+      answered: 3,
+      matched: 1,
+      brokenPromises: ["2027-01-11"],
+      unexpected: ["2027-01-12"],
+    });
+  });
+
+  it("has nothing to compare without answers", async () => {
+    db.logs = [log("a", "2027-01-11")];
+    await expect(getMyReliability(7)).resolves.toBeNull();
   });
 });
