@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  addDays, addMonths, calendarDateInZone, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, weekDates, weekStartOf,
+  addDays, addMonths, calendarDateInZone, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, summarizeReliability, weekDates, weekStartOf,
 } from "./attendance";
 
 describe("isCalendarDate", () => {
@@ -107,5 +107,31 @@ describe("months", () => {
     expect(monthDates("2028-02")).toHaveLength(29);
     expect(monthDates("2027-02")).toHaveLength(28);
     expect(monthDates("2027-01")[30]).toBe("2027-01-31");
+  });
+});
+
+describe("summarizeReliability", () => {
+  const answers = [
+    { date: "2026-11-03", status: "WILL_COME" as const },
+    { date: "2026-11-02", status: "WILL_COME" as const },
+    { date: "2026-11-04", status: "AVAILABLE" as const },
+    { date: "2026-11-05", status: "AVAILABLE" as const },
+    { date: "2026-11-06", status: "UNAVAILABLE" as const },
+    { date: "2026-11-07", status: "UNAVAILABLE" as const },
+  ];
+  const came = ["2026-11-02", "2026-11-04", "2026-11-06", "2026-11-08"];
+
+  it("counts will come + came, can't come + absent and every if needed as matching", () => {
+    expect(summarizeReliability(answers, came)).toEqual({
+      answered: 6,
+      matched: 4,
+      reliability: 4 / 6,
+      brokenPromises: ["2026-11-03"],
+      unexpected: ["2026-11-06"],
+    });
+  });
+
+  it("ignores time logs on days without an answer, and has no figure without answers", () => {
+    expect(summarizeReliability([], came)).toEqual({ answered: 0, matched: 0, reliability: null, brokenPromises: [], unexpected: [] });
   });
 });
