@@ -36,13 +36,39 @@ export const releaseRun = (ruleId: string, runKey: string) =>
 /** `&`, `<` and `>` are control characters in Slack text; `<!channel>` in a name would ping everyone. */
 const escapeSlack = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/** Slack text: the title in bold, then each recipient tagged by email (resolved by overlooking-bot). */
-export const slackText = (message: ReminderMessage): string => [
-  `*${escapeSlack(message.title)}*`,
-  message.heading,
-  ...message.recipients.map(recipient => `• <@${recipient.email}> ${recipient.detail}`),
-  message.footer,
-].join("\n");
+const HEADER_MAX = 150;
+const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
+
+/**
+ * Slack Block Kit payload: the team as a header, the summary, then a bulleted list of members and their days, and
+ * the link. `text` is the notification fallback. Members are listed by name: overlooking-bot doesn't turn emails
+ * into Slack users yet, which a `user` element needs. The list is capped by the rule, so the size stays bounded.
+ */
+export function slackPayload(message: ReminderMessage) {
+  const blocks: object[] = [
+    { type: "header", text: { type: "plain_text", text: clip(message.title, HEADER_MAX) } },
+    { type: "section", text: { type: "plain_text", text: message.summary } },
+    { type: "divider" },
+    {
+      type: "rich_text",
+      elements: [{
+        type: "rich_text_list",
+        style: "bullet",
+        elements: message.recipients.map(recipient => ({
+          type: "rich_text_section",
+          elements: [
+            { type: "text", text: recipient.name, style: { bold: true } },
+            { type: "text", text: `  ${recipient.detail}` },
+          ],
+        })),
+      }],
+    },
+  ];
+  if (message.more) blocks.push({ type: "context", elements: [{ type: "plain_text", text: message.more }] });
+  blocks.push({ type: "context", elements: [{ type: "mrkdwn", text: `<${message.link.url}|${escapeSlack(message.link.label)}>` }] });
+
+  return { text: `*${escapeSlack(message.title)}*: ${escapeSlack(message.summary)}`, blocks };
+}
 
 /** Sends the message through the rule's channel; throws when it doesn't go through. */
 export async function deliver(channel: RuleChannel, message: ReminderMessage): Promise<void> {
@@ -51,7 +77,7 @@ export async function deliver(channel: RuleChannel, message: ReminderMessage): P
       const response = await fetch(channel.target.url!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: slackText(message) }),
+        body: JSON.stringify(slackPayload(message)),
         signal: AbortSignal.timeout(10_000),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);

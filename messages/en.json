@@ -346,8 +346,10 @@
     }
   },
   "TeamReminder": {
-    "heading": "These members haven't filled in their availability yet:",
-    "footer": "Fill it in at {url}",
+    "summary": "{count, plural, one {# member hasn't} other {# members haven't}} filled in their availability for {span}",
+    "days": "{count} days, {span}",
+    "more": "and {count} more",
+    "link": "Fill in your availability",
     "weekday": {
       "1": "Mon",
       "2": "Tue",

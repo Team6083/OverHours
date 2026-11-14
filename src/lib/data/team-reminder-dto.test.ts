@@ -103,18 +103,34 @@ afterEach(() => {
 });
 
 describe("sendDueReminders", () => {
-  it("tags sub-team members who haven't answered a required day, once a day", async () => {
+  it("lists sub-team members who haven't answered a required day as Slack blocks, once a day", async () => {
     await expect(sendDueReminders(evening, "https://overhours.example.test"))
       .resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "sent" }]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("https://hooks.example.test/robot");
-    const text = JSON.parse(init.body).text as string;
-    expect(text).toContain("*Robot*");
-    expect(text).toContain("<@two@example.test> 11/14 (Sat)");
-    expect(text).not.toContain("one@example.test");
-    expect(text).toContain("https://overhours.example.test/attendance");
+    expect(JSON.parse(init.body)).toEqual({
+      text: "*Robot*: 1 member hasn't filled in their availability for 11/14 (Sat)",
+      blocks: [
+        { type: "header", text: { type: "plain_text", text: "Robot" } },
+        { type: "section", text: { type: "plain_text", text: "1 member hasn't filled in their availability for 11/14 (Sat)" } },
+        { type: "divider" },
+        {
+          type: "rich_text",
+          elements: [{
+            type: "rich_text_list",
+            style: "bullet",
+            elements: [{
+              type: "rich_text_section",
+              elements: [{ type: "text", text: "Two", style: { bold: true } }, { type: "text", text: "  11/14 (Sat)" }],
+            }],
+          }],
+        },
+        { type: "context", elements: [{ type: "mrkdwn", text: "<https://overhours.example.test/attendance|Fill in your availability>" }] },
+      ],
+    });
+    expect(init.body).not.toContain("one@example.test");
     expect(db.deliveries).toEqual([{ ruleId: "r1", runKey: "2026-11-13", result: "sent" }]);
 
     await expect(sendDueReminders(new Date("2026-11-13T22:00:00Z"), "https://x.test")).resolves.toEqual([]);
@@ -189,16 +205,39 @@ describe("sendDueReminders", () => {
     expect(db.deliveries.map(row => row.ruleId)).toEqual(["r1"]);
   });
 
-  it("escapes Slack control characters in the team name", async () => {
+  it("says several missing days as a count and span", async () => {
+    db.rules[0].config = { weekdays: [1, 2, 3, 4, 5, 6, 7], daysAhead: 3 };
+    await sendDueReminders(evening, "https://x.test");
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(payload.text).toBe("*Robot*: 2 members haven't filled in their availability for 11/14–11/16");
+    const items = payload.blocks[3].elements[0].elements.map((item: { elements: { text: string }[] }) => item.elements.map(e => e.text).join(""));
+    expect(items).toEqual(["One  2 days, 11/15–11/16", "Two  3 days, 11/14–11/16"]);
+  });
+
+  it("caps the list and counts the rest, keeping the link", async () => {
+    db.users = Array.from({ length: 20 }, (_, i) => ({ id: `m${i}`, email: `m${i}@example.test`, name: `M${String(i).padStart(2, "0")}`, teamIds: [PARENT] }));
+    await sendDueReminders(evening, "https://x.test");
+    const { blocks } = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(blocks[1].text.text).toBe("20 members haven't filled in their availability for 11/14 (Sat)");
+    expect(blocks[3].elements[0].elements).toHaveLength(15);
+    expect(blocks[4]).toEqual({ type: "context", elements: [{ type: "plain_text", text: "and 5 more" }] });
+    expect(blocks[5].elements[0].text).toContain("/attendance");
+  });
+
+  it("escapes Slack control characters in the team name where Slack parses them", async () => {
     db.teams[0].name = "R&D <!channel>";
     await sendDueReminders(evening, "https://x.test");
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).text).toContain("*R&amp;D &lt;!channel&gt;*");
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(payload.text).toMatch(/^\*R&amp;D &lt;!channel&gt;\*: /);
+    expect(payload.blocks[0].text).toEqual({ type: "plain_text", text: "R&D <!channel>" });
   });
 
   it("writes in zh-TW when REMINDER_LOCALE says so", async () => {
     vi.stubEnv("REMINDER_LOCALE", "zh-TW");
     await sendDueReminders(evening, "https://x.test");
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).text).toContain("11/14 (六)");
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(payload.text).toBe("*Robot*: 1 人還沒填 11/14 (六) 的可出席時間");
+    expect(payload.blocks.at(-1).elements[0].text).toContain("|去填可出席時間>");
   });
 });
 

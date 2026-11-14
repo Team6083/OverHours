@@ -289,9 +289,12 @@ those days, with the days missing. A team with nobody missing sends nothing. A b
 below it and goes to its own channel; a sub-team sets its own reminder for its own channel, and nothing is inherited.
 The settings show who would be reminded right now.
 
-The channel is the overlooking-bot webhook set on the same page. It receives the emails of the members it tags, and
-it is never shown again after saving. The request is `POST {"text": "..."}` with members
-tagged as `<@email>`, which the bot turns into Slack mentions. Text is in `REMINDER_LOCALE`.
+The channel is the overlooking-bot webhook set on the same page; it is never shown again after saving. The request
+is a Slack Block Kit message (`POST {"text", "blocks"}`): the team as a header, a one-line summary ("12 members
+haven't filled in their availability for 11/15–11/21"), a bulleted list of members with their days (one day, or a
+count and span), and a link to the attendance page. At most 15 members are listed, then "and N more", so the message
+stays short. `text` is the short fallback shown in notifications. Members are listed by name for now: overlooking-bot
+doesn't turn emails into Slack users yet, which tagging needs. Text is in `REMINDER_LOCALE`.
 
 The reminders go out when a scheduler calls this endpoint with `CRON_SECRET`, like auto-lock. Call it every few
 minutes; each reminder is sent at most once a day, and a failed send is retried on the next call:
