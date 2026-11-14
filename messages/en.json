@@ -322,6 +322,44 @@
   "RankMedal": {
     "label": "Rank {rank}"
   },
+  "TeamReminders": {
+    "enabled": "Send a reminder every day",
+    "weekdays": "Days that must be filled in",
+    "weekdaysHelp": "Only these days of the week count.",
+    "daysAhead": "Look ahead",
+    "daysAheadHelp": "Days from tomorrow that must already be answered, 1 to {max}.",
+    "time": "Send at",
+    "save": "Save",
+    "saved": "Saved",
+    "saveFailed": "Could not save",
+    "preview": "If it went out now",
+    "previewNone": "Nobody would be reminded.",
+    "previewNoDays": "No required days in the look-ahead window.",
+    "weekday": {
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat",
+      "7": "Sun"
+    }
+  },
+  "TeamReminder": {
+    "summary": "{count, plural, one {# member hasn't} other {# members haven't}} filled in their availability for {span}",
+    "days": "{count} days, {span}",
+    "more": "and {count} more",
+    "link": "Fill in your availability",
+    "weekday": {
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat",
+      "7": "Sun"
+    }
+  },
   "ReliabilityReport": {
     "title": "Answer reliability",
     "startDate": "Start date",

@@ -322,6 +322,44 @@
   "RankMedal": {
     "label": "第 {rank} 名"
   },
+  "TeamReminders": {
+    "enabled": "每天送提醒",
+    "weekdays": "必填的日子",
+    "weekdaysHelp": "只算這幾個星期幾。",
+    "daysAhead": "往後看幾天",
+    "daysAheadHelp": "從明天起，這幾天內的必填日子要先填好，1 到 {max} 天。",
+    "time": "送出時間",
+    "save": "儲存",
+    "saved": "已儲存",
+    "saveFailed": "儲存失敗",
+    "preview": "如果現在送出",
+    "previewNone": "沒有人會被提醒。",
+    "previewNoDays": "往後看的天數內沒有必填的日子。",
+    "weekday": {
+      "1": "一",
+      "2": "二",
+      "3": "三",
+      "4": "四",
+      "5": "五",
+      "6": "六",
+      "7": "日"
+    }
+  },
+  "TeamReminder": {
+    "summary": "{count} 人還沒填 {span} 的可出席時間",
+    "days": "{count} 天，{span}",
+    "more": "還有 {count} 人",
+    "link": "去填可出席時間",
+    "weekday": {
+      "1": "一",
+      "2": "二",
+      "3": "三",
+      "4": "四",
+      "5": "五",
+      "6": "六",
+      "7": "日"
+    }
+  },
   "ReliabilityReport": {
     "title": "填答可靠度",
     "startDate": "開始日期",

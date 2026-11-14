@@ -58,10 +58,10 @@ export function toTeamError(error: unknown): TeamError | undefined {
   return undefined;
 }
 
-type TeamTreeEntry = { id: string; name: string; parentTeamId?: string };
+export type TeamTreeEntry = { id: string; name: string; parentTeamId?: string };
 
 /** Every team's place in the tree, to work out sub-team membership. */
-async function getTeamTree(db: Prisma.TransactionClient = prisma): Promise<TeamTreeEntry[]> {
+export async function getTeamTree(db: Prisma.TransactionClient = prisma): Promise<TeamTreeEntry[]> {
   const teams = await db.team.findMany({ select: { id: true, name: true, parentTeamId: true } });
   return teams.map(team => ({ id: team.id, name: team.name, parentTeamId: team.parentTeamId ?? undefined }));
 }
@@ -109,7 +109,7 @@ export function prismaTeamToDTO(team: Team, memberCount: number): TeamDTO {
   };
 }
 
-async function requireAdmin() {
+export async function requireAdmin() {
   const session = await auth();
 
   if (!session) {
@@ -280,6 +280,9 @@ export async function deleteTeam(id: string) {
       });
     }
 
+    const rules = await tx.reminderRule.findMany({ where: { teamId: id }, select: { id: true } });
+    await tx.reminderDelivery.deleteMany({ where: { ruleId: { in: rules.map(rule => rule.id) } } });
+    await tx.reminderRule.deleteMany({ where: { teamId: id } });
     await tx.team.delete({ where: { id } });
   });
 }
@@ -345,4 +348,5 @@ export async function removeUsersFromAllTeams(tx: Prisma.TransactionClient, user
       data: { userIds: team.userIds.filter(id => !userIds.includes(id)) },
     });
   }
+
 }
