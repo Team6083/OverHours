@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 
 import { linkProviderAccount } from "./lib/data/user-account";
 import { syncUserRoleTeams } from "./lib/data/team-role-sync";
-import { evaluateAccess, extractRoles, parseAdminRoles, parseRoleList, parseTokenAlgorithms } from "./lib/auth-roles";
+import { evaluateAccess, extractRoles, parseAdminRoles, parseCommaList, parseTokenAlgorithms } from "./lib/auth-roles";
 import { describeError, describeErrorDescription, INVALID_TOKEN_ERROR_CODES, isVerifyGraceExpired, parseVerifyGraceSec } from "./lib/auth-errors";
 
 export enum Role {
@@ -49,7 +49,7 @@ const LEGACY_ROLES_CLAIM_PATH = process.env.AUTH_KEYCLOAK_ROLES_CLAIM || undefin
 const TOKEN_ALGORITHMS = parseTokenAlgorithms(process.env.AUTH_KEYCLOAK_ALGORITHMS);
 
 // Fail loudly once at startup if ADMIN_ROLES is set but unusable (it then falls back to the default).
-if (process.env.ADMIN_ROLES && parseRoleList(process.env.ADMIN_ROLES).length === 0) {
+if (process.env.ADMIN_ROLES && parseCommaList(process.env.ADMIN_ROLES).length === 0) {
   console.warn(`ADMIN_ROLES is set but contains no roles, falling back to "${parseAdminRoles(undefined).join(",")}"`);
 }
 
@@ -101,7 +101,7 @@ function accessFromRoles(roles: string[]): Access {
   const { isAdmin, allowed } = evaluateAccess(
     roles,
     parseAdminRoles(process.env.ADMIN_ROLES),
-    parseRoleList(process.env.ALLOWED_ROLES),
+    parseCommaList(process.env.ALLOWED_ROLES),
   );
   return { role: isAdmin ? Role.ADMIN : Role.USER, allowed };
 }

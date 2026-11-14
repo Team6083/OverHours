@@ -5,12 +5,12 @@
 
 const DEFAULT_ADMIN_ROLES = ["admin"];
 
-/** Parses a comma-separated role list. Blank entries are dropped. */
-export function parseRoleList(value: string | undefined): string[] {
+/** Splits a comma-separated setting (roles, algorithms, ...) into trimmed entries. Blank entries are dropped. */
+export function parseCommaList(value: string | undefined): string[] {
   return (value ?? "")
     .split(",")
-    .map((role) => role.trim())
-    .filter((role) => role.length > 0);
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
 }
 
 // Accepted access token signature algorithms (Keycloak realms default to RS256). Asymmetric only.
@@ -18,7 +18,7 @@ const ASYMMETRIC_ALGORITHM = /^(RS|PS|ES)(256|384|512)$|^EdDSA$/;
 
 /** AUTH_KEYCLOAK_ALGORITHMS, defaulting to RS256. Throws on anything that isn't an asymmetric algorithm. */
 export function parseTokenAlgorithms(value: string | undefined): string[] {
-  const algorithms = parseRoleList(value);
+  const algorithms = parseCommaList(value);
   const invalid = algorithms.filter((alg) => !ASYMMETRIC_ALGORITHM.test(alg));
   if (invalid.length > 0) {
     throw new Error(
@@ -31,7 +31,7 @@ export function parseTokenAlgorithms(value: string | undefined): string[] {
 
 /** ADMIN_ROLES, falling back to the legacy hard-coded "admin" realm role when unset or blank. */
 export function parseAdminRoles(value: string | undefined): string[] {
-  const roles = parseRoleList(value);
+  const roles = parseCommaList(value);
   return roles.length > 0 ? roles : [...DEFAULT_ADMIN_ROLES];
 }
 
