@@ -27,7 +27,8 @@ model User {
   // these when they lose the role; other memberships were added by hand and stay.
   roleTeamIds String[] @default([]) @db.ObjectId
 
-  timeLogs TimeLog[]
+  timeLogs     TimeLog[]
+  clockInLock  ClockInLock?
 
   attendanceEntries AttendanceEntry[]
   // The member's usual week, applied to the week form on request. Weekdays not listed have no usual answer.
@@ -66,6 +67,15 @@ enum TimeLogStatus {
   CurrentlyIn
   Done
   Locked
+}
+
+// Written at the start of every clock-in so two clock-ins for the same user conflict and only one creates a log.
+model ClockInLock {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique @db.ObjectId
 }
 
 model TimeLog {

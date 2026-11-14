@@ -248,7 +248,9 @@ export class AlreadyClockedInError extends Error {
   }
 }
 
-const MAX_CLOCK_IN_ATTEMPTS = 2;
+const MAX_CLOCK_IN_ATTEMPTS = 3;
+// A write conflict, or two first-time lock inserts for the same user hitting the unique index.
+const CLOCK_IN_CONFLICTS = new Set(["P2034", "P2002"]);
 
 export async function clockIn(userId: string): Promise<TimeLogDTO> {
   const session = await auth();
@@ -259,9 +261,10 @@ export async function clockIn(userId: string): Promise<TimeLogDTO> {
   for (let attempt = 1; ; attempt++) {
     try {
       const newTimeLog = await prisma.$transaction(async (tx) => {
-        // Writing the user first makes two clock-ins for the same user conflict (P2034), so only one creates a log;
+        if (await tx.user.count({ where: { id: userId } }) === 0) throw new Error("User not found");
+        // Writing the user's lock first makes two clock-ins for the same user conflict, so only one creates a log;
         // the other's retry then finds it.
-        await tx.user.update({ where: { id: userId }, data: { updatedAt: new Date() } });
+        await tx.clockInLock.upsert({ where: { userId }, create: { userId }, update: { updatedAt: new Date() } });
 
         const existingTimeLog = await tx.timeLog.findFirst({ where: { userId, status: "CurrentlyIn" }, select: { id: true } });
         if (existingTimeLog) {
@@ -272,7 +275,7 @@ export async function clockIn(userId: string): Promise<TimeLogDTO> {
       });
       return prismaTimeLogToDTO(newTimeLog);
     } catch (error) {
-      if ((error as { code?: unknown } | null)?.code !== "P2034") throw error;
+      if (!CLOCK_IN_CONFLICTS.has(String((error as { code?: unknown } | null)?.code))) throw error;
       if (attempt < MAX_CLOCK_IN_ATTEMPTS) continue;
       // Still conflicting: if another clock-in won, say so like any second clock-in.
       if (await prisma.timeLog.count({ where: { userId, status: "CurrentlyIn" } }) > 0) {
