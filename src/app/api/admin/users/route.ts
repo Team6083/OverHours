@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 
 import { apiError, withApiErrors } from "@/lib/api-error";
-import { verifyAdminApiKey } from "@/lib/admin-api-auth";
+import { verifyApiKey } from "@/lib/admin-api-auth";
 import { adminCreateUser, adminGetAllUsers } from "@/lib/data/user-dto";
 
 const createSchema = z.object({
@@ -11,7 +11,7 @@ const createSchema = z.object({
 });
 
 export const GET = withApiErrors(async (req: NextRequest) => {
-  const authError = verifyAdminApiKey(req);
+  const authError = await verifyApiKey(req, "users:read");
   if (authError) return authError;
 
   const email = req.nextUrl.searchParams.get("email") || undefined;
@@ -22,7 +22,7 @@ export const GET = withApiErrors(async (req: NextRequest) => {
 });
 
 export const POST = withApiErrors(async (req: NextRequest) => {
-  const authError = verifyAdminApiKey(req);
+  const authError = await verifyApiKey(req, "users:write");
   if (authError) return authError;
 
   let body: unknown;

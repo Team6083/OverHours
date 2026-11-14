@@ -21,6 +21,11 @@ export function getTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 
+/** Audience an Admin API access token must contain (`OIDC_AUDIENCE`, default `AUTH_KEYCLOAK_ID`). */
+export function getOidcAudience(env: Record<string, string | undefined> = process.env): string | undefined {
+  return env.OIDC_AUDIENCE || env.AUTH_KEYCLOAK_ID || undefined;
+}
+
 export type AutoLockConfig = {
   hour: number;
   minute: number;
@@ -65,6 +70,10 @@ export function validateConfig(env: Record<string, string | undefined> = process
   const cronSecret = env.CRON_SECRET;
   if (cronSecret && cronSecret === env.ADMIN_API_KEY) {
     errors.push("CRON_SECRET must differ from ADMIN_API_KEY");
+  }
+
+  if (env.AUTH_KEYCLOAK_ISSUER && !getOidcAudience(env)) {
+    errors.push("OIDC_AUDIENCE or AUTH_KEYCLOAK_ID must be set to accept Admin API tokens");
   }
 
   if (autoLockTime && !cronSecret) {

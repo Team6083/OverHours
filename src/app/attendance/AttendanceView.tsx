@@ -4,16 +4,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
 import {
-  Badge, Button, Card, Dialog, GridItem, Heading, HStack, Portal, SimpleGrid, Stack, Table, Text,
+  Badge, Button, Card, Dialog, GridItem, Heading, HStack, IconButton, Menu, Portal, SimpleGrid, Stack, Table, Text,
 } from "@chakra-ui/react";
 
 import { IconType } from "react-icons";
-import { LuCheck, LuCheckCheck, LuUsers, LuX } from "react-icons/lu";
+import { LuCalendarSync, LuCheck, LuCheckCheck, LuCopy, LuSave, LuUsers, LuWandSparkles, LuX } from "react-icons/lu";
 
 import { toaster } from "@/components/ui/toaster";
-import { addDays, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, shortDate, STATUS_PALETTE, weekStartOf } from "@/lib/attendance";
+import {
+  addDays, applyPattern, ATTENDANCE_STATUSES, AttendanceStatus, copyFromWeekBefore, DayStatus, shortDate, STATUS_PALETTE, weekdayOf, weekStartOf,
+} from "@/lib/attendance";
 import { BoardDay } from "@/lib/data/attendance-dto";
-import { saveWeek } from "./actions";
+import { getMyWeekAnswers, savePattern, saveWeek } from "./actions";
 import { boardGroups, NameGroup, UserListDialog } from "./AttendanceParts";
 
 const STATUS_ICONS: Record<AttendanceStatus, IconType> = { WILL_COME: LuCheckCheck, AVAILABLE: LuCheck, UNAVAILABLE: LuX };
@@ -62,6 +64,7 @@ export default function AttendanceView(props: {
   today: string;
   board: BoardDay[];
   mine: Record<string, AttendanceStatus>;
+  pattern: Partial<Record<number, AttendanceStatus>>;
 }) {
   const { weekStart, today, board, mine } = props;
   const t = useTranslations("Attendance");
@@ -74,6 +77,9 @@ export default function AttendanceView(props: {
   const router = useRouter();
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
   const [details, setDetails] = useState<"day" | "week" | null>(null);
+  const [pattern, setPattern] = useState(props.pattern);
+  const [filling, setFilling] = useState(false);
+  const hasAnswers = board.some(({ date }) => entries[date]);
 
   const dayLabel = (date: string) => {
     const weekday = format.dateTime(new Date(`${date}T00:00:00Z`), { timeZone: "UTC", weekday: "short" });
@@ -102,6 +108,42 @@ export default function AttendanceView(props: {
         saving.current = false;
       }
     });
+  };
+
+  // Quick fill only touches days that can still be changed, and only days the source has an answer for; nothing is saved until "Save".
+  const fillFrom = (answers: Record<string, AttendanceStatus>, emptyTitle: string) => {
+    const count = Object.keys(answers).length;
+    if (count === 0) {
+      toaster.info({ title: emptyTitle });
+      return;
+    }
+    setEntries(prev => ({ ...prev, ...answers }));
+    toaster.success({ title: t("quickFill.applied", { count }) });
+  };
+
+  const handleQuickFill = async (action: string) => {
+    if (filling) return;
+    setFilling(true);
+    try {
+      if (action === "lastWeek") {
+        const result = await getMyWeekAnswers(addDays(weekStart, -7));
+        if (!result.ok) toaster.error({ title: t("quickFill.failed") });
+        else fillFrom(copyFromWeekBefore(editableDates, result.entries), t("quickFill.lastWeekEmpty"));
+      } else if (action === "pattern") {
+        fillFrom(applyPattern(editableDates, pattern), t("quickFill.patternEmpty"));
+      } else if (action === "savePattern") {
+        const next = Object.fromEntries(board.flatMap(({ date }) => entries[date] ? [[weekdayOf(date), entries[date]]] : []));
+        const result = await savePattern(next);
+        if (result.ok) {
+          setPattern(next);
+          toaster.success({ title: t("quickFill.patternSaved") });
+        } else toaster.error({ title: t("quickFill.failed") });
+      }
+    } catch {
+      toaster.error({ title: t("quickFill.failed") });
+    } finally {
+      setFilling(false);
+    }
   };
 
   const selectedDay = board.find(day => day.date === selected) ?? board[0];
@@ -237,7 +279,31 @@ export default function AttendanceView(props: {
           <Table.Root size={{ base: "sm", md: "md" }}>
             <Table.Body>
               <Table.Row>
-                <Table.Cell py={{ base: 1, md: 2 }} fontWeight="semibold">{t("week.all")}</Table.Cell>
+                <Table.Cell py={{ base: 1, md: 2 }} fontWeight="semibold">
+                  <HStack gap={1}>
+                    {t("week.all")}
+                    <Menu.Root onSelect={({ value }) => handleQuickFill(value)}>
+                      <Menu.Trigger asChild>
+                        <IconButton size="2xs" variant="ghost" aria-label={t("quickFill.title")} title={t("quickFill.title")} loading={filling}>
+                          <LuWandSparkles />
+                        </IconButton>
+                      </Menu.Trigger>
+                      <Portal>
+                        <Menu.Positioner>
+                          <Menu.Content>
+                            <Menu.ItemGroup>
+                              <Menu.ItemGroupLabel>{t("quickFill.title")}</Menu.ItemGroupLabel>
+                              <Menu.Item value="lastWeek" disabled={editableDates.length === 0}><LuCopy />{t("quickFill.lastWeek")}</Menu.Item>
+                              <Menu.Item value="pattern" disabled={editableDates.length === 0}><LuCalendarSync />{t("quickFill.pattern")}</Menu.Item>
+                            </Menu.ItemGroup>
+                            <Menu.Separator />
+                            <Menu.Item value="savePattern" disabled={!hasAnswers}><LuSave />{t("quickFill.savePattern")}</Menu.Item>
+                          </Menu.Content>
+                        </Menu.Positioner>
+                      </Portal>
+                    </Menu.Root>
+                  </HStack>
+                </Table.Cell>
                 <Table.Cell textAlign="end" py={{ base: 1, md: 2 }}>
                   <StatusButtons
                     label={t("week.all")}

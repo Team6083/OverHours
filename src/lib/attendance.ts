@@ -41,6 +41,25 @@ export function weekStartOf(date: string): string {
   return addDays(date, 1 - isoWeekday(date));
 }
 
+/** 0 = Monday … 6 = Sunday. */
+export const weekdayOf = (date: string): number => (toUtc(date).getUTCDay() + 6) % 7;
+
+/** A usual week (by weekday) laid over `dates`; days without a usual answer are left out. */
+export function applyPattern(dates: string[], pattern: Partial<Record<number, AttendanceStatus>>): Record<string, AttendanceStatus> {
+  return Object.fromEntries(dates.flatMap(date => {
+    const status = pattern[weekdayOf(date)];
+    return status ? [[date, status]] : [];
+  }));
+}
+
+/** Answers for `dates` taken from the same weekday a week earlier; days that had no answer are left out. */
+export function copyFromWeekBefore(dates: string[], before: Record<string, AttendanceStatus>): Record<string, AttendanceStatus> {
+  return Object.fromEntries(dates.flatMap(date => {
+    const status = before[addDays(date, -7)];
+    return status ? [[date, status]] : [];
+  }));
+}
+
 export function weekDates(weekStart: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 }

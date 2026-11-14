@@ -59,3 +59,29 @@ export default function RankMedal(props: { rank?: number; size?: AvatarSize }) {
     </Box>
   );
 }
+
+// Where the crown and medal, grown by about 3px, cross the ring: degrees clockwise from 3 o'clock (the same at every avatar size).
+const HALO_GAPS = [[242, 294], [15, 69], [15, 69]];
+
+// In units of 1% of the avatar: a 5% gap, then a 5% ring, drawn as one arc with round ends clear of the icon
+const R = 57.5;
+const point = (deg: number) => `${60 + R * Math.cos((deg * Math.PI) / 180)} ${60 + R * Math.sin((deg * Math.PI) / 180)}`;
+const CAP = (2.5 / R) * (180 / Math.PI);
+
+/** A thin gold, silver or bronze ring around a top-three avatar, broken where the crown or medal sits. */
+export function RankHalo(props: { rank?: number }) {
+  const { rank = 0 } = props;
+  const color = MEDAL_COLORS[rank - 1];
+  if (!color) return null;
+
+  const [start, end] = HALO_GAPS[rank - 1];
+  return (
+    <Box position="absolute" inset="-10%" color={color} pointerEvents="none" aria-hidden>
+      {/* Inline size, like the medal, so a surrounding Button's icon styles can't shrink it */}
+      <svg viewBox="0 0 120 120" style={{ display: "block", width: "100%", height: "100%" }}>
+        <path d={`M ${point(end + CAP)} A ${R} ${R} 0 1 1 ${point(start - CAP)}`} fill="none" stroke="currentColor"
+          strokeWidth={5} strokeLinecap="round" />
+      </svg>
+    </Box>
+  );
+}

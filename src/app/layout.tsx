@@ -1,6 +1,6 @@
 import { ComponentProps, Suspense } from "react";
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -42,8 +42,17 @@ export function generateMetadata(): Metadata {
   return {
     title: "OverHours",
     description: orgName ? `Time and Attendance System for ${orgName}` : "Time and Attendance System",
+    // Opens full screen when added to the iOS home screen.
+    appleWebApp: { capable: true, title: "OverHours", statusBarStyle: "black" },
   };
 }
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
+};
 
 export default async function RootLayout({
   children,

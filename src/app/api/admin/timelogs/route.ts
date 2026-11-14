@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 
 import { apiError, withApiErrors } from "@/lib/api-error";
-import { verifyAdminApiKey } from "@/lib/admin-api-auth";
+import { verifyApiKey } from "@/lib/admin-api-auth";
 import { adminCreateTimeLog, adminGetAllTimeLogs } from "@/lib/data/timelog-dto";
 import { objectIdSchema } from "@/lib/objectid";
 
@@ -17,7 +17,7 @@ const createSchema = z.object({
 });
 
 export const GET = withApiErrors(async (req: NextRequest) => {
-  const authError = verifyAdminApiKey(req);
+  const authError = await verifyApiKey(req, "timelogs:read");
   if (authError) return authError;
 
   const { searchParams } = req.nextUrl;
@@ -50,7 +50,7 @@ export const GET = withApiErrors(async (req: NextRequest) => {
 });
 
 export const POST = withApiErrors(async (req: NextRequest) => {
-  const authError = verifyAdminApiKey(req);
+  const authError = await verifyApiKey(req, "timelogs:write");
   if (authError) return authError;
 
   let body: unknown;

@@ -42,6 +42,15 @@ describe("validateConfig", () => {
     expect(validateConfig({ CRON_SECRET: "cron", ADMIN_API_KEY: "admin" }).errors).toEqual([]);
   });
 
+  it("requires an Admin API token audience when Keycloak is configured", () => {
+    const issuer = "https://keycloak.example.test/realms/team";
+    expect(validateConfig({ AUTH_KEYCLOAK_ISSUER: issuer }).errors).toEqual([
+      "OIDC_AUDIENCE or AUTH_KEYCLOAK_ID must be set to accept Admin API tokens",
+    ]);
+    expect(validateConfig({ AUTH_KEYCLOAK_ISSUER: issuer, AUTH_KEYCLOAK_ID: "overhours" }).errors).toEqual([]);
+    expect(validateConfig({ AUTH_KEYCLOAK_ISSUER: issuer, OIDC_AUDIENCE: "overhours-api" }).errors).toEqual([]);
+  });
+
   it("warns when AUTO_LOCK_TIME is set without CRON_SECRET", () => {
     expect(validateConfig({ AUTO_LOCK_TIME: "23:00" }).warnings).toEqual([expect.stringContaining("CRON_SECRET")]);
     expect(validateConfig({ AUTO_LOCK_TIME: "23:00", CRON_SECRET: "cron" }).warnings).toEqual([]);
