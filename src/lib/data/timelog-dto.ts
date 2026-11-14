@@ -248,33 +248,39 @@ export class AlreadyClockedInError extends Error {
   }
 }
 
+const MAX_CLOCK_IN_ATTEMPTS = 2;
+
 export async function clockIn(userId: string): Promise<TimeLogDTO> {
   const session = await auth();
   if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
 
-  // Check if user already has a currently in time log
-  const existingTimeLog = await prisma.timeLog.findFirst({
-    where: {
-      userId,
-      status: "CurrentlyIn",
-    },
-  });
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const newTimeLog = await prisma.$transaction(async (tx) => {
+        // Writing the user first makes two clock-ins for the same user conflict (P2034), so only one creates a log;
+        // the other's retry then finds it.
+        await tx.user.update({ where: { id: userId }, data: { updatedAt: new Date() } });
 
-  if (existingTimeLog) {
-    throw new AlreadyClockedInError("User already has a currently in time log");
+        const existingTimeLog = await tx.timeLog.findFirst({ where: { userId, status: "CurrentlyIn" }, select: { id: true } });
+        if (existingTimeLog) {
+          throw new AlreadyClockedInError("User already has a currently in time log");
+        }
+
+        return tx.timeLog.create({ data: { userId, status: "CurrentlyIn", inTime: new Date() } });
+      });
+      return prismaTimeLogToDTO(newTimeLog);
+    } catch (error) {
+      if ((error as { code?: unknown } | null)?.code !== "P2034") throw error;
+      if (attempt < MAX_CLOCK_IN_ATTEMPTS) continue;
+      // Still conflicting: if another clock-in won, say so like any second clock-in.
+      if (await prisma.timeLog.count({ where: { userId, status: "CurrentlyIn" } }) > 0) {
+        throw new AlreadyClockedInError("User already has a currently in time log");
+      }
+      throw error;
+    }
   }
-
-  const newTimeLog = await prisma.timeLog.create({
-    data: {
-      userId,
-      status: "CurrentlyIn",
-      inTime: new Date(),
-    },
-  });
-
-  return prismaTimeLogToDTO(newTimeLog);
 }
 
 export async function getTimeLogMinDurationSec(): Promise<number> {
