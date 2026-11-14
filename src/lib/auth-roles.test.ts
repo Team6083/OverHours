@@ -1,33 +1,33 @@
 import { describe, expect, it } from "vitest";
 
-import { evaluateAccess, extractRoles, parseAdminRoles, parseRoleList, parseTokenAlgorithms } from "./auth-roles";
+import { evaluateAccess, extractRoles, parseAdminRoles, parseCommaList, parseTokenAlgorithms } from "./auth-roles";
 
-describe("parseRoleList", () => {
+describe("parseCommaList", () => {
   it("returns an empty list for undefined and empty input", () => {
-    expect(parseRoleList(undefined)).toEqual([]);
-    expect(parseRoleList("")).toEqual([]);
+    expect(parseCommaList(undefined)).toEqual([]);
+    expect(parseCommaList("")).toEqual([]);
   });
 
   it("splits on commas and trims whitespace", () => {
-    expect(parseRoleList("a,b")).toEqual(["a", "b"]);
-    expect(parseRoleList("  a , \tb\n, c  ")).toEqual(["a", "b", "c"]);
+    expect(parseCommaList("a,b")).toEqual(["a", "b"]);
+    expect(parseCommaList("  a , \tb\n, c  ")).toEqual(["a", "b", "c"]);
   });
 
   it("drops blank entries", () => {
-    expect(parseRoleList(" , ,")).toEqual([]);
-    expect(parseRoleList(",a,,b,")).toEqual(["a", "b"]);
+    expect(parseCommaList(" , ,")).toEqual([]);
+    expect(parseCommaList(",a,,b,")).toEqual(["a", "b"]);
   });
 
   it("keeps duplicates as written (no de-duplication)", () => {
-    expect(parseRoleList("a,a,b")).toEqual(["a", "a", "b"]);
+    expect(parseCommaList("a,a,b")).toEqual(["a", "a", "b"]);
   });
 
   it("keeps client:role entries intact, including extra colons and inner spaces", () => {
-    expect(parseRoleList("app:editor, app:a:b ,two words")).toEqual(["app:editor", "app:a:b", "two words"]);
+    expect(parseCommaList("app:editor, app:a:b ,two words")).toEqual(["app:editor", "app:a:b", "two words"]);
   });
 
   it("is case sensitive", () => {
-    expect(parseRoleList("Admin,admin")).toEqual(["Admin", "admin"]);
+    expect(parseCommaList("Admin,admin")).toEqual(["Admin", "admin"]);
   });
 });
 
@@ -243,7 +243,7 @@ describe("evaluateAccess", () => {
 
 describe("end to end: token payload to access decision", () => {
   const decide = (payload: unknown, adminEnv?: string, allowedEnv?: string, claimPath?: string) =>
-    evaluateAccess(extractRoles(payload, claimPath), parseAdminRoles(adminEnv), parseRoleList(allowedEnv));
+    evaluateAccess(extractRoles(payload, claimPath), parseAdminRoles(adminEnv), parseCommaList(allowedEnv));
 
   it("a client role named admin does not match the default admin role", () => {
     const payload = { resource_access: { app: { roles: ["admin"] } } };

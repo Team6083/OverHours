@@ -1,4 +1,4 @@
-import { parseRoleList } from "@/lib/auth-roles";
+import { parseCommaList } from "@/lib/auth-roles";
 
 /** What an Admin API caller may do. `ADMIN_API_KEY` and tokens with an admin role have every scope. */
 export const API_SCOPES = [
@@ -16,7 +16,7 @@ export const scopeRolesEnvName = (scope: ApiScope) => `API_ROLES_${scope.replace
 
 /** Roles that grant `scope`, from its `API_ROLES_*` variable (same syntax as `ADMIN_ROLES`). */
 export function rolesForScope(scope: ApiScope, env: Record<string, string | undefined>): string[] {
-  return parseRoleList(env[scopeRolesEnvName(scope)]);
+  return parseCommaList(env[scopeRolesEnvName(scope)]);
 }
 
 /** Whether a token with `tokenRoles` may use a scope: any admin role, or any of the roles configured for that scope. */

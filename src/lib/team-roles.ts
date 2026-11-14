@@ -3,7 +3,7 @@
 // A team's auto-join roles use the ADMIN_ROLES syntax: realm roles as-is (`frc-ce`), client roles as
 // `client:role` (`overhours:mentor`). A user with any of them joins the team.
 
-import { parseRoleList } from "./auth-roles";
+import { parseCommaList } from "./auth-roles";
 
 const MAX_ROLE_LENGTH = 255;
 
@@ -12,7 +12,7 @@ const MAX_ROLE_LENGTH = 255;
  * an entry is not a valid role name.
  */
 export function parseAutoJoinRoles(value: string | string[]): string[] {
-  const roles = Array.isArray(value) ? value.map(role => role.trim()).filter(Boolean) : parseRoleList(value);
+  const roles = Array.isArray(value) ? value.map(role => role.trim()).filter(Boolean) : parseCommaList(value);
 
   for (const role of roles) {
     if (role.length > MAX_ROLE_LENGTH || /[\s,]/.test(role) || role.startsWith(":") || role.endsWith(":")) {
