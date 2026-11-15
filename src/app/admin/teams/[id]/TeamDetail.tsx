@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Avatar, Badge, Button, ButtonGroup, Card, CloseButton, DataList, Dialog, Editable, HStack, Heading, IconButton,
-  NativeSelect, Portal, Stack, Table, Text,
+  Input, NativeSelect, Portal, Stack, Table, Text,
 } from "@chakra-ui/react";
 import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
 
@@ -13,12 +13,14 @@ import UserCombobox from "@/components/UserCombobox";
 import { InfoTip } from "@/components/ui/toggle-tip";
 import { toaster } from "@/components/ui/toaster";
 import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
+import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";
 import { parseAutoJoinRoles } from "@/lib/team-roles";
 import { wouldCreateCycle } from "@/lib/team-tree";
 import {
   type TeamActionResult, addTeamMembersAction, deleteTeamAction, moveTeamAction, removeTeamMemberAction, renameTeamAction,
-  setAutoJoinRolesAction,
+  setAutoJoinRolesAction, setTeamReminderWebhookAction,
 } from "../actions";
+import ReminderForm from "./ReminderForm";
 
 function useTeamAction() {
   const [pending, startTransition] = useTransition();
@@ -288,6 +290,56 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
   );
 }
 
+function TeamReminder(props: { team: TeamDTO; reminder: TeamReminderDTO }) {
+  const { team, reminder } = props;
+  const { pending, run } = useTeamAction();
+  const [webhook, setWebhook] = useState("");
+
+  return (
+    <Card.Root>
+      <Card.Header>
+        <Card.Title asChild><Heading as="h3" size="sm">Fill-in reminder</Heading></Card.Title>
+      </Card.Header>
+      <Card.Body>
+        <Stack gap={5}>
+          <ReminderForm reminder={reminder} />
+
+          <Stack gap={2}>
+            <HStack gap={2}>
+              <Text fontWeight="medium">Slack webhook</Text>
+              {reminder.hasWebhook ? <Badge colorPalette="green">Set</Badge> : <Badge>Not set</Badge>}
+            </HStack>
+            <Text textStyle="xs" color="fg.muted">
+              The overlooking-bot webhook of the team&apos;s channel. It receives the emails of members who haven&apos;t
+              filled in, and it is never shown again after saving. Nothing is sent until it is set.
+            </Text>
+            <HStack>
+              <Input
+                size="sm"
+                type="password"
+                autoComplete="off"
+                placeholder={reminder.hasWebhook ? "Enter a new URL to replace it" : "https://…"}
+                value={webhook}
+                onChange={e => setWebhook(e.target.value)}
+              />
+              <Button size="sm" disabled={!webhook.trim()} loading={pending}
+                onClick={() => run(() => setTeamReminderWebhookAction(team.id, webhook), () => setWebhook(""))}>
+                Save
+              </Button>
+              {reminder.hasWebhook && (
+                <Button size="sm" variant="ghost" colorPalette="red" disabled={pending}
+                  onClick={() => run(() => setTeamReminderWebhookAction(team.id, null))}>
+                  Remove
+                </Button>
+              )}
+            </HStack>
+          </Stack>
+        </Stack>
+      </Card.Body>
+    </Card.Root>
+  );
+}
+
 function DeleteTeamButton(props: { team: TeamDTO; hasSubTeams: boolean; directMemberCount: number }) {
   const { team, hasSubTeams, directMemberCount } = props;
   const router = useRouter();
@@ -347,8 +399,9 @@ export default function TeamDetail(props: {
   teams: TeamDTO[];
   members: TeamMemberDTO[];
   users: { id: string; name: string }[];
+  reminder: TeamReminderDTO;
 }) {
-  const { team, teams, members, users } = props;
+  const { team, teams, members, users, reminder } = props;
   const hasSubTeams = teams.some(t => t.parentTeamId === team.id);
   // Only a team without sub-teams can be deleted, so these are all its members
   const directMemberCount = members.filter(m => m.direct).length;
@@ -368,6 +421,8 @@ export default function TeamDetail(props: {
       </Card.Root>
 
       <TeamMembers team={team} members={members} users={users} />
+
+      <TeamReminder team={team} reminder={reminder} />
     </Stack>
   );
 }

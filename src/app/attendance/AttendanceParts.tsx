@@ -12,8 +12,6 @@ import { addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates
 import { BoardDay, BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getPersonMonth } from "./actions";
 
-export { shortDate };
-
 const MAX_AVATARS = 7;
 
 export function NameGroup(props: { label: string; palette: string; users: BoardUser[]; onOpen: () => void }) {

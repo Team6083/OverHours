@@ -339,6 +339,50 @@
         }
       }
     },
+    "/admin/jobs/attendance-reminders": {
+      "post": {
+        "tags": ["Jobs"],
+        "summary": "Send due team reminders",
+        "description": "Sends each team's daily fill-in reminder to its Slack webhook once the team's time (in TZ) has passed, tagging members who haven't answered a required day. Each team is handled at most once a day; a failed send is retried on the next call. Meant for an external scheduler. Authenticated with CRON_SECRET; ADMIN_API_KEY is not accepted.",
+        "security": [{ "cronAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Teams handled by this call",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "runs": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": { "type": "string" },
+                              "teamId": { "type": "string" },
+                              "result": { "type": "string", "enum": ["sent", "nobodyMissing", "noWebhook", "failed"] }
+                            },
+                            "required": ["ruleId", "teamId", "result"]
+                          }
+                        }
+                      },
+                      "required": ["runs"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/CronUnauthorized" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/CronNotConfigured" }
+        }
+      }
+    },
     "/admin/jobs/auto-lock": {
       "post": {
         "tags": ["Jobs"],

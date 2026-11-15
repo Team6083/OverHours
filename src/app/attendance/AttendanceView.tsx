@@ -12,11 +12,11 @@ import { LuCalendarSync, LuCheck, LuCheckCheck, LuCopy, LuSave, LuUsers, LuWandS
 
 import { toaster } from "@/components/ui/toaster";
 import {
-  addDays, applyPattern, ATTENDANCE_STATUSES, AttendanceStatus, copyFromWeekBefore, DayStatus, STATUS_PALETTE, weekdayOf, weekStartOf,
+  addDays, applyPattern, ATTENDANCE_STATUSES, AttendanceStatus, copyFromWeekBefore, DayStatus, shortDate, STATUS_PALETTE, weekdayOf, weekStartOf,
 } from "@/lib/attendance";
 import { BoardDay } from "@/lib/data/attendance-dto";
 import { getMyWeekAnswers, savePattern, saveWeek } from "./actions";
-import { boardGroups, NameGroup, shortDate, UserListDialog } from "./AttendanceParts";
+import { boardGroups, NameGroup, UserListDialog } from "./AttendanceParts";
 
 const STATUS_ICONS: Record<AttendanceStatus, IconType> = { WILL_COME: LuCheckCheck, AVAILABLE: LuCheck, UNAVAILABLE: LuX };
 
