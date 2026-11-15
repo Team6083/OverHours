@@ -16,9 +16,4 @@ describe("theme", () => {
       expect(css).toContain(`"--chakra-colors-brand-${shade}":`);
     }
   });
-
-  it("uses the fonts loaded in the root layout", () => {
-    expect(css).toMatch(/"--chakra-fonts-body":"var\(--font-geist-sans\)/);
-    expect(css).toMatch(/"--chakra-fonts-mono":"var\(--font-geist-mono\)/);
-  });
 });

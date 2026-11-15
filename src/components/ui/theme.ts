@@ -2,10 +2,8 @@ import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react"
 
 // Team theme on top of Chakra's defaults. Anything not defined here stays
 // Chakra's default; only override a token once the team has decided on it.
-// Kept self-contained so it can later move into a shared team package.
-
-const fallbackSans = `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`
-const fallbackMono = `SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`
+// Kept self-contained so it can move into the shared team package.
+// Fonts stay Chakra's system stack: no web font to load, nothing to add to font-src.
 
 // `brand` is the primary color: use colorPalette="brand" for the app's own
 // emphasis (today, the current user, primary actions) instead of naming a hue.
@@ -22,12 +20,6 @@ const config = defineConfig({
     tokens: {
       colors: {
         brand: Object.fromEntries(SHADES.map((s) => [s, { value: ref(s) }])),
-      },
-      fonts: {
-        // Loaded with next/font in src/app/layout.tsx.
-        heading: { value: `var(--font-geist-sans), ${fallbackSans}` },
-        body: { value: `var(--font-geist-sans), ${fallbackSans}` },
-        mono: { value: `var(--font-geist-mono), ${fallbackMono}` },
       },
     },
     semanticTokens: {
