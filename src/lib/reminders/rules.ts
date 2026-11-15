@@ -34,16 +34,17 @@ function translator() {
 
 /** Members of the team and of its sub-teams at any depth who haven't answered a required day. */
 export async function findUnanswered(
-  tree: TeamTreeEntry[], teamId: string, config: { weekdays: number[]; daysAhead: number }, on: string,
+  tree: TeamTreeEntry[], teamId: string, config: { weekdays: number[]; daysAhead: number; exemptTeamIds?: string[] }, on: string,
 ): Promise<MissingMember[]> {
   const required = requiredDates(on, config.weekdays, config.daysAhead);
   if (required.length === 0) return [];
 
-  const members = await prisma.user.findMany({
+  const exempt = new Set((config.exemptTeamIds ?? []).flatMap(id => [id, ...getTeamDescendants(tree, id).map(team => team.id)]));
+  const members = (await prisma.user.findMany({
     where: { teamIds: { hasSome: [teamId, ...getTeamDescendants(tree, teamId).map(team => team.id)] } },
-    select: { id: true, email: true, name: true },
+    select: { id: true, email: true, name: true, teamIds: true },
     orderBy: { name: "asc" },
-  });
+  })).filter(member => !member.teamIds.some(id => exempt.has(id)));
   if (members.length === 0) return [];
 
   const answered = await prisma.attendanceEntry.findMany({

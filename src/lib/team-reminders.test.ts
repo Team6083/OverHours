@@ -73,4 +73,13 @@ describe("reminderSettingsSchema", () => {
     expect(reminderSettingsSchema.safeParse({ enabled: true, weekdays: [], daysAhead: 0, time: "08:30" }).success).toBe(false);
     expect(reminderSettingsSchema.safeParse({ enabled: true, weekdays: [], daysAhead: 7, time: "8:30" }).success).toBe(false);
   });
+
+  it("takes optional exempt teams, deduped, and rejects ids that aren't ObjectIds", () => {
+    const team = "0000000000000000000000a1";
+    expect(reminderSettingsSchema.parse({ enabled: true, weekdays: [], daysAhead: 7, time: "08:30" }).exemptTeamIds).toBeUndefined();
+    expect(reminderSettingsSchema.parse({ enabled: true, weekdays: [], daysAhead: 7, time: "08:30", exemptTeamIds: [team, team] }).exemptTeamIds)
+      .toEqual([team]);
+    expect(reminderSettingsSchema.safeParse({ enabled: true, weekdays: [], daysAhead: 7, time: "08:30", exemptTeamIds: ["mentors"] }).success)
+      .toBe(false);
+  });
 });
