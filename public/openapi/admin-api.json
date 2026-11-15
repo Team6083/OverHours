@@ -363,7 +363,7 @@
                             "properties": {
                               "ruleId": { "type": "string" },
                               "teamId": { "type": "string" },
-                              "result": { "type": "string", "enum": ["sent", "nobodyMissing", "noWebhook", "failed"] }
+                              "result": { "type": "string", "enum": ["sent", "nobodyMissing", "noWebhook", "failed", "gaveUp"] }
                             },
                             "required": ["ruleId", "teamId", "result"]
                           }

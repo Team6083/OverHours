@@ -62,7 +62,7 @@ describe("membersMissing", () => {
     ];
     const answered = [{ userId: "a", date: "d1" }, { userId: "a", date: "d2" }, { userId: "b", date: "d2" }];
 
-    expect(membersMissing(members, ["d1", "d2"], answered)).toEqual([{ email: "b@example.com", name: "B", dates: ["d1"] }]);
+    expect(membersMissing(members, ["d1", "d2"], answered)).toEqual([{ id: "b", email: "b@example.com", name: "B", dates: ["d1"] }]);
   });
 });
 
