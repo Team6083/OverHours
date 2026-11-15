@@ -15,7 +15,7 @@ import { toaster } from "@/components/ui/toaster";
 import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
 import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";
 import { parseAutoJoinRoles } from "@/lib/team-roles";
-import { wouldCreateCycle } from "@/lib/team-tree";
+import { getTeamAncestors, wouldCreateCycle } from "@/lib/team-tree";
 import {
   type TeamActionResult, addTeamMembersAction, deleteTeamAction, moveTeamAction, removeTeamMemberAction, renameTeamAction,
   setAutoJoinRolesAction, setTeamReminderWebhookAction,
@@ -294,6 +294,10 @@ function TeamReminder(props: { team: TeamDTO; teams: TeamDTO[]; reminder: TeamRe
   const { team, teams, reminder } = props;
   const { pending, run } = useTeamAction();
   const [webhook, setWebhook] = useState("");
+  const exemptable = useMemo(() => {
+    const excluded = new Set([team.id, ...getTeamAncestors(teams, team.id).map(ancestor => ancestor.id)]);
+    return teams.filter(other => !excluded.has(other.id));
+  }, [team.id, teams]);
 
   return (
     <Card.Root>
@@ -302,7 +306,8 @@ function TeamReminder(props: { team: TeamDTO; teams: TeamDTO[]; reminder: TeamRe
       </Card.Header>
       <Card.Body>
         <Stack gap={5}>
-          <ReminderForm reminder={reminder} teams={teams.filter(other => other.id !== team.id)} />
+          {/* Not this team or its parents: exempting them would leave nobody to remind. */}
+          <ReminderForm reminder={reminder} teams={exemptable} />
 
           <Stack gap={2}>
             <HStack gap={2}>
