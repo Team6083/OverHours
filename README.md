@@ -317,7 +317,8 @@ until it is fixed). Run `npx prisma db push` once after deploying.
 Each reminder is a `ReminderRule`: a `kind` with its `config` (only `unanswered`: the weekdays and look-ahead above)
 and a `channel` with its `target` (only `slack-webhook`: the URL), both JSON checked per kind and channel. The page edits
 one rule per team, but a team can hold several, and a new condition or channel needs no schema change. Each run is
-claimed by inserting a `ReminderDelivery` row, unique per rule and day, which is deleted again if sending fails.
+claimed by inserting a `ReminderDelivery` row, unique per rule and day, which is deleted again if sending fails. A
+row still `claimed` after 10 minutes (the process died mid-run) is taken over by the next call.
 
 ## Admin API
 

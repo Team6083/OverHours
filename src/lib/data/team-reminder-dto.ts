@@ -153,7 +153,7 @@ export async function sendDueReminders(now: Date, appUrl: string): Promise<Remin
     }
 
     try {
-      if (!await claimRun(rule.id, date)) continue;
+      if (!await claimRun(rule.id, date, now)) continue;
     } catch (error) {
       console.error(`Failed to claim reminder rule ${rule.id}`, error);
       run("failed");

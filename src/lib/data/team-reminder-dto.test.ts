@@ -4,7 +4,7 @@ type RuleRow = {
   id: string; teamId: string; enabled: boolean; kind: string; config: unknown; sendTime: string; channel: string;
   target: unknown; createdAt: Date;
 };
-type DeliveryRow = { ruleId: string; runKey: string; result: string };
+type DeliveryRow = { ruleId: string; runKey: string; result: string; sentAt?: Date };
 
 const db = vi.hoisted(() => ({
   session: null as { user: { id: string; role: string } } | null,
@@ -51,6 +51,12 @@ vi.mock("../prisma", () => {
       },
       deleteMany: async ({ where }: { where: { ruleId: string; runKey: string } }) => {
         db.deliveries = db.deliveries.filter(row => !(row.ruleId === where.ruleId && row.runKey === where.runKey));
+      },
+      updateMany: async ({ where, data }: { where: { ruleId: string; runKey: string; result: string; sentAt: { lt: Date } }; data: { sentAt: Date } }) => {
+        const rows = db.deliveries.filter(row => row.ruleId === where.ruleId && row.runKey === where.runKey
+          && row.result === where.result && row.sentAt! < where.sentAt.lt);
+        rows.forEach(row => Object.assign(row, data));
+        return { count: rows.length };
       },
     },
     user: {
@@ -131,7 +137,7 @@ describe("sendDueReminders", () => {
       ],
     });
     expect(init.body).not.toContain("one@example.test");
-    expect(db.deliveries).toEqual([{ ruleId: "r1", runKey: "2026-11-13", result: "sent" }]);
+    expect(db.deliveries).toEqual([{ ruleId: "r1", runKey: "2026-11-13", result: "sent", sentAt: evening }]);
 
     await expect(sendDueReminders(new Date("2026-11-13T22:00:00Z"), "https://x.test")).resolves.toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -176,8 +182,22 @@ describe("sendDueReminders", () => {
     expect(db.deliveries).toEqual([]);
   });
 
-  it("skips a run another call has already claimed", async () => {
-    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed" }];
+  it("skips a run another call claimed moments ago", async () => {
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed", sentAt: new Date(evening.getTime() - 60_000) }];
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("takes over a run left claimed for longer than a run takes, and sends it", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed", sentAt: new Date(evening.getTime() - 11 * 60_000) }];
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "sent" }]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(db.deliveries).toEqual([{ ruleId: "r1", runKey: "2026-11-13", result: "sent", sentAt: evening }]);
+  });
+
+  it("never takes over a run that finished, however old", async () => {
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "sent", sentAt: new Date(evening.getTime() - 5 * 3600_000) }];
     await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
   });

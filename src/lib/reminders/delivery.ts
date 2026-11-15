@@ -12,18 +12,28 @@ export function canDeliver(channel: RuleChannel): boolean {
   }
 }
 
+/** Longer than a run can take: a run still `claimed` after this was abandoned (the process died mid-run). */
+export const STALE_CLAIM_MS = 10 * 60 * 1000;
+
 /**
  * Claims a rule's run by inserting its delivery row. True when this call owns the run; false when another call
- * already has it (the unique index on rule and run key).
+ * already has it (the unique index on rule and run key) or it already finished. A run left `claimed` for longer than
+ * `STALE_CLAIM_MS` is taken over, in one conditional write so only one call gets it.
  */
-export async function claimRun(ruleId: string, runKey: string): Promise<boolean> {
+export async function claimRun(ruleId: string, runKey: string, now = new Date()): Promise<boolean> {
   try {
-    await prisma.reminderDelivery.create({ data: { ruleId, runKey, result: "claimed" } });
+    await prisma.reminderDelivery.create({ data: { ruleId, runKey, result: "claimed", sentAt: now } });
     return true;
   } catch (error) {
-    if ((error as { code?: unknown })?.code === "P2002") return false;
-    throw error;
+    if ((error as { code?: unknown })?.code !== "P2002") throw error;
   }
+
+  const { count } = await prisma.reminderDelivery.updateMany({
+    where: { ruleId, runKey, result: "claimed", sentAt: { lt: new Date(now.getTime() - STALE_CLAIM_MS) } },
+    data: { sentAt: now },
+  });
+  if (count > 0) console.warn(`Took over reminder rule ${ruleId}'s run ${runKey}, abandoned while claimed`);
+  return count > 0;
 }
 
 export const finishRun = (ruleId: string, runKey: string, result: "sent" | "nobodyMissing") =>
