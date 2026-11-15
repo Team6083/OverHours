@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { auth, Role } from "@/auth";
 import { TAP_COOLDOWN_MS } from "../cards";
 import prisma from "../prisma";
-import { AutoLockedError, clockInUser, clockOutUser, TimeLogTooShortError } from "./timelog-dto";
+import { AlreadyClockedInError, AutoLockedError, clockInUser, clockOutUser, NotClockedInError, TimeLogTooShortError } from "./timelog-dto";
 
 export type TapResult =
   | { result: "clockedIn" | "clockedOut" | "locked" | "tooShort" | "tooSoon"; user: { id: string; name: string } }
@@ -28,14 +28,22 @@ export async function tapCard(uid: string, now = new Date()): Promise<TapResult>
   }
 
   const user = card.user;
-  if (card.lastUsedAt && now.getTime() - card.lastUsedAt.getTime() < TAP_COOLDOWN_MS) {
-    return { result: "tooSoon", user };
-  }
-  await prisma.card.update({ where: { id: card.id }, data: { lastUsedAt: now } });
+  // Claimed in one conditional write, so two taps arriving together (a reader sending twice) count once.
+  const cutoff = new Date(now.getTime() - TAP_COOLDOWN_MS);
+  const { count } = await prisma.card.updateMany({
+    where: { id: card.id, OR: [{ lastUsedAt: { isSet: false } }, { lastUsedAt: null }, { lastUsedAt: { lte: cutoff } }] },
+    data: { lastUsedAt: now },
+  });
+  if (count === 0) return { result: "tooSoon", user };
 
   const clockedIn = await prisma.timeLog.findFirst({ where: { userId: user.id, status: "CurrentlyIn" }, select: { id: true } });
   if (!clockedIn) {
-    await clockInUser(user.id);
+    try {
+      await clockInUser(user.id);
+    } catch (error) {
+      // Clocked in by someone else (the web, an admin) in the meantime: they are in, which is what the tap wanted.
+      if (!(error instanceof AlreadyClockedInError)) throw error;
+    }
     return { result: "clockedIn", user };
   }
 
@@ -45,6 +53,8 @@ export async function tapCard(uid: string, now = new Date()): Promise<TapResult>
   } catch (error) {
     if (error instanceof AutoLockedError) return { result: "locked", user };
     if (error instanceof TimeLogTooShortError) return { result: "tooShort", user };
+    // Clocked out by someone else in the meantime.
+    if (error instanceof NotClockedInError) return { result: "clockedOut", user };
     throw error;
   }
 }
