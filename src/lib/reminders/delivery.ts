@@ -20,7 +20,7 @@ export const retryDelayMs = (failures: number) => 5 * 60_000 * 2 ** (failures - 
 /** Longer than a run can take: a run still `claimed` after this was abandoned (the process died mid-run). */
 export const STALE_CLAIM_MS = 10 * 60 * 1000;
 
-export type ClaimedRun = { partsSent: number; failures: number };
+export type ClaimedRun = { remindedUserIds: string[]; failures: number };
 
 /**
  * Claims a rule's run: inserts its delivery row, or takes over a failed run whose wait is over, or a run abandoned
@@ -32,7 +32,7 @@ export type ClaimedRun = { partsSent: number; failures: number };
 export async function claimRun(ruleId: string, runKey: string, now = new Date()): Promise<ClaimedRun | "gaveUp" | null> {
   try {
     await prisma.reminderDelivery.create({ data: { ruleId, runKey, result: "claimed", sentAt: now } });
-    return { partsSent: 0, failures: 0 };
+    return { remindedUserIds: [], failures: 0 };
   } catch (error) {
     if ((error as { code?: unknown })?.code !== "P2002") throw error;
   }
@@ -56,12 +56,12 @@ export async function claimRun(ruleId: string, runKey: string, now = new Date())
     await prisma.reminderDelivery.update({ where: key, data: { result: "gaveUp", nextAttemptAt: null } });
     return "gaveUp";
   }
-  return { partsSent: row.partsSent, failures: row.failures };
+  return { remindedUserIds: row.remindedUserIds, failures: row.failures };
 }
 
-/** Records that the first `partsSent` messages of the run went out. */
-export const recordParts = (ruleId: string, runKey: string, partsSent: number) =>
-  prisma.reminderDelivery.update({ where: { ruleId_runKey: { ruleId, runKey } }, data: { partsSent } });
+/** Records the members whose reminder just went out, so a retry of the run leaves them out. */
+export const recordReminded = (ruleId: string, runKey: string, userIds: string[]) =>
+  prisma.reminderDelivery.update({ where: { ruleId_runKey: { ruleId, runKey } }, data: { remindedUserIds: { push: userIds } } });
 
 export const finishRun = (ruleId: string, runKey: string, result: "sent" | "nobodyMissing") =>
   prisma.reminderDelivery.update({ where: { ruleId_runKey: { ruleId, runKey } }, data: { result } });
@@ -117,25 +117,33 @@ const list = (bullets: object[]) => ({ type: "rich_text", elements: [{ type: "ri
  * large for one message continues in the next ones, the link closing the last.
  */
 export function slackPayloads(message: ReminderMessage, mention = mentionsOn()) {
-  const bullets = message.groups.flatMap(group =>
-    Array.from({ length: Math.ceil(group.members.length / MEMBERS_PER_BULLET) }, (_, i) =>
-      bullet(group.days, group.members.slice(i * MEMBERS_PER_BULLET, (i + 1) * MEMBERS_PER_BULLET), mention)));
+  return slackParts(message, mention).map(part => part.payload);
+}
 
-  const parts: object[][] = [[]];
+/** `slackPayloads`, each with the ids of the members it lists. */
+function slackParts(message: ReminderMessage, mention = mentionsOn()) {
+  const bullets = message.groups.flatMap(group =>
+    Array.from({ length: Math.ceil(group.members.length / MEMBERS_PER_BULLET) }, (_, i) => {
+      const members = group.members.slice(i * MEMBERS_PER_BULLET, (i + 1) * MEMBERS_PER_BULLET);
+      return { item: bullet(group.days, members, mention), ids: members.map(member => member.id) };
+    }));
+
+  const parts: { items: object[]; ids: string[] }[] = [{ items: [], ids: [] }];
   let size = 0;
-  for (const item of bullets) {
+  for (const { item, ids } of bullets) {
     const itemSize = JSON.stringify(item).length;
-    if (parts[parts.length - 1].length > 0 && size + itemSize > MESSAGE_LIST_BUDGET) {
-      parts.push([]);
+    if (parts[parts.length - 1].items.length > 0 && size + itemSize > MESSAGE_LIST_BUDGET) {
+      parts.push({ items: [], ids: [] });
       size = 0;
     }
-    parts[parts.length - 1].push(item);
+    parts[parts.length - 1].items.push(item);
+    parts[parts.length - 1].ids.push(...ids);
     size += itemSize;
   }
 
   const title = escapeSlack(message.title);
   const link = { type: "context", elements: [{ type: "mrkdwn", text: `<${message.link.url}|${escapeSlack(message.link.label)}>` }] };
-  return parts.map((part, i) => {
+  return parts.map(({ items, ids }, i) => {
     const first = i === 0;
     const last = i === parts.length - 1;
     const page = parts.length > 1 ? ` (${i + 1}/${parts.length})` : "";
@@ -145,25 +153,23 @@ export function slackPayloads(message: ReminderMessage, mention = mentionsOn()) 
         { type: "section", text: { type: "plain_text", text: message.summary } },
         { type: "divider" },
       ] : []),
-      list(part),
+      list(items),
       ...(last ? [link] : []),
     ];
-    return { text: first ? `*${title}*: ${escapeSlack(message.summary)}${page}` : `*${title}*${page}`, blocks };
+    return { payload: { text: first ? `*${title}*: ${escapeSlack(message.summary)}${page}` : `*${title}*${page}`, blocks }, memberIds: ids };
   });
 }
 
 /**
- * Sends the message through the rule's channel, starting after the first `from` parts (sent by an earlier try), and
- * calls `sent(n)` once the first n parts are out. Throws when a part doesn't go through.
+ * Sends the message through the rule's channel, calling `sent(ids)` with the members of each part once it is out.
+ * Throws when a part doesn't go through.
  */
 export async function deliver(
-  channel: RuleChannel, message: ReminderMessage, from = 0, sent: (parts: number) => Promise<unknown> = async () => {},
+  channel: RuleChannel, message: ReminderMessage, sent: (memberIds: string[]) => Promise<unknown> = async () => {},
 ): Promise<void> {
   switch (channel.channel) {
     case "slack-webhook": {
-      const payloads = slackPayloads(message);
-      for (let i = from; i < payloads.length; i++) {
-        const payload = payloads[i];
+      for (const { payload, memberIds } of slackParts(message)) {
         const response = await fetch(channel.target.url!, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -171,7 +177,7 @@ export async function deliver(
           signal: AbortSignal.timeout(10_000),
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        await sent(i + 1);
+        await sent(memberIds);
       }
       return;
     }

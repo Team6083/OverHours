@@ -4,7 +4,7 @@ import { calendarDateInZone } from "../attendance";
 import { getTimeZone } from "../config";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
-import { canDeliver, ClaimedRun, claimRun, deliver, failRun, finishRun, MAX_FAILURES, recordParts } from "../reminders/delivery";
+import { canDeliver, ClaimedRun, claimRun, deliver, failRun, finishRun, MAX_FAILURES, recordReminded } from "../reminders/delivery";
 import { evaluateRule, findUnanswered } from "../reminders/rules";
 import {
   isReminderDue, parseRuleChannel, parseRuleCondition, ReminderSettings, reminderSettingsSchema, slackWebhookTargetSchema,
@@ -100,6 +100,14 @@ export async function setTeamReminderWebhook(teamId: string, url: string | null)
   const rule = await findTeamRule(teamId);
   if (rule) {
     await prisma.reminderRule.update({ where: { id: rule.id }, data: { target } });
+    // A new webhook gets a fresh try today: a run that failed or gave up on the old one may be retried by the next
+    // call, with its failures reset. Members it already reminded stay recorded, so they aren't reminded again.
+    if (value) {
+      await prisma.reminderDelivery.updateMany({
+        where: { ruleId: rule.id, runKey: calendarDateInZone(new Date(), getTimeZone()), result: { in: ["failed", "gaveUp"] } },
+        data: { result: "failed", failures: 0, nextAttemptAt: new Date() },
+      });
+    }
   } else {
     await prisma.reminderRule.create({
       data: {
@@ -171,10 +179,11 @@ export async function sendDueReminders(now: Date, appUrl: string): Promise<Remin
 
     let result: "sent" | "nobodyMissing";
     try {
-      // A retry works the message out again and sends the parts after the ones already out.
-      const message = await evaluateRule(condition, { team, tree, date, appUrl });
-      if (message) await deliver(channel, message, claim.partsSent, parts => recordParts(rule.id, date, parts));
-      result = message || claim.partsSent > 0 ? "sent" : "nobodyMissing";
+      // A retry works the message out again, leaving out the members an earlier try already reminded.
+      const skipUserIds = new Set(claim.remindedUserIds);
+      const message = await evaluateRule(condition, { team, tree, date, appUrl, skipUserIds });
+      if (message) await deliver(channel, message, ids => recordReminded(rule.id, date, ids));
+      result = message || skipUserIds.size > 0 ? "sent" : "nobodyMissing";
     } catch (error) {
       console.error(`Failed to send reminder rule ${rule.id} (try ${claim.failures + 1} of ${MAX_FAILURES})`, error);
       run(await failRun(rule.id, date, claim, now).catch(failError => {
