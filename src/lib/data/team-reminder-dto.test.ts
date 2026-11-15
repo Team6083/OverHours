@@ -367,7 +367,6 @@ describe("saveTeamReminder", () => {
   });
 
   it("ends with one rule when another first save for the team wins, updating that rule", async () => {
-    db.rules = [];
     for (const code of ["P2034", "P2002"]) {
       db.rules = [];
       db.saveConflicts = [code];
