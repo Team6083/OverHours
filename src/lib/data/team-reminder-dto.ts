@@ -153,10 +153,16 @@ export async function sendDueReminders(now: Date, appUrl: string): Promise<Remin
       continue;
     }
 
-    let claim: ClaimedRun | null;
+    let claim: ClaimedRun;
     try {
-      claim = await claimRun(rule.id, date, now);
-      if (!claim) continue;
+      const claimed = await claimRun(rule.id, date, now);
+      if (!claimed) continue;
+      if (claimed === "gaveUp") {
+        console.error(`Gave up reminder rule ${rule.id} for ${date}: its run was abandoned or failed ${MAX_FAILURES} times`);
+        run("gaveUp");
+        continue;
+      }
+      claim = claimed;
     } catch (error) {
       console.error(`Failed to claim reminder rule ${rule.id}`, error);
       run("failed");

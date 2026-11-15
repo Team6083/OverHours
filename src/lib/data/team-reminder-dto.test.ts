@@ -51,10 +51,15 @@ vi.mock("../prisma", () => {
         const { ruleId, runKey } = where.ruleId_runKey;
         return Object.assign(db.deliveries.find(row => row.ruleId === ruleId && row.runKey === runKey)!, data);
       },
-      updateMany: async ({ where, data }: { where: { ruleId: string; runKey: string; result: string; nextAttemptAt: { lte: Date } }; data: Partial<DeliveryRow> }) => {
-        const rows = db.deliveries.filter(row => row.ruleId === where.ruleId && row.runKey === where.runKey
-          && row.result === where.result && row.nextAttemptAt && row.nextAttemptAt <= where.nextAttemptAt.lte);
-        rows.forEach(row => Object.assign(row, data));
+      updateMany: async ({ where, data }: {
+        where: { ruleId: string; runKey: string; result: string; nextAttemptAt?: { lte: Date }; sentAt?: { lt: Date } };
+        data: Omit<Partial<DeliveryRow>, "failures"> & { failures?: { increment: number } };
+      }) => {
+        const rows = db.deliveries.filter(row => row.ruleId === where.ruleId && row.runKey === where.runKey && row.result === where.result
+          && (!where.nextAttemptAt || (row.nextAttemptAt && row.nextAttemptAt <= where.nextAttemptAt.lte))
+          && (!where.sentAt || (row.sentAt && row.sentAt < where.sentAt.lt)));
+        const { failures, ...rest } = data;
+        rows.forEach(row => Object.assign(row, rest, failures ? { failures: (row.failures ?? 0) + failures.increment } : {}));
         return { count: rows.length };
       },
       findUniqueOrThrow: async ({ where }: { where: { ruleId_runKey: { ruleId: string; runKey: string } } }) => {
@@ -194,6 +199,36 @@ describe("sendDueReminders", () => {
     expect(fetchMock).toHaveBeenCalledTimes(5);
   });
 
+  it("skips a run another call claimed moments ago", async () => {
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed", sentAt: at(-1), partsSent: 0, failures: 0 }];
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("takes over a run abandoned while claimed, counts it as a failure and continues after the parts already sent", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    team(1200);
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed", sentAt: at(-11), partsSent: 1, failures: 0 }];
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "sent" }]);
+    expect(sent()[0].blocks[0].type).toBe("rich_text");
+    expect(db.deliveries[0]).toMatchObject({ result: "sent", failures: 1, sentAt: evening, partsSent: 1 + fetchMock.mock.calls.length });
+  });
+
+  it("gives up a run that keeps being abandoned", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed", sentAt: at(-11), partsSent: 0, failures: 4 }];
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "gaveUp" }]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(db.deliveries[0]).toMatchObject({ result: "gaveUp", failures: 5 });
+  });
+
+  it("never takes over a run that finished, however old", async () => {
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "sent", sentAt: at(-300), partsSent: 1, failures: 0 }];
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("counts reading members failing as a failed try, and goes on with the other rules", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     db.rules[1].enabled = true;
@@ -204,12 +239,6 @@ describe("sendDueReminders", () => {
       { ruleId: "r2", teamId: CHILD, result: "failed" },
     ]);
     expect(db.deliveries.map(row => row.result)).toEqual(["failed", "failed"]);
-  });
-
-  it("skips a run another call has already claimed", async () => {
-    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed" }];
-    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([]);
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("doesn't claim a rule without a webhook, so adding one later the same day still sends", async () => {

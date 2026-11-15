@@ -320,7 +320,8 @@ Each reminder is a `ReminderRule`: a `kind` with its `config` (only `unanswered`
 and a `channel` with its `target` (only `slack-webhook`: the URL), both JSON checked per kind and channel. The page edits
 one rule per team, but a team can hold several, and a new condition or channel needs no schema change. Each run is
 claimed by inserting a `ReminderDelivery` row, unique per rule and day, which records how many messages went out, how
-often it failed and when it may be tried again.
+often it failed and when it may be tried again. A run still `claimed` after 10 minutes was abandoned (the process died
+mid-run): the next call takes it over, counts it as a failure and continues after the messages already out.
 
 ## Admin API
 
