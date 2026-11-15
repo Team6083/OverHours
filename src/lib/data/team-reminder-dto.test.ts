@@ -14,7 +14,11 @@ const db = vi.hoisted(() => ({
   users: [] as { id: string; email: string; name: string; teamIds: string[] }[],
   entries: [] as { userId: string; date: string }[],
   entriesFail: false,
+  locks: [] as string[],
+  saveConflicts: [] as string[],
 }));
+
+const CHILD_ID = "0000000000000000000000a2";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/auth", () => ({ auth: async () => db.session, Role: { ADMIN: "admin", USER: "user" } }));
@@ -25,6 +29,24 @@ vi.mock("../prisma", () => {
     team: {
       findMany: async () => db.teams,
       findUnique: async ({ where }: { where: { id: string } }) => db.teams.find(team => team.id === where.id) ?? null,
+      count: async ({ where }: { where: { id: string } }) => db.teams.filter(team => team.id === where.id).length,
+    },
+    reminderRuleLock: {
+      upsert: async ({ where }: { where: { teamId: string } }) => {
+        if (!db.locks.includes(where.teamId)) db.locks.push(where.teamId);
+      },
+    },
+    $transaction: async (fn: (tx: unknown) => Promise<unknown>) => {
+      const code = db.saveConflicts.shift();
+      if (code) {
+        // Another first save for the same team committed first.
+        if (!db.rules.some(rule => rule.teamId === CHILD_ID)) {
+          db.rules.push({ id: "other", teamId: CHILD_ID, enabled: false, kind: "unanswered", config: { weekdays: [], daysAhead: 7 },
+            sendTime: "20:00", channel: "slack-webhook", target: {}, createdAt: new Date(0) });
+        }
+        throw Object.assign(new Error("Transaction failed"), { code });
+      }
+      return fn(prisma);
     },
     reminderRule: {
       findMany: async ({ where }: { where: Partial<RuleRow> }) => db.rules.filter(rule => ruleMatches(rule, where)),
@@ -85,6 +107,8 @@ beforeEach(() => {
   fetchMock.mockReset().mockResolvedValue({ ok: true, status: 200 });
   db.session = { user: { id: "000000000000000000000001", role: "admin" } };
   db.entriesFail = false;
+  db.locks = [];
+  db.saveConflicts = [];
   db.teams = [{ id: PARENT, name: "Robot", parentTeamId: null }, { id: CHILD, name: "Mech", parentTeamId: PARENT }];
   db.rules = [rule("r1", PARENT), rule("r2", CHILD, { enabled: false })];
   db.deliveries = [];
@@ -340,6 +364,22 @@ describe("saveTeamReminder", () => {
     expect(db.rules).toEqual([expect.objectContaining({
       teamId: CHILD, kind: "unanswered", channel: "slack-webhook", target: {}, config: { weekdays: [3], daysAhead: 3 },
     })]);
+  });
+
+  it("ends with one rule when another first save for the team wins, updating that rule", async () => {
+    db.rules = [];
+    for (const code of ["P2034", "P2002"]) {
+      db.rules = [];
+      db.saveConflicts = [code];
+      await saveTeamReminder(CHILD, settings);
+      expect(db.rules).toHaveLength(1);
+      expect(db.rules[0]).toMatchObject({ id: "other", enabled: true, sendTime: "21:30" });
+    }
+    expect(db.locks).toEqual([CHILD]);
+  });
+
+  it("refuses a team that doesn't exist", async () => {
+    await expect(saveTeamReminder("0000000000000000000000ff", settings)).rejects.toThrow("Team not found.");
   });
 
   it("refuses members who aren't admins", async () => {
