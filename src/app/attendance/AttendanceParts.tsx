@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import {
-  Avatar, AvatarGroup, Box, Button, CloseButton, Dialog, HStack, IconButton, Input, Portal, SimpleGrid, Spinner, Stack, Text,
+  Avatar, AvatarGroup, Badge, Box, Button, CloseButton, Dialog, HStack, IconButton, Input, Portal, SimpleGrid, Spinner, Stack, Text,
 } from "@chakra-ui/react";
 import { LuCheck, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 import { useRankOf } from "@/components/TopRanks";
 import UserAvatar from "@/components/UserAvatar";
-import { addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates, shortDate, STATUS_PALETTE, weekDates } from "@/lib/attendance";
+import { addDays, addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates, shortDate, STATUS_PALETTE, weekDates } from "@/lib/attendance";
 import { BoardDay, BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getPersonMonth } from "./actions";
 
@@ -301,16 +301,34 @@ function DayView(props: { date: string; onSelectUser: (user: BoardUser) => void 
   );
 }
 
+/** Lets a day's dialog move to other days itself: arrows around the date, and Today on the right. */
+export type DayNav = {
+  date: string;
+  today: string;
+  goTo: (date: string) => void;
+  /** The day's list isn't loaded yet, or failed to load. */
+  loading: boolean;
+  failed: boolean;
+  retry: () => void;
+};
+
 type View =
   | { type: "list" }
   | { type: "person"; user: BoardUser; month: string }
   | { type: "day"; date: string };
 
-function DialogContent(props: { title: string; groups: UserGroup[]; month: string; today: string }) {
-  const { title, groups, month, today } = props;
+function DialogContent(props: { title: string; groups: UserGroup[]; month: string; today: string; dayNav?: DayNav }) {
+  const { title, groups, month, today, dayNav } = props;
   const t = useTranslations("Attendance");
   const format = useFormatter();
   const [stack, setStack] = useState<View[]>([{ type: "list" }]);
+  // Moving to another day goes back to its list without remounting, so the arrow just clicked keeps focus and the
+  // dialog stays open.
+  const [shownDate, setShownDate] = useState(dayNav?.date);
+  if (dayNav && dayNav.date !== shownDate) {
+    setShownDate(dayNav.date);
+    setStack([{ type: "list" }]);
+  }
   const view = stack[stack.length - 1];
 
   const push = (next: View) => setStack(prev => [...prev, next]);
@@ -324,20 +342,54 @@ function DialogContent(props: { title: string; groups: UserGroup[]; month: strin
     return `${shortDate(date)} ${weekday}`;
   };
 
+  const navigating = dayNav && view.type === "list";
+
   return (
     <>
-      <Dialog.Header>
-        <HStack gap={1}>
-          {stack.length > 1 && (
-            <IconButton size="xs" variant="ghost" aria-label={t("back")} onClick={pop}>
+      {/* Room on the right for the close button. */}
+      <Dialog.Header pe={12}>
+        {navigating ? (
+          <HStack gap={1} w="full">
+            <IconButton size="xs" variant="ghost" aria-label={t("day.previous")} onClick={() => dayNav.goTo(addDays(dayNav.date, -1))}>
               <LuChevronLeft />
             </IconButton>
-          )}
-          <Dialog.Title>{view.type === "day" ? dayTitle(view.date) : title}</Dialog.Title>
-        </HStack>
+            <Dialog.Title textAlign="center">{title}</Dialog.Title>
+            <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => dayNav.goTo(addDays(dayNav.date, 1))}>
+              <LuChevronRight />
+            </IconButton>
+            {dayNav.date === today && <Badge colorPalette="blue">{t("today")}</Badge>}
+            {/* Kept in place on today, only hidden, so clicking it doesn't remove what has focus. */}
+            <Button size="xs" variant="ghost" ms="auto" visibility={dayNav.date === today ? "hidden" : undefined}
+              onClick={() => dayNav.goTo(today)}>
+              {t("today")}
+            </Button>
+          </HStack>
+        ) : (
+          <HStack gap={1}>
+            {stack.length > 1 && (
+              <IconButton size="xs" variant="ghost" aria-label={t("back")} onClick={pop}>
+                <LuChevronLeft />
+              </IconButton>
+            )}
+            <Dialog.Title>{view.type === "day" ? dayTitle(view.date) : title}</Dialog.Title>
+          </HStack>
+        )}
       </Dialog.Header>
       <Dialog.Body pb={6}>
-        {view.type === "list" && <UserListView groups={groups} onSelectUser={user => selectUser(user)} />}
+        {view.type === "list" && (dayNav?.failed ? (
+          <HStack gap={2}>
+            <Text fontSize="sm" color="red.fg">{t("day.loadFailed")}</Text>
+            <Button size="xs" variant="outline" onClick={dayNav.retry}>{t("retry")}</Button>
+          </HStack>
+        ) : (
+          <>
+            {dayNav?.loading && <Spinner size="sm" />}
+            {/* Kept mounted while the next day loads, so the search box keeps its text and doesn't grab focus again. */}
+            <Box display={dayNav?.loading ? "none" : undefined}>
+              <UserListView groups={groups} onSelectUser={user => selectUser(user)} />
+            </Box>
+          </>
+        ))}
         {view.type === "day" && <DayView date={view.date} onSelectUser={user => switchUser(user, view.date.slice(0, 7))} />}
         {view.type === "person" && (
           <PersonCalendar
@@ -361,8 +413,9 @@ export function UserListDialog(props: {
   month: string;
   today: string;
   onClose: () => void;
+  dayNav?: DayNav;
 }) {
-  const { open, title, resetKey, groups, month, today, onClose } = props;
+  const { open, title, resetKey, groups, month, today, onClose, dayNav } = props;
 
   return (
     <Dialog.Root
@@ -379,7 +432,7 @@ export function UserListDialog(props: {
         <Dialog.Positioner>
           {/* Fixed height so the dialog does not resize when switching between list, calendar and loading. */}
           <Dialog.Content h="min(34rem, 85dvh)">
-            <DialogContent key={resetKey} title={title} groups={groups} month={month} today={today} />
+            <DialogContent key={dayNav ? "day" : resetKey} title={title} groups={groups} month={month} today={today} dayNav={dayNav} />
             <Dialog.CloseTrigger asChild>
               <CloseButton size="sm" />
             </Dialog.CloseTrigger>
