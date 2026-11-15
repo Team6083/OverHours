@@ -284,6 +284,7 @@ Each team can remind its members in Slack to fill in their availability. Admins 
 | Days that must be filled in | Weekdays that count, e.g. only Wednesday and Saturday |
 | Look ahead | From tomorrow, how many days ahead those weekdays must already be answered (1–28) |
 | Send at | Time of day in `TZ` |
+| Don't remind members of | Teams whose members (sub-teams included) are never reminded, for people who don't need to fill in, such as mentors. Put them in a team, which can join them by Keycloak role (auto-join roles), and pick it here |
 
 Every day after its time, the reminder tags each member of the team, sub-teams included, who hasn't answered one of
 those days, with the days missing. A team with nobody missing sends nothing. A big team's reminder covers everyone

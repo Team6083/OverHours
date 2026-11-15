@@ -13,8 +13,9 @@ import { saveTeamReminderAction } from "../actions";
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 
-export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
-  const { reminder } = props;
+/** `teams`: the teams whose members may be exempted (every team but this one). */
+export default function ReminderForm(props: { reminder: TeamReminderDTO; teams: { id: string; name: string }[] }) {
+  const { reminder, teams } = props;
   const t = useTranslations("TeamReminders");
   const router = useRouter();
   const [settings, setSettings] = useState<ReminderSettings>(reminder.settings);
@@ -25,6 +26,10 @@ export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
   const set = (patch: Partial<ReminderSettings>) => setSettings(current => ({ ...current, ...patch }));
   const toggleDay = (day: number) => set({
     weekdays: settings.weekdays.includes(day) ? settings.weekdays.filter(d => d !== day) : [...settings.weekdays, day].sort(),
+  });
+  const exempt = settings.exemptTeamIds ?? [];
+  const toggleExempt = (id: string) => set({
+    exemptTeamIds: teams.map(team => team.id).filter(teamId => (teamId === id) !== exempt.includes(teamId)),
   });
   const changed = JSON.stringify(settings) !== JSON.stringify(reminder.settings);
 
@@ -89,6 +94,23 @@ export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
                   onChange={e => e.target.value && set({ time: e.target.value.slice(0, 5) })} />
               </Field.Root>
             </SimpleGrid>
+
+            {teams.length > 0 && (
+              <Field.Root>
+                <Field.Label>{t("exemptTeams")}</Field.Label>
+                <HStack gap={1} wrap="wrap">
+                  {teams.map(team => {
+                    const on = exempt.includes(team.id);
+                    return (
+                      <Button key={team.id} size="xs" variant={on ? "solid" : "outline"} aria-pressed={on} onClick={() => toggleExempt(team.id)}>
+                        {team.name}
+                      </Button>
+                    );
+                  })}
+                </HStack>
+                <Field.HelperText>{t("exemptTeamsHelp")}</Field.HelperText>
+              </Field.Root>
+            )}
 
             <Button alignSelf="start" onClick={save} loading={saving} disabled={!changed || !daysValid}>{t("save")}</Button>
           </Stack>
