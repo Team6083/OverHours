@@ -347,8 +347,7 @@
   },
   "TeamReminder": {
     "summary": "{count} 人還沒填 {span} 的可出席時間",
-    "days": "{count} 天，{span}",
-    "more": "還有 {count} 人",
+    "days": "{span}（{count} 天）",
     "link": "去填可出席時間",
     "weekday": {
       "1": "一",

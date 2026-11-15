@@ -347,8 +347,7 @@
   },
   "TeamReminder": {
     "summary": "{count, plural, one {# member hasn't} other {# members haven't}} filled in their availability for {span}",
-    "days": "{count} days, {span}",
-    "more": "and {count} more",
+    "days": "{span} ({count} days)",
     "link": "Fill in your availability",
     "weekday": {
       "1": "Mon",

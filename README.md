@@ -56,6 +56,7 @@ Variables are read at runtime unless noted otherwise.
 | `OVERHOURS_TIMELOG_MIN_DURATION_SEC` | No | Minimum duration in seconds for a clocked-in session; clocking out sooner deletes the log. Default: `0`. |
 | `AUTO_LOCK_TIME` | No | Daily cut-off as `HH:mm` in `TZ`. Sessions still clocked in at the cut-off are locked as abnormal clock-outs; see [Auto-lock](#auto-lock). Unset: no automatic locking. A malformed value stops the server from starting. |
 | `REMINDER_LOCALE` | No | Language of the team reminders sent to Slack: `en` (default) or `zh-TW`. See [Team reminders](#team-reminders). |
+| `REMINDER_MENTION` | No | `on` tags members in team reminders by email (needs overlooking-bot to resolve emails); `off` (default) lists names and sends no email. See [Team reminders](#team-reminders). |
 | `TZ` | No | IANA time zone (e.g. `Asia/Taipei`) of the server, used for `AUTO_LOCK_TIME` and for times in locked-log reports and CSV exports. Default: the container's zone, usually UTC, so set it whenever auto-lock is enabled. An invalid zone stops the server from starting. |
 | `SENTRY_DSN` | No | Sentry DSN for the server and edge runtimes. |
 | `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN for the browser. Inlined at build time. |
@@ -291,10 +292,15 @@ The settings show who would be reminded right now.
 
 The channel is the overlooking-bot webhook set on the same page; it is never shown again after saving. The request
 is a Slack Block Kit message (`POST {"text", "blocks"}`): the team as a header, a one-line summary ("12 members
-haven't filled in their availability for 11/15–11/21"), a bulleted list of members with their days (one day, or a
-count and span), and a link to the attendance page. At most 15 members are listed, then "and N more", so the message
-stays short. `text` is the short fallback shown in notifications. Members are listed by name for now: overlooking-bot
-doesn't turn emails into Slack users yet, which tagging needs. Text is in `REMINDER_LOCALE`.
+haven't filled in their availability for 11/15–11/21"), a bulleted list, and a link to the attendance page. Each
+bullet is the days in bold ("11/15–11/21 (7 days)") followed by every member missing those days, so the list grows with
+the different cases, not the members; the groups missing the most days come first. Everyone missing is listed; a list
+too large for one message continues in further messages, and if any of them fails the run is retried as a whole.
+`text` is the short fallback shown in notifications. Text is in `REMINDER_LOCALE`.
+
+`REMINDER_MENTION` decides whether members are tagged. `off` (the default, and any value other than `on`) lists
+their names and sends no email. `on` puts each member in as a Slack `user` element whose `user_id` is their email,
+which overlooking-bot has to resolve to the Slack user; turn it on only once the bot does.
 
 The reminders go out when a scheduler calls this endpoint with `CRON_SECRET`, like auto-lock. Call it every few
 minutes; each reminder is sent at most once a day, and a failed send is retried on the next call:

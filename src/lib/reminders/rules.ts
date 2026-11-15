@@ -14,15 +14,13 @@ export type ReminderMessage = {
   title: string;
   /** One line, e.g. "12 members haven't filled in 11/15–11/21". */
   summary: string;
-  /** At most `MAX_LISTED`. `email` is for tagging once the channel can resolve it. */
-  recipients: { email: string; name: string; detail: string }[];
-  /** "and 4 more" when the list was cut, otherwise null. */
-  more: string | null;
+  /**
+   * Every missing member, grouped by the days they are missing ("11/15–11/21 (7 days)"), most days first. `email`
+   * is for the channel to tag them with, when it does.
+   */
+  groups: { days: string; members: { email: string; name: string }[] }[];
   link: { label: string; url: string };
 };
-
-/** Members listed by name in one message; the rest are counted, so the message stays short. */
-export const MAX_LISTED = 15;
 
 export type RuleContext = { team: { id: string; name: string }; tree: TeamTreeEntry[]; date: string; appUrl: string };
 
@@ -69,15 +67,23 @@ export async function evaluateRule(condition: RuleCondition, context: RuleContex
         return sorted.length === 1 ? day(sorted[0]) : `${shortDate(sorted[0])}–${shortDate(sorted[sorted.length - 1])}`;
       };
 
+      // Members with the same count and span share a line, so the message grows with the cases, not the members.
+      const groups = new Map<string, { count: number; first: string; days: string; members: { email: string; name: string }[] }>();
+      for (const member of missing) {
+        const dates = [...member.dates].sort();
+        const key = `${dates.length} ${dates[0]} ${dates[dates.length - 1]}`;
+        const days = dates.length === 1 ? day(dates[0]) : t("days", { count: dates.length, span: span(dates) });
+        const group = groups.get(key) ?? { count: dates.length, first: dates[0], days, members: [] };
+        group.members.push({ email: member.email, name: member.name });
+        groups.set(key, group);
+      }
+
       return {
         title: context.team.name,
         summary: t("summary", { count: missing.length, span: span(missing.flatMap(member => member.dates)) }),
-        recipients: missing.slice(0, MAX_LISTED).map(member => ({
-          email: member.email,
-          name: member.name,
-          detail: member.dates.length === 1 ? day(member.dates[0]) : t("days", { count: member.dates.length, span: span(member.dates) }),
-        })),
-        more: missing.length > MAX_LISTED ? t("more", { count: missing.length - MAX_LISTED }) : null,
+        groups: [...groups.values()]
+          .sort((a, b) => b.count - a.count || a.first.localeCompare(b.first))
+          .map(group => ({ days: group.days, members: group.members })),
         link: { label: t("link"), url: `${context.appUrl}/attendance` },
       };
     }

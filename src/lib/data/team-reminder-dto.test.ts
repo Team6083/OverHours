@@ -123,7 +123,7 @@ describe("sendDueReminders", () => {
             style: "bullet",
             elements: [{
               type: "rich_text_section",
-              elements: [{ type: "text", text: "Two", style: { bold: true } }, { type: "text", text: "  11/14 (Sat)" }],
+              elements: [{ type: "text", text: "11/14 (Sat)", style: { bold: true } }, { type: "text", text: "  " }, { type: "text", text: "Two" }],
             }],
           }],
         },
@@ -205,23 +205,85 @@ describe("sendDueReminders", () => {
     expect(db.deliveries.map(row => row.ruleId)).toEqual(["r1"]);
   });
 
-  it("says several missing days as a count and span", async () => {
+  type Section = { elements: { type: string; text?: string; user_id?: string }[] };
+  const bullets = (payload: { blocks: { type: string; elements?: { elements: Section[] }[] }[] }) =>
+    payload.blocks.filter(block => block.type === "rich_text").flatMap(block => block.elements![0].elements)
+      .map(item => item.elements.map(e => e.text ?? `@${e.user_id}`).join(""));
+  const sent = () => fetchMock.mock.calls.map(call => JSON.parse(call[1].body));
+  const team = (count: number, answered: (i: number) => string[] = () => []) => {
+    db.users = Array.from({ length: count }, (_, i) => ({ id: `m${i}`, email: `m${i}@example.test`, name: `M${String(i).padStart(2, "0")}`, teamIds: [PARENT] }));
+    db.entries = db.users.flatMap((user, i) => answered(i).map(date => ({ userId: user.id, date })));
+  };
+
+  it("puts members missing the same days on one bullet, most days first", async () => {
     db.rules[0].config = { weekdays: [1, 2, 3, 4, 5, 6, 7], daysAhead: 3 };
+    team(5, i => (i < 2 ? [] : i < 4 ? ["2026-11-14"] : ["2026-11-14", "2026-11-15"]));
     await sendDueReminders(evening, "https://x.test");
-    const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(payload.text).toBe("*Robot*: 2 members haven't filled in their availability for 11/14–11/16");
-    const items = payload.blocks[3].elements[0].elements.map((item: { elements: { text: string }[] }) => item.elements.map(e => e.text).join(""));
-    expect(items).toEqual(["One  2 days, 11/15–11/16", "Two  3 days, 11/14–11/16"]);
+    const [payload] = sent();
+    expect(payload.text).toBe("*Robot*: 5 members haven't filled in their availability for 11/14–11/16");
+    expect(bullets(payload)).toEqual([
+      "11/14–11/16 (3 days)  M00, M01",
+      "11/15–11/16 (2 days)  M02, M03",
+      "11/16 (Mon)  M04",
+    ]);
   });
 
-  it("caps the list and counts the rest, keeping the link", async () => {
-    db.users = Array.from({ length: 20 }, (_, i) => ({ id: `m${i}`, email: `m${i}@example.test`, name: `M${String(i).padStart(2, "0")}`, teamIds: [PARENT] }));
+  it("lists all 30 missing members, with no cap", async () => {
+    team(30);
     await sendDueReminders(evening, "https://x.test");
-    const { blocks } = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(blocks[1].text.text).toBe("20 members haven't filled in their availability for 11/14 (Sat)");
-    expect(blocks[3].elements[0].elements).toHaveLength(15);
-    expect(blocks[4]).toEqual({ type: "context", elements: [{ type: "plain_text", text: "and 5 more" }] });
-    expect(blocks[5].elements[0].text).toContain("/attendance");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [payload] = sent();
+    expect(payload.blocks[1].text.text).toBe("30 members haven't filled in their availability for 11/14 (Sat)");
+    const names = bullets(payload).join(", ");
+    for (let i = 0; i < 30; i++) expect(names).toContain(`M${String(i).padStart(2, "0")}`);
+    expect(payload.blocks.at(-1).elements[0].text).toContain("/attendance");
+  });
+
+  it("splits a list too large for one message into several, the link closing the last", async () => {
+    team(1200);
+    await sendDueReminders(evening, "https://x.test");
+    const payloads = sent();
+    expect(payloads.length).toBeGreaterThan(1);
+    expect(payloads[0].blocks[0].type).toBe("header");
+    expect(payloads[1].blocks[0].type).toBe("rich_text");
+    expect(payloads[0].text).toMatch(new RegExp(`\\(1/${payloads.length}\\)$`));
+    expect(payloads.filter(payload => JSON.stringify(payload).includes("/attendance"))).toEqual([payloads.at(-1)]);
+    for (const payload of payloads) expect(payload.blocks.length).toBeLessThanOrEqual(50);
+    expect(payloads.flatMap(bullets).join(", ").match(/M\d+/g)).toHaveLength(1200);
+  });
+
+  it("releases the run when a later part fails, so the whole reminder is sent again", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    team(1200);
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 }).mockResolvedValueOnce({ ok: false, status: 500 });
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "failed" }]);
+    expect(db.deliveries).toEqual([]);
+  });
+
+  it("lists names and sends no email unless REMINDER_MENTION is on", async () => {
+    for (const value of [undefined, "off", "yes"]) {
+      fetchMock.mockClear();
+      db.deliveries = [];
+      if (value) vi.stubEnv("REMINDER_MENTION", value);
+      await sendDueReminders(evening, "https://x.test");
+      expect(bullets(sent()[0])).toEqual(["11/14 (Sat)  Two"]);
+      expect(fetchMock.mock.calls[0][1].body).not.toContain("@example.test");
+    }
+  });
+
+  it("tags members as user elements by email when REMINDER_MENTION is on", async () => {
+    vi.stubEnv("REMINDER_MENTION", "on");
+    db.users.push({ id: "u3", email: "three@example.test", name: "Three", teamIds: [CHILD] });
+    await sendDueReminders(evening, "https://x.test");
+    const [payload] = sent();
+    expect(payload.blocks[3].elements[0].elements[0].elements).toEqual([
+      { type: "text", text: "11/14 (Sat)", style: { bold: true } },
+      { type: "text", text: "  " },
+      { type: "user", user_id: "two@example.test" },
+      { type: "text", text: " " },
+      { type: "user", user_id: "three@example.test" },
+    ]);
+    expect(payload.text).not.toContain("@example.test");
   });
 
   it("escapes Slack control characters in the team name where Slack parses them", async () => {
