@@ -27,7 +27,7 @@ export default function DeleteTimeLogConfirm(props: {
       <DataList.Item>
         <DataList.ItemLabel>User</DataList.ItemLabel>
         <DataList.ItemValue flexWrap="wrap" gapY={2}>
-          {userName && <Badge mr={2} colorPalette="blue">{userName}</Badge>}
+          {userName && <Badge mr={2} colorPalette="brand">{userName}</Badge>}
           <GenericClipboard color="fg.muted" value={timeLog.userId} />
         </DataList.ItemValue>
       </DataList.Item>

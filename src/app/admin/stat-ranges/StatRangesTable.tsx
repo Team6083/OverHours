@@ -159,7 +159,7 @@ export default function StatRangesTable(props: {
                     {selection.map(id => {
                       const statRange = statRanges.find(s => s.id === id);
                       if (!statRange) return null;
-                      return <Badge key={id} colorPalette="blue">{statRange.name}</Badge>
+                      return <Badge key={id} colorPalette="brand">{statRange.name}</Badge>
                     })}
                   </HStack>
                   <Text color="fg.muted">Total {selection.length} stat ranges selected</Text>

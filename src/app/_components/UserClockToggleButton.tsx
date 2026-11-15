@@ -64,7 +64,7 @@ export default function UserClockToggleButton(props: { isClockedIn: boolean, use
   return (
     <Button
       width="full" size="xs" variant="surface"
-      colorPalette={isClockedIn ? "purple" : "blue"}
+      colorPalette={isClockedIn ? "purple" : "brand"}
       onClick={handleClick}
       loading={isPending}
     >

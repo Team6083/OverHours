@@ -255,7 +255,7 @@ export default function LogsTable(props: {
                         const user = userInfo[log.userId];
 
                         return <HStack key={log.id}>
-                          <Badge colorPalette="blue">{user?.name ?? log.userId}</Badge>
+                          <Badge colorPalette="brand">{user?.name ?? log.userId}</Badge>
                           <TimeLogStatusBadge status={log.status} />
                           <Badge fontFamily="mono">{log.inTime.toLocaleString()} - {log.outTime?.toLocaleString() ?? "N/A"}</Badge>
                         </HStack>;

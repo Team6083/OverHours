@@ -93,7 +93,7 @@ export function useCurrentlyClockedInContext() {
 export function CurrentlyClockedInCountBadge(props: ComponentPropsWithoutChildren<typeof Badge>) {
   const { logs } = useCurrentlyClockedInContext();
 
-  return <Badge colorPalette="blue" size="md" {...props}>{logs.length}</Badge>;
+  return <Badge colorPalette="brand" size="md" {...props}>{logs.length}</Badge>;
 }
 
 export function CurrentlyClockedInSearchInput(props: ComponentPropsWithoutChildren<typeof Input>) {
@@ -209,7 +209,7 @@ export function CurrentlyClockedInTable(props: {
                         <ButtonGroup variant="ghost" size="xs" gap={0}>
                           <Tooltip content={t("actions.forceClockOut")}>
                             <IconButton
-                              colorPalette="blue"
+                              colorPalette="brand"
                               loading={clockOutPending}
                               disabled={!!pendingAction && !clockOutPending}
                               onClick={() => handleAction("clockOut", item.id)}

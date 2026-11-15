@@ -40,7 +40,7 @@ const columns: Column<TableData>[] = [
     renderCell: (row) => (<HStack gap={2}>
       <Clipboard.Root value={row.email}>
         <Clipboard.Trigger asChild>
-          <ChakraLink as="span" color="blue.fg" textStyle="sm">
+          <ChakraLink as="span" color="brand.fg" textStyle="sm">
             <Clipboard.ValueText />
             <Clipboard.Indicator />
           </ChakraLink>
@@ -170,7 +170,7 @@ export default function UsersTable(props: {
                     {selection.map(id => {
                       const user = users.find(u => u.id === id);
                       if (!user) return null;
-                      return <Badge key={id} colorPalette="blue">{user.name}</Badge>
+                      return <Badge key={id} colorPalette="brand">{user.name}</Badge>
                     })}
                   </HStack>
                   <Text color="fg.muted">Total {selection.length} users selected</Text>

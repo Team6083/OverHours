@@ -122,7 +122,7 @@ export default function MergeUsersConfirm(props: {
                     <Text fontWeight="medium">{user.name}</Text>
                     <Text color="fg.muted">{user.email}</Text>
                     <Badge>{user.timeLogCount} time logs</Badge>
-                    {user.id === currentUserId && <Badge colorPalette="blue">You</Badge>}
+                    {user.id === currentUserId && <Badge colorPalette="brand">You</Badge>}
                     {user.id === targetId
                       ? <Badge colorPalette="green">Keep</Badge>
                       : <Badge colorPalette="red">Delete</Badge>}

@@ -104,7 +104,7 @@ function ClockUserInCombobox(props: {
         </Combobox.Control>
         <Button
           size="xs"
-          colorPalette="blue"
+          colorPalette="brand"
           variant="outline"
           disabled={value.length === 0} loading={loading}
           onClick={handleClockIn}

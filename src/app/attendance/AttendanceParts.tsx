@@ -168,12 +168,12 @@ function PersonCalendar(props: {
               fontSize="sm"
               fontWeight={status ? "semibold" : "normal"}
               borderWidth={date === today ? "2px" : "1px"}
-              borderColor={date === today ? "blue.solid" : "border.muted"}
+              borderColor={date === today ? "brand.solid" : "border.muted"}
               position="relative"
               title={label}
               aria-label={label}
               onClick={() => onSelectDate(date)}
-              _hover={{ borderColor: "blue.solid" }}
+              _hover={{ borderColor: "brand.solid" }}
               {...style}
             >
               {Number(date.slice(8))}
