@@ -4,7 +4,9 @@ type RuleRow = {
   id: string; teamId: string; enabled: boolean; kind: string; config: unknown; sendTime: string; channel: string;
   target: unknown; createdAt: Date;
 };
-type DeliveryRow = { ruleId: string; runKey: string; result: string };
+type DeliveryRow = {
+  ruleId: string; runKey: string; result: string; sentAt?: Date; partsSent?: number; failures?: number; nextAttemptAt?: Date | null;
+};
 
 const db = vi.hoisted(() => ({
   session: null as { user: { id: string; role: string } } | null,
@@ -42,15 +44,22 @@ vi.mock("../prisma", () => {
         if (db.deliveries.some(row => row.ruleId === data.ruleId && row.runKey === data.runKey)) {
           throw Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
         }
-        db.deliveries.push({ ...data });
+        db.deliveries.push({ partsSent: 0, failures: 0, nextAttemptAt: null, ...data });
         return data;
       },
-      update: async ({ where, data }: { where: { ruleId_runKey: { ruleId: string; runKey: string } }; data: { result: string } }) => {
+      update: async ({ where, data }: { where: { ruleId_runKey: { ruleId: string; runKey: string } }; data: Partial<DeliveryRow> }) => {
         const { ruleId, runKey } = where.ruleId_runKey;
         return Object.assign(db.deliveries.find(row => row.ruleId === ruleId && row.runKey === runKey)!, data);
       },
-      deleteMany: async ({ where }: { where: { ruleId: string; runKey: string } }) => {
-        db.deliveries = db.deliveries.filter(row => !(row.ruleId === where.ruleId && row.runKey === where.runKey));
+      updateMany: async ({ where, data }: { where: { ruleId: string; runKey: string; result: string; nextAttemptAt: { lte: Date } }; data: Partial<DeliveryRow> }) => {
+        const rows = db.deliveries.filter(row => row.ruleId === where.ruleId && row.runKey === where.runKey
+          && row.result === where.result && row.nextAttemptAt && row.nextAttemptAt <= where.nextAttemptAt.lte);
+        rows.forEach(row => Object.assign(row, data));
+        return { count: rows.length };
+      },
+      findUniqueOrThrow: async ({ where }: { where: { ruleId_runKey: { ruleId: string; runKey: string } } }) => {
+        const { ruleId, runKey } = where.ruleId_runKey;
+        return db.deliveries.find(row => row.ruleId === ruleId && row.runKey === runKey)!;
       },
     },
     user: {
@@ -131,7 +140,7 @@ describe("sendDueReminders", () => {
       ],
     });
     expect(init.body).not.toContain("one@example.test");
-    expect(db.deliveries).toEqual([{ ruleId: "r1", runKey: "2026-11-13", result: "sent" }]);
+    expect(db.deliveries).toEqual([expect.objectContaining({ ruleId: "r1", runKey: "2026-11-13", result: "sent", partsSent: 1, failures: 0 })]);
 
     await expect(sendDueReminders(new Date("2026-11-13T22:00:00Z"), "https://x.test")).resolves.toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -156,15 +165,36 @@ describe("sendDueReminders", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("releases the run when sending fails, so the next call retries", async () => {
+  const at = (minutes: number) => new Date(evening.getTime() + minutes * 60_000);
+
+  it("waits after a failed send, then retries", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    fetchMock.mockResolvedValue({ ok: false, status: 500 });
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 500 });
 
     await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "failed" }]);
-    expect(db.deliveries).toEqual([]);
+    expect(db.deliveries[0]).toMatchObject({ result: "failed", failures: 1, nextAttemptAt: at(5) });
+
+    await expect(sendDueReminders(at(3), "https://x.test")).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await expect(sendDueReminders(at(5), "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "sent" }]);
+    expect(db.deliveries[0]).toMatchObject({ result: "sent", failures: 1 });
   });
 
-  it("releases the run when reading members fails, and goes on with the other rules", async () => {
+  it("waits longer after each failure and gives up for the day after five", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    fetchMock.mockResolvedValue({ ok: false, status: 404 });
+
+    const results = [];
+    for (const minutes of [0, 5, 15, 35, 75]) results.push((await sendDueReminders(at(minutes), "https://x.test"))[0]?.result);
+    expect(results).toEqual(["failed", "failed", "failed", "failed", "gaveUp"]);
+    expect(db.deliveries[0]).toMatchObject({ result: "gaveUp", failures: 5 });
+
+    await expect(sendDueReminders(at(300), "https://x.test")).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
+  it("counts reading members failing as a failed try, and goes on with the other rules", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     db.rules[1].enabled = true;
     db.entriesFail = true;
@@ -173,7 +203,7 @@ describe("sendDueReminders", () => {
       { ruleId: "r1", teamId: PARENT, result: "failed" },
       { ruleId: "r2", teamId: CHILD, result: "failed" },
     ]);
-    expect(db.deliveries).toEqual([]);
+    expect(db.deliveries.map(row => row.result)).toEqual(["failed", "failed"]);
   });
 
   it("skips a run another call has already claimed", async () => {
@@ -252,12 +282,22 @@ describe("sendDueReminders", () => {
     expect(payloads.flatMap(bullets).join(", ").match(/M\d+/g)).toHaveLength(1200);
   });
 
-  it("releases the run when a later part fails, so the whole reminder is sent again", async () => {
+  it("retries after the parts already sent when a later part fails, without repeating them", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     team(1200);
     fetchMock.mockResolvedValueOnce({ ok: true, status: 200 }).mockResolvedValueOnce({ ok: false, status: 500 });
     await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "failed" }]);
-    expect(db.deliveries).toEqual([]);
+    expect(db.deliveries[0]).toMatchObject({ result: "failed", partsSent: 1 });
+    const firstTry = sent();
+
+    fetchMock.mockClear();
+    await expect(sendDueReminders(new Date(evening.getTime() + 5 * 60_000), "https://x.test"))
+      .resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "sent" }]);
+    const retry = sent();
+    expect(retry[0].blocks[0].type).toBe("rich_text");
+    expect(retry[0]).toEqual(firstTry[1]);
+    expect(retry).not.toContainEqual(firstTry[0]);
+    expect(db.deliveries[0]).toMatchObject({ result: "sent", partsSent: 1 + retry.length });
   });
 
   it("lists names and sends no email unless REMINDER_MENTION is on", async () => {

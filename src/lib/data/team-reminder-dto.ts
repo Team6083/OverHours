@@ -4,7 +4,7 @@ import { calendarDateInZone } from "../attendance";
 import { getTimeZone } from "../config";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
-import { canDeliver, claimRun, deliver, finishRun, releaseRun } from "../reminders/delivery";
+import { canDeliver, ClaimedRun, claimRun, deliver, failRun, finishRun, MAX_FAILURES, recordParts } from "../reminders/delivery";
 import { evaluateRule, findUnanswered } from "../reminders/rules";
 import {
   isReminderDue, parseRuleChannel, parseRuleCondition, ReminderSettings, reminderSettingsSchema, slackWebhookTargetSchema,
@@ -110,13 +110,14 @@ export async function setTeamReminderWebhook(teamId: string, url: string | null)
   }
 }
 
-export type ReminderRun = { ruleId: string; teamId: string; result: "sent" | "nobodyMissing" | "noWebhook" | "failed" };
+export type ReminderRun = { ruleId: string; teamId: string; result: "sent" | "nobodyMissing" | "noWebhook" | "failed" | "gaveUp" };
 
 /**
  * For the scheduler: sends each enabled rule that is due at `now` (once a day, after its time). A run is claimed
- * before sending so overlapping calls don't send twice; any failure after the claim releases it, so the next call
- * retries. A rule that can't send yet (no webhook) isn't claimed, so adding one later the same day still sends. A rule
- * failing doesn't stop the others.
+ * before sending so overlapping calls don't send twice. A failure after the claim keeps the parts already sent and
+ * waits longer after each failure before a later call tries again, from the next part; after `MAX_FAILURES` the rule
+ * is given up for the day. A rule that can't send yet (no webhook) isn't claimed, so adding one later the same day
+ * still sends. A rule failing doesn't stop the others.
  */
 export async function sendDueReminders(now: Date, appUrl: string): Promise<ReminderRun[]> {
   const timeZone = getTimeZone();
@@ -152,8 +153,10 @@ export async function sendDueReminders(now: Date, appUrl: string): Promise<Remin
       continue;
     }
 
+    let claim: ClaimedRun | null;
     try {
-      if (!await claimRun(rule.id, date)) continue;
+      claim = await claimRun(rule.id, date, now);
+      if (!claim) continue;
     } catch (error) {
       console.error(`Failed to claim reminder rule ${rule.id}`, error);
       run("failed");
@@ -162,14 +165,16 @@ export async function sendDueReminders(now: Date, appUrl: string): Promise<Remin
 
     let result: "sent" | "nobodyMissing";
     try {
+      // A retry works the message out again and sends the parts after the ones already out.
       const message = await evaluateRule(condition, { team, tree, date, appUrl });
-      if (message) await deliver(channel, message);
-      result = message ? "sent" : "nobodyMissing";
+      if (message) await deliver(channel, message, claim.partsSent, parts => recordParts(rule.id, date, parts));
+      result = message || claim.partsSent > 0 ? "sent" : "nobodyMissing";
     } catch (error) {
-      console.error(`Failed to send reminder rule ${rule.id}`, error);
-      await releaseRun(rule.id, date)
-        .catch(releaseError => console.error(`Failed to release reminder rule ${rule.id}`, releaseError));
-      run("failed");
+      console.error(`Failed to send reminder rule ${rule.id} (try ${claim.failures + 1} of ${MAX_FAILURES})`, error);
+      run(await failRun(rule.id, date, claim, now).catch(failError => {
+        console.error(`Failed to record the failure of reminder rule ${rule.id}`, failError);
+        return "failed" as const;
+      }));
       continue;
     }
 

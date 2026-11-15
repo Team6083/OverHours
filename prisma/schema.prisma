@@ -150,9 +150,13 @@ model ReminderDelivery {
   ruleId String   @db.ObjectId
   // The date (`YYYY-MM-DD` in `TZ`) for a daily rule
   runKey String
-  // "claimed" while sending, then "sent" or "nobodyMissing"
-  result String
-  sentAt DateTime @default(now())
+  // "claimed" while sending, then "sent" or "nobodyMissing"; "failed" waits for `nextAttemptAt`, "gaveUp" ends the day
+  result        String
+  sentAt        DateTime  @default(now())
+  // Messages of this run already posted, so a retry continues after them
+  partsSent     Int       @default(0)
+  failures      Int       @default(0)
+  nextAttemptAt DateTime?
 
   @@unique([ruleId, runKey])
 }

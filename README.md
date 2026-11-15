@@ -303,7 +303,7 @@ their names and sends no email. `on` puts each member in as a Slack `user` eleme
 which overlooking-bot has to resolve to the Slack user; turn it on only once the bot does.
 
 The reminders go out when a scheduler calls this endpoint with `CRON_SECRET`, like auto-lock. Call it every few
-minutes; each reminder is sent at most once a day, and a failed send is retried on the next call:
+minutes; each reminder is sent at most once a day, and a failed send is retried later the same day:
 
 ```bash
 curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://overhours.example.com/api/admin/jobs/attendance-reminders
@@ -311,13 +311,16 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://overhours.example.c
 ```
 
 `result` is `sent`, `nobodyMissing`, `noWebhook` (on but no channel set; nothing is sent, and adding a webhook later
-that day still sends) or `failed` (logged; retried on the next call, or, for a rule with an unknown kind or channel,
-until it is fixed). Run `npx prisma db push` once after deploying.
+that day still sends), `failed` (logged; tried again after 5, 10, 20 and 40 minutes, or, for a rule with an unknown
+kind or channel, until it is fixed) or `gaveUp` (the fifth failure that day; the rule waits for tomorrow). A retry
+continues after the messages that already went out, so a long list split over several messages doesn't repeat them.
+Run `npx prisma db push` once after deploying.
 
 Each reminder is a `ReminderRule`: a `kind` with its `config` (only `unanswered`: the weekdays and look-ahead above)
 and a `channel` with its `target` (only `slack-webhook`: the URL), both JSON checked per kind and channel. The page edits
 one rule per team, but a team can hold several, and a new condition or channel needs no schema change. Each run is
-claimed by inserting a `ReminderDelivery` row, unique per rule and day, which is deleted again if sending fails.
+claimed by inserting a `ReminderDelivery` row, unique per rule and day, which records how many messages went out, how
+often it failed and when it may be tried again.
 
 ## Admin API
 

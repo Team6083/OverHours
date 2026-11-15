@@ -12,26 +12,57 @@ export function canDeliver(channel: RuleChannel): boolean {
   }
 }
 
+/** A failing run is tried at most this many times a day, then given up. */
+export const MAX_FAILURES = 5;
+/** Wait after the nth failure before the next try: 5, 10, 20, 40 minutes. */
+export const retryDelayMs = (failures: number) => 5 * 60_000 * 2 ** (failures - 1);
+
+export type ClaimedRun = { partsSent: number; failures: number };
+
 /**
- * Claims a rule's run by inserting its delivery row. True when this call owns the run; false when another call
- * already has it (the unique index on rule and run key).
+ * Claims a rule's run: inserts its delivery row, or takes over a failed run whose wait is over, in one conditional
+ * write so only one call gets it. Null when another call has the run, it finished, it was given up, or its wait
+ * isn't over. The claim says how many parts already went out and how often it failed.
  */
-export async function claimRun(ruleId: string, runKey: string): Promise<boolean> {
+export async function claimRun(ruleId: string, runKey: string, now = new Date()): Promise<ClaimedRun | null> {
   try {
-    await prisma.reminderDelivery.create({ data: { ruleId, runKey, result: "claimed" } });
-    return true;
+    await prisma.reminderDelivery.create({ data: { ruleId, runKey, result: "claimed", sentAt: now } });
+    return { partsSent: 0, failures: 0 };
   } catch (error) {
-    if ((error as { code?: unknown })?.code === "P2002") return false;
-    throw error;
+    if ((error as { code?: unknown })?.code !== "P2002") throw error;
   }
+
+  const { count } = await prisma.reminderDelivery.updateMany({
+    where: { ruleId, runKey, result: "failed", nextAttemptAt: { lte: now } },
+    data: { result: "claimed", sentAt: now },
+  });
+  if (count === 0) return null;
+  const row = await prisma.reminderDelivery.findUniqueOrThrow({ where: { ruleId_runKey: { ruleId, runKey } } });
+  return { partsSent: row.partsSent, failures: row.failures };
 }
+
+/** Records that the first `partsSent` messages of the run went out. */
+export const recordParts = (ruleId: string, runKey: string, partsSent: number) =>
+  prisma.reminderDelivery.update({ where: { ruleId_runKey: { ruleId, runKey } }, data: { partsSent } });
 
 export const finishRun = (ruleId: string, runKey: string, result: "sent" | "nobodyMissing") =>
   prisma.reminderDelivery.update({ where: { ruleId_runKey: { ruleId, runKey } }, data: { result } });
 
-/** Gives a failed run back, so the next call retries it. */
-export const releaseRun = (ruleId: string, runKey: string) =>
-  prisma.reminderDelivery.deleteMany({ where: { ruleId, runKey } });
+/**
+ * Records a failed try: the run waits `retryDelayMs` before a later call may take it, keeping the parts already
+ * sent, and after `MAX_FAILURES` it is given up for the day. Returns the result to report.
+ */
+export async function failRun(ruleId: string, runKey: string, claim: ClaimedRun, now = new Date()): Promise<"failed" | "gaveUp"> {
+  const failures = claim.failures + 1;
+  const gaveUp = failures >= MAX_FAILURES;
+  await prisma.reminderDelivery.update({
+    where: { ruleId_runKey: { ruleId, runKey } },
+    data: gaveUp
+      ? { result: "gaveUp", failures, nextAttemptAt: null }
+      : { result: "failed", failures, nextAttemptAt: new Date(now.getTime() + retryDelayMs(failures)) },
+  });
+  return gaveUp ? "gaveUp" : "failed";
+}
 
 /** `&`, `<` and `>` are control characters in Slack text; `<!channel>` in a name would ping everyone. */
 const escapeSlack = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -104,13 +135,17 @@ export function slackPayloads(message: ReminderMessage, mention = mentionsOn()) 
 }
 
 /**
- * Sends the message through the rule's channel; throws when any part doesn't go through, so the run is released and
- * the next call sends it again.
+ * Sends the message through the rule's channel, starting after the first `from` parts (sent by an earlier try), and
+ * calls `sent(n)` once the first n parts are out. Throws when a part doesn't go through.
  */
-export async function deliver(channel: RuleChannel, message: ReminderMessage): Promise<void> {
+export async function deliver(
+  channel: RuleChannel, message: ReminderMessage, from = 0, sent: (parts: number) => Promise<unknown> = async () => {},
+): Promise<void> {
   switch (channel.channel) {
     case "slack-webhook": {
-      for (const payload of slackPayloads(message)) {
+      const payloads = slackPayloads(message);
+      for (let i = from; i < payloads.length; i++) {
+        const payload = payloads[i];
         const response = await fetch(channel.target.url!, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -118,6 +153,7 @@ export async function deliver(channel: RuleChannel, message: ReminderMessage): P
           signal: AbortSignal.timeout(10_000),
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        await sent(i + 1);
       }
       return;
     }
