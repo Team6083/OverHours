@@ -258,6 +258,11 @@ export async function clockIn(userId: string): Promise<TimeLogDTO> {
     throw new Error("Unauthorized");
   }
 
+  return clockInUser(userId);
+}
+
+/** Clock-in without a session check, for callers that authorized the request another way (a card reader's token). */
+export async function clockInUser(userId: string): Promise<TimeLogDTO> {
   for (let attempt = 1; ; attempt++) {
     try {
       const newTimeLog = await prisma.$transaction(async (tx) => {
@@ -353,6 +358,11 @@ export async function clockOut(userId: string, notes?: string): Promise<TimeLogD
     throw new Error("Unauthorized");
   }
 
+  return clockOutUser(userId, notes);
+}
+
+/** Clock-out without a session check, for callers that authorized the request another way (a card reader's token). */
+export async function clockOutUser(userId: string, notes?: string): Promise<TimeLogDTO> {
   // Find the currently in time log
   const existingTimeLog = await prisma.timeLog.findFirst({
     where: {

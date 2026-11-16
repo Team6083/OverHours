@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import * as z from "zod";
 
 import { unlinkAccount } from "@/lib/data/account-dto";
+import { removeCard } from "@/lib/data/card-dto";
 import { createUser, EmailManagedByProviderError, updateUser } from "@/lib/data/user-dto";
 
 const schema = z.object({
@@ -55,4 +56,9 @@ export async function handleUnlinkAccount(userId: string, accountId: string) {
   await unlinkAccount(userId, accountId);
   revalidatePath(`/admin/users/${userId}`);
   revalidatePath("/admin/users");
+}
+
+export async function handleRemoveCard(userId: string, cardId: string) {
+  await removeCard(cardId);
+  revalidatePath(`/admin/users/${userId}`);
 }

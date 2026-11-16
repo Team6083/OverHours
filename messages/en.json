@@ -372,5 +372,45 @@
     "brokenPromises": "Said will come, didn't",
     "unexpected": "Said can't come, came",
     "empty": "No answers to compare in this range"
+  },
+  "CardBind": {
+    "title": "Link a card",
+    "signInRequired": "Sign in to link this card to your account.",
+    "signIn": "Sign in",
+    "card": "Card {card}",
+    "description": "Once linked, tapping this card on the reader clocks you in or out.",
+    "bindToMe": "Link to my account",
+    "adminHint": "As an admin you can also link the card to someone else:",
+    "chooseMember": "Choose a member",
+    "bindToMember": "Link to this member",
+    "done": "Card {card} is linked",
+    "doneHint": "You can close this page and tap the card on the reader.",
+    "errors": {
+      "replaced": "This QR code no longer works: another unlinked card was tapped after it, or this card is already linked. Tap the card on the reader again.",
+      "taken": "This card is already linked to someone else.",
+      "failed": "Couldn't link the card. Try again."
+    }
+  },
+  "Kiosk": {
+    "title": "Card reader",
+    "signInRequired": "Sign in with the card reader account to turn this device into a card reader.",
+    "notAllowed": "This account can't be used as a card reader. Sign in with an account that may tap cards.",
+    "signIn": "Sign in",
+    "readerInput": "Card reader input",
+    "prompt": "Tap your card",
+    "linked": "Card {card} is linked. Tap it again to clock in.",
+    "newCard": "New card {card}",
+    "scanToLink": "Scan with your phone and sign in to link this card to your account",
+    "useDeviceNfc": "Use this device's NFC",
+    "fullscreen": "Full screen",
+    "results": {
+      "clockedIn": "Clocked in",
+      "clockedOut": "Clocked out",
+      "locked": "Past today's cut-off, so this session was locked",
+      "tooShort": "Too short, so this session wasn't kept",
+      "invalid": "Couldn't read the card. Try again.",
+      "forbidden": "This account can't be used as a card reader",
+      "failed": "Something went wrong. Try again."
+    }
   }
 }

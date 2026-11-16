@@ -33,12 +33,39 @@ model User {
   attendanceEntries AttendanceEntry[]
   // The member's usual week, applied to the week form on request. Weekdays not listed have no usual answer.
   attendancePattern AttendancePatternDay[]
+
+  cards Card[]
 }
 
 type AttendancePatternDay {
   // 0 = Monday … 6 = Sunday
   weekday Int
   status  AttendanceStatus
+}
+
+// An NFC card (e.g. a student ID) that clocks its user in or out when tapped on a card reader.
+model Card {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @db.ObjectId
+
+  // The card's UID as uppercase hex, e.g. `04A1B2C3D4E5F6`, or the decimal digits a reader typed.
+  uid String @unique
+
+  @@index([userId])
+}
+
+// The last card tapped before it was bound. The reader shows a link with `code`; whoever opens it signed in binds
+// the card. There is at most one: the next unbound tap replaces it, so only the code on the reader's screen works.
+model CardBindRequest {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+
+  uid  String @unique
+  code String @unique
 }
 
 // An identity provider (OIDC) account linked to a user, identified by the Auth.js provider id and `sub`
