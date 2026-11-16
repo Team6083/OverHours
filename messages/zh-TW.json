@@ -269,7 +269,10 @@
       "clockedIn": "有簽到",
       "previousMonth": "上個月",
       "nextMonth": "下個月",
-      "loadFailed": "無法載入這個月份"
+      "loadFailed": "無法載入這個月份",
+      "team": "團隊月曆",
+      "openHint": "連點兩下看整個月",
+      "counts": "會來 {willCome}、可以 {available}、不能來 {unavailable}"
     },
     "day": {
       "previous": "前一天",

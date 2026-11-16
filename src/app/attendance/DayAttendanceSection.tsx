@@ -17,7 +17,8 @@ type DayAttendance = {
   failed: boolean;
   retry: () => void;
   goTo: (date: string) => void;
-  openDialog: () => void;
+  /** `month` opens it on the team's month calendar. */
+  openDialog: (view?: "month") => void;
   /** The dialog has its own day arrows, so the section hides its own while it is open. */
   dialogOpen: boolean;
 };
@@ -34,6 +35,7 @@ export function DayAttendanceProvider(props: { initialDay: BoardDay; today: stri
 
   const [date, setDate] = useState(initialDay.date);
   const [open, setOpen] = useState(false);
+  const [startInMonth, setStartInMonth] = useState(false);
   const { data: day, failed, retry } = useKeyedLoad(
     date,
     async key => {
@@ -44,7 +46,7 @@ export function DayAttendanceProvider(props: { initialDay: BoardDay; today: stri
   );
 
   return (
-    <DayAttendanceContext.Provider value={{ date, today, day, failed, retry, goTo: setDate, openDialog: () => setOpen(true), dialogOpen: open }}>
+    <DayAttendanceContext.Provider value={{ date, today, day, failed, retry, goTo: setDate, openDialog: view => { setStartInMonth(view === "month"); setOpen(true); }, dialogOpen: open }}>
       {children}
       <UserListDialog
         open={open}
@@ -54,7 +56,7 @@ export function DayAttendanceProvider(props: { initialDay: BoardDay; today: stri
         today={today}
         onClose={() => setOpen(false)}
         groups={day ? boardGroups(day) : []}
-        dayNav={{ date, today, goTo: setDate, loading: !day, failed, retry }}
+        dayNav={{ date, today, goTo: setDate, loading: !day, failed, retry, startInMonth }}
       />
     </DayAttendanceContext.Provider>
   );
@@ -93,7 +95,10 @@ export default function DayAttendanceSection() {
             <LuChevronLeft />
           </IconButton>
           <HStack gap={2} minW={28} justify="center">
-            <Text fontWeight="medium">{dayLabel(date)}</Text>
+            {/* Double-click (or double-tap) the date for the team's month. */}
+            <Text fontWeight="medium" userSelect="none" title={t("calendar.openHint")} onDoubleClick={() => openDialog("month")}>
+              {dayLabel(date)}
+            </Text>
             {date === today && <Badge colorPalette="blue">{t("today")}</Badge>}
           </HStack>
           <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => goTo(addDays(date, 1))}>

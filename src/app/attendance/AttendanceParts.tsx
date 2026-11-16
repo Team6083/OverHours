@@ -10,7 +10,7 @@ import { useRankOf } from "@/components/TopRanks";
 import UserAvatar from "@/components/UserAvatar";
 import { addDays, addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates, shortDate, STATUS_PALETTE, weekDates } from "@/lib/attendance";
 import { BoardDay, BoardUser } from "@/lib/data/attendance-dto";
-import { getBoardDay, getPersonMonth } from "./actions";
+import { getBoardDay, getBoardMonth, getPersonMonth } from "./actions";
 
 const MAX_AVATARS = 7;
 
@@ -95,6 +95,103 @@ export type UserGroup = { key: AttendanceStatus | "everyone"; palette: string; u
 /** A day's will come / if needed / can't come groups, in display order. */
 export const boardGroups = (day: BoardDay): UserGroup[] =>
   ATTENDANCE_STATUSES.map(status => ({ key: status, palette: STATUS_PALETTE[status], users: day[status] }));
+
+/**
+ * The team's month: each day shows its team events above the date (none yet: the slot is kept for them) and how many
+ * answered will come - if needed - can't come below it. Picking a day goes to its list.
+ */
+function TeamMonthCalendar(props: {
+  month: string;
+  selected: string;
+  today: string;
+  events?: Record<string, string[]>;
+  onMonthChange: (month: string) => void;
+  onSelectDate: (date: string) => void;
+}) {
+  const { month, selected, today, events = {}, onMonthChange, onSelectDate } = props;
+  const t = useTranslations("Attendance");
+  const format = useFormatter();
+
+  const { data: counts, failed, retry } = useKeyedLoad(month, async key => {
+    const result = await getBoardMonth(key);
+    return result.ok ? result.counts : null;
+  });
+
+  const dates = monthDates(month);
+  const offset = (new Date(`${dates[0]}T00:00:00Z`).getUTCDay() + 6) % 7;
+  const weekdays = weekDates("2024-01-01").map(date =>
+    format.dateTime(new Date(`${date}T00:00:00Z`), { timeZone: "UTC", weekday: "narrow" }));
+  const monthLabel = format.dateTime(new Date(`${month}-01T00:00:00Z`), { timeZone: "UTC", year: "numeric", month: "long" });
+
+  return (
+    <Stack gap={3}>
+      <HStack justify="space-between">
+        <IconButton size="xs" variant="ghost" aria-label={t("calendar.previousMonth")} onClick={() => onMonthChange(addMonths(month, -1))}>
+          <LuChevronLeft />
+        </IconButton>
+        <Text fontWeight="medium">{monthLabel}</Text>
+        <IconButton size="xs" variant="ghost" aria-label={t("calendar.nextMonth")} onClick={() => onMonthChange(addMonths(month, 1))}>
+          <LuChevronRight />
+        </IconButton>
+      </HStack>
+
+      {failed && (
+        <HStack gap={2}>
+          <Text fontSize="sm" color="red.fg">{t("calendar.loadFailed")}</Text>
+          <Button size="xs" variant="outline" onClick={retry}>{t("retry")}</Button>
+        </HStack>
+      )}
+
+      <SimpleGrid columns={7} gap={1} opacity={counts === undefined ? 0.5 : 1}>
+        {weekdays.map((weekday, index) => (
+          <Text key={index} fontSize="xs" color="fg.muted" textAlign="center">{weekday}</Text>
+        ))}
+        {Array.from({ length: offset }, (_, index) => <Box key={`blank-${index}`} />)}
+        {dates.map(date => {
+          const day = counts?.[date];
+          const event = events[date]?.join("、");
+          const label = [
+            date, event,
+            day && t("calendar.counts", { willCome: day.WILL_COME, available: day.AVAILABLE, unavailable: day.UNAVAILABLE }),
+          ].filter(Boolean).join(" ");
+
+          return (
+            <Button
+              key={date}
+              variant="plain"
+              h="auto"
+              minW={0}
+              px={0.5}
+              py={1}
+              rounded="md"
+              borderWidth={date === selected ? "2px" : "1px"}
+              borderColor={date === selected ? "blue.solid" : "border.muted"}
+              title={label}
+              aria-label={label}
+              onClick={() => onSelectDate(date)}
+              _hover={{ borderColor: "blue.solid" }}
+            >
+              <Stack gap={0} align="center" w="full" minW={0}>
+                <Text fontSize="2xs" lineHeight="1rem" h="1rem" color="orange.fg" truncate w="full" textAlign="center">{event}</Text>
+                <Text fontSize="sm" lineHeight="1.25rem" fontWeight={date === today ? "bold" : "normal"} color={date === today ? "blue.fg" : undefined}>
+                  {Number(date.slice(8))}
+                </Text>
+                <HStack gap={0} fontSize="xs" lineHeight="1rem" h="1rem" fontWeight="medium" fontVariantNumeric="tabular-nums">
+                  {day && ATTENDANCE_STATUSES.map((status, index) => (
+                    <Text key={status} as="span" color={`${STATUS_PALETTE[status]}.fg`}>
+                      {index > 0 && <Text as="span" color="fg.muted">-</Text>}
+                      {day[status]}
+                    </Text>
+                  ))}
+                </HStack>
+              </Stack>
+            </Button>
+          );
+        })}
+      </SimpleGrid>
+    </Stack>
+  );
+}
 
 function PersonCalendar(props: {
   user: BoardUser;
@@ -310,18 +407,23 @@ export type DayNav = {
   loading: boolean;
   failed: boolean;
   retry: () => void;
+  /** Open on the team month calendar instead of the day's list (a double-click on the date outside). */
+  startInMonth?: boolean;
 };
 
 type View =
   | { type: "list" }
   | { type: "person"; user: BoardUser; month: string }
-  | { type: "day"; date: string };
+  | { type: "day"; date: string }
+  | { type: "month"; month: string };
 
 function DialogContent(props: { title: string; groups: UserGroup[]; month: string; today: string; dayNav?: DayNav }) {
   const { title, groups, month, today, dayNav } = props;
   const t = useTranslations("Attendance");
   const format = useFormatter();
-  const [stack, setStack] = useState<View[]>([{ type: "list" }]);
+  const [stack, setStack] = useState<View[]>(() => dayNav?.startInMonth
+    ? [{ type: "list" }, { type: "month", month: dayNav.date.slice(0, 7) }]
+    : [{ type: "list" }]);
   // Moving to another day goes back to its list without remounting, so the arrow just clicked keeps focus and the
   // dialog stays open.
   const [shownDate, setShownDate] = useState(dayNav?.date);
@@ -353,7 +455,11 @@ function DialogContent(props: { title: string; groups: UserGroup[]; month: strin
             <IconButton size="xs" variant="ghost" aria-label={t("day.previous")} onClick={() => dayNav.goTo(addDays(dayNav.date, -1))}>
               <LuChevronLeft />
             </IconButton>
-            <Dialog.Title textAlign="center">{title}</Dialog.Title>
+            {/* Double-click (or double-tap) the date for the team's month. */}
+            <Dialog.Title textAlign="center" userSelect="none" title={t("calendar.openHint")}
+              onDoubleClick={() => push({ type: "month", month: dayNav.date.slice(0, 7) })}>
+              {title}
+            </Dialog.Title>
             <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => dayNav.goTo(addDays(dayNav.date, 1))}>
               <LuChevronRight />
             </IconButton>
@@ -371,7 +477,7 @@ function DialogContent(props: { title: string; groups: UserGroup[]; month: strin
                 <LuChevronLeft />
               </IconButton>
             )}
-            <Dialog.Title>{view.type === "day" ? dayTitle(view.date) : title}</Dialog.Title>
+            <Dialog.Title>{view.type === "day" ? dayTitle(view.date) : view.type === "month" ? t("calendar.team") : title}</Dialog.Title>
           </HStack>
         )}
       </Dialog.Header>
@@ -390,6 +496,18 @@ function DialogContent(props: { title: string; groups: UserGroup[]; month: strin
             </Box>
           </>
         ))}
+        {view.type === "month" && dayNav && (
+          <TeamMonthCalendar
+            month={view.month}
+            selected={dayNav.date}
+            today={today}
+            onMonthChange={next => setStack(prev => [...prev.slice(0, -1), { type: "month", month: next }])}
+            onSelectDate={date => {
+              setStack([{ type: "list" }]);
+              dayNav.goTo(date);
+            }}
+          />
+        )}
         {view.type === "day" && <DayView date={view.date} onSelectUser={user => switchUser(user, view.date.slice(0, 7))} />}
         {view.type === "person" && (
           <PersonCalendar

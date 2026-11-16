@@ -45,7 +45,7 @@ vi.mock("../prisma", () => {
   return { default: prisma };
 });
 
-import { adminGetAttendance, getDayBoard, getMyPattern, getMyReliability, getMyWeek, getUserMonth, getWeekBoard, saveMyPattern, saveMyWeek } from "./attendance-dto";
+import { adminGetAttendance, getDayBoard, getMonthCounts, getMyPattern, getMyReliability, getMyWeek, getUserMonth, getWeekBoard, saveMyPattern, saveMyWeek } from "./attendance-dto";
 
 const entry = (userId: string, date: string, status = "Available") => ({ userId, date, status });
 
@@ -155,6 +155,21 @@ describe("getDayBoard", () => {
     expect(day.WILL_COME.map(user => user.id)).toEqual(["c"]);
     expect(day.AVAILABLE.map(user => user.id)).toEqual(["a"]);
     expect(day.UNAVAILABLE.map(user => user.id)).toEqual(["b"]);
+  });
+});
+
+describe("getMonthCounts", () => {
+  it("counts each answer per day of the month, leaving out days nobody answered and other months", async () => {
+    db.users.push({ id: "c", name: "C", email: "c@example.com" });
+    db.entries = [
+      entry("a", "2027-01-12", "WillCome"), entry("b", "2027-01-12", "Unavailable"), entry("c", "2027-01-12", "WillCome"),
+      entry("a", "2027-01-31"), entry("a", "2027-02-01", "WillCome"),
+    ];
+
+    await expect(getMonthCounts("2027-01")).resolves.toEqual({
+      "2027-01-12": { WILL_COME: 2, AVAILABLE: 0, UNAVAILABLE: 1 },
+      "2027-01-31": { WILL_COME: 0, AVAILABLE: 1, UNAVAILABLE: 0 },
+    });
   });
 });
 
