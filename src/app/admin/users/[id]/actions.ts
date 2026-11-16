@@ -41,9 +41,11 @@ export async function formSubmit(state: UserFormState, formData: FormData): Prom
       console.log("Validation errors:", e.issues);
       return { issues: e.issues, prevValues: formDataObj as never };
     }
-    if (e instanceof EmailManagedByProviderError) {
+    const emailError = e instanceof EmailManagedByProviderError ? e.message
+      : (e as { code?: unknown } | null)?.code === "P2002" ? "Another user already has this email." : null;
+    if (emailError) {
       return {
-        issues: [{ code: "custom", path: ["email"], message: e.message, input: formDataObj.email }],
+        issues: [{ code: "custom", path: ["email"], message: emailError, input: formDataObj.email }],
         prevValues: formDataObj as never,
       };
     }
