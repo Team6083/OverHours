@@ -3,7 +3,7 @@ import * as z from "zod";
 
 import { apiError, withApiErrors } from "@/lib/api-error";
 import { verifyApiKey } from "@/lib/admin-api-auth";
-import { adminCreateTimeLog, adminGetAllTimeLogs } from "@/lib/data/timelog-dto";
+import { adminCreateTimeLog, adminGetAllTimeLogs, AlreadyClockedInError } from "@/lib/data/timelog-dto";
 import { objectIdSchema } from "@/lib/objectid";
 
 const statusSchema = z.enum(["CURRENTLY_IN", "DONE", "LOCKED"]);
@@ -75,6 +75,10 @@ export const POST = withApiErrors(async (req: NextRequest) => {
       || e.message === "Out time must be after in time"
     )) {
       return apiError("invalid_request", e.message);
+    }
+
+    if (e instanceof AlreadyClockedInError) {
+      return apiError("conflict", "The user already has a currently in time log");
     }
 
     throw e;
