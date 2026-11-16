@@ -333,7 +333,7 @@ curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/jso
 # {"data":{"result":"clockedIn","user":{"id":"...","name":"..."}}}
 ```
 
-`uid` is 4–10 bytes of hex, in any case and optionally split by spaces, colons or dashes. `result` is:
+`uid` is 4–10 bytes of hex, in any case and optionally split by spaces, colons or dashes, or 8–20 decimal digits as many USB readers type it (kept as is, so a card read in hex by another reader won't match). `result` is:
 
 | `result` | Meaning |
 | --- | --- |

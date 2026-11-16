@@ -387,7 +387,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "uid": { "type": "string", "description": "Card UID as 4-10 bytes of hex, any case, optionally split by spaces, colons or dashes", "example": "04:A1:B2:C3:D4:E5:F6" }
+                  "uid": { "type": "string", "description": "Card UID as 4-10 bytes of hex, any case, optionally split by spaces, colons or dashes, or as 8-20 decimal digits", "example": "04:A1:B2:C3:D4:E5:F6" }
                 },
                 "required": ["uid"]
               }

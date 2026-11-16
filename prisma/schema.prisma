@@ -52,7 +52,7 @@ model Card {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @db.ObjectId
 
-  // The card's UID as uppercase hex, e.g. `04A1B2C3D4E5F6`.
+  // The card's UID as uppercase hex, e.g. `04A1B2C3D4E5F6`, or the decimal digits a reader typed.
   uid String @unique
 
   @@index([userId])

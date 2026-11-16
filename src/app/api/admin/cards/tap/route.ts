@@ -20,7 +20,7 @@ export const POST = withApiErrors(async (req: NextRequest) => {
   const raw = (body as { uid?: unknown } | null)?.uid;
   const uid = typeof raw === "string" ? normalizeUid(raw) : null;
   if (!uid) {
-    return apiError("invalid_request", "uid must be the card UID in hex (4–10 bytes)");
+    return apiError("invalid_request", "uid must be the card UID in hex (4–10 bytes) or decimal (8–20 digits)");
   }
 
   const tap = await tapCard(uid);
