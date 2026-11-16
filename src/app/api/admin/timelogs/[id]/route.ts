@@ -3,7 +3,7 @@ import * as z from "zod";
 
 import { apiError, withApiErrors } from "@/lib/api-error";
 import { verifyApiKey } from "@/lib/admin-api-auth";
-import { adminDeleteTimeLog, adminGetTimeLog, adminUpdateTimeLog } from "@/lib/data/timelog-dto";
+import { adminDeleteTimeLog, adminGetTimeLog, adminUpdateTimeLog, AlreadyClockedInError } from "@/lib/data/timelog-dto";
 import { objectIdSchema } from "@/lib/objectid";
 
 const updateSchema = z.object({
@@ -73,6 +73,10 @@ export const PUT = withApiErrors(async (req: NextRequest, { params }: RouteParam
 
     if (isKnownValidationError(e)) {
       return apiError("invalid_request", e.message);
+    }
+
+    if (e instanceof AlreadyClockedInError) {
+      return apiError("conflict", "The user already has a currently in time log");
     }
 
     if (e instanceof Error && "code" in e) {

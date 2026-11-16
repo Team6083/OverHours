@@ -252,38 +252,50 @@ const MAX_CLOCK_IN_ATTEMPTS = 3;
 // A write conflict, or two first-time lock inserts for the same user hitting the unique index.
 const CLOCK_IN_CONFLICTS = new Set(["P2034", "P2002"]);
 
+/**
+ * Writes a log that leaves `userId` clocked in, refusing if they already have another open log. Writing the user's
+ * lock first makes two such writes for the same user conflict, so only one gets through; the other's retry then
+ * finds it. `keepId` is the log being edited, which doesn't count as another one.
+ */
+async function writeOpenLog(
+  userId: string,
+  write: (tx: Prisma.TransactionClient) => Promise<TimeLog>,
+  keepId?: string,
+): Promise<TimeLog> {
+  const otherOpen = { userId, status: "CurrentlyIn" as const, ...(keepId ? { id: { not: keepId } } : {}) };
+
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        if (await tx.user.count({ where: { id: userId } }) === 0) throw new Error("User not found");
+        await tx.clockInLock.upsert({ where: { userId }, create: { userId }, update: { updatedAt: new Date() } });
+
+        if (await tx.timeLog.findFirst({ where: otherOpen, select: { id: true } })) {
+          throw new AlreadyClockedInError("User already has a currently in time log");
+        }
+
+        return write(tx);
+      });
+    } catch (error) {
+      if (!CLOCK_IN_CONFLICTS.has(String((error as { code?: unknown } | null)?.code))) throw error;
+      if (attempt < MAX_CLOCK_IN_ATTEMPTS) continue;
+      // Still conflicting: if another clock-in won, say so like any second clock-in.
+      if (await prisma.timeLog.count({ where: otherOpen }) > 0) {
+        throw new AlreadyClockedInError("User already has a currently in time log");
+      }
+      throw error;
+    }
+  }
+}
+
 export async function clockIn(userId: string): Promise<TimeLogDTO> {
   const session = await auth();
   if (session?.user.id !== userId && session?.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized");
   }
 
-  for (let attempt = 1; ; attempt++) {
-    try {
-      const newTimeLog = await prisma.$transaction(async (tx) => {
-        if (await tx.user.count({ where: { id: userId } }) === 0) throw new Error("User not found");
-        // Writing the user's lock first makes two clock-ins for the same user conflict, so only one creates a log;
-        // the other's retry then finds it.
-        await tx.clockInLock.upsert({ where: { userId }, create: { userId }, update: { updatedAt: new Date() } });
-
-        const existingTimeLog = await tx.timeLog.findFirst({ where: { userId, status: "CurrentlyIn" }, select: { id: true } });
-        if (existingTimeLog) {
-          throw new AlreadyClockedInError("User already has a currently in time log");
-        }
-
-        return tx.timeLog.create({ data: { userId, status: "CurrentlyIn", inTime: new Date() } });
-      });
-      return prismaTimeLogToDTO(newTimeLog);
-    } catch (error) {
-      if (!CLOCK_IN_CONFLICTS.has(String((error as { code?: unknown } | null)?.code))) throw error;
-      if (attempt < MAX_CLOCK_IN_ATTEMPTS) continue;
-      // Still conflicting: if another clock-in won, say so like any second clock-in.
-      if (await prisma.timeLog.count({ where: { userId, status: "CurrentlyIn" } }) > 0) {
-        throw new AlreadyClockedInError("User already has a currently in time log");
-      }
-      throw error;
-    }
-  }
+  const newTimeLog = await writeOpenLog(userId, tx => tx.timeLog.create({ data: { userId, status: "CurrentlyIn", inTime: new Date() } }));
+  return prismaTimeLogToDTO(newTimeLog);
 }
 
 export async function getTimeLogMinDurationSec(): Promise<number> {
@@ -515,16 +527,17 @@ export async function createTimeLog(data: {
     throw new Error("Out time must be after in time");
   }
 
-  const result = await prisma.timeLog.create({
+  const create = (db: Prisma.TransactionClient) => db.timeLog.create({
     data: {
       userId: data.userId,
       status,
       inTime: data.inTime,
-      outTime: data.outTime,
+      outTime: status === "CurrentlyIn" ? null : data.outTime,
       notes: data.notes,
       ...lockFieldsForStatusChange(null, status, session.user.id),
     }
   });
+  const result = status === "CurrentlyIn" ? await writeOpenLog(data.userId, create) : await create(prisma);
 
   return prismaTimeLogToDTO(result);
 }
@@ -558,17 +571,19 @@ export async function updateTimeLog(timeLogId: string, data: {
 
   const existing = await prisma.timeLog.findUnique({ where: { id: timeLogId }, select: { status: true } });
 
-  const result = await prisma.timeLog.update({
+  const update = (db: Prisma.TransactionClient) => db.timeLog.update({
     where: { id: timeLogId },
     data: {
       userId: data.userId,
       status,
       inTime: data.inTime,
-      outTime: data.outTime,
+      // A log set back to clocked in has no clock-out time yet.
+      outTime: status === "CurrentlyIn" ? null : data.outTime,
       notes: data.notes,
       ...lockFieldsForStatusChange(existing?.status ?? null, status, session.user.id),
     }
   });
+  const result = status === "CurrentlyIn" ? await writeOpenLog(data.userId, update, timeLogId) : await update(prisma);
 
   return prismaTimeLogToDTO(result);
 }
@@ -680,16 +695,17 @@ export async function adminCreateTimeLog(data: {
     throw new Error("Out time must be after in time");
   }
 
-  const result = await prisma.timeLog.create({
+  const create = (db: Prisma.TransactionClient) => db.timeLog.create({
     data: {
       userId: data.userId,
       status,
       inTime: data.inTime,
-      outTime: data.outTime,
+      outTime: status === "CurrentlyIn" ? null : data.outTime,
       notes: data.notes,
       ...lockFieldsForStatusChange(null, status, null),
     },
   });
+  const result = status === "CurrentlyIn" ? await writeOpenLog(data.userId, create) : await create(prisma);
 
   return prismaTimeLogToDTO(result);
 }
@@ -713,17 +729,18 @@ export async function adminUpdateTimeLog(timeLogId: string, data: {
 
   const existing = await prisma.timeLog.findUnique({ where: { id: timeLogId }, select: { status: true } });
 
-  const result = await prisma.timeLog.update({
+  const update = (db: Prisma.TransactionClient) => db.timeLog.update({
     where: { id: timeLogId },
     data: {
       userId: data.userId,
       status,
       inTime: data.inTime,
-      outTime: data.outTime ?? null,
+      outTime: status === "CurrentlyIn" ? null : data.outTime ?? null,
       notes: data.notes ?? null,
       ...lockFieldsForStatusChange(existing?.status ?? null, status, null),
     },
   });
+  const result = status === "CurrentlyIn" ? await writeOpenLog(data.userId, update, timeLogId) : await update(prisma);
 
   return prismaTimeLogToDTO(result);
 }

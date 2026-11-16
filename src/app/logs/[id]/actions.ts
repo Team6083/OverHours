@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import * as z from "zod";
 
-import { createTimeLog, updateTimeLog } from "@/lib/data/timelog-dto";
+import { AlreadyClockedInError, createTimeLog, updateTimeLog } from "@/lib/data/timelog-dto";
 
 const schema = z
   .object({
@@ -70,6 +70,10 @@ export async function formSubmit(state: LogFormState, formData: FormData): Promi
     if (e instanceof z.ZodError) {
       console.log("Validation errors:", e.issues);
       return { issues: e.issues, prevValues: formDataObj as never };
+    }
+    if (e instanceof AlreadyClockedInError) {
+      const message = "This member is already clocked in on another log. Clock that one out first.";
+      return { issues: [{ code: "custom", path: ["status"], message, input: formDataObj.status }], prevValues: formDataObj as never };
     }
     throw e;
   }
