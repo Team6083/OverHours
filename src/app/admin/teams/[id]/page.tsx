@@ -3,6 +3,7 @@ import { Breadcrumb, EmptyState, VStack } from "@chakra-ui/react";
 import { LuSearchX } from "react-icons/lu";
 
 import { getAllTeamDTOs, getTeamMembers } from "@/lib/data/team-dto";
+import { getTeamReminder } from "@/lib/data/team-reminder-dto";
 import { getAllUserNames } from "@/lib/data/user-dto";
 import { getTeamAncestors } from "@/lib/team-tree";
 import TeamDetail from "./TeamDetail";
@@ -29,7 +30,7 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
     );
   }
 
-  const [members, users] = await Promise.all([getTeamMembers(id), getAllUserNames()]);
+  const [members, users, reminder] = await Promise.all([getTeamMembers(id), getAllUserNames(), getTeamReminder(id)]);
   const ancestors = getTeamAncestors(teams, id).reverse();
 
   return <>
@@ -49,6 +50,6 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
       </Breadcrumb.List>
     </Breadcrumb.Root>
 
-    <TeamDetail key={team.id} team={team} teams={teams} members={members} users={users} />
+    {reminder && <TeamDetail key={team.id} team={team} teams={teams} members={members} users={users} reminder={reminder} />}
   </>;
 }
