@@ -31,6 +31,11 @@ export function maskName(name: string): string {
   }
 }
 
+/** `value` if it is a path on this site, else `fallback`, so a link can't send someone to another site after an action. */
+export function safeReturnTo(value: unknown, fallback: string): string {
+  return typeof value === "string" && /^\/(?![/\\])/.test(value) ? value : fallback;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ComponentPropsWithoutChildren<T extends keyof JSX.IntrinsicElements | JSXElementConstructor<any>>
   = Omit<ComponentProps<T>, 'children'>;

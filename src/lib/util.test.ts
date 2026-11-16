@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDuration } from "./util";
+import { formatDuration, safeReturnTo } from "./util";
 
 describe("formatDuration", () => {
   it("keeps seconds by default", () => {
@@ -20,5 +20,18 @@ describe("formatDuration", () => {
   it("still shows seconds under a minute", () => {
     expect(formatDuration(42, { hideSecondsFromMinute: true })).toBe("42s");
     expect(formatDuration(59.9, { hideSecondsFromMinute: true })).toBe("59s");
+  });
+});
+
+describe("safeReturnTo", () => {
+  it("keeps paths on this site", () => {
+    expect(safeReturnTo("/", "/logs")).toBe("/");
+    expect(safeReturnTo("/admin/stat-ranges?x=1", "/logs")).toBe("/admin/stat-ranges?x=1");
+  });
+
+  it("falls back for other sites and anything that isn't a path", () => {
+    for (const bad of ["https://example.com/", "//example.com", "/\\example.com", "javascript:alert(1)", "logs", "", undefined, ["/"]]) {
+      expect(safeReturnTo(bad, "/logs")).toBe("/logs");
+    }
   });
 });

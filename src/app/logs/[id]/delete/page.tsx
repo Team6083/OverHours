@@ -3,6 +3,7 @@ import { Container } from "@chakra-ui/react";
 
 import { deleteTimeLog, getTimelogDTO } from "@/lib/data/timelog-dto";
 import { getUserDTO } from "@/lib/data/user-dto";
+import { safeReturnTo } from "@/lib/util";
 import DeleteTimeLogConfirm from "./DeleteTimeLogConfirm";
 
 export default async function DeleteTimeLogPage(props: {
@@ -13,7 +14,7 @@ export default async function DeleteTimeLogPage(props: {
   const { id } = await params;
   const searchParams = await props.searchParams;
 
-  const returnTo = typeof searchParams.returnTo === "string" ? searchParams.returnTo : "/logs";
+  const returnTo = safeReturnTo(searchParams.returnTo, "/logs");
 
   const timeLogDTO = await getTimelogDTO(id);
   if (!timeLogDTO) {

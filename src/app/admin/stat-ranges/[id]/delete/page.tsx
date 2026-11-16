@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Container } from "@chakra-ui/react";
 
 import { deleteStatRange, getStatRangeDTO } from "@/lib/data/statrange-dto";
+import { safeReturnTo } from "@/lib/util";
 import DeleteStatRangeConfirm from "./DeleteStatRangeConfirm";
 
 export default async function DeleteStatRangePage(props: {
@@ -12,7 +13,7 @@ export default async function DeleteStatRangePage(props: {
   const { id } = await params;
   const searchParams = await props.searchParams;
 
-  const returnTo = typeof searchParams.returnTo === "string" ? searchParams.returnTo : "/admin/stat-ranges";
+  const returnTo = safeReturnTo(searchParams.returnTo, "/admin/stat-ranges");
 
   const statRangeDTO = await getStatRangeDTO(id);
   if (!statRangeDTO) {
