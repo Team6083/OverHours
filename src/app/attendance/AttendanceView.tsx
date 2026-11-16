@@ -65,18 +65,20 @@ export default function AttendanceView(props: {
   board: BoardDay[];
   mine: Record<string, AttendanceStatus>;
   pattern: Partial<Record<number, AttendanceStatus>>;
+  /** The day to show first, when it is in this week (picked on the team calendar). */
+  day?: string;
 }) {
   const { weekStart, today, board, mine } = props;
   const t = useTranslations("Attendance");
   const format = useFormatter();
 
-  const [selected, setSelected] = useState(() => board.some(day => day.date === today) ? today : weekStart);
+  const [selected, setSelected] = useState(() => [props.day, today].find(date => board.some(day => day.date === date)) ?? weekStart);
   const [entries, setEntries] = useState(mine);
   const [isPending, startTransition] = useTransition();
   const saving = useRef(false);
   const router = useRouter();
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
-  const [details, setDetails] = useState<"day" | "week" | null>(null);
+  const [details, setDetails] = useState<"day" | "week" | "month" | null>(null);
   const [pattern, setPattern] = useState(props.pattern);
   const [filling, setFilling] = useState(false);
   const hasAnswers = board.some(({ date }) => entries[date]);
@@ -225,7 +227,12 @@ export default function AttendanceView(props: {
           <Card.Root w="full" size="sm">
             <Card.Header>
               <HStack justify="space-between">
-                <Card.Title>{dayLabel(selectedDay.date)}</Card.Title>
+                <Card.Title>
+                  <Button variant="ghost" size="sm" px={1} fontSize="inherit" fontWeight="inherit" title={t("calendar.openHint")}
+                    onClick={() => setDetails("month")}>
+                    {dayLabel(selectedDay.date)}
+                  </Button>
+                </Card.Title>
                 <Button size="xs" variant="ghost" onClick={() => setDetails("week")}>
                   <LuUsers />{t("findPerson")}
                 </Button>
@@ -257,6 +264,22 @@ export default function AttendanceView(props: {
           groups={details === "week"
             ? [{ key: "everyone", palette: "blue", users: weekUsers }]
             : boardGroups(selectedDay)}
+          monthPick={details === "week" ? undefined : {
+            date: selectedDay.date,
+            startInMonth: details === "month",
+            pick: date => {
+              if (board.some(day => day.date === date)) {
+                setSelected(date);
+                setDetails("day");
+                return;
+              }
+              // Another week: the page for it, asking first if this week has unsaved answers.
+              const href = `/attendance?day=${date}`;
+              setDetails(null);
+              if (dirty) setLeaveTo(href);
+              else router.push(href, { scroll: false });
+            },
+          }}
         />
       </GridItem>
 
