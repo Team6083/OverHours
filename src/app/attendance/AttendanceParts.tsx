@@ -407,9 +407,12 @@ export type DayNav = {
   loading: boolean;
   failed: boolean;
   retry: () => void;
-  /** Open on the team month calendar instead of the day's list (a double-click on the date outside). */
+  /** Open on the team month calendar instead of the day's list (a click on the date outside). */
   startInMonth?: boolean;
 };
+
+/** Lets a day's dialog without day arrows open the team month calendar, from the date in its header. */
+export type MonthPick = { date: string; startInMonth?: boolean; pick: (date: string) => void };
 
 type View =
   | { type: "list" }
@@ -417,12 +420,15 @@ type View =
   | { type: "day"; date: string }
   | { type: "month"; month: string };
 
-function DialogContent(props: { title: string; groups: UserGroup[]; month: string; today: string; dayNav?: DayNav }) {
+function DialogContent(props: {
+  title: string; groups: UserGroup[]; month: string; today: string; dayNav?: DayNav; monthPick?: MonthPick;
+}) {
   const { title, groups, month, today, dayNav } = props;
   const t = useTranslations("Attendance");
   const format = useFormatter();
-  const [stack, setStack] = useState<View[]>(() => dayNav?.startInMonth
-    ? [{ type: "list" }, { type: "month", month: dayNav.date.slice(0, 7) }]
+  const calendar = props.monthPick ?? (dayNav && { date: dayNav.date, startInMonth: dayNav.startInMonth, pick: dayNav.goTo });
+  const [stack, setStack] = useState<View[]>(() => calendar?.startInMonth
+    ? [{ type: "list" }, { type: "month", month: calendar.date.slice(0, 7) }]
     : [{ type: "list" }]);
   // Moving to another day goes back to its list without remounting, so the arrow just clicked keeps focus and the
   // dialog stays open.
@@ -455,10 +461,11 @@ function DialogContent(props: { title: string; groups: UserGroup[]; month: strin
             <IconButton size="xs" variant="ghost" aria-label={t("day.previous")} onClick={() => dayNav.goTo(addDays(dayNav.date, -1))}>
               <LuChevronLeft />
             </IconButton>
-            {/* Double-click (or double-tap) the date for the team's month. */}
-            <Dialog.Title textAlign="center" userSelect="none" title={t("calendar.openHint")}
-              onDoubleClick={() => push({ type: "month", month: dayNav.date.slice(0, 7) })}>
-              {title}
+            <Dialog.Title>
+              <Button variant="ghost" size="sm" px={1} fontSize="inherit" fontWeight="inherit" title={t("calendar.openHint")}
+                onClick={() => push({ type: "month", month: dayNav.date.slice(0, 7) })}>
+                {title}
+              </Button>
             </Dialog.Title>
             <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => dayNav.goTo(addDays(dayNav.date, 1))}>
               <LuChevronRight />
@@ -477,7 +484,16 @@ function DialogContent(props: { title: string; groups: UserGroup[]; month: strin
                 <LuChevronLeft />
               </IconButton>
             )}
-            <Dialog.Title>{view.type === "day" ? dayTitle(view.date) : view.type === "month" ? t("calendar.team") : title}</Dialog.Title>
+            {view.type === "list" && calendar ? (
+              <Dialog.Title>
+                <Button variant="ghost" size="sm" px={1} fontSize="inherit" fontWeight="inherit" title={t("calendar.openHint")}
+                  onClick={() => push({ type: "month", month: calendar.date.slice(0, 7) })}>
+                  {title}
+                </Button>
+              </Dialog.Title>
+            ) : (
+              <Dialog.Title>{view.type === "day" ? dayTitle(view.date) : view.type === "month" ? t("calendar.team") : title}</Dialog.Title>
+            )}
           </HStack>
         )}
       </Dialog.Header>
@@ -496,15 +512,15 @@ function DialogContent(props: { title: string; groups: UserGroup[]; month: strin
             </Box>
           </>
         ))}
-        {view.type === "month" && dayNav && (
+        {view.type === "month" && calendar && (
           <TeamMonthCalendar
             month={view.month}
-            selected={dayNav.date}
+            selected={calendar.date}
             today={today}
             onMonthChange={next => setStack(prev => [...prev.slice(0, -1), { type: "month", month: next }])}
             onSelectDate={date => {
               setStack([{ type: "list" }]);
-              dayNav.goTo(date);
+              calendar.pick(date);
             }}
           />
         )}
@@ -532,8 +548,9 @@ export function UserListDialog(props: {
   today: string;
   onClose: () => void;
   dayNav?: DayNav;
+  monthPick?: MonthPick;
 }) {
-  const { open, title, resetKey, groups, month, today, onClose, dayNav } = props;
+  const { open, title, resetKey, groups, month, today, onClose, dayNav, monthPick } = props;
 
   return (
     <Dialog.Root
@@ -550,7 +567,8 @@ export function UserListDialog(props: {
         <Dialog.Positioner>
           {/* Fixed height so the dialog does not resize when switching between list, calendar and loading. */}
           <Dialog.Content h="min(34rem, 85dvh)">
-            <DialogContent key={dayNav ? "day" : resetKey} title={title} groups={groups} month={month} today={today} dayNav={dayNav} />
+            <DialogContent key={dayNav ? "day" : resetKey} title={title} groups={groups} month={month} today={today} dayNav={dayNav}
+              monthPick={monthPick} />
             <Dialog.CloseTrigger asChild>
               <CloseButton size="sm" />
             </Dialog.CloseTrigger>

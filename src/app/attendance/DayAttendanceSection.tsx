@@ -95,10 +95,9 @@ export default function DayAttendanceSection() {
             <LuChevronLeft />
           </IconButton>
           <HStack gap={2} minW={28} justify="center">
-            {/* Double-click (or double-tap) the date for the team's month. */}
-            <Text fontWeight="medium" userSelect="none" title={t("calendar.openHint")} onDoubleClick={() => openDialog("month")}>
+            <Button variant="ghost" size="sm" px={1} fontWeight="medium" title={t("calendar.openHint")} onClick={() => openDialog("month")}>
               {dayLabel(date)}
-            </Text>
+            </Button>
             {date === today && <Badge colorPalette="blue">{t("today")}</Badge>}
           </HStack>
           <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => goTo(addDays(date, 1))}>
