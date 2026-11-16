@@ -19,7 +19,6 @@ const RESULT_STYLE: Record<Shown["result"], { palette: string; icon: IconType }>
   clockedOut: { palette: "blue", icon: LuLogOut },
   locked: { palette: "orange", icon: LuCircleAlert },
   tooShort: { palette: "orange", icon: LuTimer },
-  tooSoon: { palette: "gray", icon: LuTimer },
   invalid: { palette: "red", icon: LuCircleAlert },
   forbidden: { palette: "red", icon: LuCircleAlert },
   failed: { palette: "red", icon: LuCircleAlert },

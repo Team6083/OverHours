@@ -2,12 +2,11 @@ import "server-only";
 import { randomBytes } from "crypto";
 
 import { auth, Role } from "@/auth";
-import { TAP_COOLDOWN_MS } from "../cards";
 import prisma from "../prisma";
 import { AlreadyClockedInError, AutoLockedError, clockInUser, clockOutUser, NotClockedInError, TimeLogTooShortError } from "./timelog-dto";
 
 export type TapResult =
-  | { result: "clockedIn" | "clockedOut" | "locked" | "tooShort" | "tooSoon"; user: { id: string; name: string } }
+  | { result: "clockedIn" | "clockedOut" | "locked" | "tooShort"; user: { id: string; name: string } }
   | { result: "unbound"; code: string };
 
 /**
@@ -28,13 +27,8 @@ export async function tapCard(uid: string, now = new Date()): Promise<TapResult>
   }
 
   const user = card.user;
-  // Claimed in one conditional write, so two taps arriving together (a reader sending twice) count once.
-  const cutoff = new Date(now.getTime() - TAP_COOLDOWN_MS);
-  const { count } = await prisma.card.updateMany({
-    where: { id: card.id, OR: [{ lastUsedAt: { isSet: false } }, { lastUsedAt: null }, { lastUsedAt: { lte: cutoff } }] },
-    data: { lastUsedAt: now },
-  });
-  if (count === 0) return { result: "tooSoon", user };
+  // Every tap counts; a session that ends too soon is handled like any clock-out (OVERHOURS_TIMELOG_MIN_DURATION_SEC).
+  await prisma.card.update({ where: { id: card.id }, data: { lastUsedAt: now } });
 
   const clockedIn = await prisma.timeLog.findFirst({ where: { userId: user.id, status: "CurrentlyIn" }, select: { id: true } });
   if (!clockedIn) {

@@ -379,7 +379,7 @@
       "post": {
         "tags": ["Cards"],
         "summary": "Report a card tapped on a reader",
-        "description": "Requires the cards:tap permission. A card linked to a user clocks them in, or out if they are clocked in. A card nobody has linked gets a bindUrl that the reader should show, e.g. as a QR code; opening it signed in links the card. Only the latest bindUrl works: the next unlinked tap replaces it. A second tap of the same card within 15 seconds changes nothing (tooSoon).",
+        "description": "Requires the cards:tap permission. A card linked to a user clocks them in, or out if they are clocked in. A card nobody has linked gets a bindUrl that the reader should show, e.g. as a QR code; opening it signed in links the card. Only the latest bindUrl works: the next unlinked tap replaces it. Every tap counts: a clock-out shorter than the minimum session length deletes the session (tooShort).",
         "requestBody": {
           "required": true,
           "content": {
@@ -405,7 +405,7 @@
                     "data": {
                       "type": "object",
                       "properties": {
-                        "result": { "type": "string", "enum": ["clockedIn", "clockedOut", "locked", "tooShort", "tooSoon", "unbound"] },
+                        "result": { "type": "string", "enum": ["clockedIn", "clockedOut", "locked", "tooShort", "unbound"] },
                         "user": {
                           "type": "object",
                           "description": "Present unless result is unbound",

@@ -1,6 +1,3 @@
-/** A second tap of the same card within this long is ignored, so one tap can't clock in and straight back out. */
-export const TAP_COOLDOWN_MS = 15 * 1000;
-
 /**
  * A card UID as readers report it (hex, any case, optionally split by spaces, colons or dashes) turned into
  * uppercase hex, or null when it isn't 4–10 bytes of hex. Many USB readers type the number in decimal instead, so

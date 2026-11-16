@@ -370,7 +370,6 @@
       "clockedOut": "Clocked out",
       "locked": "Past today's cut-off, so this session was locked",
       "tooShort": "Too short, so this session wasn't kept",
-      "tooSoon": "Already tapped just now",
       "invalid": "Couldn't read the card. Try again.",
       "forbidden": "This account can't be used as a card reader",
       "failed": "Something went wrong. Try again."

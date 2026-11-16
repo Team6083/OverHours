@@ -6,7 +6,7 @@ import { maskUid, normalizeUid } from "@/lib/cards";
 import { isCurrentBindCode, tapCard } from "@/lib/data/card-dto";
 
 export type KioskTap =
-  | { result: "clockedIn" | "clockedOut" | "locked" | "tooShort" | "tooSoon"; name: string }
+  | { result: "clockedIn" | "clockedOut" | "locked" | "tooShort"; name: string }
   | { result: "unbound"; card: string; code: string; bindUrl: string }
   | { result: "invalid" | "forbidden" | "failed" };
 

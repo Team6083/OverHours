@@ -33,14 +33,6 @@ vi.mock("../prisma", () => {
       update: async ({ where, data }: { where: { id: string }; data: Partial<CardRow> }) => {
         Object.assign(db.cards.find(c => c.id === where.id)!, data);
       },
-      // Check and write happen in one step, like the database's conditional update.
-      updateMany: async ({ where, data }: { where: { id: string; OR: { lastUsedAt: { lte?: Date } | null }[] }; data: { lastUsedAt: Date } }) => {
-        const found = db.cards.find(c => c.id === where.id);
-        const cutoff = where.OR.map(cond => cond.lastUsedAt).find(cond => cond && "lte" in cond)?.lte;
-        if (!found || (found.lastUsedAt && cutoff && found.lastUsedAt > cutoff)) return { count: 0 };
-        found.lastUsedAt = data.lastUsedAt;
-        return { count: 1 };
-      },
       create: async ({ data }: { data: { uid: string; userId: string } }) => {
         db.cards.push({ id: `c${db.cards.length + 1}`, lastUsedAt: null, createdAt: new Date(), ...data });
       },
@@ -115,22 +107,10 @@ describe("tapCard", () => {
     expect(timelog.clockOutUser).toHaveBeenCalledWith("a");
   });
 
-  it("ignores a second tap within the cooldown", async () => {
+  it("counts a tap right after the last one, and records when the card was used", async () => {
     db.cards = [card("a", NOW)];
-    await expect(tapCard("04A1B2C3", later(5000))).resolves.toMatchObject({ result: "tooSoon" });
-    expect(timelog.clockInUser).not.toHaveBeenCalled();
-  });
-
-  it("counts two taps arriving together once", async () => {
-    db.cards = [card("a")];
-    const results = await Promise.all([tapCard("04A1B2C3", NOW), tapCard("04A1B2C3", NOW)]);
-    expect(results.map(r => r.result).sort()).toEqual(["clockedIn", "tooSoon"]);
-    expect(timelog.clockInUser).toHaveBeenCalledTimes(1);
-  });
-
-  it("accepts a tap again once the cooldown has passed", async () => {
-    db.cards = [card("a", NOW)];
-    await expect(tapCard("04A1B2C3", later(15_000))).resolves.toMatchObject({ result: "clockedIn" });
+    await expect(tapCard("04A1B2C3", later(1000))).resolves.toMatchObject({ result: "clockedIn" });
+    expect(db.cards[0].lastUsedAt).toEqual(later(1000));
   });
 
   it("reports clocked in or out when someone else did it at the same moment", async () => {

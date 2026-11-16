@@ -340,7 +340,6 @@ curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/jso
 | `clockedIn` / `clockedOut` | The card's user was clocked in, or out if they were clocked in. |
 | `locked` | The clock-out came after the daily cut-off, so the session was locked instead (see [Auto-lock](#auto-lock)). |
 | `tooShort` | The session was shorter than `OVERHOURS_TIMELOG_MIN_DURATION_SEC` and was deleted. |
-| `tooSoon` | The same card was tapped less than 15 seconds ago; nothing changed. |
 | `unbound` | The card isn't linked to anyone. The response has a `bindUrl` (on `AUTH_URL`). |
 
 For `unbound`, the reader should show `bindUrl` as a QR code until the next unbound card replaces it; linked cards
