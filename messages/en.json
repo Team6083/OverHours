@@ -365,6 +365,7 @@
     "newCard": "New card {card}",
     "scanToLink": "Scan with your phone and sign in to link this card to your account",
     "useDeviceNfc": "Use this device's NFC",
+    "fullscreen": "Full screen",
     "results": {
       "clockedIn": "Clocked in",
       "clockedOut": "Clocked out",

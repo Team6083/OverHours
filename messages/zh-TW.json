@@ -365,6 +365,7 @@
     "newCard": "新卡片 {card}",
     "scanToLink": "用手機掃描並登入，就能把這張卡綁到你的帳號",
     "useDeviceNfc": "使用這台裝置的 NFC",
+    "fullscreen": "全螢幕",
     "results": {
       "clockedIn": "已簽到",
       "clockedOut": "已簽退",

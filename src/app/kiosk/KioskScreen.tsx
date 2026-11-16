@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useFormatter, useNow, useTranslations } from "next-intl";
 import { Box, Button, Center, Flex, Heading, Stack, Text } from "@chakra-ui/react";
 import { IconType } from "react-icons";
-import { LuCircleAlert, LuLogIn, LuLogOut, LuNfc, LuSmartphoneNfc, LuTimer } from "react-icons/lu";
+import { LuCircleAlert, LuLogIn, LuLogOut, LuMaximize, LuNfc, LuSmartphoneNfc, LuTimer } from "react-icons/lu";
 import QRCode from "qrcode";
 
 import { KioskTap, kioskBindCodeActive, kioskTap } from "./actions";
@@ -50,6 +50,14 @@ const noSubscribe = () => () => { };
 /** Web NFC is only in Android Chrome; false while rendering on the server. */
 const useHasWebNfc = () => useSyncExternalStore(noSubscribe, () => "NDEFReader" in window, () => false);
 
+const onFullscreenChange = (callback: () => void) => {
+  document.addEventListener("fullscreenchange", callback);
+  return () => document.removeEventListener("fullscreenchange", callback);
+};
+/** Whether the page could go full screen now (supported, and not already). */
+const useCanGoFullscreen = () =>
+  useSyncExternalStore(onFullscreenChange, () => document.fullscreenEnabled && !document.fullscreenElement, () => false);
+
 /**
  * The card reader screen. A USB reader that types the UID followed by Enter works as is; on Android Chrome with NFC,
  * the "Use this device's NFC" button reads cards with Web NFC instead. Use one kind of reader: the two may report the
@@ -65,6 +73,7 @@ export default function KioskScreen() {
   const [linked, setLinked] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const hasWebNfc = useHasWebNfc();
+  const canGoFullscreen = useCanGoFullscreen();
   const [nfcOn, setNfcOn] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const resultTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -196,6 +205,13 @@ export default function KioskScreen() {
       {hasWebNfc && !nfcOn && (
         <Button position="absolute" bottom={4} left={4} size="sm" variant="outline" onClick={startNfc}>
           <LuSmartphoneNfc />{t("useDeviceNfc")}
+        </Button>
+      )}
+      {/* Hides the browser's bars on a tablet; Back leaves full screen. */}
+      {canGoFullscreen && (
+        <Button position="absolute" bottom={4} right={4} size="sm" variant="outline"
+          onClick={() => void document.documentElement.requestFullscreen().catch(() => {})}>
+          <LuMaximize />{t("fullscreen")}
         </Button>
       )}
     </Box>
