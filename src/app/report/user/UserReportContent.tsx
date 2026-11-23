@@ -80,11 +80,11 @@ export default function UserReportContent({
         key: new Date(d.date).toISOString().slice(0, 10),
         label: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }),
         totalMs: d.totalMs,
-        sessions: d.sessions,
+        sessions: d.sessionIds.length,
       }));
     }
 
-    const map = new Map<string, { label: string; totalMs: number; sessions: number }>();
+    const map = new Map<string, { label: string; totalMs: number; sessionIds: Set<string> }>();
     for (const d of reportData.dailyBreakdown) {
       const date = new Date(d.date);
       let key: string, label: string;
@@ -102,12 +102,14 @@ export default function UserReportContent({
         label = key;
       }
       const existing = map.get(key);
-      if (existing) { existing.totalMs += d.totalMs; existing.sessions += d.sessions; }
-      else map.set(key, { label, totalMs: d.totalMs, sessions: d.sessions });
+      const group = map.get(key) ?? { label, totalMs: 0, sessionIds: new Set<string>() };
+      group.totalMs += d.totalMs;
+      d.sessionIds.forEach(id => group.sessionIds.add(id));
+      map.set(key, group);
     }
     return Array.from(map.entries())
       .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([key, data]) => ({ key, ...data }));
+      .map(([key, { label, totalMs, sessionIds }]) => ({ key, label, totalMs, sessions: sessionIds.size }));
   }, [reportData, groupBy]);
 
   // Year range derived from data

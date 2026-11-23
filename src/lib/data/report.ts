@@ -352,7 +352,8 @@ export type UserReportSession = {
 
 export type UserReportData = {
   sessions: UserReportSession[];
-  dailyBreakdown: { date: Date; totalMs: number; sessions: number }[];
+  // A session crossing midnight is on each day it touches, so groups of days count its id once.
+  dailyBreakdown: { date: Date; totalMs: number; sessionIds: string[] }[];
   stats: {
     totalMs: number;
     totalSessions: number;
@@ -426,15 +427,15 @@ export async function getUserReportData(
   // Daily breakdown (Done sessions only) by calendar date in TZ. A session is split at midnight, and only its part
   // within the selected period counts.
   const timeZone = getTimeZone();
-  const dailyMap = new Map<string, { totalMs: number; sessions: number }>();
+  const dailyMap = new Map<string, { totalMs: number; sessionIds: string[] }>();
   let totalMs = 0;
   for (const s of doneSessions) {
     const from = new Date(Math.max(s.inTime.getTime(), start?.getTime() ?? -Infinity));
     const to = new Date(Math.min(s.outTime!.getTime(), end?.getTime() ?? Infinity));
     for (const piece of splitByDay(from, to, timeZone)) {
-      const existing = dailyMap.get(piece.date) ?? { totalMs: 0, sessions: 0 };
+      const existing = dailyMap.get(piece.date) ?? { totalMs: 0, sessionIds: [] };
       existing.totalMs += piece.ms;
-      existing.sessions += 1;
+      existing.sessionIds.push(s.id);
       dailyMap.set(piece.date, existing);
       totalMs += piece.ms;
     }
