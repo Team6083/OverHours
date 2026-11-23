@@ -236,6 +236,8 @@ function UserListView(props: { groups: UserGroup[]; onSelectUser: (user: BoardUs
         size="sm"
         type="search"
         autoFocus={autoFocus}
+        // The dialog picks its first focus itself (`[data-autofocus]`, else the first button), after React's autoFocus.
+        {...(autoFocus && { "data-autofocus": "" })}
         value={query}
         placeholder={t("searchPlaceholder")}
         aria-label={t("searchPlaceholder")}
@@ -353,7 +355,7 @@ function DialogContent(props: { title: string; groups: UserGroup[]; month: strin
             <IconButton size="xs" variant="ghost" aria-label={t("day.previous")} onClick={() => dayNav.goTo(addDays(dayNav.date, -1))}>
               <LuChevronLeft />
             </IconButton>
-            <Dialog.Title textAlign="center">{title}</Dialog.Title>
+            <Dialog.Title>{title}</Dialog.Title>
             <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => dayNav.goTo(addDays(dayNav.date, 1))}>
               <LuChevronRight />
             </IconButton>
