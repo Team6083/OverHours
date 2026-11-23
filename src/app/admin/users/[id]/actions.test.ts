@@ -18,17 +18,25 @@ const form = (fields: Record<string, string>) => {
 beforeEach(() => vi.clearAllMocks());
 
 describe("user formSubmit", () => {
-  it("shows an email that another user has as a field error instead of failing", async () => {
-    const taken = Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
-    user.createUser.mockRejectedValue(taken);
-    user.updateUser.mockRejectedValue(taken);
+  const taken = Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
+  const emailTaken = [expect.objectContaining({ path: ["email"], message: "Another user already has this email." })];
 
-    const cases: Record<string, string>[] = [{ name: "A", email: "a@example.com" }, { id: "u1", name: "A", email: "a@example.com" }];
-    for (const fields of cases) {
-      const state = await formSubmit({}, form(fields));
-      expect(state.issues).toEqual([expect.objectContaining({ path: ["email"], message: "Another user already has this email." })]);
-      expect(state.prevValues).toMatchObject(fields);
-    }
+  it("shows an email another user has as a field error on create", async () => {
+    user.createUser.mockRejectedValue(taken);
+    const fields = { name: "A", email: "a@example.com" };
+
+    const state = await formSubmit({}, form(fields));
+    expect(state.issues).toEqual(emailTaken);
+    expect(state.prevValues).toMatchObject(fields);
+  });
+
+  it("shows an email another user has as a field error on edit", async () => {
+    user.updateUser.mockRejectedValue(taken);
+    const fields = { id: "u1", name: "A", email: "a@example.com" };
+
+    const state = await formSubmit({}, form(fields));
+    expect(state.issues).toEqual(emailTaken);
+    expect(state.prevValues).toMatchObject(fields);
   });
 
   it("still fails on other errors", async () => {
