@@ -333,6 +333,8 @@ function UserListView(props: { groups: UserGroup[]; onSelectUser: (user: BoardUs
         size="sm"
         type="search"
         autoFocus={autoFocus}
+        // The dialog picks its first focus itself (`[data-autofocus]`, else the first button), after React's autoFocus.
+        {...(autoFocus && { "data-autofocus": "" })}
         value={query}
         placeholder={t("searchPlaceholder")}
         aria-label={t("searchPlaceholder")}
