@@ -13,7 +13,7 @@ import { saveTeamReminderAction } from "../actions";
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 
-/** `teams`: the teams whose members may be exempted (every team but this one). */
+/** `teams`: the teams whose members may be exempted (every team but this one and its ancestors). */
 export default function ReminderForm(props: { reminder: TeamReminderDTO; teams: { id: string; name: string }[] }) {
   const { reminder, teams } = props;
   const t = useTranslations("TeamReminders");
