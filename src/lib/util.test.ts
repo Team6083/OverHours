@@ -29,9 +29,16 @@ describe("safeReturnTo", () => {
     expect(safeReturnTo("/admin/stat-ranges?x=1", "/logs")).toBe("/admin/stat-ranges?x=1");
   });
 
-  it("falls back for other sites and anything that isn't a path", () => {
-    for (const bad of ["https://example.com/", "//example.com", "/\\example.com", "javascript:alert(1)", "logs", "", undefined, ["/"]]) {
-      expect(safeReturnTo(bad, "/logs")).toBe("/logs");
-    }
+  it("keeps spaces in a path", () => {
+    expect(safeReturnTo("/report?name=a b", "/logs")).toBe("/report?name=a b");
+  });
+
+  // A URL parser drops tab, LF and CR, so "/\t//evil.com" resolves to evil.com.
+  it.each([
+    "https://example.com/", "//example.com", "///example.com", "/\\example.com",
+    "/\t//example.com", "/\n//example.com", "/\r//example.com", "/logs\u0000",
+    "javascript:alert(1)", "logs", "", undefined, ["/"],
+  ])("falls back for %j", bad => {
+    expect(safeReturnTo(bad, "/logs")).toBe("/logs");
   });
 });

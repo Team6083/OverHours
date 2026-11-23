@@ -31,9 +31,12 @@ export function maskName(name: string): string {
   }
 }
 
-/** `value` if it is a path on this site, else `fallback`, so a link can't send someone to another site after an action. */
+/**
+ * `value` if it is a path on this site, else `fallback`, so a link can't send someone to another site after an action.
+ * Control characters are refused too: a URL parser drops tab, LF and CR, which would turn "/\t//host" into "//host".
+ */
 export function safeReturnTo(value: unknown, fallback: string): string {
-  return typeof value === "string" && /^\/(?![/\\])/.test(value) ? value : fallback;
+  return typeof value === "string" && /^\/(?![/\\])[^\x00-\x1f\x7f]*$/.test(value) ? value : fallback;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
