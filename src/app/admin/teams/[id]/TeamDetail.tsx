@@ -4,13 +4,13 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Avatar, Badge, Button, ButtonGroup, Card, CloseButton, DataList, Dialog, Editable, HStack, Heading, IconButton,
+  Badge, Button, ButtonGroup, Card, CloseButton, DataList, Dialog, Editable, HStack, Heading, IconButton,
   Input, NativeSelect, Portal, Stack, Table, Text,
 } from "@chakra-ui/react";
 import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
 
 import UserCombobox from "@/components/user/UserCombobox";
-import { InfoTip, toaster } from "@team6083/ui";
+import { InfoTip, MemberAvatar, toaster } from "@team6083/ui";
 import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
 import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";
 import { parseAutoJoinRoles } from "@/lib/team-roles";
@@ -241,10 +241,7 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
                   <Table.Row key={member.id}>
                     <Table.Cell>
                       <HStack flexWrap="wrap">
-                        <Avatar.Root size="xs">
-                          <Avatar.Fallback name={member.name} />
-                          {member.image && <Avatar.Image src={member.image} />}
-                        </Avatar.Root>
+                        <MemberAvatar name={member.name} image={member.image} size="xs" />
                         <Text>{member.name}</Text>
                         {member.viaTeams.map(via => (
                           <Badge key={via.id} asChild size="sm" variant="outline">
