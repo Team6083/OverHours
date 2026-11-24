@@ -374,5 +374,10 @@
     "brokenPromises": "說會來沒來",
     "unexpected": "說不能來卻來了",
     "empty": "這段期間沒有填答可以比對"
+  },
+  "NotFoundPage": {
+    "title": "找不到這個頁面",
+    "description": "連結可能有誤，或頁面已經移走了。",
+    "backHome": "回到首頁"
   }
 }

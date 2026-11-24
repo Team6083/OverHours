@@ -374,5 +374,10 @@
     "brokenPromises": "Said will come, didn't",
     "unexpected": "Said can't come, came",
     "empty": "No answers to compare in this range"
+  },
+  "NotFoundPage": {
+    "title": "Page not found",
+    "description": "The link may be wrong, or the page may have moved.",
+    "backHome": "Back to home"
   }
 }
