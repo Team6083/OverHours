@@ -8,7 +8,7 @@ import {
 } from "@chakra-ui/react";
 
 import { IconType } from "react-icons";
-import { LuCalendarSync, LuCheck, LuCheckCheck, LuCopy, LuSave, LuUsers, LuWandSparkles, LuX } from "react-icons/lu";
+import { LuCalendarDays, LuCalendarSync, LuCheck, LuCheckCheck, LuCopy, LuSave, LuUsers, LuWandSparkles, LuX } from "react-icons/lu";
 
 import { toaster } from "@/components/ui/toaster";
 import {
@@ -65,7 +65,7 @@ export default function AttendanceView(props: {
   board: BoardDay[];
   mine: Record<string, AttendanceStatus>;
   pattern: Partial<Record<number, AttendanceStatus>>;
-  /** The day to show first, when it is in this week (picked on the team calendar). */
+  /** The day to show first, when it is in this week (picked on the month overview). */
   day?: string;
 }) {
   const { weekStart, today, board, mine } = props;
@@ -227,12 +227,12 @@ export default function AttendanceView(props: {
           <Card.Root w="full" size="sm">
             <Card.Header>
               <HStack justify="space-between">
-                <Card.Title>
-                  <Button variant="ghost" size="sm" px={1} fontSize="inherit" fontWeight="inherit" title={t("calendar.openHint")}
-                    onClick={() => setDetails("month")}>
-                    {dayLabel(selectedDay.date)}
-                  </Button>
-                </Card.Title>
+                <HStack gap={1}>
+                  <Card.Title>{dayLabel(selectedDay.date)}</Card.Title>
+                  <IconButton size="xs" variant="ghost" aria-label={t("calendar.openHint")} onClick={() => setDetails("month")}>
+                    <LuCalendarDays />
+                  </IconButton>
+                </HStack>
                 <Button size="xs" variant="ghost" onClick={() => setDetails("week")}>
                   <LuUsers />{t("findPerson")}
                 </Button>

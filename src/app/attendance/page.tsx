@@ -6,8 +6,7 @@ import MyReliability from "./MyReliability";
 const RELIABILITY_DAYS = 30;
 
 export default async function AttendancePage(props: { searchParams: Promise<{ week?: string; day?: string }> }) {
-  const { week } = await props.searchParams;
-  const day = (await props.searchParams).day;
+  const { week, day } = await props.searchParams;
   const dayValid = day && isCalendarDate(day) ? day : undefined;
 
   const today = getToday();

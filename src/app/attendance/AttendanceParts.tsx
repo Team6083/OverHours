@@ -4,7 +4,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import {
   Avatar, AvatarGroup, Badge, Box, Button, CloseButton, Dialog, HStack, IconButton, Input, Portal, SimpleGrid, Spinner, Stack, Text,
 } from "@chakra-ui/react";
-import { LuCheck, LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { LuCalendarDays, LuCheck, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 import { useRankOf } from "@/components/TopRanks";
 import UserAvatar from "@/components/UserAvatar";
@@ -96,19 +96,15 @@ export type UserGroup = { key: AttendanceStatus | "everyone"; palette: string; u
 export const boardGroups = (day: BoardDay): UserGroup[] =>
   ATTENDANCE_STATUSES.map(status => ({ key: status, palette: STATUS_PALETTE[status], users: day[status] }));
 
-/**
- * The team's month: each day shows its team events above the date (none yet: the slot is kept for them) and how many
- * answered will come - if needed - can't come below it. Picking a day goes to its list.
- */
-function TeamMonthCalendar(props: {
+/** A month of attendance: each day shows how many answered will come - if needed - can't come. Picking a day goes to its list. */
+function MonthOverview(props: {
   month: string;
   selected: string;
   today: string;
-  events?: Record<string, string[]>;
   onMonthChange: (month: string) => void;
   onSelectDate: (date: string) => void;
 }) {
-  const { month, selected, today, events = {}, onMonthChange, onSelectDate } = props;
+  const { month, selected, today, onMonthChange, onSelectDate } = props;
   const t = useTranslations("Attendance");
   const format = useFormatter();
 
@@ -149,9 +145,8 @@ function TeamMonthCalendar(props: {
         {Array.from({ length: offset }, (_, index) => <Box key={`blank-${index}`} />)}
         {dates.map(date => {
           const day = counts?.[date];
-          const event = events[date]?.join("、");
           const label = [
-            date, event,
+            date,
             day && t("calendar.counts", { willCome: day.WILL_COME, available: day.AVAILABLE, unavailable: day.UNAVAILABLE }),
           ].filter(Boolean).join(" ");
 
@@ -172,7 +167,6 @@ function TeamMonthCalendar(props: {
               _hover={{ borderColor: "blue.solid" }}
             >
               <Stack gap={0} align="center" w="full" minW={0}>
-                <Text fontSize="2xs" lineHeight="1rem" h="1rem" color="orange.fg" truncate w="full" textAlign="center">{event}</Text>
                 <Text fontSize="sm" lineHeight="1.25rem" fontWeight={date === today ? "bold" : "normal"} color={date === today ? "blue.fg" : undefined}>
                   {Number(date.slice(8))}
                 </Text>
@@ -463,12 +457,11 @@ function DialogContent(props: {
             <IconButton size="xs" variant="ghost" aria-label={t("day.previous")} onClick={() => dayNav.goTo(addDays(dayNav.date, -1))}>
               <LuChevronLeft />
             </IconButton>
-            <Dialog.Title>
-              <Button variant="ghost" size="sm" px={1} fontSize="inherit" fontWeight="inherit" title={t("calendar.openHint")}
-                onClick={() => push({ type: "month", month: dayNav.date.slice(0, 7) })}>
-                {title}
-              </Button>
-            </Dialog.Title>
+            <Dialog.Title>{title}</Dialog.Title>
+            <IconButton size="xs" variant="ghost" aria-label={t("calendar.openHint")}
+              onClick={() => push({ type: "month", month: dayNav.date.slice(0, 7) })}>
+              <LuCalendarDays />
+            </IconButton>
             <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => dayNav.goTo(addDays(dayNav.date, 1))}>
               <LuChevronRight />
             </IconButton>
@@ -487,14 +480,15 @@ function DialogContent(props: {
               </IconButton>
             )}
             {view.type === "list" && calendar ? (
-              <Dialog.Title>
-                <Button variant="ghost" size="sm" px={1} fontSize="inherit" fontWeight="inherit" title={t("calendar.openHint")}
+              <>
+                <Dialog.Title>{title}</Dialog.Title>
+                <IconButton size="xs" variant="ghost" aria-label={t("calendar.openHint")}
                   onClick={() => push({ type: "month", month: calendar.date.slice(0, 7) })}>
-                  {title}
-                </Button>
-              </Dialog.Title>
+                  <LuCalendarDays />
+                </IconButton>
+              </>
             ) : (
-              <Dialog.Title>{view.type === "day" ? dayTitle(view.date) : view.type === "month" ? t("calendar.team") : title}</Dialog.Title>
+              <Dialog.Title>{view.type === "day" ? dayTitle(view.date) : view.type === "month" ? t("calendar.month") : title}</Dialog.Title>
             )}
           </HStack>
         )}
@@ -515,7 +509,7 @@ function DialogContent(props: {
           </>
         ))}
         {view.type === "month" && calendar && (
-          <TeamMonthCalendar
+          <MonthOverview
             month={view.month}
             selected={calendar.date}
             today={today}

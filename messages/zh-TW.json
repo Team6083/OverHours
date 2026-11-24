@@ -270,7 +270,7 @@
       "previousMonth": "上個月",
       "nextMonth": "下個月",
       "loadFailed": "無法載入這個月份",
-      "team": "團隊月曆",
+      "month": "整月出席",
       "openHint": "看整個月",
       "counts": "會來 {willCome}、可以 {available}、不能來 {unavailable}"
     },

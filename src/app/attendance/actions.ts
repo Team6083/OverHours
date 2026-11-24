@@ -55,7 +55,7 @@ export async function getBoardDay(date: string): Promise<{ ok: true; day: BoardD
   }
 }
 
-/** Per-day answer counts for a month, for the team calendar. */
+/** Per-day answer counts for a month, for the month overview. */
 export async function getBoardMonth(month: string): Promise<{ ok: true; counts: MonthCounts } | { ok: false }> {
   if (!isMonth(month)) return { ok: false };
 

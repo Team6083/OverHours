@@ -270,7 +270,7 @@
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
       "loadFailed": "Could not load this month",
-      "team": "Team calendar",
+      "month": "Month overview",
       "openHint": "Open the month",
       "counts": "{willCome} will come, {available} if needed, {unavailable} can't come"
     },
