@@ -1,4 +1,5 @@
-import { Heading, DataList, HStack, ButtonGroup, Button, Icon, Text } from "@chakra-ui/react";
+import { Heading, HStack, ButtonGroup, Button, Icon, Text } from "@chakra-ui/react";
+import { FactList } from "@team6083/ui";
 import { LuTrash2 } from "react-icons/lu";
 
 import { UserDTO } from "@/lib/data/user-dto";
@@ -13,20 +14,11 @@ export default function DeleteUserConfirm(props: {
   return <>
     <Heading as="h2" size="md" mb={4}>Confirm Deletion</Heading>
 
-    <DataList.Root orientation="horizontal" mb={4}>
-      <DataList.Item>
-        <DataList.ItemLabel>User ID</DataList.ItemLabel>
-        <DataList.ItemValue>{user.id}</DataList.ItemValue>
-      </DataList.Item>
-      <DataList.Item>
-        <DataList.ItemLabel>Name</DataList.ItemLabel>
-        <DataList.ItemValue>{user.name}</DataList.ItemValue>
-      </DataList.Item>
-      <DataList.Item>
-        <DataList.ItemLabel>Email</DataList.ItemLabel>
-        <DataList.ItemValue>{user.email}</DataList.ItemValue>
-      </DataList.Item>
-    </DataList.Root>
+    <FactList mb={4} items={[
+      { label: "User ID", value: user.id },
+      { label: "Name", value: user.name },
+      { label: "Email", value: user.email },
+    ]} />
 
     <Text fontWeight="medium" color="fg.warning" mb={4}>Are you sure you want to delete this user?</Text>
 
