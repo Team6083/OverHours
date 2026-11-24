@@ -1,36 +1,24 @@
 import Link from "next/link";
-import { Button, ButtonGroup, Container, EmptyState, GridItem, SimpleGrid, VStack } from "@chakra-ui/react";
-import { LuShieldAlert } from "react-icons/lu";
+import { getTranslations } from "next-intl/server";
+import { Button, Container, GridItem, SimpleGrid } from "@chakra-ui/react";
+import { NoAccessPage } from "@team6083/ui";
 
-import { auth, Role, signIn } from "@/auth";
+import { auth, Role } from "@/auth";
+import { redirectToSignIn } from "@/lib/require-sign-in";
 import ReportMenu from "./ReportMenu";
 
 export default async function ReportLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  if (!session) return redirectToSignIn();
 
-  if (!session || session.user.role !== Role.ADMIN) {
+  if (session.user.role !== Role.ADMIN) {
+    const t = await getTranslations("AccessDenied");
     return (
-      <EmptyState.Root>
-        <EmptyState.Content>
-          <EmptyState.Indicator>
-            <LuShieldAlert />
-          </EmptyState.Indicator>
-          <VStack textAlign="center">
-            <EmptyState.Title>{session ? "Forbidden" : "Unauthorized"}</EmptyState.Title>
-            <EmptyState.Description>
-              {session ? "You do not have access to this page." : "You must be signed in to view this page."}
-            </EmptyState.Description>
-          </VStack>
-          <ButtonGroup>
-            <Button variant="outline" asChild><Link href="/">Back to Home</Link></Button>
-            {!session && <Button
-              onClick={async () => {
-                "use server";
-                return signIn("keycloak");
-              }}>Sign-in</Button>}
-          </ButtonGroup>
-        </EmptyState.Content>
-      </EmptyState.Root>
+      <NoAccessPage
+        title={t("adminOnly.title")}
+        description={t("adminOnly.description")}
+        actions={<Button variant="outline" asChild><Link href="/">{t("backHome")}</Link></Button>}
+      />
     );
   }
 
