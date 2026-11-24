@@ -1,4 +1,5 @@
-import { EmptyState, Heading, HStack, SimpleGrid, Stat, Table, Text, VStack } from "@chakra-ui/react";
+import { Heading, HStack, SimpleGrid, Stat, Table, Text, VStack } from "@chakra-ui/react";
+import { EmptyState } from "@team6083/ui";
 import { LuCalendarCheck } from "react-icons/lu";
 import { getTranslations } from "next-intl/server";
 
@@ -43,12 +44,7 @@ export default async function ReliabilityReport(props: { searchParams: Promise<{
     <Text fontSize="sm" color="fg.muted" mb={6}>{t("description")}</Text>
 
     {rows.length === 0 ? (
-      <EmptyState.Root>
-        <EmptyState.Content>
-          <EmptyState.Indicator><LuCalendarCheck /></EmptyState.Indicator>
-          <EmptyState.Title>{t("empty")}</EmptyState.Title>
-        </EmptyState.Content>
-      </EmptyState.Root>
+      <EmptyState icon={<LuCalendarCheck />} title={t("empty")} />
     ) : <>
       <SimpleGrid columns={{ base: 3 }} gap={4} mb={6}>
         <Stat.Root>

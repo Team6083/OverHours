@@ -1,8 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Badge, Button, Center, EmptyState, Heading, HStack, IconButton, Input, Spinner, Stat, Table, Text, VStack,
+  Badge, Button, Center, Heading, HStack, IconButton, Input, Spinner, Stat, Table, Text, VStack,
 } from "@chakra-ui/react";
+import { EmptyState } from "@team6083/ui";
 import { LuDownload, LuLock, LuRefreshCcw } from "react-icons/lu";
 import { useTranslations } from "next-intl";
 
@@ -143,12 +144,7 @@ export default function LockedReportContent(props: { autoLockTime?: string; time
           </Table.Root>
         </Table.ScrollArea>
       </> : (
-        <EmptyState.Root>
-          <EmptyState.Content>
-            <EmptyState.Indicator><LuLock /></EmptyState.Indicator>
-            <EmptyState.Title>{rows ? t("empty") : t("loadFailed")}</EmptyState.Title>
-          </EmptyState.Content>
-        </EmptyState.Root>
+        <EmptyState icon={<LuLock />} title={rows ? t("empty") : t("loadFailed")} />
       )
     )}
   </>);

@@ -3,7 +3,7 @@ import React, { createContext, useContext, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import {
-  Badge, ButtonGroup, CloseButton, EmptyState, HStack, Icon, IconButton, Input, InputGroup,
+  Badge, ButtonGroup, CloseButton, HStack, Icon, IconButton, Input, InputGroup,
   Menu, Pagination, Portal, Spinner, Stack, Table, useFilter, usePaginationContext, VStack
 } from "@chakra-ui/react";
 import {
@@ -12,7 +12,7 @@ import {
 } from "react-icons/lu";
 
 import { useRankOf } from "@/components/ranking/TopRanks";
-import { Tooltip } from "@team6083/ui";
+import { EmptyState, type EmptyStateProps, Tooltip } from "@team6083/ui";
 import UserAvatar from "@/components/user/UserAvatar";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 
@@ -149,17 +149,12 @@ export function CurrentlyClockedInTable(props: {
 
   if (filteredLogs.length === 0) {
     return (
-      <EmptyState.Root size="sm">
-        <EmptyState.Content>
-          <EmptyState.Indicator>
-            <LuSearchSlash />
-          </EmptyState.Indicator>
-          <VStack textAlign="center">
-            <EmptyState.Title>{t("emptyStates.noSearchResults.title")}</EmptyState.Title>
-            <EmptyState.Description>{t("emptyStates.noSearchResults.description")}</EmptyState.Description>
-          </VStack>
-        </EmptyState.Content>
-      </EmptyState.Root>
+      <EmptyState
+        size="sm"
+        icon={<LuSearchSlash />}
+        title={t("emptyStates.noSearchResults.title")}
+        description={t("emptyStates.noSearchResults.description")}
+      />
     );
   }
 
@@ -294,27 +289,23 @@ export function CurrentlyClockedInContent(props: {
 
 export function CurrentlyClockedInNoData(props: {
   hasUser?: boolean;
-} & ComponentPropsWithoutChildren<typeof EmptyState.Root>) {
+} & Omit<EmptyStateProps, "icon" | "title" | "description" | "actions">) {
   const { hasUser, ...emptyStateRootProps } = props;
   const t = useTranslations("HomePage.currentlyInTable.emptyStates.noCurrentlyInUsers");
 
   const { logs } = useCurrentlyClockedInContext();
 
   return (
-    <EmptyState.Root hidden={logs.length !== 0} {...emptyStateRootProps}>
-      <EmptyState.Content>
-        <EmptyState.Indicator>
-          <LuBuilding />
-        </EmptyState.Indicator>
-        <VStack textAlign="center">
-          <EmptyState.Title>{t("title")}</EmptyState.Title>
-          <EmptyState.Description>
-            {t("description")} <br />
-            {hasUser ? t("description2") : null}
-          </EmptyState.Description>
-        </VStack>
-      </EmptyState.Content>
-    </EmptyState.Root>
+    <EmptyState
+      hidden={logs.length !== 0}
+      {...emptyStateRootProps}
+      icon={<LuBuilding />}
+      title={t("title")}
+      description={<>
+        {t("description")} <br />
+        {hasUser ? t("description2") : null}
+      </>}
+    />
   );
 }
 
