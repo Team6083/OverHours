@@ -148,6 +148,8 @@ model Team {
   // Users with any of these roles join the team automatically. Same syntax as ADMIN_ROLES: realm roles
   // as-is, client roles as `client:role`.
   autoJoinRoles String[] @default([])
+
+  reminderRuleLock ReminderRuleLock?
 }
 
 // A team's reminder. The admin page edits one "unanswered" rule per team; the model leaves room for more rules,
@@ -169,6 +171,16 @@ model ReminderRule {
   target   Json
 
   @@index([teamId])
+}
+
+// Written at the start of every save of a team's reminder, so two first saves for the same team conflict and only one
+// creates the rule.
+model ReminderRuleLock {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  updatedAt DateTime @updatedAt
+
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId String @unique @db.ObjectId
 }
 
 // One row per rule and run, inserted to claim the run so it goes out once.
