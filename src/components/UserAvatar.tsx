@@ -1,7 +1,7 @@
 import { ComponentProps } from "react";
 import { Avatar, Box } from "@chakra-ui/react";
 
-import RankMedal, { RankHalo } from "./RankMedal";
+import { RankHalo, RankMedal } from "./RankMedal";
 
 const AVATAR_PALETTES = ["blue", "teal", "purple", "orange", "pink", "cyan"];
 

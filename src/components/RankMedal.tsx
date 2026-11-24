@@ -31,7 +31,7 @@ function bySize(size: AvatarSize, f: (px: number) => string) {
 }
 
 /** Crown on top of a `position: relative` avatar for 1st, a medal at the bottom right for 2nd and 3rd, sized to the avatar. */
-export default function RankMedal(props: { rank?: number; size?: AvatarSize }) {
+export function RankMedal(props: { rank?: number; size?: AvatarSize }) {
   const { rank = 0, size } = props;
   const t = useTranslations("RankMedal");
   const color = MEDAL_COLORS[rank - 1];
