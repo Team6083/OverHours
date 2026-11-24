@@ -65,12 +65,16 @@ export default async function RootLayout({
     { href: "/logs", label: t("nav.logs"), icon: <LuLogs />, adminOnly: false },
     { href: "/attendance", label: t("nav.attendance"), icon: <LuCalendarCheck />, adminOnly: false },
     { href: "/report", label: t("nav.reports"), icon: <LuChartNoAxesCombined />, adminOnly: true },
-    { href: "/admin/users", label: t("nav.users"), icon: <LuUsers />, adminOnly: true },
-    { href: "/admin/teams", label: t("nav.teams"), icon: <LuNetwork />, adminOnly: true },
-    { href: "/admin/stat-ranges", label: t("nav.statRanges"), icon: <LuCalendarRange />, adminOnly: true },
   ]
     .filter((link) => role && (link.adminOnly ? role === Role.ADMIN : true))
     .map(({ href, label, icon }) => ({ href, label, icon }));
+
+  // Admin pages sit in the account menu until AppShell can group nav items (Team6083/ui#30).
+  const adminLinks = role === Role.ADMIN ? [
+    { href: "/admin/users", label: t("nav.users"), icon: <LuUsers /> },
+    { href: "/admin/teams", label: t("nav.teams"), icon: <LuNetwork /> },
+    { href: "/admin/stat-ranges", label: t("nav.statRanges"), icon: <LuCalendarRange /> },
+  ] : [];
 
   const handleSignIn = async () => {
     "use server";
@@ -92,6 +96,8 @@ export default async function RootLayout({
                 <Frame
                   orgName={orgName}
                   nav={nav}
+                  adminLabel={t("nav.admin")}
+                  adminLinks={adminLinks}
                   user={session?.user}
                   signInAction={handleSignIn}
                   signOutAction={handleSignOut}

@@ -186,6 +186,7 @@
       "users": "Users",
       "teams": "Teams",
       "statRanges": "Stat Ranges",
+      "admin": "Admin",
       "attendance": "Availability",
       "signIn": "Sign-In",
       "signOut": "Sign-Out"
