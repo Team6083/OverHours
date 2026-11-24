@@ -3,6 +3,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Badge, HStack, Stat, Heading, Center, IconButton, Spinner, ButtonGroup, Table,
 } from "@chakra-ui/react";
+import { PageHeader } from "@team6083/ui";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
 import HeatMap from "@/components/stats/HeatMap";
@@ -70,23 +71,25 @@ export default function WeeklyReportContent({
 
   return (
     <>
-      <HStack justify="space-between" mb={4}>
-        <Heading as="h2" size="2xl">Weekly Report</Heading>
-        <HStack gap={3}>
-          <ButtonGroup size="sm" variant="ghost" gap={1}>
-            <IconButton aria-label="Previous Week" onClick={() => setWeekStart(new Date(weekStart.getTime() - 7 * 86400000))}>
-              <LuArrowLeft />
+      <PageHeader
+        title="Weekly Report"
+        actions={
+          <HStack gap={3}>
+            <ButtonGroup size="sm" variant="ghost" gap={1}>
+              <IconButton aria-label="Previous Week" onClick={() => setWeekStart(new Date(weekStart.getTime() - 7 * 86400000))}>
+                <LuArrowLeft />
+              </IconButton>
+              <Center px={2} fontSize="sm" whiteSpace="nowrap">{weekLabel}</Center>
+              <IconButton aria-label="Next Week" onClick={() => setWeekStart(new Date(weekStart.getTime() + 7 * 86400000))}>
+                <LuArrowRight />
+              </IconButton>
+            </ButtonGroup>
+            <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
+              <LuRefreshCcw />
             </IconButton>
-            <Center px={2} fontSize="sm" whiteSpace="nowrap">{weekLabel}</Center>
-            <IconButton aria-label="Next Week" onClick={() => setWeekStart(new Date(weekStart.getTime() + 7 * 86400000))}>
-              <LuArrowRight />
-            </IconButton>
-          </ButtonGroup>
-          <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
-            <LuRefreshCcw />
-          </IconButton>
-        </HStack>
-      </HStack>
+          </HStack>
+        }
+      />
 
       {loading ? (
         <Center><Spinner /></Center>

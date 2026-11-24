@@ -4,6 +4,7 @@ import {
   Box, HStack, Stat, Heading, Center, Spinner, IconButton,
   Table, SegmentGroup, Text,
 } from "@chakra-ui/react";
+import { PageHeader } from "@team6083/ui";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
 import StatRangeSelector from "@/components/stats/StatRangeSelector";
@@ -202,30 +203,32 @@ export default function UserReportContent({
 
   return (
     <>
-      <HStack justify="space-between" mb={4} flexWrap="wrap" gap={2}>
-        <Heading as="h2" size="2xl">User Report</Heading>
-        <HStack gap={2} flexWrap="wrap">
-          <UserCombobox
-            users={users}
-            value={selectedUserId}
-            onValueChange={setSelectedUserId}
-            placeholder="Select user"
-            size="xs"
-            width="auto"
-            minWidth="44"
-          />
-
-          <StatRangeSelector
-            statRanges={statRanges}
-            onSelectAction={(start, end) => setDateRange([start, end])}
-            onClearAction={() => setDateRange(null)}
-          />
-
-          <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading} disabled={!selectedUserId}>
-            <LuRefreshCcw />
-          </IconButton>
-        </HStack>
-      </HStack>
+      <PageHeader
+        title="User Report"
+        actions={
+          <HStack gap={2} flexWrap="wrap">
+            <UserCombobox
+              users={users}
+              value={selectedUserId}
+              onValueChange={setSelectedUserId}
+              placeholder="Select user"
+              size="xs"
+              width="auto"
+              minWidth="44"
+            />
+  
+            <StatRangeSelector
+              statRanges={statRanges}
+              onSelectAction={(start, end) => setDateRange([start, end])}
+              onClearAction={() => setDateRange(null)}
+            />
+  
+            <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading} disabled={!selectedUserId}>
+              <LuRefreshCcw />
+            </IconButton>
+          </HStack>
+        }
+      />
 
       {!selectedUserId ? (
         <Center color="fg.muted">Select a user to view their report.</Center>

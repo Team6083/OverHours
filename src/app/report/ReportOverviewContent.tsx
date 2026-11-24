@@ -1,6 +1,7 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 import { HStack, Stat, Heading, Center, Spinner, IconButton } from "@chakra-ui/react";
+import { PageHeader } from "@team6083/ui";
 
 import { LuRefreshCcw } from "react-icons/lu";
 
@@ -41,19 +42,21 @@ export default function ReportOverviewContent({
 
   return (
     <>
-      <HStack justify="space-between" mb={4}>
-        <Heading as="h2" size="2xl">Overview</Heading>
-        <HStack gap={2}>
-          <StatRangeSelector
-            statRanges={statRanges}
-            onSelectAction={(start, end) => setDateRange([start, end])}
-            onClearAction={() => setDateRange(null)}
-          />
-          <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
-            <LuRefreshCcw />
-          </IconButton>
-        </HStack>
-      </HStack>
+      <PageHeader
+        title="Overview"
+        actions={
+          <HStack gap={2}>
+            <StatRangeSelector
+              statRanges={statRanges}
+              onSelectAction={(start, end) => setDateRange([start, end])}
+              onClearAction={() => setDateRange(null)}
+            />
+            <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
+              <LuRefreshCcw />
+            </IconButton>
+          </HStack>
+        }
+      />
 
       {loading ? (
         <Center><Spinner /></Center>
