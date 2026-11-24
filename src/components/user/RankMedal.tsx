@@ -65,8 +65,8 @@ export function RankMedal(props: { rank?: number; size?: AvatarSize }) {
 // center: degrees clockwise from 3 o'clock (270 is straight up, 45 is the bottom right); width: the gap's size in degrees.
 const HALO_GAPS = [
   { center: 231, width: 55 },
-  { center: 47, width: 55 },
-  { center: 47, width: 55 },
+  { center: 46, width: 55 },
+  { center: 46, width: 55 },
 ];
 
 // In units of 1% of the avatar: a 5% gap, then a 5% ring, drawn as one arc with round ends clear of the icon
