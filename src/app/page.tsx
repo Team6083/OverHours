@@ -9,7 +9,7 @@ import { LuCalendarCheck, LuHouse, LuTrophy } from "react-icons/lu";
 import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/common/LastUpdatedText";
 import LeaderboardCard from "./_components/LeaderboardCard";
-import LeaderboardWithFilter from "./_components/LeaderboardWithFilter";
+import LeaderboardTabPanel from "./_components/LeaderboardTabPanel";
 import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
 import { getActiveStatRangeDTOs } from "@/lib/data/statrange-dto";
 import { getTeamsForUser } from "@/lib/data/team-dto";
@@ -18,11 +18,11 @@ import {
 } from "@/lib/data/timelog-dto";
 import { getAllUserAvatars, getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import ClockUserInPopover from "./_components/ClockUserInPopover";
-import PageUpdateButton from "./_components/PageUpdateButton";
-import UserStatus from "./_components/UserStatus";
+import RefreshButton from "./_components/RefreshButton";
+import ClockStatus from "./_components/ClockStatus";
 import UserDisplay from "./_components/UserDisplay";
-import UserStat from "./_components/UserStat";
-import UserClockToggleButton from "./_components/UserClockToggleButton";
+import UserStats from "./_components/UserStats";
+import ClockInOutButton from "./_components/ClockInOutButton";
 import {
   CurrentlyClockedInContent, CurrentlyClockedInCountBadge, CurrentlyClockedInNoData,
   CurrentlyClockedInPaginationControls, CurrentlyClockedInProvider, CurrentlyClockedInSearchInput,
@@ -151,13 +151,13 @@ export default async function Home() {
                 <Card.Body>
 
                   <HStack w="full" justify="flex-end" mb={2}>
-                    <UserStatus lastLog={userInfo.lastLog} />
+                    <ClockStatus lastLog={userInfo.lastLog} />
                   </HStack>
 
                   <VStack textAlign="center" gap={4}>
                     <UserDisplay user={userInfo} />
 
-                    <UserStat
+                    <UserStats
                       totalTimeSec={userInfo.totalTimeSec}
                       ranking={userInfo.ranking}
                       orientation="horizontal"
@@ -167,7 +167,7 @@ export default async function Home() {
 
                 </Card.Body>
                 <Card.Footer>
-                  <UserClockToggleButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
+                  <ClockInOutButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
                 </Card.Footer>
               </Card.Root>
             )}
@@ -214,10 +214,10 @@ export default async function Home() {
             <VStack align="flex-start" gap={4} mb={4}>
               <HStack justifyContent="space-between" w="full" gapX={4}>
                 <UserDisplay user={userInfo} />
-                <UserStatus lastLog={userInfo.lastLog || undefined} />
+                <ClockStatus lastLog={userInfo.lastLog || undefined} />
               </HStack>
 
-              <UserStat
+              <UserStats
                 totalTimeSec={userInfo.totalTimeSec}
                 ranking={userInfo.ranking}
                 flexDir="row"
@@ -225,7 +225,7 @@ export default async function Home() {
                 w="full"
               />
 
-              <UserClockToggleButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
+              <ClockInOutButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
             </VStack>
             <Separator mb={4} />
           </>)}
@@ -242,7 +242,7 @@ export default async function Home() {
         </Tabs.Content>)}
 
         <Tabs.Content value="leaderboard">
-          <LeaderboardWithFilter initialRankings={rankings} statRanges={statRanges} />
+          <LeaderboardTabPanel initialRankings={rankings} statRanges={statRanges} />
         </Tabs.Content>
 
       </Tabs.Root>
@@ -264,7 +264,7 @@ async function CurrentlyClockedIn(props: {
       <HStack>
         <Heading as="h2" size="xl">{t("headings.currentlyIn")}</Heading>
         <CurrentlyClockedInCountBadge />
-        <PageUpdateButton />
+        <RefreshButton />
       </HStack>
 
       {isAdmin && canClockInUsers && <ClockUserInPopover

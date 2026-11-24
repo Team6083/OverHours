@@ -7,7 +7,7 @@ import { Tooltip } from "@team6083/ui";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 
-export default function UserStatus(props: {
+export default function ClockStatus(props: {
   lastLog?: TimeLogDTO;
   textColor?: ComponentProps<typeof Text>["color"];
 } & ComponentPropsWithoutChildren<typeof Status.Root>) {

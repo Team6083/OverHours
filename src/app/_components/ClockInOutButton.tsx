@@ -8,7 +8,7 @@ import { toaster } from "@team6083/ui";
 import { formatDuration } from "@/lib/util";
 import { userClockToggle } from "../actions";
 
-export default function UserClockToggleButton(props: { isClockedIn: boolean, userId: string }) {
+export default function ClockInOutButton(props: { isClockedIn: boolean, userId: string }) {
   const { isClockedIn, userId } = props;
   const t = useTranslations("HomePage");
   const format = useFormatter();

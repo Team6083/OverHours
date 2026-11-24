@@ -12,7 +12,7 @@ import { LANGUAGES, LOCALE_COOKIE } from "@/i18n/locales";
 import { Session } from "next-auth";
 
 /** AppShell needs a function for links and the current path, so the server layout hands its data to this client frame. */
-export default function Frame(props: {
+export default function AppFrame(props: {
   orgName?: string;
   nav: Omit<NavItem, "active">[];
   adminLabel: string;

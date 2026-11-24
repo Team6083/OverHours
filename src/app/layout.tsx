@@ -14,7 +14,7 @@ import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
 import { TopRanksProvider } from "@/components/ranking/TopRanks";
 import { getOrgName } from "@/lib/config";
 import { getTopUserIds } from "@/lib/data/timelog-dto";
-import Frame from "./_components/Frame";
+import AppFrame from "./_components/AppFrame";
 import { Providers } from "./providers";
 
 const geistSans = Geist({
@@ -93,7 +93,7 @@ export default async function RootLayout({
           <Providers locale={locale} nonce={nonce}>
             <SessionProvider> {/* Auth.js provider, for useSession() hook */}
               <TopRanksProvider userIds={topUserIds}>
-                <Frame
+                <AppFrame
                   orgName={orgName}
                   nav={nav}
                   adminLabel={t("nav.admin")}
@@ -110,7 +110,7 @@ export default async function RootLayout({
                   }
                 >
                   {children}
-                </Frame>
+                </AppFrame>
               </TopRanksProvider>
             </SessionProvider>
           </Providers>

@@ -9,7 +9,7 @@ import StatRangeSelector from "@/components/stats/StatRangeSelector";
 import { StatRangeDTO } from "@/lib/data/statrange-dto";
 import { getLeaderboardRankings } from "../actions";
 
-export default function LeaderboardWithFilter(props: {
+export default function LeaderboardTabPanel(props: {
   initialRankings: { id: string; name: string; duration: number }[];
   statRanges: StatRangeDTO[];
 }) {
