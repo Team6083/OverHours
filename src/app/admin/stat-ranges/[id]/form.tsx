@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { Fieldset, Stack, Field, DataList, Button, SegmentGroup, SimpleGrid, HStack, Input, GridItem } from "@chakra-ui/react";
 import { useAppOutdated } from "@team6083/ui";
 import { LuArchive, LuCircleCheck } from "react-icons/lu";
@@ -38,16 +38,19 @@ export default function StatRangeForm(props: {
   const outdated = useAppOutdated();
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(state.prevValues?.status || "ACTIVE");
-  useEffect(() => {
-    if (state.prevValues?.status) {
-      setSelectedStatus(state.prevValues.status);
-    }
-  }, [state.prevValues?.status]);
+  // Re-sync the segment control when a submit returns new values.
+  const [syncedStatus, setSyncedStatus] = useState(state.prevValues?.status);
+  if (state.prevValues?.status !== syncedStatus) {
+    setSyncedStatus(state.prevValues?.status);
+    if (state.prevValues?.status) setSelectedStatus(state.prevValues.status);
+  }
 
-  const nameFieldError = state.issues?.filter((issue: any) => issue.path[0] === "name").map((issue: any) => issue.message).join(", ");
-  const startDateFieldError = state.issues?.filter((issue: any) => issue.path[0] === "startDate").map((issue: any) => issue.message).join(", ");
-  const endDateFieldError = state.issues?.filter((issue: any) => issue.path[0] === "endDate").map((issue: any) => issue.message).join(", ");
-  const statusFieldError = state.issues?.filter((issue: any) => issue.path[0] === "status").map((issue: any) => issue.message).join(", ");
+  const fieldError = (field: string) =>
+    state.issues?.filter((issue) => issue.path[0] === field).map((issue) => issue.message).join(", ");
+  const nameFieldError = fieldError("name");
+  const startDateFieldError = fieldError("startDate");
+  const endDateFieldError = fieldError("endDate");
+  const statusFieldError = fieldError("status");
   const hasFieldErrors = !!(nameFieldError || startDateFieldError || endDateFieldError || statusFieldError);
 
   return <form action={action}>

@@ -31,11 +31,7 @@ function formatMs(ms: number): string {
   return "< 1m";
 }
 
-export default function WeeklyReportContent({
-  userNameDict: _userNameDict,
-}: {
-  userNameDict: Record<string, string>;
-}) {
+export default function WeeklyReportContent() {
   const [weekStart, setWeekStart] = useState(() => getMondayOfWeek(new Date()));
   const weekEnd = useMemo(() => new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1), [weekStart]);
 
@@ -50,6 +46,7 @@ export default function WeeklyReportContent({
   }, [weekStart, weekEnd]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO: move fetching to the server component
     handleRefresh();
   }, [handleRefresh]);
 

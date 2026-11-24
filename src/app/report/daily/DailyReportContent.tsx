@@ -62,6 +62,7 @@ export default function DailyReportContent(props: {
 
   // Fetch report data on component mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO: move fetching to the server component
     handleRefresh();
   }, [handleRefresh]);
 

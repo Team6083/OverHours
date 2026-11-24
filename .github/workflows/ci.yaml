@@ -48,12 +48,9 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm test
 
-      # TODO(oh-03): non-blocking because main has existing lint errors
-      # (react-hooks/*, no-explicit-any). Remove continue-on-error once fixed.
-      - name: Lint (non-blocking until existing errors are fixed)
+      - name: Lint
         if: ${{ !cancelled() }}
         run: npm run lint
-        continue-on-error: true
 
       - name: Build
         if: ${{ !cancelled() }}

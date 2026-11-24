@@ -29,10 +29,6 @@ function getMondayOf(d: Date): Date {
   return copy;
 }
 
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString([], { month: "short", day: "numeric" });
-}
-
 function formatMs(ms: number): string {
   if (ms <= 0) return "—";
   const totalSec = Math.floor(ms / 1000);
@@ -71,6 +67,7 @@ export default function UserReportContent({
   }, [selectedUserId, dateRange]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO: move fetching to the server component
     if (selectedUserId) handleRefresh();
     else setReportData(null);
   }, [handleRefresh, selectedUserId]);

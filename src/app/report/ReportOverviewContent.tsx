@@ -31,6 +31,7 @@ export default function ReportOverviewContent({
   }, [dateRange]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO: move fetching to the server component
     handleRefresh();
   }, [handleRefresh]);
 
