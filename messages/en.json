@@ -89,6 +89,7 @@
     },
     "tabs": {
       "home": "Home",
+      "availability": "Availability",
       "leaderboard": "Leaderboard"
     },
     "clockUserInPopover": {

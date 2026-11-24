@@ -3,11 +3,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
-import {
-  Button, Card, ClientOnly, CloseButton, Dialog, GridItem, Heading, HStack, Icon, Portal, Separator, SimpleGrid,
-  Spinner, Tabs, Text, VStack
-} from "@chakra-ui/react";
-import { LuChevronsRight, LuHouse, LuTrophy } from "react-icons/lu";
+import { Card, ClientOnly, GridItem, Heading, HStack, Separator, SimpleGrid, Spinner, Tabs, VStack } from "@chakra-ui/react";
+import { LuCalendarCheck, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/LastUpdatedText";
@@ -200,6 +197,10 @@ export default async function Home() {
             <LuHouse />
             {t("tabs.home")}
           </Tabs.Trigger>
+          {todayBoard && (<Tabs.Trigger value="availability">
+            <LuCalendarCheck />
+            {t("tabs.availability")}
+          </Tabs.Trigger>)}
           <Tabs.Trigger value="leaderboard">
             <LuTrophy />
             {t("tabs.leaderboard")}
@@ -228,12 +229,15 @@ export default async function Home() {
           </>)}
 
           {todayBoard && (<>
-            <DayAttendanceSection />
             <Separator my={4} />
           </>)}
 
           <CurrentlyClockedIn hasUser={!!userInfo} isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
         </Tabs.Content>
+
+        {todayBoard && (<Tabs.Content value="availability">
+          <DayAttendanceSection />
+        </Tabs.Content>)}
 
         <Tabs.Content value="leaderboard">
           <LeaderboardWithFilter initialRankings={rankings} />

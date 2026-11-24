@@ -89,6 +89,7 @@
     },
     "tabs": {
       "home": "主畫面",
+      "availability": "可出席時間",
       "leaderboard": "排行榜"
     },
     "clockUserInPopover": {
