@@ -18,6 +18,8 @@ type DayAttendance = {
   retry: () => void;
   goTo: (date: string) => void;
   openDialog: () => void;
+  /** The dialog has its own day arrows, so the section hides its own while it is open. */
+  dialogOpen: boolean;
 };
 
 const DayAttendanceContext = createContext<DayAttendance | null>(null);
@@ -42,19 +44,18 @@ export function DayAttendanceProvider(props: { initialDay: BoardDay; today: stri
   );
 
   return (
-    <DayAttendanceContext.Provider value={{ date, today, day, failed, retry, goTo: setDate, openDialog: () => setOpen(true) }}>
+    <DayAttendanceContext.Provider value={{ date, today, day, failed, retry, goTo: setDate, openDialog: () => setOpen(true), dialogOpen: open }}>
       {children}
-      {day && (
-        <UserListDialog
-          open={open}
-          title={dayLabel(date)}
-          resetKey={date}
-          month={date.slice(0, 7)}
-          today={today}
-          onClose={() => setOpen(false)}
-          groups={boardGroups(day)}
-        />
-      )}
+      <UserListDialog
+        open={open}
+        title={dayLabel(date)}
+        resetKey={date}
+        month={date.slice(0, 7)}
+        today={today}
+        onClose={() => setOpen(false)}
+        groups={day ? boardGroups(day) : []}
+        dayNav={{ date, today, goTo: setDate, loading: !day, failed, retry }}
+      />
     </DayAttendanceContext.Provider>
   );
 }
@@ -75,7 +76,7 @@ export default function DayAttendanceSection() {
   const dayLabel = useDayLabel();
 
   if (!context) return null;
-  const { date, today, day, failed, retry, goTo, openDialog } = context;
+  const { date, today, day, failed, retry, goTo, openDialog, dialogOpen } = context;
 
   return (
     <Stack gap={3}>
@@ -84,7 +85,7 @@ export default function DayAttendanceSection() {
           <Link href="/attendance">{t("title")}</Link>
         </Heading>
 
-        <HStack gap={1}>
+        <HStack gap={1} visibility={dialogOpen ? "hidden" : undefined}>
           {date !== today && (
             <Button size="xs" variant="ghost" onClick={() => goTo(today)}>{t("today")}</Button>
           )}
