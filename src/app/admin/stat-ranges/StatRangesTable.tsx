@@ -2,6 +2,7 @@
 import Link from "next/link";
 
 import { Button, ButtonGroup, Icon, IconButton, CloseButton, Dialog, Portal, Text, HStack, Badge } from "@chakra-ui/react";
+import { useAppOutdated } from "@team6083/ui";
 import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuPen, LuTrash2, LuPlus } from "react-icons/lu";
 
 import GenericTable, { Column } from "@/components/common/GenericTable";
@@ -112,6 +113,7 @@ const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1]) => {
 export default function StatRangesTable(props: {
   statRanges: StatRangeDTO[];
 }) {
+  const outdated = useAppOutdated();
   const { statRanges } = props;
 
   const items: TableData[] = statRanges.map(statRange => ({
@@ -171,7 +173,7 @@ export default function StatRangesTable(props: {
                     </Dialog.ActionTrigger>
                     <Dialog.Context>
                       {(store) => (
-                        <Button colorPalette="red" onClick={() => handleDeleteStatRanges(selection).then(() => store.setOpen(false))}>
+                        <Button colorPalette="red" disabled={outdated} onClick={() => handleDeleteStatRanges(selection).then(() => store.setOpen(false))}>
                           <Icon><LuTrash2 /></Icon>
                           Delete
                         </Button>

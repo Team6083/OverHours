@@ -10,7 +10,7 @@ import {
 import { IconType } from "react-icons";
 import { LuCalendarSync, LuCheck, LuCheckCheck, LuCopy, LuSave, LuUsers, LuWandSparkles, LuX } from "react-icons/lu";
 
-import { toaster } from "@team6083/ui";
+import { toaster, useAppOutdated } from "@team6083/ui";
 import {
   addDays, applyPattern, ATTENDANCE_STATUSES, AttendanceStatus, copyFromWeekBefore, DayStatus, shortDate, STATUS_PALETTE, weekdayOf, weekStartOf,
 } from "@/lib/attendance";
@@ -73,6 +73,7 @@ export default function AttendanceView(props: {
   const [selected, setSelected] = useState(() => board.some(day => day.date === today) ? today : weekStart);
   const [entries, setEntries] = useState(mine);
   const [isPending, startTransition] = useTransition();
+  const outdated = useAppOutdated();
   const saving = useRef(false);
   const router = useRouter();
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
@@ -297,7 +298,7 @@ export default function AttendanceView(props: {
                               <Menu.Item value="pattern" disabled={editableDates.length === 0}><LuCalendarSync />{t("quickFill.pattern")}</Menu.Item>
                             </Menu.ItemGroup>
                             <Menu.Separator />
-                            <Menu.Item value="savePattern" disabled={!hasAnswers}><LuSave />{t("quickFill.savePattern")}</Menu.Item>
+                            <Menu.Item value="savePattern" disabled={outdated || !hasAnswers}><LuSave />{t("quickFill.savePattern")}</Menu.Item>
                           </Menu.Content>
                         </Menu.Positioner>
                       </Portal>
@@ -358,7 +359,7 @@ export default function AttendanceView(props: {
             colorPalette="brand"
             onClick={handleSave}
             loading={isPending}
-            disabled={editableDates.length === 0}
+            disabled={outdated || editableDates.length === 0}
           >
             {t("week.save")}
           </Button>

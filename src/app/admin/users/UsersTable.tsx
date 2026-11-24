@@ -5,7 +5,7 @@ import { Button, ButtonGroup, Clipboard, Icon, IconButton, Link as ChakraLink, C
 import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuMerge, LuPen, LuTrash2, LuUserPlus } from "react-icons/lu";
 
 import GenericTable, { Column } from "@/components/common/GenericTable";
-import { Tooltip } from "@team6083/ui";
+import { Tooltip, useAppOutdated } from "@team6083/ui";
 import { UserDTO } from "@/lib/data/user-dto";
 import { handleDeleteUsers } from "./actions";
 
@@ -115,6 +115,7 @@ export default function UsersTable(props: {
   users: UserDTO[];
   outOfSyncEmails: Record<string, string[]>;
 }) {
+  const outdated = useAppOutdated();
   const { users, outOfSyncEmails } = props;
 
   const items: TableData[] = users.map(user => ({
@@ -182,7 +183,7 @@ export default function UsersTable(props: {
                     </Dialog.ActionTrigger>
                     <Dialog.Context>
                       {(store) => (
-                        <Button colorPalette="red" onClick={() => handleDeleteUsers(selection).then(() => store.setOpen(false))}>
+                        <Button colorPalette="red" disabled={outdated} onClick={() => handleDeleteUsers(selection).then(() => store.setOpen(false))}>
                           <Icon><LuTrash2 /></Icon>
                           Delete
                         </Button>

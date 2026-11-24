@@ -6,6 +6,7 @@ import GenericClipboard from "@/components/common/Clipboard";
 import TimeLogStatusBadge from "@/components/timelog/TimeLogStatusBadge";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { formatDuration } from "@/lib/util";
+import WriteButton from "@/components/common/WriteButton";
 
 export default function DeleteTimeLogConfirm(props: {
   timeLog: TimeLogDTO;
@@ -46,10 +47,10 @@ export default function DeleteTimeLogConfirm(props: {
         <Button onClick={handleCancel}>
           Cancel
         </Button>
-        <Button colorPalette="red" onClick={handleDelete}>
+        <WriteButton colorPalette="red" onClick={handleDelete}>
           <Icon><LuTrash2 /></Icon>
           Delete
-        </Button>
+        </WriteButton>
       </ButtonGroup>
     </HStack>
   </>

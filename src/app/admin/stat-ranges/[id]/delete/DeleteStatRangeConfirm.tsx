@@ -4,6 +4,7 @@ import { LuTrash2 } from "react-icons/lu";
 
 import GenericClipboard from "@/components/common/Clipboard";
 import { StatRangeDTO } from "@/lib/data/statrange-dto";
+import WriteButton from "@/components/common/WriteButton";
 
 export default function DeleteStatRangeConfirm(props: {
   statRange: StatRangeDTO;
@@ -34,10 +35,10 @@ export default function DeleteStatRangeConfirm(props: {
         <Button onClick={handleCancel}>
           Cancel
         </Button>
-        <Button colorPalette="red" onClick={handleDelete}>
+        <WriteButton colorPalette="red" onClick={handleDelete}>
           <Icon><LuTrash2 /></Icon>
           Delete
-        </Button>
+        </WriteButton>
       </ButtonGroup>
     </HStack>
   </>

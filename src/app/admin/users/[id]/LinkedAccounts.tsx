@@ -1,9 +1,10 @@
-import { Button, Card, Code, Heading, Icon, Stack, Text } from "@chakra-ui/react";
+import { Card, Code, Heading, Icon, Stack, Text } from "@chakra-ui/react";
 import { FactList } from "@team6083/ui";
 import { LuUnlink } from "react-icons/lu";
 
 import { AccountDTO } from "@/lib/data/account-dto";
 import { handleUnlinkAccount } from "./actions";
+import WriteButton from "@/components/common/WriteButton";
 
 export default function LinkedAccounts(props: {
   userId: string;
@@ -39,9 +40,9 @@ export default function LinkedAccounts(props: {
         </Card.Body>
         <Card.Footer>
           <form action={handleUnlinkAccount.bind(null, userId, account.id)}>
-            <Button type="submit" size="xs" variant="outline" colorPalette="red">
+            <WriteButton type="submit" size="xs" variant="outline" colorPalette="red">
               <Icon><LuUnlink /></Icon> Unlink
-            </Button>
+            </WriteButton>
           </form>
         </Card.Footer>
       </Card.Root>

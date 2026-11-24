@@ -10,7 +10,7 @@ import {
 import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
 
 import UserCombobox from "@/components/user/UserCombobox";
-import { InfoTip, MemberAvatar, toaster } from "@team6083/ui";
+import { InfoTip, MemberAvatar, toaster, useAppOutdated } from "@team6083/ui";
 import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
 import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";
 import { parseAutoJoinRoles } from "@/lib/team-roles";
@@ -23,6 +23,7 @@ import ReminderForm from "./ReminderForm";
 
 function useTeamAction() {
   const [pending, startTransition] = useTransition();
+  const outdated = useAppOutdated();
 
   const run = (
     action: () => Promise<TeamActionResult>,
@@ -38,12 +39,12 @@ function useTeamAction() {
     }
   });
 
-  return { pending, run };
+  return { pending, outdated, run };
 }
 
 function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
   const { team, teams } = props;
-  const { pending, run } = useTeamAction();
+  const { pending, outdated, run } = useTeamAction();
 
   // Controlled, so that a rejected rename shows the saved name again instead of the rejected text
   const [name, setName] = useState(team.name);
@@ -76,7 +77,7 @@ function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
           <Editable.Root
             size="sm"
             value={name}
-            disabled={pending}
+            disabled={pending || outdated}
             onValueChange={(e) => setName(e.value)}
             onValueCommit={(e) => run(
               () => renameTeamAction(team.id, e.value),
@@ -105,7 +106,7 @@ function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
       <DataList.Item>
         <DataList.ItemLabel>Parent team</DataList.ItemLabel>
         <DataList.ItemValue>
-          <NativeSelect.Root size="sm" maxW="xs" disabled={pending}>
+          <NativeSelect.Root size="sm" maxW="xs" disabled={pending || outdated}>
             <NativeSelect.Field
               value={team.parentTeamId ?? ""}
               onChange={(e) => run(() => moveTeamAction(team.id, e.currentTarget.value || null))}
@@ -135,7 +136,7 @@ function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
             size="sm"
             value={roles}
             placeholder="None"
-            disabled={pending}
+            disabled={pending || outdated}
             onValueChange={(e) => setRoles(e.value)}
             onValueCommit={(e) => run(
               () => setAutoJoinRolesAction(team.id, e.value),
@@ -179,7 +180,7 @@ function TeamInfo(props: { team: TeamDTO; teams: TeamDTO[] }) {
 
 function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { id: string; name: string }[] }) {
   const { team, members, users } = props;
-  const { pending, run } = useTeamAction();
+  const { pending, outdated, run } = useTeamAction();
   const [selectedUserId, setSelectedUserId] = useState("");
 
   // A member through a sub-team can still be added to this team directly
@@ -207,7 +208,7 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
               size="sm"
               variant="outline"
               aria-label="Add member"
-              disabled={!selectedUserId}
+              disabled={outdated || !selectedUserId}
               loading={pending}
               onClick={() => run(() => addTeamMembersAction(team.id, [selectedUserId]), () => setSelectedUserId(""))}
             >
@@ -262,7 +263,7 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
                           title={member.viaRole
                             ? "Remove. They rejoin at their next sign-in if they still have the role."
                             : "Remove"}
-                          disabled={pending}
+                          disabled={pending || outdated}
                           onClick={() => run(
                             () => removeTeamMemberAction(team.id, member.id),
                             // They stay listed, so say why rather than look like the removal failed
@@ -288,7 +289,7 @@ function TeamMembers(props: { team: TeamDTO; members: TeamMemberDTO[]; users: { 
 
 function TeamReminder(props: { team: TeamDTO; reminder: TeamReminderDTO }) {
   const { team, reminder } = props;
-  const { pending, run } = useTeamAction();
+  const { pending, outdated, run } = useTeamAction();
   const [webhook, setWebhook] = useState("");
 
   return (
@@ -318,12 +319,12 @@ function TeamReminder(props: { team: TeamDTO; reminder: TeamReminderDTO }) {
                 value={webhook}
                 onChange={e => setWebhook(e.target.value)}
               />
-              <Button size="sm" disabled={!webhook.trim()} loading={pending}
+              <Button size="sm" disabled={outdated || !webhook.trim()} loading={pending}
                 onClick={() => run(() => setTeamReminderWebhookAction(team.id, webhook), () => setWebhook(""))}>
                 Save
               </Button>
               {reminder.hasWebhook && (
-                <Button size="sm" variant="ghost" colorPalette="red" disabled={pending}
+                <Button size="sm" variant="ghost" colorPalette="red" disabled={pending || outdated}
                   onClick={() => run(() => setTeamReminderWebhookAction(team.id, null))}>
                   Remove
                 </Button>
@@ -339,7 +340,7 @@ function TeamReminder(props: { team: TeamDTO; reminder: TeamReminderDTO }) {
 function DeleteTeamButton(props: { team: TeamDTO; hasSubTeams: boolean; directMemberCount: number }) {
   const { team, hasSubTeams, directMemberCount } = props;
   const router = useRouter();
-  const { pending, run } = useTeamAction();
+  const { pending, outdated, run } = useTeamAction();
 
   return (
     <Dialog.Root>
@@ -372,7 +373,7 @@ function DeleteTeamButton(props: { team: TeamDTO; hasSubTeams: boolean; directMe
                 </Dialog.ActionTrigger>
                 <Button
                   colorPalette="red"
-                  disabled={hasSubTeams}
+                  disabled={outdated || hasSubTeams}
                   loading={pending}
                   onClick={() => run(() => deleteTeamAction(team.id), () => router.push("/admin/teams"))}
                 >

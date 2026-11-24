@@ -3,6 +3,7 @@ import { FactList } from "@team6083/ui";
 import { LuTrash2 } from "react-icons/lu";
 
 import { UserDTO } from "@/lib/data/user-dto";
+import WriteButton from "@/components/common/WriteButton";
 
 export default function DeleteUserConfirm(props: {
   user: UserDTO;
@@ -27,10 +28,10 @@ export default function DeleteUserConfirm(props: {
         <Button onClick={handleCancel}>
           Cancel
         </Button>
-        <Button colorPalette="red" onClick={handleDelete}>
+        <WriteButton colorPalette="red" onClick={handleDelete}>
           <Icon><LuTrash2 /></Icon>
           Delete
-        </Button>
+        </WriteButton>
       </ButtonGroup>
     </HStack>
   </>

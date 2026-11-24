@@ -12,7 +12,7 @@ import {
 } from "react-icons/lu";
 
 import { useRankOf } from "@/components/ranking/TopRanks";
-import { EmptyState, type EmptyStateProps, Tooltip } from "@team6083/ui";
+import { EmptyState, type EmptyStateProps, Tooltip, useAppOutdated } from "@team6083/ui";
 import UserAvatar from "@/components/user/UserAvatar";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 
@@ -137,6 +137,7 @@ export function CurrentlyClockedInTable(props: {
   const rankOf = useRankOf();
 
   const [pendingAction, setActionPending] = useState<string | null>(null);
+  const outdated = useAppOutdated();
   const handleAction = async (action: "clockOut" | "lock" | "remove", id: string) => {
     if (pendingAction) return;
     setActionPending(action);
@@ -206,7 +207,7 @@ export function CurrentlyClockedInTable(props: {
                             <IconButton
                               colorPalette="brand"
                               loading={clockOutPending}
-                              disabled={!!pendingAction && !clockOutPending}
+                              disabled={outdated || (!!pendingAction && !clockOutPending)}
                               onClick={() => handleAction("clockOut", item.id)}
                             >
                               <LuDoorOpen />
@@ -217,7 +218,7 @@ export function CurrentlyClockedInTable(props: {
                             <IconButton
                               colorPalette="orange"
                               loading={lockPending}
-                              disabled={!!pendingAction && !lockPending}
+                              disabled={outdated || (!!pendingAction && !lockPending)}
                               onClick={() => handleAction("lock", item.id)}
                             >
                               <LuLock />
@@ -228,7 +229,7 @@ export function CurrentlyClockedInTable(props: {
                             <IconButton
                               colorPalette="red"
                               loading={removePending}
-                              disabled={!!pendingAction && !removePending}
+                              disabled={outdated || (!!pendingAction && !removePending)}
                               onClick={() => handleAction("remove", item.id)}
                             >
                               <LuTrash2 />
@@ -247,13 +248,13 @@ export function CurrentlyClockedInTable(props: {
                           <Portal>
                             <Menu.Positioner>
                               <Menu.Content>
-                                <Menu.Item value="clockOut" disabled={!!pendingAction}>
+                                <Menu.Item value="clockOut" disabled={outdated || !!pendingAction}>
                                   <LuDoorOpen /> {t("actions.forceClockOut")} {clockOutPending ? <Spinner size="xs" ms={2} /> : null}
                                 </Menu.Item>
-                                <Menu.Item value="lock" disabled={!!pendingAction} color="fg.warning" _hover={{ bg: "bg.warning", color: "fg.warning" }}>
+                                <Menu.Item value="lock" disabled={outdated || !!pendingAction} color="fg.warning" _hover={{ bg: "bg.warning", color: "fg.warning" }}>
                                   <LuLock /> {t("actions.lockUser")} {lockPending ? <Spinner size="xs" ms={2} /> : null}
                                 </Menu.Item>
-                                <Menu.Item value="remove" disabled={!!pendingAction} color="fg.error" _hover={{ bg: "bg.error", color: "fg.error" }}>
+                                <Menu.Item value="remove" disabled={outdated || !!pendingAction} color="fg.error" _hover={{ bg: "bg.error", color: "fg.error" }}>
                                   <LuTrash2 /> {t("actions.removeLog")} {removePending ? <Spinner size="xs" ms={2} /> : null}
                                 </Menu.Item>
                               </Menu.Content>

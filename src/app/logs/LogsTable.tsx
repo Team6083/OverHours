@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog, HStack, Portal, Stack, ClientOnly, SkeletonText, Pagination, Switch } from "@chakra-ui/react";
 import { LuArrowDown01, LuArrowUp10, LuLock, LuTimer, LuPen, LuTrash2, LuArrowDownAZ, LuArrowUpZA, LuClipboardPlus } from "react-icons/lu";
 
-import { Tooltip } from "@team6083/ui";
+import { Tooltip, useAppOutdated } from "@team6083/ui";
 import UserCombobox from "@/components/user/UserCombobox";
 import GenericTable, { Column } from "@/components/common/GenericTable";
 import GenericClipboard from "@/components/common/Clipboard";
@@ -156,6 +156,7 @@ export default function LogsTable(props: {
   userInfo: Record<string, { name: string, avatarUrl?: string }>;
   showAdminActions?: boolean;
 }) {
+  const outdated = useAppOutdated();
   const { logs, userInfo, showAdminActions = false } = props;
   const t = useTranslations("LogsPage");
 
@@ -270,7 +271,7 @@ export default function LogsTable(props: {
                       </Dialog.ActionTrigger>
                       <Dialog.Context>
                         {(store) => (
-                          <Button colorPalette="red" onClick={() => handleDeleteLogs(selection).then(() => store.setOpen(false))}>
+                          <Button colorPalette="red" disabled={outdated} onClick={() => handleDeleteLogs(selection).then(() => store.setOpen(false))}>
                             <Icon><LuTrash2 /></Icon>
                             Delete
                           </Button>
