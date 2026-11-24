@@ -3,7 +3,7 @@ import React, { createContext, useContext, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import {
-  Badge, ButtonGroup, CloseButton, EmptyState, HStack, Icon, IconButton, Input, InputGroup,
+  Badge, ButtonGroup, CloseButton, HStack, Icon, IconButton, Input, InputGroup,
   Menu, Pagination, Portal, Spinner, Stack, Table, useFilter, usePaginationContext, VStack
 } from "@chakra-ui/react";
 import {
@@ -11,9 +11,9 @@ import {
   LuEllipsisVertical, LuLock, LuSearchSlash, LuTrash2,
 } from "react-icons/lu";
 
-import { useRankOf } from "@/components/TopRanks";
-import { Tooltip } from "@/components/ui/tooltip";
-import UserAvatar from "@/components/UserAvatar";
+import { useRankOf } from "@/components/ranking/TopRanks";
+import { EmptyState, type EmptyStateProps, Tooltip, useAppOutdated } from "@team6083/ui";
+import UserAvatar from "@/components/user/UserAvatar";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 
 type CurrentlyClockedInTimeLog = {
@@ -93,7 +93,7 @@ export function useCurrentlyClockedInContext() {
 export function CurrentlyClockedInCountBadge(props: ComponentPropsWithoutChildren<typeof Badge>) {
   const { logs } = useCurrentlyClockedInContext();
 
-  return <Badge colorPalette="blue" size="md" {...props}>{logs.length}</Badge>;
+  return <Badge colorPalette="brand" size="md" {...props}>{logs.length}</Badge>;
 }
 
 export function CurrentlyClockedInSearchInput(props: ComponentPropsWithoutChildren<typeof Input>) {
@@ -137,6 +137,7 @@ export function CurrentlyClockedInTable(props: {
   const rankOf = useRankOf();
 
   const [pendingAction, setActionPending] = useState<string | null>(null);
+  const outdated = useAppOutdated();
   const handleAction = async (action: "clockOut" | "lock" | "remove", id: string) => {
     if (pendingAction) return;
     setActionPending(action);
@@ -149,17 +150,12 @@ export function CurrentlyClockedInTable(props: {
 
   if (filteredLogs.length === 0) {
     return (
-      <EmptyState.Root size="sm">
-        <EmptyState.Content>
-          <EmptyState.Indicator>
-            <LuSearchSlash />
-          </EmptyState.Indicator>
-          <VStack textAlign="center">
-            <EmptyState.Title>{t("emptyStates.noSearchResults.title")}</EmptyState.Title>
-            <EmptyState.Description>{t("emptyStates.noSearchResults.description")}</EmptyState.Description>
-          </VStack>
-        </EmptyState.Content>
-      </EmptyState.Root>
+      <EmptyState
+        size="sm"
+        icon={<LuSearchSlash />}
+        title={t("emptyStates.noSearchResults.title")}
+        description={t("emptyStates.noSearchResults.description")}
+      />
     );
   }
 
@@ -209,9 +205,9 @@ export function CurrentlyClockedInTable(props: {
                         <ButtonGroup variant="ghost" size="xs" gap={0}>
                           <Tooltip content={t("actions.forceClockOut")}>
                             <IconButton
-                              colorPalette="blue"
+                              colorPalette="brand"
                               loading={clockOutPending}
-                              disabled={!!pendingAction && !clockOutPending}
+                              disabled={outdated || (!!pendingAction && !clockOutPending)}
                               onClick={() => handleAction("clockOut", item.id)}
                             >
                               <LuDoorOpen />
@@ -222,7 +218,7 @@ export function CurrentlyClockedInTable(props: {
                             <IconButton
                               colorPalette="orange"
                               loading={lockPending}
-                              disabled={!!pendingAction && !lockPending}
+                              disabled={outdated || (!!pendingAction && !lockPending)}
                               onClick={() => handleAction("lock", item.id)}
                             >
                               <LuLock />
@@ -233,7 +229,7 @@ export function CurrentlyClockedInTable(props: {
                             <IconButton
                               colorPalette="red"
                               loading={removePending}
-                              disabled={!!pendingAction && !removePending}
+                              disabled={outdated || (!!pendingAction && !removePending)}
                               onClick={() => handleAction("remove", item.id)}
                             >
                               <LuTrash2 />
@@ -252,13 +248,13 @@ export function CurrentlyClockedInTable(props: {
                           <Portal>
                             <Menu.Positioner>
                               <Menu.Content>
-                                <Menu.Item value="clockOut" disabled={!!pendingAction}>
+                                <Menu.Item value="clockOut" disabled={outdated || !!pendingAction}>
                                   <LuDoorOpen /> {t("actions.forceClockOut")} {clockOutPending ? <Spinner size="xs" ms={2} /> : null}
                                 </Menu.Item>
-                                <Menu.Item value="lock" disabled={!!pendingAction} color="fg.warning" _hover={{ bg: "bg.warning", color: "fg.warning" }}>
+                                <Menu.Item value="lock" disabled={outdated || !!pendingAction} color="fg.warning" _hover={{ bg: "bg.warning", color: "fg.warning" }}>
                                   <LuLock /> {t("actions.lockUser")} {lockPending ? <Spinner size="xs" ms={2} /> : null}
                                 </Menu.Item>
-                                <Menu.Item value="remove" disabled={!!pendingAction} color="fg.error" _hover={{ bg: "bg.error", color: "fg.error" }}>
+                                <Menu.Item value="remove" disabled={outdated || !!pendingAction} color="fg.error" _hover={{ bg: "bg.error", color: "fg.error" }}>
                                   <LuTrash2 /> {t("actions.removeLog")} {removePending ? <Spinner size="xs" ms={2} /> : null}
                                 </Menu.Item>
                               </Menu.Content>
@@ -294,27 +290,23 @@ export function CurrentlyClockedInContent(props: {
 
 export function CurrentlyClockedInNoData(props: {
   hasUser?: boolean;
-} & ComponentPropsWithoutChildren<typeof EmptyState.Root>) {
+} & Omit<EmptyStateProps, "icon" | "title" | "description" | "actions">) {
   const { hasUser, ...emptyStateRootProps } = props;
   const t = useTranslations("HomePage.currentlyInTable.emptyStates.noCurrentlyInUsers");
 
   const { logs } = useCurrentlyClockedInContext();
 
   return (
-    <EmptyState.Root hidden={logs.length !== 0} {...emptyStateRootProps}>
-      <EmptyState.Content>
-        <EmptyState.Indicator>
-          <LuBuilding />
-        </EmptyState.Indicator>
-        <VStack textAlign="center">
-          <EmptyState.Title>{t("title")}</EmptyState.Title>
-          <EmptyState.Description>
-            {t("description")} <br />
-            {hasUser ? t("description2") : null}
-          </EmptyState.Description>
-        </VStack>
-      </EmptyState.Content>
-    </EmptyState.Root>
+    <EmptyState
+      hidden={logs.length !== 0}
+      {...emptyStateRootProps}
+      icon={<LuBuilding />}
+      title={t("title")}
+      description={<>
+        {t("description")} <br />
+        {hasUser ? t("description2") : null}
+      </>}
+    />
   );
 }
 

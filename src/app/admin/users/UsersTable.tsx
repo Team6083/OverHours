@@ -4,8 +4,8 @@ import Link from "next/link";
 import { Button, ButtonGroup, Clipboard, Icon, IconButton, Link as ChakraLink, CloseButton, Dialog, Portal, Text, HStack, Badge } from "@chakra-ui/react";
 import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuMerge, LuPen, LuTrash2, LuUserPlus } from "react-icons/lu";
 
-import GenericTable, { Column } from "@/components/GenericTable";
-import { Tooltip } from "@/components/ui/tooltip";
+import GenericTable, { Column } from "@/components/common/GenericTable";
+import { Tooltip, useAppOutdated } from "@team6083/ui";
 import { UserDTO } from "@/lib/data/user-dto";
 import { handleDeleteUsers } from "./actions";
 
@@ -40,7 +40,7 @@ const columns: Column<TableData>[] = [
     renderCell: (row) => (<HStack gap={2}>
       <Clipboard.Root value={row.email}>
         <Clipboard.Trigger asChild>
-          <ChakraLink as="span" color="blue.fg" textStyle="sm">
+          <ChakraLink as="span" color="brand.fg" textStyle="sm">
             <Clipboard.ValueText />
             <Clipboard.Indicator />
           </ChakraLink>
@@ -115,6 +115,7 @@ export default function UsersTable(props: {
   users: UserDTO[];
   outOfSyncEmails: Record<string, string[]>;
 }) {
+  const outdated = useAppOutdated();
   const { users, outOfSyncEmails } = props;
 
   const items: TableData[] = users.map(user => ({
@@ -170,7 +171,7 @@ export default function UsersTable(props: {
                     {selection.map(id => {
                       const user = users.find(u => u.id === id);
                       if (!user) return null;
-                      return <Badge key={id} colorPalette="blue">{user.name}</Badge>
+                      return <Badge key={id} colorPalette="brand">{user.name}</Badge>
                     })}
                   </HStack>
                   <Text color="fg.muted">Total {selection.length} users selected</Text>
@@ -182,7 +183,7 @@ export default function UsersTable(props: {
                     </Dialog.ActionTrigger>
                     <Dialog.Context>
                       {(store) => (
-                        <Button colorPalette="red" onClick={() => handleDeleteUsers(selection).then(() => store.setOpen(false))}>
+                        <Button colorPalette="red" disabled={outdated} onClick={() => handleDeleteUsers(selection).then(() => store.setOpen(false))}>
                           <Icon><LuTrash2 /></Icon>
                           Delete
                         </Button>

@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useEffect, useState } from "react";
 import { Fieldset, Stack, Field, DataList, Button, SegmentGroup, SimpleGrid, HStack, Input, GridItem } from "@chakra-ui/react";
+import { useAppOutdated } from "@team6083/ui";
 import { LuArchive, LuCircleCheck } from "react-icons/lu";
 
 import { StatRangeDTO } from "@/lib/data/statrange-dto";
@@ -34,6 +35,7 @@ export default function StatRangeForm(props: {
       status: statRange.status,
     } : undefined
   } as StatRangeFormState);
+  const outdated = useAppOutdated();
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(state.prevValues?.status || "ACTIVE");
   useEffect(() => {
@@ -136,7 +138,7 @@ export default function StatRangeForm(props: {
         </DataList.Root>
       )}
 
-      <Button type="submit" loading={pending}>
+      <Button type="submit" loading={pending} disabled={outdated}>
         {isNew ? "Create" : "Save Changes"}
       </Button>
 

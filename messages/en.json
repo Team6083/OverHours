@@ -89,6 +89,7 @@
     },
     "tabs": {
       "home": "Home",
+      "availability": "Availability",
       "leaderboard": "Leaderboard"
     },
     "clockUserInPopover": {
@@ -185,6 +186,7 @@
       "users": "Users",
       "teams": "Teams",
       "statRanges": "Stat Ranges",
+      "admin": "Admin",
       "attendance": "Availability",
       "signIn": "Sign-In",
       "signOut": "Sign-Out"
@@ -372,5 +374,17 @@
     "brokenPromises": "Said will come, didn't",
     "unexpected": "Said can't come, came",
     "empty": "No answers to compare in this range"
+  },
+  "AccessDenied": {
+    "adminOnly": {
+      "title": "Admins only",
+      "description": "This page is for OverHours admins. Ask an admin if you need access."
+    },
+    "backHome": "Back to home"
+  },
+  "NotFoundPage": {
+    "title": "Page not found",
+    "description": "The link may be wrong, or the page may have moved.",
+    "backHome": "Back to home"
   }
 }

@@ -1,18 +1,22 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 import { HStack, Stat, Heading, Center, Spinner, IconButton } from "@chakra-ui/react";
+import { PageHeader } from "@team6083/ui";
 
 import { LuRefreshCcw } from "react-icons/lu";
 
-import LeaderboardTable from "@/components/LeaderboardTable";
-import StatRangeSelector from "@/components/StatRangeSelector";
-import StatValueTextDuration from "@/components/StatValueTextDuration";
+import LeaderboardTable from "@/components/ranking/LeaderboardTable";
+import StatRangeSelector from "@/components/stats/StatRangeSelector";
+import { StatRangeDTO } from "@/lib/data/statrange-dto";
+import StatValueTextDuration from "@/components/stats/StatValueTextDuration";
 import { OverviewStats, getOverviewStats } from "@/lib/data/report";
 
 export default function ReportOverviewContent({
   userNameDict,
+  statRanges,
 }: {
   userNameDict: Record<string, string>;
+  statRanges: StatRangeDTO[];
 }) {
   const [dateRange, setDateRange] = useState<[Date, Date] | null>(null);
   const [stats, setStats] = useState<OverviewStats | null>(null);
@@ -38,18 +42,21 @@ export default function ReportOverviewContent({
 
   return (
     <>
-      <HStack justify="space-between" mb={4}>
-        <Heading as="h2" size="2xl">Overview</Heading>
-        <HStack gap={2}>
-          <StatRangeSelector
-            onSelectAction={(start, end) => setDateRange([start, end])}
-            onClearAction={() => setDateRange(null)}
-          />
-          <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
-            <LuRefreshCcw />
-          </IconButton>
-        </HStack>
-      </HStack>
+      <PageHeader
+        title="Overview"
+        actions={
+          <HStack gap={2}>
+            <StatRangeSelector
+              statRanges={statRanges}
+              onSelectAction={(start, end) => setDateRange([start, end])}
+              onClearAction={() => setDateRange(null)}
+            />
+            <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
+              <LuRefreshCcw />
+            </IconButton>
+          </HStack>
+        }
+      />
 
       {loading ? (
         <Center><Spinner /></Center>

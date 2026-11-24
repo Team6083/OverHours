@@ -4,16 +4,17 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Button, Icon } from "@chakra-ui/react";
 import { LuDoorOpen, LuTimer } from "react-icons/lu";
 
-import { toaster } from "@/components/ui/toaster";
+import { toaster, useAppOutdated } from "@team6083/ui";
 import { formatDuration } from "@/lib/util";
 import { userClockToggle } from "../actions";
 
-export default function UserClockToggleButton(props: { isClockedIn: boolean, userId: string }) {
+export default function ClockInOutButton(props: { isClockedIn: boolean, userId: string }) {
   const { isClockedIn, userId } = props;
   const t = useTranslations("HomePage");
   const format = useFormatter();
 
   const [isPending, startTransition] = useTransition();
+  const outdated = useAppOutdated();
 
   const handleClick = () => startTransition(() => {
     return userClockToggle(userId, isClockedIn)
@@ -64,9 +65,10 @@ export default function UserClockToggleButton(props: { isClockedIn: boolean, use
   return (
     <Button
       width="full" size="xs" variant="surface"
-      colorPalette={isClockedIn ? "purple" : "blue"}
+      colorPalette={isClockedIn ? "purple" : "brand"}
       onClick={handleClick}
       loading={isPending}
+      disabled={outdated}
     >
       {isClockedIn ? t("buttons.clockOut") : t("buttons.clockIn")}
       <Icon>{isClockedIn ? <LuDoorOpen /> : <LuTimer />}</Icon>

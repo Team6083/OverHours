@@ -1,10 +1,11 @@
 "use client";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { Badge, HStack, Stat, Heading, Center, IconButton, Spinner, ButtonGroup, Input } from "@chakra-ui/react";
+import { PageHeader } from "@team6083/ui";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
-import Heatmap from "@/components/HeatMap";
-import StatValueTextDuration from "@/components/StatValueTextDuration";
+import Heatmap from "@/components/stats/HeatMap";
+import StatValueTextDuration from "@/components/stats/StatValueTextDuration";
 import { DailyReportData, getDailyReportData } from "@/lib/data/report";
 
 export default function DailyReportContent(props: {
@@ -81,17 +82,19 @@ export default function DailyReportContent(props: {
     && reportData.durationStat.total / Math.max(reportData.userDuration.length, 1);
 
   return (<>
-    <HStack justify="space-between" mb={4}>
-      <Heading as="h2" size="2xl">Daily Report</Heading>
-      <HStack gap={3}>
-        <ButtonGroup size="sm" variant="ghost" gap={1}>
-          <IconButton aria-label="Previous Day" onClick={handlePreviousDay}><LuArrowLeft /></IconButton>
-          <Input type="date" size="xs" value={dateInputValue} onChange={handleDateInputOnChange} />
-          <IconButton aria-label="Next Day" onClick={handleNextDay}><LuArrowRight /></IconButton>
-        </ButtonGroup>
-        <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading}><LuRefreshCcw /></IconButton>
-      </HStack>
-    </HStack>
+    <PageHeader
+      title="Daily Report"
+      actions={
+        <HStack gap={3}>
+          <ButtonGroup size="sm" variant="ghost" gap={1}>
+            <IconButton aria-label="Previous Day" onClick={handlePreviousDay}><LuArrowLeft /></IconButton>
+            <Input type="date" size="xs" value={dateInputValue} onChange={handleDateInputOnChange} />
+            <IconButton aria-label="Next Day" onClick={handleNextDay}><LuArrowRight /></IconButton>
+          </ButtonGroup>
+          <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading}><LuRefreshCcw /></IconButton>
+        </HStack>
+      }
+    />
 
     {loading ? <Center><Spinner /></Center> : (
       reportData ? <>
