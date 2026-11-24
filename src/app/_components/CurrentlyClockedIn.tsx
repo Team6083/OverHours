@@ -11,9 +11,9 @@ import {
   LuEllipsisVertical, LuLock, LuSearchSlash, LuTrash2,
 } from "react-icons/lu";
 
-import { useRankOf } from "@/components/TopRanks";
+import { useRankOf } from "@/components/ranking/TopRanks";
 import { Tooltip } from "@team6083/ui";
-import UserAvatar from "@/components/UserAvatar";
+import UserAvatar from "@/components/user/UserAvatar";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 
 type CurrentlyClockedInTimeLog = {

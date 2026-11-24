@@ -1,7 +1,7 @@
 import { Heading, DataList, HStack, ButtonGroup, Button, Icon, Text, Badge } from "@chakra-ui/react";
 import { LuTrash2 } from "react-icons/lu";
 
-import GenericClipboard from "@/components/Clipboard";
+import GenericClipboard from "@/components/common/Clipboard";
 import { StatRangeDTO } from "@/lib/data/statrange-dto";
 
 export default function DeleteStatRangeConfirm(props: {

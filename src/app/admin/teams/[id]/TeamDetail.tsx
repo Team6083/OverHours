@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
 
-import UserCombobox from "@/components/UserCombobox";
+import UserCombobox from "@/components/user/UserCombobox";
 import { InfoTip, toaster } from "@team6083/ui";
 import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
 import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";

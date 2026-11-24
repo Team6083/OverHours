@@ -6,10 +6,10 @@ import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog
 import { LuArrowDown01, LuArrowUp10, LuLock, LuTimer, LuPen, LuTrash2, LuArrowDownAZ, LuArrowUpZA, LuClipboardPlus } from "react-icons/lu";
 
 import { Tooltip } from "@team6083/ui";
-import UserCombobox from "@/components/UserCombobox";
-import GenericTable, { Column } from "@/components/GenericTable";
-import GenericClipboard from "@/components/Clipboard";
-import TimeLogStatusBadge from "@/components/TimeLogStatusBadge";
+import UserCombobox from "@/components/user/UserCombobox";
+import GenericTable, { Column } from "@/components/common/GenericTable";
+import GenericClipboard from "@/components/common/Clipboard";
+import TimeLogStatusBadge from "@/components/timelog/TimeLogStatusBadge";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { formatDuration } from "@/lib/util";
 import { handleDeleteLogs } from "./actions";

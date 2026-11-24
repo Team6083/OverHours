@@ -5,8 +5,8 @@ import {
 } from "@chakra-ui/react";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
-import HeatMap from "@/components/HeatMap";
-import StatValueTextDuration from "@/components/StatValueTextDuration";
+import HeatMap from "@/components/stats/HeatMap";
+import StatValueTextDuration from "@/components/stats/StatValueTextDuration";
 import { WeeklyReportData, getWeeklyReportData } from "@/lib/data/report";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

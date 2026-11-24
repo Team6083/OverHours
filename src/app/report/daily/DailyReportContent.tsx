@@ -3,8 +3,8 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { Badge, HStack, Stat, Heading, Center, IconButton, Spinner, ButtonGroup, Input } from "@chakra-ui/react";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
-import Heatmap from "@/components/HeatMap";
-import StatValueTextDuration from "@/components/StatValueTextDuration";
+import Heatmap from "@/components/stats/HeatMap";
+import StatValueTextDuration from "@/components/stats/StatValueTextDuration";
 import { DailyReportData, getDailyReportData } from "@/lib/data/report";
 
 export default function DailyReportContent(props: {

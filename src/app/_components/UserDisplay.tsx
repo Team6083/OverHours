@@ -1,6 +1,6 @@
 import { HStack, Stack, Tag, Text } from "@chakra-ui/react";
 
-import UserAvatar from "@/components/UserAvatar";
+import UserAvatar from "@/components/user/UserAvatar";
 
 export default function UserDisplay(props: {
   user: {

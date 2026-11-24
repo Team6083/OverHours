@@ -7,10 +7,11 @@ import { Card, ClientOnly, GridItem, Heading, HStack, Separator, SimpleGrid, Spi
 import { LuCalendarCheck, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
-import LastUpdatedText from "@/components/LastUpdatedText";
+import LastUpdatedText from "@/components/common/LastUpdatedText";
 import LeaderboardCard from "./_components/LeaderboardCard";
 import LeaderboardWithFilter from "./_components/LeaderboardWithFilter";
 import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
+import { getActiveStatRangeDTOs } from "@/lib/data/statrange-dto";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import {
   adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
@@ -67,6 +68,7 @@ export default async function Home() {
 
   // Get All Users Total Time
   const allUsersTotalTimeSec = await getAllUsersTotalTimeSec();
+  const statRanges = await getActiveStatRangeDTOs();
   const rankings = Object.entries(allUsersTotalTimeSec)
     .sort((a, b) => b[1] - a[1])
     .map(([id, duration]) => ({ id, name: userNameMap[id], duration }));
@@ -171,7 +173,7 @@ export default async function Home() {
             )}
 
             {/* Leaderboard Card */}
-            <LeaderboardCard initialRankings={rankings} />
+            <LeaderboardCard initialRankings={rankings} statRanges={statRanges} />
 
           </VStack>
         </GridItem>
@@ -240,7 +242,7 @@ export default async function Home() {
         </Tabs.Content>)}
 
         <Tabs.Content value="leaderboard">
-          <LeaderboardWithFilter initialRankings={rankings} />
+          <LeaderboardWithFilter initialRankings={rankings} statRanges={statRanges} />
         </Tabs.Content>
 
       </Tabs.Root>

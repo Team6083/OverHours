@@ -6,8 +6,8 @@ import {
 } from "@chakra-ui/react";
 import { LuCheck, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
-import { useRankOf } from "@/components/TopRanks";
-import UserAvatar from "@/components/UserAvatar";
+import { useRankOf } from "@/components/ranking/TopRanks";
+import UserAvatar from "@/components/user/UserAvatar";
 import { addDays, addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates, shortDate, STATUS_PALETTE, weekDates } from "@/lib/attendance";
 import { BoardDay, BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getPersonMonth } from "./actions";

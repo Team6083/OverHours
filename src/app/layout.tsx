@@ -11,7 +11,7 @@ import { Text } from "@chakra-ui/react";
 import { LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange, LuCalendarCheck, LuNetwork } from "react-icons/lu";
 
 import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
-import { TopRanksProvider } from "@/components/TopRanks";
+import { TopRanksProvider } from "@/components/ranking/TopRanks";
 import { getOrgName } from "@/lib/config";
 import { getTopUserIds } from "@/lib/data/timelog-dto";
 import Frame from "./_components/Frame";
