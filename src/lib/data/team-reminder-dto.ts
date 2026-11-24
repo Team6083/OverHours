@@ -1,4 +1,5 @@
 import "server-only";
+import { Prisma } from "@/generated/prisma";
 
 import { calendarDateInZone } from "../attendance";
 import { getTimeZone } from "../config";
@@ -27,7 +28,7 @@ function assertValidId(id: string) {
 }
 
 /** The team's rule the admin page edits: its first "unanswered" rule through Slack. */
-const findTeamRule = (teamId: string) => prisma.reminderRule.findFirst({
+const findTeamRule = (teamId: string, db: Prisma.TransactionClient = prisma) => db.reminderRule.findFirst({
   where: { teamId, kind: "unanswered", channel: "slack-webhook" },
   orderBy: { createdAt: "asc" },
 });
@@ -65,6 +66,41 @@ export async function getTeamReminder(teamId: string): Promise<TeamReminderDTO |
   return { team: { id: team.id, name: team.name }, settings, hasWebhook, missing: missing.map(member => ({ name: member.name, dates: member.dates })) };
 }
 
+const MAX_SAVE_ATTEMPTS = 5;
+// A write conflict, or two first-time lock inserts for the same team hitting the unique index.
+const SAVE_CONFLICTS = new Set(["P2034", "P2002"]);
+
+/**
+ * Updates the team's rule, or creates it when there is none. The team's lock is written first, so two first saves
+ * for the same team (a double submit, two admins) conflict and the retry updates the rule the other created.
+ */
+async function saveTeamRule(
+  teamId: string,
+  update: Prisma.ReminderRuleUpdateInput,
+  create: Omit<Prisma.ReminderRuleUncheckedCreateInput, "teamId" | "kind" | "channel">,
+): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await prisma.$transaction(async (tx) => {
+        if (await tx.team.count({ where: { id: teamId } }) === 0) throw new TeamError("Team not found.");
+        await tx.reminderRuleLock.upsert({ where: { teamId }, create: { teamId }, update: { updatedAt: new Date() } });
+
+        const rule = await findTeamRule(teamId, tx);
+        if (rule) {
+          await tx.reminderRule.update({ where: { id: rule.id }, data: update });
+        } else {
+          await tx.reminderRule.create({ data: { ...create, teamId, kind: "unanswered", channel: "slack-webhook" } });
+        }
+      });
+      return;
+    } catch (error) {
+      if (!SAVE_CONFLICTS.has(String((error as { code?: unknown } | null)?.code)) || attempt >= MAX_SAVE_ATTEMPTS) throw error;
+      // Every save must land, so wait a little, at random, rather than colliding again straight away.
+      await new Promise(resolve => setTimeout(resolve, attempt * 20 + Math.random() * 40));
+    }
+  }
+}
+
 export async function saveTeamReminder(teamId: string, input: unknown): Promise<void> {
   await requireAdmin();
   assertValidId(teamId);
@@ -74,12 +110,7 @@ export async function saveTeamReminder(teamId: string, input: unknown): Promise<
   const { enabled, time, weekdays, daysAhead } = parsed.data;
   const data = { enabled, sendTime: time, config: { weekdays, daysAhead, exemptTeamIds: parsed.data.exemptTeamIds ?? [] } };
 
-  const rule = await findTeamRule(teamId);
-  if (rule) {
-    await prisma.reminderRule.update({ where: { id: rule.id }, data });
-  } else {
-    await prisma.reminderRule.create({ data: { ...data, teamId, kind: "unanswered", channel: "slack-webhook", target: {} } });
-  }
+  await saveTeamRule(teamId, data, { ...data, target: {} });
 }
 
 /** Null removes it. */
@@ -99,17 +130,10 @@ export async function setTeamReminderWebhook(teamId: string, url: string | null)
   }
   const target = slackWebhookTargetSchema.parse(value ? { url: value } : {});
 
-  const rule = await findTeamRule(teamId);
-  if (rule) {
-    await prisma.reminderRule.update({ where: { id: rule.id }, data: { target } });
-  } else {
-    await prisma.reminderRule.create({
-      data: {
-        teamId, enabled: DEFAULT_SETTINGS.enabled, kind: "unanswered", sendTime: DEFAULT_SETTINGS.time, channel: "slack-webhook", target,
-        config: { weekdays: DEFAULT_SETTINGS.weekdays, daysAhead: DEFAULT_SETTINGS.daysAhead },
-      },
-    });
-  }
+  await saveTeamRule(teamId, { target }, {
+    enabled: DEFAULT_SETTINGS.enabled, sendTime: DEFAULT_SETTINGS.time, target,
+    config: { weekdays: DEFAULT_SETTINGS.weekdays, daysAhead: DEFAULT_SETTINGS.daysAhead },
+  });
 }
 
 export type ReminderRun = { ruleId: string; teamId: string; result: "sent" | "nobodyMissing" | "noWebhook" | "failed" };
