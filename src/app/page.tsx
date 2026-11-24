@@ -11,7 +11,7 @@ import LastUpdatedText from "@/components/common/LastUpdatedText";
 import LeaderboardCard from "./_components/LeaderboardCard";
 import LeaderboardTabPanel from "./_components/LeaderboardTabPanel";
 import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
-import { getActiveStatRangeDTOs } from "@/lib/data/statrange-dto";
+import { getActiveStatRangesForPicker } from "@/lib/data/statrange-dto";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import {
   adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
@@ -56,6 +56,8 @@ export default async function Home() {
       return undefined;
     })
     : Promise.resolve(undefined);
+  // The leaderboard's range picker; loads alongside the other queries and is empty if it fails.
+  const statRangesPromise = getActiveStatRangesForPicker();
   const isAdmin = session?.user.role === Role.ADMIN;
 
   // Get All User Names
@@ -68,7 +70,7 @@ export default async function Home() {
 
   // Get All Users Total Time
   const allUsersTotalTimeSec = await getAllUsersTotalTimeSec();
-  const statRanges = await getActiveStatRangeDTOs();
+  const statRanges = await statRangesPromise;
   const rankings = Object.entries(allUsersTotalTimeSec)
     .sort((a, b) => b[1] - a[1])
     .map(([id, duration]) => ({ id, name: userNameMap[id], duration }));
@@ -267,10 +269,6 @@ export default async function Home() {
               <ClockInOutButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
             </VStack>
             <Separator mb={4} />
-          </>)}
-
-          {todayBoard && (<>
-            <Separator my={4} />
           </>)}
 
           <CurrentlyClockedIn hasUser={!!userInfo} isAdmin={isAdmin} canClockInUsers={canClockInUsers} />

@@ -30,10 +30,10 @@ export default function LinkedAccounts(props: {
             { label: "Issuer", value: <Code whiteSpace="normal" wordBreak="break-all">{account.issuer}</Code> },
             {
               label: "Provider Email",
-              value: <>
+              value: <Text as="span" overflowWrap="anywhere">
                 {account.email}
                 {account.emailTakenByOtherUser && <Text as="span" color="fg.warning" ms={2}>(another user has this email)</Text>}
-              </>,
+              </Text>,
             },
             { label: "Linked At", value: account.createdAt.toLocaleString() },
           ]} />
