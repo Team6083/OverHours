@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Card, Field, HStack, Input, SimpleGrid, Stack, Switch, Text } from "@chakra-ui/react";
 import { useTranslations } from "next-intl";
 
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@team6083/ui";
 import { shortDate } from "@/lib/attendance";
 import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";
 import { MAX_DAYS_AHEAD, ReminderSettings } from "@/lib/team-reminders";

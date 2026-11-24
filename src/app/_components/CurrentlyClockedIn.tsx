@@ -12,7 +12,7 @@ import {
 } from "react-icons/lu";
 
 import { useRankOf } from "@/components/TopRanks";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip } from "@team6083/ui";
 import UserAvatar from "@/components/UserAvatar";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 

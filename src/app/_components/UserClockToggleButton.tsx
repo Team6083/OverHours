@@ -4,7 +4,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Button, Icon } from "@chakra-ui/react";
 import { LuDoorOpen, LuTimer } from "react-icons/lu";
 
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@team6083/ui";
 import { formatDuration } from "@/lib/util";
 import { userClockToggle } from "../actions";
 

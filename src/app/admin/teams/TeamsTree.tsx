@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Badge, Button, ButtonGroup, Card, HStack, IconButton, Text, TreeView, createTreeCollection, useTreeView, useTreeViewContext } from "@chakra-ui/react";
 import { LuPlus, LuSquareMinus, LuSquarePlus, LuUsers } from "react-icons/lu";
 
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@team6083/ui";
 import type { TeamDTO } from "@/lib/data/team-dto";
 import { buildTeamTree, getTeamAncestors, type TeamTreeNode } from "@/lib/team-tree";
 import { createTeamAction } from "./actions";

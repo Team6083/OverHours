@@ -5,7 +5,7 @@ import { Button, ButtonGroup, Clipboard, Icon, IconButton, Link as ChakraLink, C
 import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuMerge, LuPen, LuTrash2, LuUserPlus } from "react-icons/lu";
 
 import GenericTable, { Column } from "@/components/GenericTable";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip } from "@team6083/ui";
 import { UserDTO } from "@/lib/data/user-dto";
 import { handleDeleteUsers } from "./actions";
 

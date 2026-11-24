@@ -10,8 +10,7 @@ import {
 import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
 
 import UserCombobox from "@/components/UserCombobox";
-import { InfoTip } from "@/components/ui/toggle-tip";
-import { toaster } from "@/components/ui/toaster";
+import { InfoTip, toaster } from "@team6083/ui";
 import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
 import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";
 import { parseAutoJoinRoles } from "@/lib/team-roles";

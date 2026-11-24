@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog, HStack, Portal, Stack, ClientOnly, SkeletonText, Pagination, Switch } from "@chakra-ui/react";
 import { LuArrowDown01, LuArrowUp10, LuLock, LuTimer, LuPen, LuTrash2, LuArrowDownAZ, LuArrowUpZA, LuClipboardPlus } from "react-icons/lu";
 
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip } from "@team6083/ui";
 import UserCombobox from "@/components/UserCombobox";
 import GenericTable, { Column } from "@/components/GenericTable";
 import GenericClipboard from "@/components/Clipboard";

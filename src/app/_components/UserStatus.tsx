@@ -3,7 +3,7 @@ import { ComponentProps } from "react";
 import { useFormatter, useNow, useTranslations } from "next-intl";
 import { Status, Text } from "@chakra-ui/react";
 
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip } from "@team6083/ui";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 

@@ -10,7 +10,7 @@ import {
 import { IconType } from "react-icons";
 import { LuCalendarSync, LuCheck, LuCheckCheck, LuCopy, LuSave, LuUsers, LuWandSparkles, LuX } from "react-icons/lu";
 
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@team6083/ui";
 import {
   addDays, applyPattern, ATTENDANCE_STATUSES, AttendanceStatus, copyFromWeekBefore, DayStatus, shortDate, STATUS_PALETTE, weekdayOf, weekStartOf,
 } from "@/lib/attendance";

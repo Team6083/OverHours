@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { NextIntlClientProvider } from "next-intl";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { SessionProvider } from "next-auth/react";
 
@@ -14,15 +14,14 @@ import { Box, Button, CloseButton, Container, Drawer, Flex, Heading, HStack, Ico
 import { LuLogOut, LuLogIn, LuMenu, LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange, LuCalendarCheck, LuNetwork } from "react-icons/lu";
 
 import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
-import { ColorModeButton } from "@/components/ui/color-mode";
-import { Provider } from "@/components/ui/provider"
-import { Toaster } from "@/components/ui/toaster";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import { TopRanksProvider } from "@/components/TopRanks";
 import UserAvatar from "@/components/UserAvatar";
 import { getOrgName } from "@/lib/config";
 import { getTopUserIds } from "@/lib/data/timelog-dto";
 import DrawerNavLink from "./_components/DrawerNavLink";
+import { Providers } from "./providers";
+import { ColorModeButton } from "@team6083/ui";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,13 +61,14 @@ export default async function RootLayout({
   const orgName = getOrgName();
   // Set by src/proxy.ts; next-themes' inline script needs it to run under the CSP.
   const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const locale = await getLocale();
   const topUserIds = await topUserIdsForSession();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <NextIntlClientProvider>
-          <Provider nonce={nonce}> {/* Chakra-UI provider */}
+          <Providers locale={locale} nonce={nonce}>
             <SessionProvider> {/* Auth.js provider, for useSession() hook */}
               <TopRanksProvider userIds={topUserIds}>
                 <Container maxWidth="5xl" fluid p={4} my={2}>
@@ -88,9 +88,8 @@ export default async function RootLayout({
                   </Stack>
                 </Container>
               </footer>
-              <Toaster />
             </SessionProvider>
-          </Provider>
+          </Providers>
         </NextIntlClientProvider>
       </body>
     </html>
