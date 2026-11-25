@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Breadcrumb, EmptyState, VStack } from "@chakra-ui/react";
+import { Breadcrumb } from "@chakra-ui/react";
+import { EmptyState } from "@team6083/ui";
 import { LuSearchX } from "react-icons/lu";
 
 import { getAllTeamDTOs, getTeamMembers } from "@/lib/data/team-dto";
@@ -16,17 +17,11 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
 
   if (!team) {
     return (
-      <EmptyState.Root>
-        <EmptyState.Content>
-          <EmptyState.Indicator>
-            <LuSearchX />
-          </EmptyState.Indicator>
-          <VStack textAlign="center">
-            <EmptyState.Title>Team not found</EmptyState.Title>
-            <EmptyState.Description>No team has the ID &quot;{id}&quot;.</EmptyState.Description>
-          </VStack>
-        </EmptyState.Content>
-      </EmptyState.Root>
+      <EmptyState
+        icon={<LuSearchX />}
+        title="Team not found"
+        description={<>No team has the ID &quot;{id}&quot;.</>}
+      />
     );
   }
 

@@ -5,7 +5,7 @@ import { LuRefreshCcw } from "react-icons/lu";
 import { useAsync } from "@/lib/hooks";
 import { updatePage } from "../actions";
 
-export default function PageUpdateButton() {
+export default function RefreshButton() {
   const { pending, reload } = useAsync(updatePage);
 
   return <>

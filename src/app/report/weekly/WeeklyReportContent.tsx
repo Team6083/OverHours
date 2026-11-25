@@ -3,10 +3,11 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Badge, HStack, Stat, Heading, Center, IconButton, Spinner, ButtonGroup, Table,
 } from "@chakra-ui/react";
+import { PageHeader } from "@team6083/ui";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
-import HeatMap from "@/components/HeatMap";
-import StatValueTextDuration from "@/components/StatValueTextDuration";
+import HeatMap from "@/components/stats/HeatMap";
+import StatValueTextDuration from "@/components/stats/StatValueTextDuration";
 import { WeeklyReportData, getWeeklyReportData } from "@/lib/data/report";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -30,11 +31,7 @@ function formatMs(ms: number): string {
   return "< 1m";
 }
 
-export default function WeeklyReportContent({
-  userNameDict: _userNameDict,
-}: {
-  userNameDict: Record<string, string>;
-}) {
+export default function WeeklyReportContent() {
   const [weekStart, setWeekStart] = useState(() => getMondayOfWeek(new Date()));
   const weekEnd = useMemo(() => new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1), [weekStart]);
 
@@ -49,6 +46,7 @@ export default function WeeklyReportContent({
   }, [weekStart, weekEnd]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO: move fetching to the server component
     handleRefresh();
   }, [handleRefresh]);
 
@@ -70,23 +68,25 @@ export default function WeeklyReportContent({
 
   return (
     <>
-      <HStack justify="space-between" mb={4}>
-        <Heading as="h2" size="2xl">Weekly Report</Heading>
-        <HStack gap={3}>
-          <ButtonGroup size="sm" variant="ghost" gap={1}>
-            <IconButton aria-label="Previous Week" onClick={() => setWeekStart(new Date(weekStart.getTime() - 7 * 86400000))}>
-              <LuArrowLeft />
+      <PageHeader
+        title="Weekly Report"
+        actions={
+          <HStack gap={3}>
+            <ButtonGroup size="sm" variant="ghost" gap={1}>
+              <IconButton aria-label="Previous Week" onClick={() => setWeekStart(new Date(weekStart.getTime() - 7 * 86400000))}>
+                <LuArrowLeft />
+              </IconButton>
+              <Center px={2} fontSize="sm" whiteSpace="nowrap">{weekLabel}</Center>
+              <IconButton aria-label="Next Week" onClick={() => setWeekStart(new Date(weekStart.getTime() + 7 * 86400000))}>
+                <LuArrowRight />
+              </IconButton>
+            </ButtonGroup>
+            <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
+              <LuRefreshCcw />
             </IconButton>
-            <Center px={2} fontSize="sm" whiteSpace="nowrap">{weekLabel}</Center>
-            <IconButton aria-label="Next Week" onClick={() => setWeekStart(new Date(weekStart.getTime() + 7 * 86400000))}>
-              <LuArrowRight />
-            </IconButton>
-          </ButtonGroup>
-          <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
-            <LuRefreshCcw />
-          </IconButton>
-        </HStack>
-      </HStack>
+          </HStack>
+        }
+      />
 
       {loading ? (
         <Center><Spinner /></Center>

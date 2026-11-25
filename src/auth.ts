@@ -1,16 +1,16 @@
 
+import { createRemoteJWKSet, decodeJwt, jwtVerify } from "jose";
+import memoize from "memoize";
 import NextAuth, { DefaultSession, Profile } from "next-auth";
 import { DefaultJWT, getToken } from "next-auth/jwt";
 import Keycloak from "next-auth/providers/keycloak";
-import { createRemoteJWKSet, decodeJwt, jwtVerify } from "jose";
-import memoize from "memoize";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { linkProviderAccount } from "./lib/data/user-account";
-import { syncUserRoleTeams } from "./lib/data/team-role-sync";
-import { evaluateAccess, extractRoles, parseAdminRoles, parseCommaList, parseTokenAlgorithms } from "./lib/auth-roles";
 import { describeError, describeErrorDescription, INVALID_TOKEN_ERROR_CODES, isVerifyGraceExpired, parseVerifyGraceSec } from "./lib/auth-errors";
+import { evaluateAccess, extractRoles, parseAdminRoles, parseCommaList, parseTokenAlgorithms } from "./lib/auth-roles";
+import { syncUserRoleTeams } from "./lib/data/team-role-sync";
+import { linkProviderAccount } from "./lib/data/user-account";
 
 export enum Role {
   ADMIN = "admin",

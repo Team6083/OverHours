@@ -6,8 +6,8 @@ import {
 } from "@chakra-ui/react";
 import { LuCheck, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
-import { useRankOf } from "@/components/TopRanks";
-import UserAvatar from "@/components/UserAvatar";
+import { useRankOf } from "@/components/ranking/TopRanks";
+import UserAvatar from "@/components/user/UserAvatar";
 import { addDays, addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates, shortDate, STATUS_PALETTE, weekDates } from "@/lib/attendance";
 import { BoardDay, BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getPersonMonth } from "./actions";
@@ -168,12 +168,12 @@ function PersonCalendar(props: {
               fontSize="sm"
               fontWeight={status ? "semibold" : "normal"}
               borderWidth={date === today ? "2px" : "1px"}
-              borderColor={date === today ? "blue.solid" : "border.muted"}
+              borderColor={date === today ? "brand.solid" : "border.muted"}
               position="relative"
               title={label}
               aria-label={label}
               onClick={() => onSelectDate(date)}
-              _hover={{ borderColor: "blue.solid" }}
+              _hover={{ borderColor: "brand.solid" }}
               {...style}
             >
               {Number(date.slice(8))}

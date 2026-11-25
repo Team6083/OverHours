@@ -1,6 +1,6 @@
 import "server-only";
-import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
+import { NextRequest, NextResponse } from "next/server";
 
 import { apiError } from "@/lib/api-error";
 import { ApiScope, rolesForScope, rolesGrantScope } from "@/lib/api-scopes";

@@ -1,29 +1,20 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { createListCollection, Select, Portal } from "@chakra-ui/react";
 
 import { StatRangeDTO } from "@/lib/data/statrange-dto";
-import { getActiveStatRanges } from "./actions";
 
+/** Picks one of the active stat ranges; the page loads them on the server and passes them in. */
 export default function StatRangeSelector(props: {
+  statRanges: StatRangeDTO[];
   onSelectAction?: (startDate: Date, endDate: Date) => void;
   onClearAction?: () => void;
 }) {
-  const { onSelectAction, onClearAction } = props;
+  const { statRanges, onSelectAction, onClearAction } = props;
   const t = useTranslations("StatRangeSelector");
 
-  const [statRanges, setStatRanges] = useState<StatRangeDTO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [selectedId, setSelectedId] = useState("");
-
-  useEffect(() => {
-    getActiveStatRanges()
-      .then((ranges: StatRangeDTO[]) => setStatRanges(ranges))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, []);
 
   const collection = useMemo(() => createListCollection({
     items: [
@@ -45,7 +36,7 @@ export default function StatRangeSelector(props: {
     }
   };
 
-  if (loading || error || statRanges.length === 0) {
+  if (statRanges.length === 0) {
     return null;
   }
 
