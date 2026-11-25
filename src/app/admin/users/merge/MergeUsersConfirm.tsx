@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import {
   Alert, Badge, Button, ButtonGroup, Card, Checkbox, HStack, Heading, Icon, List, RadioGroup, Stack, Text,
 } from "@chakra-ui/react";
+import { useAppOutdated } from "@team6083/ui";
 import { LuMerge } from "react-icons/lu";
 
 import type { MergeConflictLog, MergePreview } from "@/lib/data/user-merge";
@@ -84,6 +85,7 @@ export default function MergeUsersConfirm(props: {
   const [targetId, setTargetId] = useState(users[0].id);
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
+  const outdated = useAppOutdated();
 
   const teams = useMemo(() => teamOptions(users), [users]);
   // Every team is kept unless the admin unticks it. Only the unticked teams are sent, so a team the users join
@@ -122,7 +124,7 @@ export default function MergeUsersConfirm(props: {
                     <Text fontWeight="medium">{user.name}</Text>
                     <Text color="fg.muted">{user.email}</Text>
                     <Badge>{user.timeLogCount} time logs</Badge>
-                    {user.id === currentUserId && <Badge colorPalette="blue">You</Badge>}
+                    {user.id === currentUserId && <Badge colorPalette="brand">You</Badge>}
                     {user.id === targetId
                       ? <Badge colorPalette="green">Keep</Badge>
                       : <Badge colorPalette="red">Delete</Badge>}
@@ -185,7 +187,7 @@ export default function MergeUsersConfirm(props: {
     <Card.Footer justifyContent="flex-end">
       <ButtonGroup size="sm" variant="subtle">
         <Button asChild><Link href="/admin/users">Cancel</Link></Button>
-        <Button colorPalette="red" onClick={submit} loading={pending} disabled={hasConflicts || mergesSelfAway}>
+        <Button colorPalette="red" onClick={submit} loading={pending} disabled={outdated || hasConflicts || mergesSelfAway}>
           <Icon><LuMerge /></Icon>
           Merge
         </Button>

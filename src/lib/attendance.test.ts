@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  addDays, addMonths, applyPattern, calendarDateInZone, copyFromWeekBefore, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, summarizeReliability, weekDates, weekdayOf, weekStartOf,
+    addDays, addMonths, applyPattern, calendarDateInZone, copyFromWeekBefore, datesInRange, dayStatuses, isCalendarDate, isMonth, monthDates, rowsToReassign, summarizeReliability, weekDates, weekdayOf, weekStartOf,
 } from "./attendance";
 
 describe("isCalendarDate", () => {

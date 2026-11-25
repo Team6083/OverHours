@@ -3,11 +3,11 @@ import { ComponentProps } from "react";
 import { useFormatter, useNow, useTranslations } from "next-intl";
 import { Status, Text } from "@chakra-ui/react";
 
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip } from "@team6083/ui";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 
-export default function UserStatus(props: {
+export default function ClockStatus(props: {
   lastLog?: TimeLogDTO;
   textColor?: ComponentProps<typeof Text>["color"];
 } & ComponentPropsWithoutChildren<typeof Status.Root>) {
@@ -15,8 +15,9 @@ export default function UserStatus(props: {
 
   const t = useTranslations("HomePage.userCard");
   const format = useFormatter();
-  const intlNow = useNow({ updateInterval: 10000 }); // Update every 10 seconds
-  const now = intlNow.getTime() > Date.now() ? intlNow.getTime() : Date.now();
+  const now = useNow({ updateInterval: 10000 }); // Update every 10 seconds
+  // `now` can lag up to 10s behind; never let a fresh log read as "in N seconds".
+  const relativeTime = (date: Date) => format.relativeTime(date, Math.max(now.getTime(), date.getTime()));
 
   let statusText: string;
   let statusColor: ComponentProps<typeof Status.Root>["colorPalette"];
@@ -26,10 +27,10 @@ export default function UserStatus(props: {
     if (lastLog.status === "CURRENTLY_IN") {
       statusColor = "green";
       time = lastLog.inTime;
-      statusText = t("status.lastIn", { time: format.relativeTime(time, now) });
+      statusText = t("status.lastIn", { time: relativeTime(time) });
     } else {
       time = lastLog.outTime;
-      const timeStr = lastLog.outTime ? format.relativeTime(lastLog.outTime, now) : "N/A";
+      const timeStr = lastLog.outTime ? relativeTime(lastLog.outTime) : "N/A";
 
       if (lastLog.status === "LOCKED") {
         statusColor = "orange";
