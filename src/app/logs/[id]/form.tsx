@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useState } from "react";
 import { Fieldset, Stack, Field, DataList, Button, Combobox, Portal, useFilter, useListCollection, SegmentGroup, SimpleGrid, HStack, Input, GridItem, Textarea } from "@chakra-ui/react";
+import { useAppOutdated } from "@team6083/ui";
 import { LuCircleCheckBig, LuLock, LuTimer } from "react-icons/lu";
 
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
@@ -50,6 +51,7 @@ export default function LogForm(props: {
       notes: timeLog.notes || undefined,
     } : undefined
   });
+  const outdated = useAppOutdated();
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(state.prevValues?.status || "CURRENTLY_IN");
   // Follow the status the server echoes back after a submit (adjusting state during render, not in an effect)
@@ -218,7 +220,7 @@ export default function LogForm(props: {
         </DataList.Root>
       )}
 
-      <Button type="submit" loading={pending}>
+      <Button type="submit" loading={pending} disabled={outdated}>
         {isNew ? t("buttons.submitCreate") : t("buttons.submitEdit")}
       </Button>
 

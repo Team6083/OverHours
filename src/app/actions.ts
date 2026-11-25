@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 
-import { AlreadyClockedInError, AutoLockedError, clockIn, clockOut, NotClockedInError, TimeLogTooShortError, getAllUsersTotalTimeSec } from "@/lib/data/timelog-dto";
+import { AlreadyClockedInError, AutoLockedError, clockIn, clockOut, getAllUsersTotalTimeSec, NotClockedInError, TimeLogTooShortError } from "@/lib/data/timelog-dto";
 import { getAllUserNames } from "@/lib/data/user-dto";
 
 export async function handleAdminClockIn(userId: string) {

@@ -4,14 +4,16 @@ import { useTranslations } from "next-intl";
 import { HStack, VStack, Spinner, Center, Heading, Popover, IconButton, Icon, Portal } from "@chakra-ui/react";
 import { LuCalendarRange } from "react-icons/lu";
 
-import LeaderboardTable from "@/components/LeaderboardTable";
-import StatRangeSelector from "@/components/StatRangeSelector";
+import LeaderboardTable from "@/components/ranking/LeaderboardTable";
+import StatRangeSelector from "@/components/stats/StatRangeSelector";
+import { StatRangeDTO } from "@/lib/data/statrange-dto";
 import { getLeaderboardRankings } from "../actions";
 
-export default function LeaderboardWithFilter(props: {
+export default function LeaderboardTabPanel(props: {
   initialRankings: { id: string; name: string; duration: number }[];
+  statRanges: StatRangeDTO[];
 }) {
-  const { initialRankings } = props;
+  const { initialRankings, statRanges } = props;
   const t = useTranslations("HomePage.leaderboardWithFilter");
 
   const [rankings, setRankings] = useState(initialRankings);
@@ -56,6 +58,7 @@ export default function LeaderboardWithFilter(props: {
                 <Popover.Arrow />
                 <Popover.Body>
                   <StatRangeSelector
+                    statRanges={statRanges}
                     onSelectAction={handleStatRangeSelect}
                     onClearAction={handleClearRange}
                   />

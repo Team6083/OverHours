@@ -1,10 +1,12 @@
-import { Heading, DataList, HStack, ButtonGroup, Button, Icon, Text, Badge } from "@chakra-ui/react";
+import { Heading, HStack, ButtonGroup, Button, Icon, Text, Badge } from "@chakra-ui/react";
+import { FactList } from "@team6083/ui";
 import { LuTrash2 } from "react-icons/lu";
 
-import GenericClipboard from "@/components/Clipboard";
-import TimeLogStatusBadge from "@/components/TimeLogStatusBadge";
+import GenericClipboard from "@/components/common/Clipboard";
+import TimeLogStatusBadge from "@/components/timelog/TimeLogStatusBadge";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { formatDuration } from "@/lib/util";
+import WriteButton from "@/components/common/WriteButton";
 
 export default function DeleteTimeLogConfirm(props: {
   timeLog: TimeLogDTO;
@@ -17,52 +19,26 @@ export default function DeleteTimeLogConfirm(props: {
   return <>
     <Heading as="h2" size="md" mb={4}>Confirm Deletion</Heading>
 
-    <DataList.Root mb={4}>
-
-      <DataList.Item>
-        <DataList.ItemLabel>TimeLog ID</DataList.ItemLabel>
-        <GenericClipboard value={timeLog.id} />
-      </DataList.Item>
-
-      <DataList.Item>
-        <DataList.ItemLabel>User</DataList.ItemLabel>
-        <DataList.ItemValue flexWrap="wrap" gapY={2}>
-          {userName && <Badge mr={2} colorPalette="blue">{userName}</Badge>}
+    <FactList mb={4} items={[
+      { label: "TimeLog ID", value: <GenericClipboard value={timeLog.id} /> },
+      {
+        label: "User",
+        value: <HStack flexWrap="wrap" gap={2}>
+          {userName && <Badge colorPalette="brand">{userName}</Badge>}
           <GenericClipboard color="fg.muted" value={timeLog.userId} />
-        </DataList.ItemValue>
-      </DataList.Item>
-
-      <DataList.Item>
-        <DataList.ItemLabel>Status</DataList.ItemLabel>
-        <DataList.ItemValue>
-          <TimeLogStatusBadge status={timeLog.status} />
-        </DataList.ItemValue>
-      </DataList.Item>
-
-      <DataList.Item>
-        <DataList.ItemLabel>Clock-in Time</DataList.ItemLabel>
-        <DataList.ItemValue>{timeLog.inTime.toLocaleString()}</DataList.ItemValue>
-      </DataList.Item>
-
-      {timeLog.outTime && (<>
-        <DataList.Item>
-          <DataList.ItemLabel>Clock-out Time</DataList.ItemLabel>
-          <DataList.ItemValue>{timeLog.outTime.toLocaleString()}</DataList.ItemValue>
-        </DataList.Item>
-        <DataList.Item>
-          <DataList.ItemLabel>Duration</DataList.ItemLabel>
-          <DataList.ItemValue>{formatDuration(Math.round((timeLog.outTime.getTime() - timeLog.inTime.getTime()) / 1000))}</DataList.ItemValue>
-        </DataList.Item>
-      </>)}
-
-      {timeLog.notes &&
-        <DataList.Item>
-          <DataList.ItemLabel>Notes</DataList.ItemLabel>
-          <DataList.ItemValue>{timeLog.notes}</DataList.ItemValue>
-        </DataList.Item>
-      }
-
-    </DataList.Root>
+        </HStack>,
+      },
+      { label: "Status", value: <TimeLogStatusBadge status={timeLog.status} /> },
+      { label: "Clock-in Time", value: timeLog.inTime.toLocaleString() },
+      ...(timeLog.outTime ? [
+        { label: "Clock-out Time", value: timeLog.outTime.toLocaleString() },
+        {
+          label: "Duration",
+          value: formatDuration(Math.round((timeLog.outTime.getTime() - timeLog.inTime.getTime()) / 1000)),
+        },
+      ] : []),
+      ...(timeLog.notes ? [{ label: "Notes", value: timeLog.notes }] : []),
+    ]} />
 
     <Text fontWeight="medium" color="fg.warning" mb={4}>Are you sure you want to delete this time log?</Text>
 
@@ -71,10 +47,10 @@ export default function DeleteTimeLogConfirm(props: {
         <Button onClick={handleCancel}>
           Cancel
         </Button>
-        <Button colorPalette="red" onClick={handleDelete}>
+        <WriteButton colorPalette="red" onClick={handleDelete}>
           <Icon><LuTrash2 /></Icon>
           Delete
-        </Button>
+        </WriteButton>
       </ButtonGroup>
     </HStack>
   </>

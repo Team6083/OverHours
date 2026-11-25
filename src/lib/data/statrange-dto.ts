@@ -81,6 +81,14 @@ export async function getActiveStatRangeDTOs(): Promise<StatRangeDTO[]> {
   return statRanges.map(prismaStatRangeToDTO);
 }
 
+/** For the stat range picker, which is optional: a failed query hides the picker instead of breaking the page. */
+export function getActiveStatRangesForPicker(): Promise<StatRangeDTO[]> {
+  return getActiveStatRangeDTOs().catch((error) => {
+    console.error("Failed to load stat ranges", error);
+    return [];
+  });
+}
+
 export async function createStatRange(data: {
   name: string;
   startDate: Date;
