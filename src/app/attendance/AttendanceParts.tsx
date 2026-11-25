@@ -6,8 +6,8 @@ import {
 } from "@chakra-ui/react";
 import { LuCalendarDays, LuCheck, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
-import { useRankOf } from "@/components/TopRanks";
-import UserAvatar from "@/components/UserAvatar";
+import { useRankOf } from "@/components/ranking/TopRanks";
+import UserAvatar from "@/components/user/UserAvatar";
 import { addDays, addMonths, ATTENDANCE_STATUSES, AttendanceStatus, DayStatus, monthDates, shortDate, STATUS_PALETTE, weekDates } from "@/lib/attendance";
 import { BoardDay, BoardUser } from "@/lib/data/attendance-dto";
 import { getBoardDay, getBoardMonth, getPersonMonth } from "./actions";
@@ -160,14 +160,14 @@ function MonthOverview(props: {
               py={1}
               rounded="md"
               borderWidth={date === selected ? "2px" : "1px"}
-              borderColor={date === selected ? "blue.solid" : "border.muted"}
+              borderColor={date === selected ? "brand.solid" : "border.muted"}
               title={label}
               aria-label={label}
               onClick={() => onSelectDate(date)}
-              _hover={{ borderColor: "blue.solid" }}
+              _hover={{ borderColor: "brand.solid" }}
             >
               <Stack gap={0} align="center" w="full" minW={0}>
-                <Text fontSize="sm" lineHeight="1.25rem" fontWeight={date === today ? "bold" : "normal"} color={date === today ? "blue.fg" : undefined}>
+                <Text fontSize="sm" lineHeight="1.25rem" fontWeight={date === today ? "bold" : "normal"} color={date === today ? "brand.fg" : undefined}>
                   {Number(date.slice(8))}
                 </Text>
                 <HStack gap={0} fontSize="xs" lineHeight="1rem" h="1rem" fontWeight="medium" fontVariantNumeric="tabular-nums">
@@ -259,12 +259,12 @@ function PersonCalendar(props: {
               fontSize="sm"
               fontWeight={status ? "semibold" : "normal"}
               borderWidth={date === today ? "2px" : "1px"}
-              borderColor={date === today ? "blue.solid" : "border.muted"}
+              borderColor={date === today ? "brand.solid" : "border.muted"}
               position="relative"
               title={label}
               aria-label={label}
               onClick={() => onSelectDate(date)}
-              _hover={{ borderColor: "blue.solid" }}
+              _hover={{ borderColor: "brand.solid" }}
               {...style}
             >
               {Number(date.slice(8))}

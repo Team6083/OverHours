@@ -2,6 +2,7 @@
 import { ComponentProps, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Group, Combobox, Button, useFilter, useListCollection, usePopoverContext, Icon, IconButton, Popover, Portal, Text, Box } from "@chakra-ui/react";
+import { useAppOutdated } from "@team6083/ui";
 import { LuSmilePlus } from "react-icons/lu";
 
 import { UserDTO } from "@/lib/data/user-dto";
@@ -72,6 +73,7 @@ function ClockUserInCombobox(props: {
 
   const [value, setValue] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const outdated = useAppOutdated();
 
   const popoverCtx = usePopoverContext();
 
@@ -104,9 +106,9 @@ function ClockUserInCombobox(props: {
         </Combobox.Control>
         <Button
           size="xs"
-          colorPalette="blue"
+          colorPalette="brand"
           variant="outline"
-          disabled={value.length === 0} loading={loading}
+          disabled={outdated || value.length === 0} loading={loading}
           onClick={handleClockIn}
         >{t("buttons.clockIn")}</Button>
       </Group>

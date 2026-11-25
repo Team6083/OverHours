@@ -19,6 +19,8 @@ export const proxy = auth((req) => {
 
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-nonce", nonce);
+  // Lets a layout send someone to sign in and back to this page (src/lib/require-sign-in.ts).
+  requestHeaders.set("x-pathname", req.nextUrl.pathname + req.nextUrl.search);
   requestHeaders.set(cspHeader, csp);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });

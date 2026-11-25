@@ -10,7 +10,7 @@ import {
 import { IconType } from "react-icons";
 import { LuCalendarDays, LuCalendarSync, LuCheck, LuCheckCheck, LuCopy, LuSave, LuUsers, LuWandSparkles, LuX } from "react-icons/lu";
 
-import { toaster } from "@/components/ui/toaster";
+import { toaster, useAppOutdated } from "@team6083/ui";
 import {
   addDays, applyPattern, ATTENDANCE_STATUSES, AttendanceStatus, copyFromWeekBefore, DayStatus, shortDate, STATUS_PALETTE, weekdayOf, weekStartOf,
 } from "@/lib/attendance";
@@ -75,6 +75,7 @@ export default function AttendanceView(props: {
   const [selected, setSelected] = useState(() => [props.day, today].find(date => board.some(day => day.date === date)) ?? weekStart);
   const [entries, setEntries] = useState(mine);
   const [isPending, startTransition] = useTransition();
+  const outdated = useAppOutdated();
   const saving = useRef(false);
   const router = useRouter();
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
@@ -193,9 +194,9 @@ export default function AttendanceView(props: {
                 <Button
                   key={day.date}
                   variant="outline"
-                  colorPalette={active ? "blue" : "gray"}
-                  bg={active ? "blue.subtle" : undefined}
-                  borderColor={active ? "blue.solid" : undefined}
+                  colorPalette={active ? "brand" : "gray"}
+                  bg={active ? "brand.subtle" : undefined}
+                  borderColor={active ? "brand.solid" : undefined}
                   rounded="lg"
                   height="auto"
                   minW={0}
@@ -287,7 +288,7 @@ export default function AttendanceView(props: {
         <HStack mb={{ base: 1, md: 4 }} justify="space-between" wrap="wrap" gapY={0}>
           <HStack>
             <Heading as="h2" size={{ base: "lg", md: "xl" }}>{t("week.heading")}</Heading>
-            <Badge colorPalette="blue" size="md">{shortDate(weekStart)} – {shortDate(addDays(weekStart, 6))}</Badge>
+            <Badge colorPalette="brand" size="md">{shortDate(weekStart)} – {shortDate(addDays(weekStart, 6))}</Badge>
           </HStack>
           <HStack gap={1}>
             {weekLink(`/attendance?week=${addDays(weekStart, -7)}`, addDays(weekStart, -7), t("week.previous"))}
@@ -320,7 +321,7 @@ export default function AttendanceView(props: {
                               <Menu.Item value="pattern" disabled={editableDates.length === 0}><LuCalendarSync />{t("quickFill.pattern")}</Menu.Item>
                             </Menu.ItemGroup>
                             <Menu.Separator />
-                            <Menu.Item value="savePattern" disabled={!hasAnswers}><LuSave />{t("quickFill.savePattern")}</Menu.Item>
+                            <Menu.Item value="savePattern" disabled={outdated || !hasAnswers}><LuSave />{t("quickFill.savePattern")}</Menu.Item>
                           </Menu.Content>
                         </Menu.Positioner>
                       </Portal>
@@ -351,13 +352,13 @@ export default function AttendanceView(props: {
                           minW={0}
                           px={0}
                           fontWeight={date === selected ? "semibold" : "normal"}
-                          color={date === selected ? "blue.fg" : isPast ? "fg.muted" : undefined}
+                          color={date === selected ? "brand.fg" : isPast ? "fg.muted" : undefined}
                           aria-pressed={date === selected}
                           onClick={() => setSelected(date)}
                         >
                           {dayLabel(date)}
                         </Button>
-                        {date === today && <Badge colorPalette="blue">{t("today")}</Badge>}
+                        {date === today && <Badge colorPalette="brand">{t("today")}</Badge>}
                       </HStack>
                     </Table.Cell>
                     <Table.Cell textAlign="end" py={{ base: 1, md: 2 }}>
@@ -378,10 +379,10 @@ export default function AttendanceView(props: {
             width="full"
             size="xs"
             variant={dirty ? "solid" : "surface"}
-            colorPalette="blue"
+            colorPalette="brand"
             onClick={handleSave}
             loading={isPending}
-            disabled={editableDates.length === 0}
+            disabled={outdated || editableDates.length === 0}
           >
             {t("week.save")}
           </Button>

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  describeError,
-  describeErrorDescription,
-  INVALID_TOKEN_ERROR_CODES,
-  isVerifyGraceExpired,
-  KNOWN_TRANSIENT_ERROR_CODES,
-  parseVerifyGraceSec,
+    describeError,
+    describeErrorDescription,
+    INVALID_TOKEN_ERROR_CODES,
+    isVerifyGraceExpired,
+    KNOWN_TRANSIENT_ERROR_CODES,
+    parseVerifyGraceSec,
 } from "./auth-errors";
 
 // Deliberate change-detector: this literal list must match INVALID_TOKEN_ERROR_CODES exactly, so adding

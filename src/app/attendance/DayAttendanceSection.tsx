@@ -95,11 +95,11 @@ export default function DayAttendanceSection() {
             <LuChevronLeft />
           </IconButton>
           <HStack gap={2} minW={28} justify="center">
-            <Text fontSize="sm" fontWeight="medium">{dayLabel(date)}</Text>
+            <Text fontWeight="medium">{dayLabel(date)}</Text>
             <IconButton size="xs" variant="ghost" aria-label={t("calendar.openHint")} onClick={() => openDialog("month")}>
               <LuCalendarDays />
             </IconButton>
-            {date === today && <Badge colorPalette="blue">{t("today")}</Badge>}
+            {date === today && <Badge colorPalette="brand">{t("today")}</Badge>}
           </HStack>
           <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => goTo(addDays(date, 1))}>
             <LuChevronRight />

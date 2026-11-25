@@ -1,18 +1,18 @@
-import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
+import { cookies, headers } from "next/headers";
 
-const supportedLocales = ["en", "zh-TW"];
+import { LOCALE_COOKIE, SUPPORTED_LOCALES } from "./locales";
 
 export default getRequestConfig(async () => {
   let locale: string = "en";
 
   const store = await cookies();
-  const cookieLocale = store.get("locale")?.value;
+  const cookieLocale = store.get(LOCALE_COOKIE)?.value;
 
   const h = await headers();
   const acceptLanguageHeader = h.get("Accept-Language");
 
-  if (cookieLocale && supportedLocales.includes(cookieLocale)) {
+  if (cookieLocale && SUPPORTED_LOCALES.includes(cookieLocale)) {
     locale = cookieLocale;
   } else if (acceptLanguageHeader) {
     const headerLocales = acceptLanguageHeader.split(",")
@@ -28,7 +28,7 @@ export default getRequestConfig(async () => {
 
         return { lang, q: isNaN(q) ? 1 : q };
       })
-      .filter((v) => supportedLocales.includes(v.lang))
+      .filter((v) => SUPPORTED_LOCALES.includes(v.lang))
       .sort((a, b) => b.q - a.q);
 
     if (headerLocales.length > 0) {

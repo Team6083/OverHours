@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Badge, Button, ButtonGroup, Card, HStack, IconButton, Text, TreeView, createTreeCollection, useTreeView, useTreeViewContext } from "@chakra-ui/react";
 import { LuPlus, LuSquareMinus, LuSquarePlus, LuUsers } from "react-icons/lu";
 
-import { toaster } from "@/components/ui/toaster";
+import { toaster, useAppOutdated } from "@team6083/ui";
 import type { TeamDTO } from "@/lib/data/team-dto";
 import { buildTeamTree, getTeamAncestors, type TeamTreeNode } from "@/lib/team-tree";
 import { createTeamAction } from "./actions";
@@ -15,6 +15,7 @@ type Node = TeamTreeNode<TeamDTO>;
 function useCreateTeam() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const outdated = useAppOutdated();
 
   const create = async (parentTeamId?: string) => {
     setLoading(true);
@@ -30,19 +31,19 @@ function useCreateTeam() {
     }
   };
 
-  return { create, loading };
+  return { create, loading, outdated };
 }
 
 export function CreateTeamButton() {
-  const { create, loading } = useCreateTeam();
-  return <Button loading={loading} onClick={() => create()}>
+  const { create, loading, outdated } = useCreateTeam();
+  return <Button loading={loading} disabled={outdated} onClick={() => create()}>
     <LuPlus /> Create team
   </Button>;
 }
 
 function TreeToolbar() {
   const tree = useTreeViewContext();
-  const { create, loading } = useCreateTeam();
+  const { create, loading, outdated } = useCreateTeam();
 
   const branches = tree.collection.getBranchValues();
   const isAllExpanded = branches.length > 0 && branches.every(value => tree.expandedValue.includes(value));
@@ -52,7 +53,7 @@ function TreeToolbar() {
       {branches.length > 0 && (isAllExpanded
         ? <Button onClick={() => tree.collapse()}>Collapse all</Button>
         : <Button onClick={() => tree.expand()}>Expand all</Button>)}
-      <IconButton aria-label="Create top-level team" loading={loading} onClick={() => create()}>
+      <IconButton aria-label="Create top-level team" loading={loading} disabled={outdated} onClick={() => create()}>
         <LuPlus />
       </IconButton>
     </ButtonGroup>
@@ -61,7 +62,7 @@ function TreeToolbar() {
 
 function AddSubTeamButton(props: { node: Node }) {
   const tree = useTreeViewContext();
-  const { create, loading } = useCreateTeam();
+  const { create, loading, outdated } = useCreateTeam();
 
   return (
     <IconButton
@@ -69,6 +70,7 @@ function AddSubTeamButton(props: { node: Node }) {
       variant="ghost"
       aria-label={`Add sub-team to ${props.node.name}`}
       loading={loading}
+      disabled={outdated}
       css={{ opacity: 0, "[role=treeitem]:hover > * > &, [role=treeitem]:hover > &": { opacity: 1 } }}
       onClick={(e) => {
         e.stopPropagation();

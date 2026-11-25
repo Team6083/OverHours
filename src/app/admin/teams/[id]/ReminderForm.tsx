@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Card, Field, HStack, Input, SimpleGrid, Stack, Switch, Text } from "@chakra-ui/react";
 import { useTranslations } from "next-intl";
 
-import { toaster } from "@/components/ui/toaster";
+import { toaster, useAppOutdated } from "@team6083/ui";
 import { shortDate } from "@/lib/attendance";
 import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";
 import { MAX_DAYS_AHEAD, ReminderSettings } from "@/lib/team-reminders";
@@ -19,6 +19,7 @@ export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
   const router = useRouter();
   const [settings, setSettings] = useState<ReminderSettings>(reminder.settings);
   const [saving, startSaving] = useTransition();
+  const outdated = useAppOutdated();
   const [daysText, setDaysText] = useState(String(reminder.settings.daysAhead));
   const daysValid = /^\d+$/.test(daysText) && Number(daysText) >= 1 && Number(daysText) <= MAX_DAYS_AHEAD;
 
@@ -90,7 +91,7 @@ export default function ReminderForm(props: { reminder: TeamReminderDTO }) {
               </Field.Root>
             </SimpleGrid>
 
-            <Button alignSelf="start" onClick={save} loading={saving} disabled={!changed || !daysValid}>{t("save")}</Button>
+            <Button alignSelf="start" onClick={save} loading={saving} disabled={outdated || !changed || !daysValid}>{t("save")}</Button>
           </Stack>
         </Card.Body>
       </Card.Root>

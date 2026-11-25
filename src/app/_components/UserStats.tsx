@@ -2,10 +2,10 @@ import { ComponentProps } from "react";
 import { getTranslations } from "next-intl/server";
 import { DataList, Badge } from "@chakra-ui/react";
 
-import RankingBadge from "@/components/RankingBadge";
+import RankingBadge from "@/components/ranking/RankingBadge";
 import { formatDuration } from "@/lib/util";
 
-export default async function UserStat(props: {
+export default async function UserStats(props: {
   totalTimeSec: number,
   ranking?: number,
 } & ComponentProps<typeof DataList.Root>) {
