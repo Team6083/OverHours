@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Badge, Button, ButtonGroup, Card, HStack, IconButton, Text, TreeView, createTreeCollection, useTreeView, useTreeViewContext } from "@chakra-ui/react";
+import { useMemo, useState } from "react";
+
+import { Badge, Button, ButtonGroup, Card, createTreeCollection, HStack, IconButton, Text, TreeView, useTreeView, useTreeViewContext } from "@chakra-ui/react";
+import { toaster, useAppOutdated } from "@team6083/ui";
 import { LuPlus, LuSquareMinus, LuSquarePlus, LuUsers } from "react-icons/lu";
 
-import { toaster, useAppOutdated } from "@team6083/ui";
 import type { TeamDTO } from "@/lib/data/team-dto";
 import { buildTeamTree, getTeamAncestors, type TeamTreeNode } from "@/lib/team-tree";
 import { createTeamAction } from "./actions";

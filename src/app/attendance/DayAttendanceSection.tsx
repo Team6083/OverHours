@@ -1,14 +1,15 @@
 "use client";
-import { createContext, useContext, useState } from "react";
 import Link from "next/link";
 import { useFormatter, useTranslations } from "next-intl";
+import { createContext, useContext, useState } from "react";
+
 import { Badge, Button, Heading, HStack, IconButton, SimpleGrid, Spinner, Stack, Text } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 import { addDays, shortDate } from "@/lib/attendance";
 import { BoardDay } from "@/lib/data/attendance-dto";
 import { getBoardDay } from "./actions";
-import { boardGroups, NameGroup, UserListDialog, useKeyedLoad } from "./AttendanceParts";
+import { boardGroups, NameGroup, useKeyedLoad, UserListDialog } from "./AttendanceParts";
 
 type DayAttendance = {
   date: string;

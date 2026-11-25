@@ -1,18 +1,18 @@
 "use client";
-import React, { createContext, useContext, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import React, { createContext, useContext, useRef, useState } from "react";
 
 import {
-  Badge, ButtonGroup, CloseButton, HStack, Icon, IconButton, Input, InputGroup,
-  Menu, Pagination, Portal, Spinner, Stack, Table, useFilter, usePaginationContext, VStack
+    Badge, ButtonGroup, CloseButton, HStack, Icon, IconButton, Input, InputGroup,
+    Menu, Pagination, Portal, Spinner, Stack, Table, useFilter, usePaginationContext, VStack
 } from "@chakra-ui/react";
+import { EmptyState, type EmptyStateProps, Tooltip, useAppOutdated } from "@team6083/ui";
 import {
-  LuArrowUp10, LuBuilding, LuChevronLeft, LuChevronRight, LuDoorOpen,
-  LuEllipsisVertical, LuLock, LuSearchSlash, LuTrash2,
+    LuArrowUp10, LuBuilding, LuChevronLeft, LuChevronRight, LuDoorOpen,
+    LuEllipsisVertical, LuLock, LuSearchSlash, LuTrash2,
 } from "react-icons/lu";
 
 import { useRankOf } from "@/components/ranking/TopRanks";
-import { EmptyState, type EmptyStateProps, Tooltip, useAppOutdated } from "@team6083/ui";
 import UserAvatar from "@/components/user/UserAvatar";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 

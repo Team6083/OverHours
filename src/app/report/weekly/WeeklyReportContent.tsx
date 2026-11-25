@@ -1,14 +1,22 @@
 "use client";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
-  Badge, HStack, Stat, Heading, Center, IconButton, Spinner, ButtonGroup, Table,
+    Badge,
+    ButtonGroup,
+    Center,
+    Heading,
+    HStack,
+    IconButton, Spinner,
+    Stat,
+    Table,
 } from "@chakra-ui/react";
 import { PageHeader } from "@team6083/ui";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
 import HeatMap from "@/components/stats/HeatMap";
 import StatValueTextDuration from "@/components/stats/StatValueTextDuration";
-import { WeeklyReportData, getWeeklyReportData } from "@/lib/data/report";
+import { getWeeklyReportData, WeeklyReportData } from "@/lib/data/report";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_LABELS_SHORT = ["M", "T", "W", "T", "F", "S", "S"];

@@ -1,12 +1,12 @@
-import { Heading, HStack, ButtonGroup, Button, Icon, Text, Badge } from "@chakra-ui/react";
+import { Badge, Button, ButtonGroup, Heading, HStack, Icon, Text } from "@chakra-ui/react";
 import { FactList } from "@team6083/ui";
 import { LuTrash2 } from "react-icons/lu";
 
 import GenericClipboard from "@/components/common/Clipboard";
+import WriteButton from "@/components/common/WriteButton";
 import TimeLogStatusBadge from "@/components/timelog/TimeLogStatusBadge";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { formatDuration } from "@/lib/util";
-import WriteButton from "@/components/common/WriteButton";
 
 export default function DeleteTimeLogConfirm(props: {
   timeLog: TimeLogDTO;

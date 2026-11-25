@@ -1,5 +1,5 @@
-import { getRequestConfig } from "next-intl/server";
 import { cookies, headers } from "next/headers";
+import { getRequestConfig } from "next-intl/server";
 
 import { LOCALE_COOKIE, SUPPORTED_LOCALES } from "./locales";
 import { negotiateLocale } from "./negotiate";
