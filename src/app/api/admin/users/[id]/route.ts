@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 
-import { apiError, withApiErrors } from "@/lib/api-error";
 import { verifyApiKey } from "@/lib/admin-api-auth";
+import { apiError, withApiErrors } from "@/lib/api-error";
 import { adminDeleteUser, adminGetUser, adminUpdateUser, EmailManagedByProviderError } from "@/lib/data/user-dto";
 import { objectIdSchema } from "@/lib/objectid";
 

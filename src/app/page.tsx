@@ -3,28 +3,25 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
-import {
-  Button, Card, ClientOnly, CloseButton, Dialog, GridItem, Heading, HStack, Icon, Portal, Separator, SimpleGrid,
-  Spinner, Tabs, Text, VStack
-} from "@chakra-ui/react";
-import { LuChevronsRight, LuHouse, LuTrophy } from "react-icons/lu";
+import { Card, ClientOnly, GridItem, Heading, HStack, Separator, SimpleGrid, Spinner, Stack, Tabs, Tag, Text, VStack } from "@chakra-ui/react";
+import { LuCalendarCheck, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
-import LastUpdatedText from "@/components/LastUpdatedText";
+import LastUpdatedText from "@/components/common/LastUpdatedText";
 import LeaderboardCard from "./_components/LeaderboardCard";
-import LeaderboardWithFilter from "./_components/LeaderboardWithFilter";
+import LeaderboardTabPanel from "./_components/LeaderboardTabPanel";
 import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
+import { getActiveStatRangesForPicker } from "@/lib/data/statrange-dto";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import {
   adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
 } from "@/lib/data/timelog-dto";
 import { getAllUserAvatars, getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import ClockUserInPopover from "./_components/ClockUserInPopover";
-import PageUpdateButton from "./_components/PageUpdateButton";
-import UserStatus from "./_components/UserStatus";
-import UserDisplay from "./_components/UserDisplay";
-import UserStat from "./_components/UserStat";
-import UserClockToggleButton from "./_components/UserClockToggleButton";
+import RefreshButton from "./_components/RefreshButton";
+import ClockStatus from "./_components/ClockStatus";
+import UserStats from "./_components/UserStats";
+import ClockInOutButton from "./_components/ClockInOutButton";
 import {
   CurrentlyClockedInContent, CurrentlyClockedInCountBadge, CurrentlyClockedInNoData,
   CurrentlyClockedInPaginationControls, CurrentlyClockedInProvider, CurrentlyClockedInSearchInput,
@@ -32,6 +29,7 @@ import {
 } from "./_components/CurrentlyClockedIn";
 import HomePageSkeleton from "./home-skeleton";
 import DayAttendanceSection, { DayAttendanceProvider } from "./attendance/DayAttendanceSection";
+import UserAvatar from "@/components/user/UserAvatar";
 
 type UserInfo = {
   id: string;
@@ -58,6 +56,8 @@ export default async function Home() {
       return undefined;
     })
     : Promise.resolve(undefined);
+  // The leaderboard's range picker; loads alongside the other queries and is empty if it fails.
+  const statRangesPromise = getActiveStatRangesForPicker();
   const isAdmin = session?.user.role === Role.ADMIN;
 
   // Get All User Names
@@ -70,6 +70,7 @@ export default async function Home() {
 
   // Get All Users Total Time
   const allUsersTotalTimeSec = await getAllUsersTotalTimeSec();
+  const statRanges = await statRangesPromise;
   const rankings = Object.entries(allUsersTotalTimeSec)
     .sort((a, b) => b[1] - a[1])
     .map(([id, duration]) => ({ id, name: userNameMap[id], duration }));
@@ -150,31 +151,49 @@ export default async function Home() {
             {userInfo && (
               <Card.Root w="full" size="sm">
                 <Card.Body>
-
                   <HStack w="full" justify="flex-end" mb={2}>
-                    <UserStatus lastLog={userInfo.lastLog} />
+                    <ClockStatus lastLog={userInfo.lastLog} />
                   </HStack>
 
                   <VStack textAlign="center" gap={4}>
-                    <UserDisplay user={userInfo} />
+                    <HStack gap={4}>
+                      <UserAvatar
+                        name={userInfo.name ?? ""}
+                        image={userInfo.image}
+                        size={userInfo.teams && userInfo.teams.length > 0 ? { base: "sm", md: "xl" } : "xs"}
+                        rank={userInfo.ranking}
+                      />
 
-                    <UserStat
+                      <Stack gap={1}>
+                        <Text fontWeight="medium" fontSize="lg">{userInfo.name}</Text>
+                        {userInfo.teams && userInfo.teams.length > 0 && (
+                          <HStack gap={1} justifyContent="center" alignContent="center" flexWrap="wrap">
+                            {userInfo.teams.map((team) => (
+                              <Tag.Root key={team.id} variant="surface">
+                                <Tag.Label>{team.name}</Tag.Label>
+                              </Tag.Root>
+                            ))}
+                          </HStack>
+                        )}
+                      </Stack>
+                    </HStack>
+
+                    <UserStats
                       totalTimeSec={userInfo.totalTimeSec}
                       ranking={userInfo.ranking}
                       orientation="horizontal"
                       gap={2}
                     />
                   </VStack>
-
                 </Card.Body>
                 <Card.Footer>
-                  <UserClockToggleButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
+                  <ClockInOutButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
                 </Card.Footer>
               </Card.Root>
             )}
 
             {/* Leaderboard Card */}
-            <LeaderboardCard initialRankings={rankings} />
+            <LeaderboardCard initialRankings={rankings} statRanges={statRanges} />
 
           </VStack>
         </GridItem>
@@ -200,6 +219,10 @@ export default async function Home() {
             <LuHouse />
             {t("tabs.home")}
           </Tabs.Trigger>
+          {todayBoard && (<Tabs.Trigger value="availability">
+            <LuCalendarCheck />
+            {t("tabs.availability")}
+          </Tabs.Trigger>)}
           <Tabs.Trigger value="leaderboard">
             <LuTrophy />
             {t("tabs.leaderboard")}
@@ -209,12 +232,33 @@ export default async function Home() {
         <Tabs.Content value="main">
           {userInfo && (<>
             <VStack align="flex-start" gap={4} mb={4}>
-              <HStack justifyContent="space-between" w="full" gapX={4}>
-                <UserDisplay user={userInfo} />
-                <UserStatus lastLog={userInfo.lastLog || undefined} />
+              <HStack w="full" gapX={4}>
+                <UserAvatar
+                  name={userInfo.name ?? ""}
+                  image={userInfo.image}
+                  size={userInfo.teams && userInfo.teams.length > 0 ? { base: "sm", md: "xl" } : "xs"}
+                  rank={userInfo.ranking}
+                />
+
+                <Stack w="full" gap={1}>
+                  <HStack w="full" justifyContent="space-between">
+                    <Text fontWeight="medium" fontSize="lg">{userInfo.name}</Text>
+                    <ClockStatus lastLog={userInfo.lastLog || undefined} />
+                  </HStack>
+
+                  {userInfo.teams && userInfo.teams.length > 0 && (
+                    <HStack gap={1} flexWrap="wrap">
+                      {userInfo.teams.map((team) => (
+                        <Tag.Root key={team.id} variant="surface">
+                          <Tag.Label>{team.name}</Tag.Label>
+                        </Tag.Root>
+                      ))}
+                    </HStack>
+                  )}
+                </Stack>
               </HStack>
 
-              <UserStat
+              <UserStats
                 totalTimeSec={userInfo.totalTimeSec}
                 ranking={userInfo.ranking}
                 flexDir="row"
@@ -222,21 +266,20 @@ export default async function Home() {
                 w="full"
               />
 
-              <UserClockToggleButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
+              <ClockInOutButton userId={userInfo.id} isClockedIn={userInfo.lastLog?.status === "CURRENTLY_IN"} />
             </VStack>
             <Separator mb={4} />
-          </>)}
-
-          {todayBoard && (<>
-            <DayAttendanceSection />
-            <Separator my={4} />
           </>)}
 
           <CurrentlyClockedIn hasUser={!!userInfo} isAdmin={isAdmin} canClockInUsers={canClockInUsers} />
         </Tabs.Content>
 
+        {todayBoard && (<Tabs.Content value="availability">
+          <DayAttendanceSection />
+        </Tabs.Content>)}
+
         <Tabs.Content value="leaderboard">
-          <LeaderboardWithFilter initialRankings={rankings} />
+          <LeaderboardTabPanel initialRankings={rankings} statRanges={statRanges} />
         </Tabs.Content>
 
       </Tabs.Root>
@@ -258,7 +301,7 @@ async function CurrentlyClockedIn(props: {
       <HStack>
         <Heading as="h2" size="xl">{t("headings.currentlyIn")}</Heading>
         <CurrentlyClockedInCountBadge />
-        <PageUpdateButton />
+        <RefreshButton />
       </HStack>
 
       {isAdmin && canClockInUsers && <ClockUserInPopover

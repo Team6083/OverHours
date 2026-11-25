@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  firstCutoffAfter, formatWallTime, fromWallTime, isValidTimeZone, lastCutoffAtOrBefore, splitByDay, toWallTime,
+    firstCutoffAfter, formatWallTime, fromWallTime, isValidTimeZone, lastCutoffAtOrBefore, splitByDay, toWallTime,
 } from "./zoned-time";
 
 const TPE = "Asia/Taipei"; // UTC+8, no daylight saving

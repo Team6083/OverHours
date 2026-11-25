@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Fieldset, Stack, Field, Input, Button, DataList } from "@chakra-ui/react";
+import { useAppOutdated } from "@team6083/ui";
 
 import { UserDTO } from "@/lib/data/user-dto";
 import { formSubmit } from "./actions";
@@ -15,6 +16,7 @@ export default function UserForm(props: {
   const { isNew, user, emailManaged } = props;
 
   const [state, action, pending] = useActionState(formSubmit, { prevValues: user });
+  const outdated = useAppOutdated();
 
   const nameFieldError = state.issues?.filter(issue => issue.path[0] === "name");
   const emailFieldError = state.issues?.filter(issue => issue.path[0] === "email");
@@ -68,7 +70,7 @@ export default function UserForm(props: {
         </DataList.Root>
       )}
 
-      <Button type="submit" loading={pending}>
+      <Button type="submit" loading={pending} disabled={outdated}>
         {isNew ? "Create User" : "Save Changes"}
       </Button>
 
