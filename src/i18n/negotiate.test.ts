@@ -14,6 +14,11 @@ describe("negotiateLocale", () => {
     expect(negotiateLocale("fr, zh-TW;q=0.8")).toBe("zh-TW");
   });
 
+  it("skips malformed tags instead of discarding the whole header", () => {
+    expect(negotiateLocale("zh-TW, en_US;q=0.5")).toBe("zh-TW");
+    expect(negotiateLocale("zh_TW, zh;q=0.9")).toBe("zh-TW");
+  });
+
   it("falls back to en for missing, unsupported or malformed headers", () => {
     expect(negotiateLocale(null)).toBe("en");
     expect(negotiateLocale("fr, ja;q=0.8")).toBe("en");
