@@ -1,4 +1,5 @@
-import { ButtonGroup, Card, EmptyState, GridItem, SimpleGrid, VStack } from "@chakra-ui/react";
+import { Card, GridItem, SimpleGrid } from "@chakra-ui/react";
+import { EmptyState } from "@team6083/ui";
 import { LuUsers } from "react-icons/lu";
 
 import { getAllTeamDTOs } from "@/lib/data/team-dto";
@@ -13,20 +14,12 @@ export default async function TeamsLayout({ children }: { children: React.ReactN
         {teams.length === 0 ? (
           <Card.Root>
             <Card.Body>
-              <EmptyState.Root>
-                <EmptyState.Content>
-                  <EmptyState.Indicator>
-                    <LuUsers />
-                  </EmptyState.Indicator>
-                  <VStack textAlign="center">
-                    <EmptyState.Title>No teams yet</EmptyState.Title>
-                    <EmptyState.Description>Create a team to get started.</EmptyState.Description>
-                  </VStack>
-                  <ButtonGroup>
-                    <CreateTeamButton />
-                  </ButtonGroup>
-                </EmptyState.Content>
-              </EmptyState.Root>
+              <EmptyState
+                icon={<LuUsers />}
+                title="No teams yet"
+                description="Create a team to get started."
+                actions={<CreateTeamButton />}
+              />
             </Card.Body>
           </Card.Root>
         ) : (

@@ -2,8 +2,8 @@ import "server-only";
 import { auth, Role } from "@/auth";
 import { User } from "@/generated/prisma";
 import prisma from "../prisma";
-import { removeUsersFromAllTeams } from "./team-dto";
 import { maskName } from "../util";
+import { removeUsersFromAllTeams } from "./team-dto";
 
 export type UserDTO = {
   id: string;

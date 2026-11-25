@@ -94,7 +94,7 @@ export default function DayAttendanceSection() {
           </IconButton>
           <HStack gap={2} minW={28} justify="center">
             <Text fontWeight="medium">{dayLabel(date)}</Text>
-            {date === today && <Badge colorPalette="blue">{t("today")}</Badge>}
+            {date === today && <Badge colorPalette="brand">{t("today")}</Badge>}
           </HStack>
           <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => goTo(addDays(date, 1))}>
             <LuChevronRight />

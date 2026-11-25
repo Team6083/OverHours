@@ -6,14 +6,16 @@ import {
 } from "@chakra-ui/react";
 import { LuChevronsRight } from "react-icons/lu";
 
-import LeaderboardTable from "@/components/LeaderboardTable";
-import StatRangeSelector from "@/components/StatRangeSelector";
+import LeaderboardTable from "@/components/ranking/LeaderboardTable";
+import StatRangeSelector from "@/components/stats/StatRangeSelector";
+import { StatRangeDTO } from "@/lib/data/statrange-dto";
 import { getLeaderboardRankings } from "../actions";
 
 export default function LeaderboardCard(props: {
   initialRankings: { id: string; name: string; duration: number }[];
+  statRanges: StatRangeDTO[];
 }) {
-  const { initialRankings } = props;
+  const { initialRankings, statRanges } = props;
   const t = useTranslations("HomePage.leaderboardCard");
 
   const [rankings, setRankings] = useState(initialRankings);
@@ -49,6 +51,7 @@ export default function LeaderboardCard(props: {
           <HStack justify="space-between" w="full">
             <Card.Title>{t("title")}</Card.Title>
             <StatRangeSelector
+              statRanges={statRanges}
               onSelectAction={handleStatRangeSelect}
               onClearAction={handleClearRange}
             />
