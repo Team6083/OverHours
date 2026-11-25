@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { isoWeekday } from "./attendance";
 import {
-  isReminderDue, membersMissing, parseRuleChannel, parseRuleCondition, reminderSettingsSchema, requiredDates,
+    isReminderDue, membersMissing, parseRuleChannel, parseRuleCondition, reminderSettingsSchema, requiredDates,
 } from "./team-reminders";
 
 describe("isoWeekday", () => {

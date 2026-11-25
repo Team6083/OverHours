@@ -1,12 +1,13 @@
 import { ComponentProps } from "react";
 import { Avatar, Box } from "@chakra-ui/react";
 import { useTranslations } from "next-intl";
-import { PiCrownFill, PiMedalFill } from "react-icons/pi";
+import { LuAward, LuCrown } from "react-icons/lu";
 
-// Gold, silver and bronze for 1st, 2nd and 3rd; the dark bronze is too dim on a dark page, so dark mode gets a lighter one.
+// Gold, silver and bronze for 1st, 2nd and 3rd. The icons are thin outlines, so each color keeps at least 3:1 contrast
+// with the page: darker gold and silver on a light page, a lighter bronze on a dark one.
 const MEDAL_COLORS = [
-  { base: "#EF9F27" },
-  { base: "#B4B2A9" },
+  { base: "#C77C02", _dark: "#EF9F27" },
+  { base: "#788491", _dark: "#C4C9CF" },
   { base: "#915136", _dark: "#C2774A" },
 ];
 
@@ -30,7 +31,7 @@ function bySize(size: AvatarSize, f: (px: number) => string) {
 }
 
 /** Crown on top of a `position: relative` avatar for 1st, a medal at the bottom right for 2nd and 3rd, sized to the avatar. */
-export default function RankMedal(props: { rank?: number; size?: AvatarSize }) {
+export function RankMedal(props: { rank?: number; size?: AvatarSize }) {
   const { rank = 0, size } = props;
   const t = useTranslations("RankMedal");
   const color = MEDAL_COLORS[rank - 1];
@@ -38,7 +39,7 @@ export default function RankMedal(props: { rank?: number; size?: AvatarSize }) {
 
   const label = t("label", { rank });
   const first = rank === 1;
-  const Icon = first ? PiCrownFill : PiMedalFill;
+  const Icon = first ? LuCrown : LuAward;
 
   // The svg fills the box inline so a surrounding Button's icon styles can't resize it.
   return (
@@ -52,7 +53,7 @@ export default function RankMedal(props: { rank?: number; size?: AvatarSize }) {
       aria-label={label}
       title={label}
       {...(first
-        ? { top: bySize(size, px => `-${Math.round(px * 0.55)}px`), left: "50%", transform: "translateX(-50%) rotate(-12deg)" }
+        ? { top: bySize(size, px => `-${Math.round(px * 0.55)}px`), left: "20%", transform: "translateX(-70%) rotate(-12deg)" }
         : { right: bySize(size, px => `-${Math.round(px * 0.2)}px`), bottom: "-2px" })}
     >
       <Icon aria-hidden style={{ width: "100%", height: "100%" }} />
@@ -60,8 +61,13 @@ export default function RankMedal(props: { rank?: number; size?: AvatarSize }) {
   );
 }
 
-// Where the crown and medal, grown by about 3px, cross the ring: degrees clockwise from 3 o'clock (the same at every avatar size).
-const HALO_GAPS = [[242, 294], [15, 69], [15, 69]];
+// Where the ring breaks for the crown (1st) and the medal (2nd, 3rd), the same at every avatar size.
+// center: degrees clockwise from 3 o'clock (270 is straight up, 45 is the bottom right); width: the gap's size in degrees.
+const HALO_GAPS = [
+  { center: 231, width: 55 },
+  { center: 46, width: 55 },
+  { center: 46, width: 55 },
+];
 
 // In units of 1% of the avatar: a 5% gap, then a 5% ring, drawn as one arc with round ends clear of the icon
 const R = 57.5;
@@ -74,7 +80,9 @@ export function RankHalo(props: { rank?: number }) {
   const color = MEDAL_COLORS[rank - 1];
   if (!color) return null;
 
-  const [start, end] = HALO_GAPS[rank - 1];
+  const { center, width } = HALO_GAPS[rank - 1];
+  const start = center - width / 2;
+  const end = center + width / 2;
   return (
     <Box position="absolute" inset="-10%" color={color} pointerEvents="none" aria-hidden>
       {/* Inline size, like the medal, so a surrounding Button's icon styles can't shrink it */}

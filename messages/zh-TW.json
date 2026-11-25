@@ -89,6 +89,7 @@
     },
     "tabs": {
       "home": "主畫面",
+      "availability": "可出席時間",
       "leaderboard": "排行榜"
     },
     "clockUserInPopover": {
@@ -185,6 +186,7 @@
       "users": "使用者",
       "teams": "團隊",
       "statRanges": "統計範圍",
+      "admin": "管理",
       "attendance": "可出席時間",
       "signIn": "登入",
       "signOut": "登出"
@@ -374,5 +376,17 @@
     "brokenPromises": "說會來沒來",
     "unexpected": "說不能來卻來了",
     "empty": "這段期間沒有填答可以比對"
+  },
+  "AccessDenied": {
+    "adminOnly": {
+      "title": "只有管理員可以看",
+      "description": "這個頁面只開放給 OverHours 的管理員，需要的話請聯絡管理員。"
+    },
+    "backHome": "回到首頁"
+  },
+  "NotFoundPage": {
+    "title": "找不到這個頁面",
+    "description": "連結可能有誤，或頁面已經移走了。",
+    "backHome": "回到首頁"
   }
 }
