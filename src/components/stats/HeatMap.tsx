@@ -1,9 +1,8 @@
 "use client";
 import { ComponentProps, Fragment } from "react";
 import { GridItem, Grid } from "@chakra-ui/react";
-import { useColorMode } from "@/components/ui/color-mode";
+import { Tooltip, useColorMode } from "@team6083/ui";
 
-import { Tooltip } from "./ui/tooltip";
 
 // Light mode: high value → dark green (900); dark mode: high value → light green (200)
 function calculateColor(value: number, isDark: boolean): string {

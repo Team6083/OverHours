@@ -8,7 +8,7 @@ import prisma from "../prisma";
 import { canDeliver, ClaimedRun, claimRun, deliver, failRun, finishRun, MAX_FAILURES, recordReminded } from "../reminders/delivery";
 import { evaluateRule, findUnanswered } from "../reminders/rules";
 import {
-  isReminderDue, parseRuleChannel, parseRuleCondition, ReminderSettings, reminderSettingsSchema, slackWebhookTargetSchema,
+    isReminderDue, parseRuleChannel, parseRuleCondition, ReminderSettings, reminderSettingsSchema, slackWebhookTargetSchema,
 } from "../team-reminders";
 import { toWallTime } from "../zoned-time";
 import { getTeamTree, requireAdmin, TeamError } from "./team-dto";

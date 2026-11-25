@@ -1,8 +1,10 @@
-import { Heading, DataList, HStack, ButtonGroup, Button, Icon, Text, Badge } from "@chakra-ui/react";
+import { Heading, HStack, ButtonGroup, Button, Icon, Text, Badge } from "@chakra-ui/react";
+import { FactList } from "@team6083/ui";
 import { LuTrash2 } from "react-icons/lu";
 
-import GenericClipboard from "@/components/Clipboard";
+import GenericClipboard from "@/components/common/Clipboard";
 import { StatRangeDTO } from "@/lib/data/statrange-dto";
+import WriteButton from "@/components/common/WriteButton";
 
 export default function DeleteStatRangeConfirm(props: {
   statRange: StatRangeDTO;
@@ -14,43 +16,17 @@ export default function DeleteStatRangeConfirm(props: {
   return <>
     <Heading as="h2" size="md" mb={4}>Confirm Deletion</Heading>
 
-    <DataList.Root mb={4}>
-
-      <DataList.Item>
-        <DataList.ItemLabel>ID</DataList.ItemLabel>
-        <GenericClipboard value={statRange.id} />
-      </DataList.Item>
-
-      <DataList.Item>
-        <DataList.ItemLabel>Name</DataList.ItemLabel>
-        <DataList.ItemValue>{statRange.name}</DataList.ItemValue>
-      </DataList.Item>
-
-      <DataList.Item>
-        <DataList.ItemLabel>Start Date</DataList.ItemLabel>
-        <DataList.ItemValue>{statRange.startDate.toLocaleDateString()}</DataList.ItemValue>
-      </DataList.Item>
-
-      <DataList.Item>
-        <DataList.ItemLabel>End Date</DataList.ItemLabel>
-        <DataList.ItemValue>{statRange.endDate.toLocaleDateString()}</DataList.ItemValue>
-      </DataList.Item>
-
-      <DataList.Item>
-        <DataList.ItemLabel>Status</DataList.ItemLabel>
-        <DataList.ItemValue>
-          <Badge colorPalette={statRange.status === "ACTIVE" ? "green" : "gray"}>
-            {statRange.status}
-          </Badge>
-        </DataList.ItemValue>
-      </DataList.Item>
-
-      <DataList.Item>
-        <DataList.ItemLabel>Created At</DataList.ItemLabel>
-        <DataList.ItemValue>{statRange.createdAt.toLocaleString()}</DataList.ItemValue>
-      </DataList.Item>
-
-    </DataList.Root>
+    <FactList mb={4} items={[
+      { label: "ID", value: <GenericClipboard value={statRange.id} /> },
+      { label: "Name", value: statRange.name },
+      { label: "Start Date", value: statRange.startDate.toLocaleDateString() },
+      { label: "End Date", value: statRange.endDate.toLocaleDateString() },
+      {
+        label: "Status",
+        value: <Badge colorPalette={statRange.status === "ACTIVE" ? "green" : "gray"}>{statRange.status}</Badge>,
+      },
+      { label: "Created At", value: statRange.createdAt.toLocaleString() },
+    ]} />
 
     <Text fontWeight="medium" color="fg.warning" mb={4}>Are you sure you want to delete this stat range?</Text>
 
@@ -59,10 +35,10 @@ export default function DeleteStatRangeConfirm(props: {
         <Button onClick={handleCancel}>
           Cancel
         </Button>
-        <Button colorPalette="red" onClick={handleDelete}>
+        <WriteButton colorPalette="red" onClick={handleDelete}>
           <Icon><LuTrash2 /></Icon>
           Delete
-        </Button>
+        </WriteButton>
       </ButtonGroup>
     </HStack>
   </>
