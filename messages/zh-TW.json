@@ -104,17 +104,15 @@
       "columns": {
         "user": "使用者",
         "time": "時間",
-        "duration": "時長"
-      },
-      "label": "工時紀錄"
+        "duration": "時長",
+        "actions": "操作"
+      }
     },
     "filters": {
       "finishedOnly": "只顯示已完成"
     },
     "buttons": {
-      "createLog": "新增紀錄",
-      "edit": "編輯",
-      "delete": "刪除"
+      "createLog": "新增紀錄"
     },
     "status": {
       "currentlyIn": "簽到中",
@@ -201,6 +199,11 @@
       "user": "使用者",
       "totalTime": "總時數"
     }
+  },
+  "GenericTable": {
+    "entriesPerPage": "個項目 / 頁",
+    "selectedCount": "已選擇 {count} 項",
+    "showingEntries": "顯示第 {start} 至 {end} 項，共 {count} 項"
   },
   "LastUpdatedText": {
     "lastUpdated": "最後更新 {timeString}"
