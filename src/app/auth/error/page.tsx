@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { Button } from "@chakra-ui/react";
 import { NoAccessPage, StatusPage } from "@team6083/ui";
 import { LuShieldAlert } from "react-icons/lu";

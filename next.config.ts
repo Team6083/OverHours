@@ -1,8 +1,7 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
-
 import createNextIntlPlugin from 'next-intl/plugin';
 
-import { withSentryConfig } from "@sentry/nextjs/config";
 
 // Evaluated at build time (the Docker build args are exported as env vars there) and baked into the standalone
 // server, so these reflect the image, not the runtime environment. Unset values emit no header.

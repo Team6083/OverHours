@@ -1,7 +1,8 @@
 "use client";
-import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { createListCollection, Select, Portal } from "@chakra-ui/react";
+import { useMemo, useState } from "react";
+
+import { createListCollection, Portal, Select } from "@chakra-ui/react";
 
 import { StatRangeDTO } from "@/lib/data/statrange-dto";
 

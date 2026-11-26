@@ -1,25 +1,26 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
+
 import {
-  Badge, Button, ButtonGroup, Card, CloseButton, DataList, Dialog, Editable, HStack, Heading, IconButton,
-  Input, NativeSelect, Portal, Stack, Table, Text,
+    Badge, Button, ButtonGroup, Card, CloseButton, DataList, Dialog, Editable, Heading, HStack, IconButton,
+    Input, NativeSelect, Portal, Stack, Table, Text,
 } from "@chakra-ui/react";
+import { InfoTip, MemberAvatar, toaster, useAppOutdated } from "@team6083/ui";
 import { LuCheck, LuPencilLine, LuTrash2, LuUserMinus, LuUserPlus, LuX } from "react-icons/lu";
 
 import UserCombobox from "@/components/user/UserCombobox";
-import { InfoTip, MemberAvatar, toaster, useAppOutdated } from "@team6083/ui";
 import type { TeamDTO, TeamMemberDTO } from "@/lib/data/team-dto";
 import type { TeamReminderDTO } from "@/lib/data/team-reminder-dto";
 import { parseAutoJoinRoles } from "@/lib/team-roles";
 import { wouldCreateCycle } from "@/lib/team-tree";
-import {
-  type TeamActionResult, addTeamMembersAction, deleteTeamAction, moveTeamAction, removeTeamMemberAction, renameTeamAction,
-  setAutoJoinRolesAction, setTeamReminderWebhookAction,
-} from "../actions";
 import ReminderForm from "./ReminderForm";
+import { addTeamMembersAction, deleteTeamAction, moveTeamAction, removeTeamMemberAction, renameTeamAction,
+    setAutoJoinRolesAction, setTeamReminderWebhookAction,
+    type TeamActionResult,
+} from "../actions";
 
 function useTeamAction() {
   const [pending, startTransition] = useTransition();
