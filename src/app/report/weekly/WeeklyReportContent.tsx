@@ -5,13 +5,12 @@ import {
     Badge,
     ButtonGroup,
     Center,
-    Heading,
     HStack,
     IconButton, Spinner,
     Stat,
     Table,
 } from "@chakra-ui/react";
-import { PageHeader } from "@team6083/ui";
+import { TitleBar } from "@team6083/ui";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
 import HeatMap from "@/components/stats/HeatMap";
@@ -76,9 +75,11 @@ export default function WeeklyReportContent() {
 
   return (
     <>
-      <PageHeader
+      <TitleBar
+        level={1}
+        mb={4}
         title="Weekly Report"
-        actions={
+        end={
           <HStack gap={3}>
             <ButtonGroup size="sm" variant="ghost" gap={1}>
               <IconButton aria-label="Previous Week" onClick={() => setWeekStart(new Date(weekStart.getTime() - 7 * 86400000))}>
@@ -119,7 +120,7 @@ export default function WeeklyReportContent() {
             </Stat.Root>
           </HStack>
 
-          <Heading as="h3" size="md" mb={3}>Daily Breakdown</Heading>
+          <TitleBar title="Daily Breakdown" level={3} mb={3} />
           <Table.Root size="sm" mb={8}>
             <Table.Header>
               <Table.Row bg="transparent">
@@ -149,7 +150,7 @@ export default function WeeklyReportContent() {
             </Table.Body>
           </Table.Root>
 
-          <Heading as="h3" size="md" mb={3}>Headcount Heatmap</Heading>
+          <TitleBar title="Headcount Heatmap" level={3} mb={3} />
           <HeatMap
             rows={7}
             columns={24}

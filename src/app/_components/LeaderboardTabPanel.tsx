@@ -2,7 +2,8 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { Center, Heading, HStack, Icon, IconButton, Popover, Portal, Spinner, VStack } from "@chakra-ui/react";
+import { Center, Icon, IconButton, Popover, Portal, Spinner, VStack } from "@chakra-ui/react";
+import { TitleBar } from "@team6083/ui";
 import { LuCalendarRange } from "react-icons/lu";
 
 import LeaderboardTable from "@/components/ranking/LeaderboardTable";
@@ -45,30 +46,34 @@ export default function LeaderboardTabPanel(props: {
 
   return (
     <VStack align="stretch" gap={3}>
-      <HStack justify="space-between" align="center">
-        <Heading as="h3" size="lg">{t("title")}</Heading>
-        <Popover.Root open={popoverOpen} onOpenChange={(e) => setPopoverOpen(e.open)}>
-          <Popover.Trigger asChild>
-            <IconButton size="sm" variant="ghost" aria-label="Select date range">
-              <Icon><LuCalendarRange /></Icon>
-            </IconButton>
-          </Popover.Trigger>
-          <Portal>
-            <Popover.Positioner>
-              <Popover.Content>
-                <Popover.Arrow />
-                <Popover.Body>
-                  <StatRangeSelector
-                    statRanges={statRanges}
-                    onSelectAction={handleStatRangeSelect}
-                    onClearAction={handleClearRange}
-                  />
-                </Popover.Body>
-              </Popover.Content>
-            </Popover.Positioner>
-          </Portal>
-        </Popover.Root>
-      </HStack>
+      <TitleBar
+        title={t("title")}
+        level={3}
+        size="lg"
+        end={
+            <Popover.Root open={popoverOpen} onOpenChange={(e) => setPopoverOpen(e.open)}>
+              <Popover.Trigger asChild>
+                <IconButton size="sm" variant="ghost" aria-label="Select date range">
+                  <Icon><LuCalendarRange /></Icon>
+                </IconButton>
+              </Popover.Trigger>
+              <Portal>
+                <Popover.Positioner>
+                  <Popover.Content>
+                    <Popover.Arrow />
+                    <Popover.Body>
+                      <StatRangeSelector
+                        statRanges={statRanges}
+                        onSelectAction={handleStatRangeSelect}
+                        onClearAction={handleClearRange}
+                      />
+                    </Popover.Body>
+                  </Popover.Content>
+                </Popover.Positioner>
+              </Portal>
+            </Popover.Root>
+        }
+      />
       {loading ? (
         <Center py={8}>
           <Spinner size="lg" />
