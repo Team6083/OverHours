@@ -1,11 +1,10 @@
-
 import { createRemoteJWKSet, decodeJwt, jwtVerify } from "jose";
 import memoize from "memoize";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import NextAuth, { DefaultSession, Profile } from "next-auth";
 import { DefaultJWT, getToken } from "next-auth/jwt";
 import Keycloak from "next-auth/providers/keycloak";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { rolesForScope, rolesGrantScope } from "./lib/api-scopes";
 import { describeError, describeErrorDescription, INVALID_TOKEN_ERROR_CODES, isVerifyGraceExpired, parseVerifyGraceSec } from "./lib/auth-errors";

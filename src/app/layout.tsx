@@ -1,14 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
-
+import { headers } from "next/headers";
+import { SessionProvider } from "next-auth/react";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 
-import { SessionProvider } from "next-auth/react";
-
 import { Text } from "@chakra-ui/react";
-import { LuChartNoAxesCombined, LuLogs, LuUsers, LuCalendarRange, LuCalendarCheck, LuNetwork } from "react-icons/lu";
+import { LuCalendarCheck, LuCalendarRange, LuChartNoAxesCombined, LuLogs, LuNetwork, LuUsers } from "react-icons/lu";
 
 import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
 import { TopRanksProvider } from "@/components/ranking/TopRanks";

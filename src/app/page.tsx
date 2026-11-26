@@ -1,15 +1,14 @@
-import { Suspense } from "react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { Card, ClientOnly, GridItem, Heading, HStack, Separator, SimpleGrid, Spinner, Stack, Tabs, Tag, Text, VStack } from "@chakra-ui/react";
 import { LuCalendarCheck, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
 import LastUpdatedText from "@/components/common/LastUpdatedText";
-import LeaderboardCard from "./_components/LeaderboardCard";
-import LeaderboardTabPanel from "./_components/LeaderboardTabPanel";
+import UserAvatar from "@/components/user/UserAvatar";
 import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
 import { getActiveStatRangesForPicker } from "@/lib/data/statrange-dto";
 import { getTeamsForUser } from "@/lib/data/team-dto";
@@ -17,19 +16,20 @@ import {
   adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
 } from "@/lib/data/timelog-dto";
 import { getAllUserAvatars, getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
-import ClockUserInPopover from "./_components/ClockUserInPopover";
-import RefreshButton from "./_components/RefreshButton";
-import ClockStatus from "./_components/ClockStatus";
-import UserStats from "./_components/UserStats";
 import ClockInOutButton from "./_components/ClockInOutButton";
+import ClockStatus from "./_components/ClockStatus";
+import ClockUserInPopover from "./_components/ClockUserInPopover";
 import {
   CurrentlyClockedInContent, CurrentlyClockedInCountBadge, CurrentlyClockedInNoData,
   CurrentlyClockedInPaginationControls, CurrentlyClockedInProvider, CurrentlyClockedInSearchInput,
   CurrentlyClockedInTable
 } from "./_components/CurrentlyClockedIn";
-import HomePageSkeleton from "./home-skeleton";
+import LeaderboardCard from "./_components/LeaderboardCard";
+import LeaderboardTabPanel from "./_components/LeaderboardTabPanel";
+import RefreshButton from "./_components/RefreshButton";
+import UserStats from "./_components/UserStats";
 import DayAttendanceSection, { DayAttendanceProvider } from "./attendance/DayAttendanceSection";
-import UserAvatar from "@/components/user/UserAvatar";
+import HomePageSkeleton from "./home-skeleton";
 
 type UserInfo = {
   id: string;

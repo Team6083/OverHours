@@ -2,9 +2,9 @@ import { Card, Code, Heading, Icon, Stack, Text } from "@chakra-ui/react";
 import { FactList } from "@team6083/ui";
 import { LuUnlink } from "react-icons/lu";
 
+import WriteButton from "@/components/common/WriteButton";
 import { AccountDTO } from "@/lib/data/account-dto";
 import { handleUnlinkAccount } from "./actions";
-import WriteButton from "@/components/common/WriteButton";
 
 export default function LinkedAccounts(props: {
   userId: string;

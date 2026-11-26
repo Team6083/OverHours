@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 
-import { Button, ButtonGroup, Icon, IconButton, CloseButton, Dialog, Portal, Text, HStack, Badge } from "@chakra-ui/react";
+import { Badge, Button, ButtonGroup, CloseButton, Dialog, HStack, Icon, IconButton, Portal, Text } from "@chakra-ui/react";
 import { useAppOutdated } from "@team6083/ui";
-import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuPen, LuTrash2, LuPlus } from "react-icons/lu";
+import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuPen, LuPlus, LuTrash2 } from "react-icons/lu";
 
 import GenericTable, { Column } from "@/components/common/GenericTable";
 import { StatRangeDTO } from "@/lib/data/statrange-dto";

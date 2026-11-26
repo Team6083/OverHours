@@ -1,7 +1,8 @@
-import { ComponentProps, useMemo, useState } from "react";
-import { createListCollection, Stack, usePaginationContext, HStack, Select, Portal, Table, Checkbox, ButtonGroup, Pagination, IconButton, ActionBar, Text, Collapsible, Box } from "@chakra-ui/react";
-import { LuChevronLeft, LuChevronRight, LuChevronsDown } from "react-icons/lu";
 import { useTranslations } from "next-intl";
+import { ComponentProps, useMemo, useState } from "react";
+
+import { ActionBar, Box, ButtonGroup, Checkbox, Collapsible, createListCollection, HStack, IconButton, Pagination, Portal, Select, Stack, Table, Text, usePaginationContext } from "@chakra-ui/react";
+import { LuChevronLeft, LuChevronRight, LuChevronsDown } from "react-icons/lu";
 
 const itemsPerPage = createListCollection({
   items: [

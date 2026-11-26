@@ -1,7 +1,7 @@
 import { Badge, Icon } from "@chakra-ui/react";
-import { LuTimer, LuCircleCheckBig, LuLock } from "react-icons/lu";
+import { LuCircleCheckBig, LuLock, LuTimer } from "react-icons/lu";
 
-import { TimeLogDTO } from "@/lib/data/timelog-dto"
+import { TimeLogDTO } from "@/lib/data/timelog-dto";
 
 export default function TimeLogStatusBadge(props: { status: TimeLogDTO["status"] }) {
 

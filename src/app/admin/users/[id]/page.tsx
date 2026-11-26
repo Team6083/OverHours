@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { Button, Container, HStack, Icon, IconButton } from "@chakra-ui/react";
 import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
 

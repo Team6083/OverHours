@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
 
-import { Button, ButtonGroup, Clipboard, Icon, IconButton, Link as ChakraLink, CloseButton, Dialog, Portal, Text, HStack, Badge } from "@chakra-ui/react";
+import { Badge, Button, ButtonGroup, Clipboard, CloseButton, Dialog, HStack, Icon, IconButton, Link as ChakraLink, Portal, Text } from "@chakra-ui/react";
+import { Tooltip, useAppOutdated } from "@team6083/ui";
 import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuMerge, LuPen, LuTrash2, LuUserPlus } from "react-icons/lu";
 
 import GenericTable, { Column } from "@/components/common/GenericTable";
-import { Tooltip, useAppOutdated } from "@team6083/ui";
 import { UserDTO } from "@/lib/data/user-dto";
 import { handleDeleteUsers } from "./actions";
 
