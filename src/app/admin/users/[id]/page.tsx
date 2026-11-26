@@ -6,8 +6,8 @@ import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
 import { getUserAccounts } from "@/lib/data/account-dto";
 import { getUserCards } from "@/lib/data/card-dto";
 import { getUserDTO } from "@/lib/data/user-dto";
-import UserForm from "./form";
 import Cards from "./Cards";
+import UserForm from "./form";
 import LinkedAccounts from "./LinkedAccounts";
 
 export default async function SingleUserPage(props: {

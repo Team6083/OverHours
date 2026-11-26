@@ -1,4 +1,4 @@
-import { Button, Card, Code, HStack, Heading, Icon, Stack, Text } from "@chakra-ui/react";
+import { Button, Card, Code, Heading, HStack, Icon, Stack, Text } from "@chakra-ui/react";
 import { LuTrash2 } from "react-icons/lu";
 
 import { maskUid } from "@/lib/cards";

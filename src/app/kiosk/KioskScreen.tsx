@@ -1,12 +1,13 @@
 "use client";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useFormatter, useNow, useTranslations } from "next-intl";
-import { Box, Button, Center, Flex, Heading, Stack, Text } from "@chakra-ui/react";
-import { IconType } from "react-icons";
-import { LuCircleAlert, LuLogIn, LuLogOut, LuMaximize, LuNfc, LuSmartphoneNfc, LuTimer } from "react-icons/lu";
 import QRCode from "qrcode";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { IconType } from "react-icons";
 
-import { KioskTap, kioskBindCodeActive, kioskTap } from "./actions";
+import { Box, Button, Center, Flex, Heading, Stack, Text } from "@chakra-ui/react";
+import { LuCircleAlert, LuLogIn, LuLogOut, LuMaximize, LuNfc, LuSmartphoneNfc, LuTimer } from "react-icons/lu";
+
+import { kioskBindCodeActive, KioskTap, kioskTap } from "./actions";
 
 const RESULT_MS = 5000;
 const POLL_MS = 4000;

@@ -1,5 +1,6 @@
-import { Button, EmptyState, VStack } from "@chakra-ui/react";
 import { getTranslations } from "next-intl/server";
+
+import { Button, EmptyState, VStack } from "@chakra-ui/react";
 import { LuNfc } from "react-icons/lu";
 
 import { auth, signIn } from "@/auth";

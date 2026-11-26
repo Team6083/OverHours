@@ -61,8 +61,8 @@ vi.mock("../prisma", () => {
   return { default: prisma };
 });
 
-import { AlreadyClockedInError, AutoLockedError, NotClockedInError } from "./timelog-dto";
 import { bindCard, getBindRequest, isCurrentBindCode, removeCard, tapCard } from "./card-dto";
+import { AlreadyClockedInError, AutoLockedError, NotClockedInError } from "./timelog-dto";
 
 const NOW = new Date("2027-01-13T09:00:00Z");
 const later = (ms: number) => new Date(NOW.getTime() + ms);
