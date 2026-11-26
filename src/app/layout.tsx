@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { SessionProvider } from "next-auth/react";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -10,9 +10,11 @@ import type { NavItem } from "@team6083/ui";
 import { LuCalendarCheck, LuCalendarRange, LuChartNoAxesCombined, LuLogs, LuNetwork, LuShieldCheck, LuUsers } from "react-icons/lu";
 
 import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
+import { TablePreferenceProvider } from "@/components/common/TablePreference";
 import { TopRanksProvider } from "@/components/ranking/TopRanks";
 import { getOrgName } from "@/lib/config";
 import { getTopUserIds } from "@/lib/data/timelog-dto";
+import { NEW_TABLES_COOKIE } from "@/lib/table-preference";
 import AppFrame from "./_components/AppFrame";
 import { Providers } from "./providers";
 
@@ -58,6 +60,7 @@ export default async function RootLayout({
   const t = await getTranslations("AppNav");
   const session = await auth();
   const topUserIds = await topUserIdsForSession();
+  const newTables = (await cookies()).get(NEW_TABLES_COOKIE)?.value === "1";
 
   const role = session?.user.role;
   const isAdmin = role === Role.ADMIN;
@@ -95,22 +98,24 @@ export default async function RootLayout({
           <Providers locale={locale} nonce={nonce}>
             <SessionProvider> {/* Auth.js provider, for useSession() hook */}
               <TopRanksProvider userIds={topUserIds}>
-                <AppFrame
-                  orgName={orgName}
-                  nav={nav}
-                  user={session?.user}
-                  signInAction={handleSignIn}
-                  signOutAction={handleSignOut}
-                  footer={
-                    <Text as="span">
-                      {orgName && <>© {new Date().getFullYear()} {orgName}<br /></>}
-                      Made with ❤️ and way too many commits{" "}
-                      <Text as="span" whiteSpace="nowrap">(fueled by ☕️)</Text>
-                    </Text>
-                  }
-                >
-                  {children}
-                </AppFrame>
+                <TablePreferenceProvider newTables={newTables}>
+                  <AppFrame
+                    orgName={orgName}
+                    nav={nav}
+                    user={session?.user}
+                    signInAction={handleSignIn}
+                    signOutAction={handleSignOut}
+                    footer={
+                      <Text as="span">
+                        {orgName && <>© {new Date().getFullYear()} {orgName}<br /></>}
+                        Made with ❤️ and way too many commits{" "}
+                        <Text as="span" whiteSpace="nowrap">(fueled by ☕️)</Text>
+                      </Text>
+                    }
+                  >
+                    {children}
+                  </AppFrame>
+                </TablePreferenceProvider>
               </TopRanksProvider>
             </SessionProvider>
           </Providers>

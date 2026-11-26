@@ -3,11 +3,12 @@
 import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Session } from "next-auth";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
-import { Menu } from "@chakra-ui/react";
+import { Badge, Menu } from "@chakra-ui/react";
 import { AccountMenu, AppShell, BuildInfo, LanguageMenu, type NavItem, SignInButton, SignOutMenuItem } from "@team6083/ui";
 
+import { useNewTables, useSetNewTables } from "@/components/common/TablePreference";
 import { LANGUAGES, LOCALE_COOKIE } from "@/i18n/locales";
 
 /** AppShell needs a function for links and the current path, so the server layout hands its data to this client frame. */
@@ -25,6 +26,9 @@ export default function AppFrame(props: {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations("AppNav");
+  const newTables = useNewTables();
+  const setNewTables = useSetNewTables();
 
   // The server picks the locale from this cookie, so re-render the page with it set.
   const setLocale = (value: string) => {
@@ -46,6 +50,11 @@ export default function AppFrame(props: {
       account={user
         ? <AccountMenu name={user.name ?? user.id ?? "Unknown User"} detail={user.email} image={user.image}>
           <LanguageMenu languages={LANGUAGES} value={locale} onChange={setLocale} />
+          <Menu.CheckboxItem value="new-tables" checked={newTables} onCheckedChange={setNewTables}>
+            {t("newTables")}
+            <Badge size="xs" colorPalette="brand">Beta</Badge>
+            <Menu.ItemIndicator />
+          </Menu.CheckboxItem>
           <Menu.Separator />
           <SignOutMenuItem onSelect={() => void signOutAction()} />
         </AccountMenu>

@@ -29,7 +29,7 @@ const columns: DataColumn<TableData>[] = [
   { key: "createdAt", header: "Created At", cell: (row) => row.createdAt.toLocaleString(), sortValue: (row) => row.createdAt },
 ];
 
-export default function StatRangesTable(props: {
+export default function StatRangesDataTable(props: {
   statRanges: StatRangeDTO[];
 }) {
   const outdated = useAppOutdated();

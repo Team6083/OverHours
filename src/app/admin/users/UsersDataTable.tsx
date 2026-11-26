@@ -41,7 +41,7 @@ const columns: DataColumn<TableData>[] = [
   { key: "updatedAt", header: "Updated At", cell: (row) => row.updatedAt.toLocaleString(), sortValue: (row) => row.updatedAt },
 ];
 
-export default function UsersTable(props: {
+export default function UsersDataTable(props: {
   users: UserDTO[];
   outOfSyncEmails: Record<string, string[]>;
 }) {

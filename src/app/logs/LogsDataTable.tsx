@@ -45,7 +45,7 @@ function formatLogDuration(inTime: Date, outTime: Date): string {
   return durationMs < 0 ? "—" : formatDuration(durationMs / 1000, { hideSecondsFromMinute: true });
 }
 
-export default function LogsTable(props: {
+export default function LogsDataTable(props: {
   logs: Pick<TimeLogDTO, "id" | "userId" | "inTime" | "outTime" | "status" | "notes">[];
   userInfo: Record<string, { name: string, avatarUrl?: string }>;
   showAdminActions?: boolean;
