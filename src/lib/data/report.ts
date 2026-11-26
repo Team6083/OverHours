@@ -3,7 +3,9 @@ import "server-only";
 
 import { auth, Role } from "@/auth";
 import { TimeLog } from "@/generated/prisma";
+import { getTimeZone } from "@/lib/config";
 import prisma from "@/lib/prisma";
+import { splitByDay } from "@/lib/zoned-time";
 import { TimeLogDTO } from "./timelog-dto";
 
 type HeadCountOptions = {
@@ -262,13 +264,11 @@ export async function getDailyReportData(dateRange: [Date, Date]): Promise<Daily
   const logs = await prisma.timeLog.findMany({
     where: {
       OR: [
-        // Non-locked logs: either inTime or outTime overlaps the day
+        // Non-locked logs that overlap the day, including ones that span it or are still open since an earlier day
         {
           NOT: { status: "Locked" },
-          OR: [
-            { inTime: { gte: dateRange[0], lte: dateRange[1] } },
-            { outTime: { gte: dateRange[0], lte: dateRange[1] } },
-          ],
+          inTime: { lte: dateRange[1] },
+          OR: [{ outTime: { gte: dateRange[0] } }, { status: "CurrentlyIn" }],
         },
         // Locked logs: only match by inTime (counted as point event at start time)
         {
@@ -303,11 +303,15 @@ export async function getDailyReportData(dateRange: [Date, Date]): Promise<Daily
 
   const lockedCount = logs.filter(log => log.status === "Locked").length;
 
-  // Exclude Locked logs from duration stats so they don't skew shortest/longest
+  // Exclude Locked logs from duration stats so they don't skew shortest/longest. Only the part of a session within the
+  // day counts toward it.
+  const dayStart = new Date(dateRange[0]).getTime();
+  const dayEnd = new Date(dateRange[1]).getTime();
   const durationPerUser = processedLogs
     .filter(log => log.status !== "Locked")
     .reduce((acc, log) => {
-      const duration = (log.outTime?.getTime() ?? Date.now()) - log.inTime.getTime();
+      const out = Math.min(log.outTime?.getTime() ?? Date.now(), dayEnd);
+      const duration = Math.max(0, out - Math.max(log.inTime.getTime(), dayStart));
       acc[log.userId] = (acc[log.userId] || 0) + duration;
       return acc;
     }, {} as Record<string, number>);
@@ -348,7 +352,8 @@ export type UserReportSession = {
 
 export type UserReportData = {
   sessions: UserReportSession[];
-  dailyBreakdown: { date: Date; totalMs: number; sessions: number }[];
+  // A session crossing midnight is on each day it touches, so groups of days count its id once.
+  dailyBreakdown: { date: Date; totalMs: number; sessionIds: string[] }[];
   stats: {
     totalMs: number;
     totalSessions: number;
@@ -417,17 +422,23 @@ export async function getUserReportData(
   });
 
   const doneSessions = sessions.filter(s => s.status === "DONE");
-  const totalMs = doneSessions.reduce((sum, s) => sum + s.durationMs, 0);
   const lockedCount = sessions.filter(s => s.status === "LOCKED").length;
 
-  // Daily breakdown (Done sessions only, keyed by UTC date)
-  const dailyMap = new Map<string, { totalMs: number; sessions: number }>();
+  // Daily breakdown (Done sessions only) by calendar date in TZ. A session is split at midnight, and only its part
+  // within the selected period counts.
+  const timeZone = getTimeZone();
+  const dailyMap = new Map<string, { totalMs: number; sessionIds: string[] }>();
+  let totalMs = 0;
   for (const s of doneSessions) {
-    const key = s.inTime.toISOString().slice(0, 10);
-    const existing = dailyMap.get(key) ?? { totalMs: 0, sessions: 0 };
-    existing.totalMs += s.durationMs;
-    existing.sessions += 1;
-    dailyMap.set(key, existing);
+    const from = new Date(Math.max(s.inTime.getTime(), start?.getTime() ?? -Infinity));
+    const to = new Date(Math.min(s.outTime!.getTime(), end?.getTime() ?? Infinity));
+    for (const piece of splitByDay(from, to, timeZone)) {
+      const existing = dailyMap.get(piece.date) ?? { totalMs: 0, sessionIds: [] };
+      existing.totalMs += piece.ms;
+      existing.sessionIds.push(s.id);
+      dailyMap.set(piece.date, existing);
+      totalMs += piece.ms;
+    }
   }
   const dailyBreakdown = Array.from(dailyMap.entries())
     .map(([dateStr, data]) => ({ date: new Date(dateStr + "T00:00:00Z"), ...data }))
