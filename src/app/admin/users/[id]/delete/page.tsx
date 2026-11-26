@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 
 import { Container } from "@chakra-ui/react";
 
+import DeleteConfirm from "@/components/common/DeleteConfirm";
 import { deleteUser, getUserDTO } from "@/lib/data/user-dto";
-import DeleteUserConfirm from "./DeleteUserConfirm";
 
 export default async function DeleteUserPage(props: {
   params: Promise<{ id: string }>;
@@ -28,8 +28,13 @@ export default async function DeleteUserPage(props: {
   };
 
   return <>
-    <DeleteUserConfirm
-      user={userDTO}
+    <DeleteConfirm
+      subject="user"
+      items={[
+        { label: "User ID", value: userDTO.id },
+        { label: "Name", value: userDTO.name },
+        { label: "Email", value: userDTO.email },
+      ]}
       handleCancel={handleCancel}
       handleDelete={handleDelete}
     />

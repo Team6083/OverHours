@@ -1,27 +1,25 @@
 import { Button, ButtonGroup, HStack, Icon, Text } from "@chakra-ui/react";
-import { FactList, TitleBar } from "@team6083/ui";
+import { type Fact, FactList, TitleBar } from "@team6083/ui";
 import { LuTrash2 } from "react-icons/lu";
 
 import WriteButton from "@/components/common/WriteButton";
-import { UserDTO } from "@/lib/data/user-dto";
 
-export default function DeleteUserConfirm(props: {
-  user: UserDTO;
+/** The page that asks before deleting a record: its facts, a warning and Cancel / Delete. */
+export default function DeleteConfirm(props: {
+  /** What is deleted, as in "Are you sure you want to delete this {subject}?" */
+  subject: string;
+  items: Fact[];
   handleCancel: () => Promise<void>;
   handleDelete: () => Promise<void>;
 }) {
-  const { user, handleCancel, handleDelete } = props;
+  const { subject, items, handleCancel, handleDelete } = props;
 
   return <>
     <TitleBar title="Confirm Deletion" size="md" mb={4} />
 
-    <FactList mb={4} items={[
-      { label: "User ID", value: user.id },
-      { label: "Name", value: user.name },
-      { label: "Email", value: user.email },
-    ]} />
+    <FactList mb={4} items={items} />
 
-    <Text fontWeight="medium" color="fg.warning" mb={4}>Are you sure you want to delete this user?</Text>
+    <Text fontWeight="medium" color="fg.warning" mb={4}>Are you sure you want to delete this {subject}?</Text>
 
     <HStack justify="flex-end">
       <ButtonGroup size="sm" variant="subtle">

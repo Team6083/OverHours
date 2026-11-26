@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 
-import { Container } from "@chakra-ui/react";
+import { Badge, Container, HStack } from "@chakra-ui/react";
 
+import GenericClipboard from "@/components/common/Clipboard";
+import DeleteConfirm from "@/components/common/DeleteConfirm";
+import TimeLogStatusBadge from "@/components/timelog/TimeLogStatusBadge";
 import { deleteTimeLog, getTimelogDTO } from "@/lib/data/timelog-dto";
 import { getUserDTO } from "@/lib/data/user-dto";
-import DeleteTimeLogConfirm from "./DeleteTimeLogConfirm";
+import { formatDuration } from "@/lib/util";
 
 export default async function DeleteTimeLogPage(props: {
   params: Promise<{ id: string }>;
@@ -35,9 +38,28 @@ export default async function DeleteTimeLogPage(props: {
   };
 
   return <>
-    <DeleteTimeLogConfirm
-      timeLog={timeLogDTO}
-      userName={user?.name}
+    <DeleteConfirm
+      subject="time log"
+      items={[
+        { label: "TimeLog ID", value: <GenericClipboard value={timeLogDTO.id} /> },
+        {
+          label: "User",
+          value: <HStack flexWrap="wrap" gap={2}>
+            {user?.name && <Badge colorPalette="brand">{user.name}</Badge>}
+            <GenericClipboard color="fg.muted" value={timeLogDTO.userId} />
+          </HStack>,
+        },
+        { label: "Status", value: <TimeLogStatusBadge status={timeLogDTO.status} /> },
+        { label: "Clock-in Time", value: timeLogDTO.inTime.toLocaleString() },
+        ...(timeLogDTO.outTime ? [
+          { label: "Clock-out Time", value: timeLogDTO.outTime.toLocaleString() },
+          {
+            label: "Duration",
+            value: formatDuration(Math.round((timeLogDTO.outTime.getTime() - timeLogDTO.inTime.getTime()) / 1000)),
+          },
+        ] : []),
+        ...(timeLogDTO.notes ? [{ label: "Notes", value: timeLogDTO.notes }] : []),
+      ]}
       handleCancel={handleCancel}
       handleDelete={handleDelete}
     />

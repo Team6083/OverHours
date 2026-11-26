@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 
-import { Container } from "@chakra-ui/react";
+import { Badge, Container } from "@chakra-ui/react";
 
+import GenericClipboard from "@/components/common/Clipboard";
+import DeleteConfirm from "@/components/common/DeleteConfirm";
 import { deleteStatRange, getStatRangeDTO } from "@/lib/data/statrange-dto";
-import DeleteStatRangeConfirm from "./DeleteStatRangeConfirm";
 
 export default async function DeleteStatRangePage(props: {
   params: Promise<{ id: string }>;
@@ -32,8 +33,19 @@ export default async function DeleteStatRangePage(props: {
   };
 
   return <>
-    <DeleteStatRangeConfirm
-      statRange={statRangeDTO}
+    <DeleteConfirm
+      subject="stat range"
+      items={[
+        { label: "ID", value: <GenericClipboard value={statRangeDTO.id} /> },
+        { label: "Name", value: statRangeDTO.name },
+        { label: "Start Date", value: statRangeDTO.startDate.toLocaleDateString() },
+        { label: "End Date", value: statRangeDTO.endDate.toLocaleDateString() },
+        {
+          label: "Status",
+          value: <Badge colorPalette={statRangeDTO.status === "ACTIVE" ? "green" : "gray"}>{statRangeDTO.status}</Badge>,
+        },
+        { label: "Created At", value: statRangeDTO.createdAt.toLocaleString() },
+      ]}
       handleCancel={handleCancel}
       handleDelete={handleDelete}
     />
