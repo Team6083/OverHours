@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 
-import { Badge, Button, ButtonGroup, Clipboard, CloseButton, Dialog, HStack, Icon, IconButton, Link as ChakraLink, Portal, Text } from "@chakra-ui/react";
-import { Tooltip, useAppOutdated } from "@team6083/ui";
+import { Badge, Button, ButtonGroup, Clipboard, HStack, Icon, IconButton, Link as ChakraLink } from "@chakra-ui/react";
+import { Tooltip } from "@team6083/ui";
 import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuMerge, LuPen, LuTrash2, LuUserPlus } from "react-icons/lu";
 
 import GenericTable, { Column } from "@/components/common/GenericTable";
 import { UserDTO } from "@/lib/data/user-dto";
-import { handleDeleteUsers } from "./actions";
+import DeleteUsersDialog from "./DeleteUsersDialog";
 
 type TableData = UserDTO & {
   /** Emails this user signs in with that another user already has. */
@@ -88,9 +88,10 @@ const columns: Column<TableData>[] = [
         </Link></IconButton>
 
         {/* Delete Button */}
-        <IconButton colorPalette="red" asChild><Link href={`/admin/users/${row.id}/delete`}>
-          <Icon><LuTrash2 /></Icon>
-        </Link></IconButton>
+        <DeleteUsersDialog
+          users={[row]}
+          trigger={<IconButton colorPalette="red" aria-label="Delete"><Icon><LuTrash2 /></Icon></IconButton>}
+        />
       </ButtonGroup>
     ),
   }
@@ -115,7 +116,6 @@ export default function UsersLegacyTable(props: {
   users: UserDTO[];
   outOfSyncEmails: Record<string, string[]>;
 }) {
-  const outdated = useAppOutdated();
   const { users, outOfSyncEmails } = props;
 
   const items: TableData[] = users.map(user => ({
@@ -141,63 +141,21 @@ export default function UsersLegacyTable(props: {
       show: true,
       showActionBar: true,
       renderActionBarContent: (selection: string[]) => (<>
-        <Dialog.Root size="lg">
-
-          <ButtonGroup size="xs" variant="outline">
-            <Button disabled={selection.length < 2} asChild={selection.length >= 2}>
-              {selection.length >= 2
-                ? <Link href={`/admin/users/merge?ids=${selection.join(",")}`}>
-                  <Icon><LuMerge /></Icon> Merge selected
-                </Link>
-                : <><Icon><LuMerge /></Icon> Merge selected</>}
-            </Button>
-            <Dialog.Trigger asChild>
-              <Button colorPalette="red">
-                <Icon><LuTrash2 /></Icon> Delete selected
-              </Button>
-            </Dialog.Trigger>
-          </ButtonGroup>
-
-          <Portal>
-            <Dialog.Backdrop />
-            <Dialog.Positioner>
-              <Dialog.Content>
-                <Dialog.Header>
-                  <Dialog.Title>Confirm Deletion</Dialog.Title>
-                </Dialog.Header>
-                <Dialog.Body>
-                  <Text mb={2}>Are you sure you want to delete following users?</Text>
-                  <HStack mb={4} flexWrap="wrap" gap={2}>
-                    {selection.map(id => {
-                      const user = users.find(u => u.id === id);
-                      if (!user) return null;
-                      return <Badge key={id} colorPalette="brand">{user.name}</Badge>
-                    })}
-                  </HStack>
-                  <Text color="fg.muted">Total {selection.length} users selected</Text>
-                </Dialog.Body>
-                <Dialog.Footer>
-                  <ButtonGroup size="sm">
-                    <Dialog.ActionTrigger asChild>
-                      <Button variant="outline">Cancel</Button>
-                    </Dialog.ActionTrigger>
-                    <Dialog.Context>
-                      {(store) => (
-                        <Button colorPalette="red" disabled={outdated} onClick={() => handleDeleteUsers(selection).then(() => store.setOpen(false))}>
-                          <Icon><LuTrash2 /></Icon>
-                          Delete
-                        </Button>
-                      )}
-                    </Dialog.Context>
-                  </ButtonGroup>
-                </Dialog.Footer>
-                <Dialog.CloseTrigger asChild>
-                  <CloseButton size="sm" />
-                </Dialog.CloseTrigger>
-              </Dialog.Content>
-            </Dialog.Positioner>
-          </Portal>
-        </Dialog.Root>
+        <ButtonGroup size="xs" variant="outline">
+          <Button disabled={selection.length < 2} asChild={selection.length >= 2}>
+            {selection.length >= 2
+              ? <Link href={`/admin/users/merge?ids=${selection.join(",")}`}>
+                <Icon><LuMerge /></Icon> Merge selected
+              </Link>
+              : <><Icon><LuMerge /></Icon> Merge selected</>}
+          </Button>
+          <DeleteUsersDialog
+            users={users.filter(user => selection.includes(user.id))}
+            trigger={<Button colorPalette="red">
+              <Icon><LuTrash2 /></Icon> Delete selected
+            </Button>}
+          />
+        </ButtonGroup>
       </>
       )
     }}

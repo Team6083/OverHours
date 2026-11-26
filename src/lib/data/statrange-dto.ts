@@ -146,24 +146,6 @@ export async function updateStatRange(id: string, data: {
   return prismaStatRangeToDTO(statRange);
 }
 
-export async function deleteStatRange(id: string): Promise<StatRangeDTO> {
-  const session = await auth();
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
-
-  if (session.user.role !== Role.ADMIN) {
-    throw new Error("Forbidden");
-  }
-
-  const statRange = await prisma.statRange.delete({
-    where: { id },
-  });
-
-  return prismaStatRangeToDTO(statRange);
-}
-
 export async function deleteStatRanges(ids: string[]) {
   const session = await auth();
 

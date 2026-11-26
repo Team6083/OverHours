@@ -1,13 +1,12 @@
 "use client";
 import Link from "next/link";
 
-import { Badge, Button, ButtonGroup, CloseButton, Dialog, HStack, Icon, IconButton, Portal, Text } from "@chakra-ui/react";
-import { useAppOutdated } from "@team6083/ui";
+import { Badge, Button, ButtonGroup, HStack, Icon, IconButton } from "@chakra-ui/react";
 import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuPen, LuPlus, LuTrash2 } from "react-icons/lu";
 
 import GenericTable, { Column } from "@/components/common/GenericTable";
 import { StatRangeDTO } from "@/lib/data/statrange-dto";
-import { handleDeleteStatRanges } from "./actions";
+import DeleteStatRangesDialog from "./DeleteStatRangesDialog";
 
 type TableData = StatRangeDTO & {};
 
@@ -87,9 +86,10 @@ const columns: Column<TableData>[] = [
         </Link></IconButton>
 
         {/* Delete Button */}
-        <IconButton colorPalette="red" asChild><Link href={`/admin/stat-ranges/${row.id}/delete`}>
-          <Icon><LuTrash2 /></Icon>
-        </Link></IconButton>
+        <DeleteStatRangesDialog
+          statRanges={[row]}
+          trigger={<IconButton colorPalette="red" aria-label="Delete"><Icon><LuTrash2 /></Icon></IconButton>}
+        />
       </ButtonGroup>
     ),
   }
@@ -113,7 +113,6 @@ const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1]) => {
 export default function StatRangesLegacyTable(props: {
   statRanges: StatRangeDTO[];
 }) {
-  const outdated = useAppOutdated();
   const { statRanges } = props;
 
   const items: TableData[] = statRanges.map(statRange => ({
@@ -138,56 +137,12 @@ export default function StatRangesLegacyTable(props: {
       show: true,
       showActionBar: true,
       renderActionBarContent: (selection: string[]) => (<>
-        <Dialog.Root size="lg">
-
-          <ButtonGroup size="xs" variant="outline">
-            <Dialog.Trigger asChild>
-              <Button colorPalette="red">
-                <Icon><LuTrash2 /></Icon> Delete selected
-              </Button>
-            </Dialog.Trigger>
-          </ButtonGroup>
-
-          <Portal>
-            <Dialog.Backdrop />
-            <Dialog.Positioner>
-              <Dialog.Content>
-                <Dialog.Header>
-                  <Dialog.Title>Confirm Deletion</Dialog.Title>
-                </Dialog.Header>
-                <Dialog.Body>
-                  <Text mb={2}>Are you sure you want to delete following stat ranges?</Text>
-                  <HStack mb={4} flexWrap="wrap" gap={2}>
-                    {selection.map(id => {
-                      const statRange = statRanges.find(s => s.id === id);
-                      if (!statRange) return null;
-                      return <Badge key={id} colorPalette="brand">{statRange.name}</Badge>
-                    })}
-                  </HStack>
-                  <Text color="fg.muted">Total {selection.length} stat ranges selected</Text>
-                </Dialog.Body>
-                <Dialog.Footer>
-                  <ButtonGroup size="sm">
-                    <Dialog.ActionTrigger asChild>
-                      <Button variant="outline">Cancel</Button>
-                    </Dialog.ActionTrigger>
-                    <Dialog.Context>
-                      {(store) => (
-                        <Button colorPalette="red" disabled={outdated} onClick={() => handleDeleteStatRanges(selection).then(() => store.setOpen(false))}>
-                          <Icon><LuTrash2 /></Icon>
-                          Delete
-                        </Button>
-                      )}
-                    </Dialog.Context>
-                  </ButtonGroup>
-                </Dialog.Footer>
-                <Dialog.CloseTrigger asChild>
-                  <CloseButton size="sm" />
-                </Dialog.CloseTrigger>
-              </Dialog.Content>
-            </Dialog.Positioner>
-          </Portal>
-        </Dialog.Root>
+        <DeleteStatRangesDialog
+          statRanges={statRanges.filter(statRange => selection.includes(statRange.id))}
+          trigger={<Button size="xs" variant="outline" colorPalette="red">
+            <Icon><LuTrash2 /></Icon> Delete selected
+          </Button>}
+        />
       </>
       )
     }}

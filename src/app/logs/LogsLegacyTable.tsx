@@ -3,13 +3,12 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
-import { Badge, Button, ButtonGroup, ClientOnly, CloseButton, Dialog, HStack, Icon, IconButton, Pagination, Portal, SkeletonText, Stack, Switch, Text } from "@chakra-ui/react";
-import { Tooltip, useAppOutdated } from "@team6083/ui";
+import { Badge, Button, ButtonGroup, ClientOnly, HStack, Icon, IconButton, Pagination, SkeletonText, Switch, Text } from "@chakra-ui/react";
+import { Tooltip } from "@team6083/ui";
 import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuClipboardPlus, LuLock, LuPen, LuTimer, LuTrash2 } from "react-icons/lu";
 
-import GenericClipboard from "@/components/common/Clipboard";
 import GenericTable, { Column } from "@/components/common/GenericTable";
-import TimeLogStatusBadge from "@/components/timelog/TimeLogStatusBadge";
+import DeleteTimeLogsDialog from "@/components/timelog/DeleteTimeLogsDialog";
 import UserCombobox from "@/components/user/UserCombobox";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { formatDuration } from "@/lib/util";
@@ -123,7 +122,12 @@ const actionsColumn: Column<TableData> = {
   renderCell: (row) => (
     <ButtonGroup size="xs" variant="ghost">
       <IconButton asChild><Link href={`/logs/${row.id}`}><Icon><LuPen /></Icon></Link></IconButton>
-      <IconButton colorPalette="red" asChild><Link href={`/logs/${row.id}/delete`}><Icon><LuTrash2 /></Icon></Link></IconButton>
+      <DeleteTimeLogsDialog
+        logs={[row]}
+        userNames={{ [row.userId]: row.displayName }}
+        onDelete={handleDeleteLogs}
+        trigger={<IconButton colorPalette="red" aria-label="Delete"><Icon><LuTrash2 /></Icon></IconButton>}
+      />
     </ButtonGroup>
   ),
 };
@@ -157,7 +161,6 @@ export default function LogsLegacyTable(props: {
   userInfo: Record<string, { name: string, avatarUrl?: string }>;
   showAdminActions?: boolean;
 }) {
-  const outdated = useAppOutdated();
   const { logs, userInfo, showAdminActions = false } = props;
   const t = useTranslations("LogsPage");
 
@@ -177,6 +180,11 @@ export default function LogsLegacyTable(props: {
       };
     });
   }, [logs, userInfo]);
+
+  const userNames = useMemo(
+    () => Object.fromEntries(Object.entries(userInfo).map(([id, user]) => [id, user.name])),
+    [userInfo]
+  );
 
   const [finishedOnly, setFinishedOnly] = useState(true);
   const [userFilterSelected, setUserFilterSelected] = useState<string | null>(null);
@@ -230,63 +238,14 @@ export default function LogsLegacyTable(props: {
         show: showAdminActions,
         showActionBar: showAdminActions,
         renderActionBarContent: (selection) => (
-          <Dialog.Root size="lg">
-
-            <ButtonGroup size="xs" variant="outline">
-              <Dialog.Trigger asChild>
-                <Button colorPalette="red">
-                  <Icon><LuTrash2 /></Icon> Delete selected
-                </Button>
-              </Dialog.Trigger>
-            </ButtonGroup>
-
-            <Portal>
-              <Dialog.Backdrop />
-              <Dialog.Positioner>
-                <Dialog.Content>
-                  <Dialog.Header>
-                    <Dialog.Title>Confirm Deletion</Dialog.Title>
-                  </Dialog.Header>
-                  <Dialog.Body>
-                    <Text mb={4}>Are you sure you want to delete following time logs?</Text>
-                    <Stack mb={4} gap={2}>
-                      {selection.map(id => {
-                        const log = logs.find(u => u.id === id);
-                        if (!log) return <GenericClipboard key={id} value={id} />;
-
-                        const user = userInfo[log.userId];
-
-                        return <HStack key={log.id}>
-                          <Badge colorPalette="brand">{user?.name ?? log.userId}</Badge>
-                          <TimeLogStatusBadge status={log.status} />
-                          <Badge fontFamily="mono">{log.inTime.toLocaleString()} - {log.outTime?.toLocaleString() ?? "N/A"}</Badge>
-                        </HStack>;
-                      })}
-                    </Stack>
-                    <Text color="fg.muted">Total {selection.length} logs selected</Text>
-                  </Dialog.Body>
-                  <Dialog.Footer>
-                    <ButtonGroup size="sm">
-                      <Dialog.ActionTrigger asChild>
-                        <Button variant="outline">Cancel</Button>
-                      </Dialog.ActionTrigger>
-                      <Dialog.Context>
-                        {(store) => (
-                          <Button colorPalette="red" disabled={outdated} onClick={() => handleDeleteLogs(selection).then(() => store.setOpen(false))}>
-                            <Icon><LuTrash2 /></Icon>
-                            Delete
-                          </Button>
-                        )}
-                      </Dialog.Context>
-                    </ButtonGroup>
-                  </Dialog.Footer>
-                  <Dialog.CloseTrigger asChild>
-                    <CloseButton size="sm" />
-                  </Dialog.CloseTrigger>
-                </Dialog.Content>
-              </Dialog.Positioner>
-            </Portal>
-          </Dialog.Root>
+          <DeleteTimeLogsDialog
+            logs={logs.filter(log => selection.includes(log.id))}
+            userNames={userNames}
+            onDelete={handleDeleteLogs}
+            trigger={<Button size="xs" variant="outline" colorPalette="red">
+              <Icon><LuTrash2 /></Icon> Delete selected
+            </Button>}
+          />
         )
       }}
       topRightElement={topRightElement}
