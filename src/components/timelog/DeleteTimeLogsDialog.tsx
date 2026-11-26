@@ -10,7 +10,12 @@ import { formatDuration } from "@/lib/util";
 
 type DeletedTimeLog = Pick<TimeLogDTO, "id" | "userId" | "status" | "inTime"> & Partial<Pick<TimeLogDTO, "outTime" | "notes">>;
 
-/** Asks before deleting time logs: the facts of one log, or a line per log. */
+/**
+ * Asks before deleting time logs: the facts of one log, or a line per log.
+ *
+ * The dialog is narrow, so its FactLists use alignItems="start" (FactList stretches each fact to its row, which made
+ * badges tall) and IDs may break anywhere (otherwise they run into the next column).
+ */
 export default function DeleteTimeLogsDialog(props: DeleteDialogControls & {
   logs: DeletedTimeLog[];
   userNames: Record<string, string | undefined>;
@@ -44,13 +49,13 @@ export default function DeleteTimeLogsDialog(props: DeleteDialogControls & {
 function TimeLogFacts(props: { log: DeletedTimeLog; userName?: string }) {
   const { log, userName } = props;
 
-  return <FactList items={[
-    { label: "TimeLog ID", value: <GenericClipboard value={log.id} /> },
+  return <FactList alignItems="start" items={[
+    { label: "TimeLog ID", value: <GenericClipboard wordBreak="break-all" value={log.id} /> },
     {
       label: "User",
       value: <HStack flexWrap="wrap" gap={2}>
         {userName && <Badge colorPalette="brand">{userName}</Badge>}
-        <GenericClipboard color="fg.muted" value={log.userId} />
+        <GenericClipboard color="fg.muted" wordBreak="break-all" value={log.userId} />
       </HStack>,
     },
     { label: "Status", value: <TimeLogStatusBadge status={log.status} /> },

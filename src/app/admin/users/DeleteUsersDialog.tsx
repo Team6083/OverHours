@@ -21,8 +21,8 @@ export default function DeleteUsersDialog(props: DeleteDialogControls & {
     onDelete={() => handleDeleteUsers(users.map(user => user.id))}
   >
     {users.length === 1 ? (
-      <FactList items={[
-        { label: "User ID", value: <GenericClipboard value={users[0].id} /> },
+      <FactList alignItems="start" items={[
+        { label: "User ID", value: <GenericClipboard wordBreak="break-all" value={users[0].id} /> },
         { label: "Name", value: users[0].name },
         { label: "Email", value: users[0].email },
       ]} />

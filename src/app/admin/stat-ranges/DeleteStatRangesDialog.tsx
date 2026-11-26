@@ -21,8 +21,8 @@ export default function DeleteStatRangesDialog(props: DeleteDialogControls & {
     onDelete={() => handleDeleteStatRanges(statRanges.map(statRange => statRange.id))}
   >
     {statRanges.length === 1 ? (
-      <FactList items={[
-        { label: "ID", value: <GenericClipboard value={statRanges[0].id} /> },
+      <FactList alignItems="start" items={[
+        { label: "ID", value: <GenericClipboard wordBreak="break-all" value={statRanges[0].id} /> },
         { label: "Name", value: statRanges[0].name },
         { label: "Start Date", value: statRanges[0].startDate.toLocaleDateString() },
         { label: "End Date", value: statRanges[0].endDate.toLocaleDateString() },
