@@ -17,8 +17,8 @@ const prismaMock = vi.hoisted(() => {
 });
 vi.mock("../prisma", () => ({ default: prismaMock }));
 
-import {
-    TeamError, createTeam, getAllTeamDTOs, getTeamMembers, removeTeamMember, toTeamError, updateTeam,
+import { createTeam, getAllTeamDTOs, getTeamMembers, removeTeamMember,
+    TeamError, toTeamError, updateTeam,
 } from "./team-dto";
 
 // Valid ObjectIds

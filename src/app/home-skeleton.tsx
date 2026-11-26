@@ -1,5 +1,11 @@
 import {
-  SimpleGrid, GridItem, VStack, Card, HStack, Skeleton, SkeletonCircle, SkeletonText, Tabs, Separator,
+    Card,
+    GridItem,
+    HStack,
+    Separator,
+    SimpleGrid,
+    Skeleton, SkeletonCircle, SkeletonText, Tabs,
+    VStack,
 } from "@chakra-ui/react";
 
 export default function HomePageSkeleton() {

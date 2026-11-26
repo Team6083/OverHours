@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { Breadcrumb } from "@chakra-ui/react";
 import { EmptyState } from "@team6083/ui";
 import { LuSearchX } from "react-icons/lu";
