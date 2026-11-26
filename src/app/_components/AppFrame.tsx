@@ -3,30 +3,32 @@
 import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Session } from "next-auth";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
-import { Menu } from "@chakra-ui/react";
+import { Badge, Menu } from "@chakra-ui/react";
 import { AccountMenu, AppShell, BuildInfo, LanguageMenu, type NavItem, SignInButton, SignOutMenuItem } from "@team6083/ui";
 
+import { useNewTables, useSetNewTables } from "@/components/common/TablePreference";
 import { LANGUAGES, LOCALE_COOKIE } from "@/i18n/locales";
 
 /** AppShell needs a function for links and the current path, so the server layout hands its data to this client frame. */
 export default function AppFrame(props: {
   orgName?: string;
-  nav: Omit<NavItem, "active">[];
-  adminLabel: string;
-  /** Empty for anyone who isn't an admin. */
-  adminLinks: Omit<NavItem, "active">[];
+  /** Without `active`; the frame marks the current page. */
+  nav: NavItem[];
   user?: Session["user"];
   signInAction: () => Promise<void>;
   signOutAction: () => Promise<void>;
   footer?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const { orgName, nav, adminLabel, adminLinks, user, signInAction, signOutAction, footer, children } = props;
+  const { orgName, nav, user, signInAction, signOutAction, footer, children } = props;
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations("AppNav");
+  const newTables = useNewTables();
+  const setNewTables = useSetNewTables();
 
   // The server picks the locale from this cookie, so re-render the page with it set.
   const setLocale = (value: string) => {
@@ -34,26 +36,25 @@ export default function AppFrame(props: {
     router.refresh();
   };
 
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const navWithActive = nav.map((item): NavItem => item.items
+    ? { ...item, items: item.items.map((link) => ({ ...link, active: isActive(link.href) })) }
+    : { ...item, active: isActive(item.href) });
+
   return (
     <AppShell
       appName="OverHours"
       orgName={orgName || undefined}
-      nav={nav.map((item) => ({ ...item, active: pathname === item.href || pathname.startsWith(`${item.href}/`) }))}
+      nav={navWithActive}
       renderLink={(href, linkChildren) => <NextLink href={href}>{linkChildren}</NextLink>}
       account={user
         ? <AccountMenu name={user.name ?? user.id ?? "Unknown User"} detail={user.email} image={user.image}>
-          {adminLinks.length > 0 && <>
-            <Menu.ItemGroup>
-              <Menu.ItemGroupLabel>{adminLabel}</Menu.ItemGroupLabel>
-              {adminLinks.map((link) => (
-                <Menu.Item key={link.href} value={link.href} asChild>
-                  <NextLink href={link.href}>{link.icon}{link.label}</NextLink>
-                </Menu.Item>
-              ))}
-            </Menu.ItemGroup>
-            <Menu.Separator />
-          </>}
           <LanguageMenu languages={LANGUAGES} value={locale} onChange={setLocale} />
+          <Menu.CheckboxItem value="new-tables" checked={newTables} onCheckedChange={setNewTables}>
+            {t("newTables")}
+            <Badge size="xs" colorPalette="brand">Beta</Badge>
+            <Menu.ItemIndicator />
+          </Menu.CheckboxItem>
           <Menu.Separator />
           <SignOutMenuItem onSelect={() => void signOutAction()} />
         </AccountMenu>

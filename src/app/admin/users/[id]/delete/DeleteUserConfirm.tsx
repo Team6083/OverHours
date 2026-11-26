@@ -1,5 +1,5 @@
-import { Button, ButtonGroup, Heading, HStack, Icon, Text } from "@chakra-ui/react";
-import { FactList } from "@team6083/ui";
+import { Button, ButtonGroup, HStack, Icon, Text } from "@chakra-ui/react";
+import { FactList, TitleBar } from "@team6083/ui";
 import { LuTrash2 } from "react-icons/lu";
 
 import WriteButton from "@/components/common/WriteButton";
@@ -13,7 +13,7 @@ export default function DeleteUserConfirm(props: {
   const { user, handleCancel, handleDelete } = props;
 
   return <>
-    <Heading as="h2" size="md" mb={4}>Confirm Deletion</Heading>
+    <TitleBar title="Confirm Deletion" size="md" mb={4} />
 
     <FactList mb={4} items={[
       { label: "User ID", value: user.id },

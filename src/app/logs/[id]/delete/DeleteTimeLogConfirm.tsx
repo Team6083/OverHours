@@ -1,5 +1,5 @@
-import { Badge, Button, ButtonGroup, Heading, HStack, Icon, Text } from "@chakra-ui/react";
-import { FactList } from "@team6083/ui";
+import { Badge, Button, ButtonGroup, HStack, Icon, Text } from "@chakra-ui/react";
+import { FactList, TitleBar } from "@team6083/ui";
 import { LuTrash2 } from "react-icons/lu";
 
 import GenericClipboard from "@/components/common/Clipboard";
@@ -17,7 +17,7 @@ export default function DeleteTimeLogConfirm(props: {
   const { timeLog, userName, handleCancel, handleDelete } = props;
 
   return <>
-    <Heading as="h2" size="md" mb={4}>Confirm Deletion</Heading>
+    <TitleBar title="Confirm Deletion" size="md" mb={4} />
 
     <FactList mb={4} items={[
       { label: "TimeLog ID", value: <GenericClipboard value={timeLog.id} /> },

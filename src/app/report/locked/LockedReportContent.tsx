@@ -3,9 +3,9 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
-    Badge, Button, Center, HStack, IconButton, Input, Spinner, Stat, Table, Text, VStack,
+    Badge, Button, Center, HStack, IconButton, Input, Spinner, Stack, Stat, Table, Text, VStack,
 } from "@chakra-ui/react";
-import { EmptyState, PageHeader } from "@team6083/ui";
+import { EmptyState, TitleBar } from "@team6083/ui";
 import { LuDownload, LuLock, LuRefreshCcw } from "react-icons/lu";
 
 import type { LockedTimeLogRow } from "@/lib/data/locked-export";
@@ -65,32 +65,32 @@ export default function LockedReportContent(props: { autoLockTime?: string; time
   const userCount = rows ? new Set(rows.map(r => r.userId)).size : 0;
 
   return (<>
-    <PageHeader
-      title={t("title")}
-      description={<>
-        {t("description.filter")}{" "}
-        {autoLockTime
-          ? t("description.autoLockOn", { time: autoLockTime, timeZone })
-          : t("description.autoLockOff")}
-        {" "}{t("description.timeZone", { timeZone })}
-      </>}
-      mb={6}
-      actions={
-        <HStack gap={2} wrap="wrap">
-          <Input type="date" size="xs" w="auto" value={startStr} max={endStr}
-            onChange={e => setStartStr(e.target.value)} aria-label={t("startDate")} />
-          <Text fontSize="sm">–</Text>
-          <Input type="date" size="xs" w="auto" value={endStr} min={startStr}
-            onChange={e => setEndStr(e.target.value)} aria-label={t("endDate")} />
-          <IconButton aria-label={t("refresh")} size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
-            <LuRefreshCcw />
-          </IconButton>
-          <Button size="sm" variant="surface" asChild>
-            <a href={exportHref} download><LuDownload /> {t("downloadCsv")}</a>
-          </Button>
-        </HStack>
-      }
-    />
+    <Stack gap={3} mb={6}>
+      <TitleBar
+        level={1}
+        title={t("title")}
+        description={<>
+          {t("description.filter")}{" "}
+          {autoLockTime
+            ? t("description.autoLockOn", { time: autoLockTime, timeZone })
+            : t("description.autoLockOff")}
+          {" "}{t("description.timeZone", { timeZone })}
+        </>}
+      />
+      <HStack gap={2} wrap="wrap">
+        <Input type="date" size="xs" w="auto" value={startStr} max={endStr}
+          onChange={e => setStartStr(e.target.value)} aria-label={t("startDate")} />
+        <Text fontSize="sm">–</Text>
+        <Input type="date" size="xs" w="auto" value={endStr} min={startStr}
+          onChange={e => setEndStr(e.target.value)} aria-label={t("endDate")} />
+        <IconButton aria-label={t("refresh")} size="sm" variant="ghost" onClick={handleRefresh} loading={loading}>
+          <LuRefreshCcw />
+        </IconButton>
+        <Button size="sm" variant="surface" asChild>
+          <a href={exportHref} download><LuDownload /> {t("downloadCsv")}</a>
+        </Button>
+      </HStack>
+    </Stack>
 
     {loading && !rows ? <Center><Spinner /></Center> : (
       rows && rows.length > 0 ? <>
