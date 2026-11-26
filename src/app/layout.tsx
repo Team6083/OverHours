@@ -6,7 +6,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { Text } from "@chakra-ui/react";
-import { LuCalendarCheck, LuCalendarRange, LuChartNoAxesCombined, LuLogs, LuNetwork, LuUsers } from "react-icons/lu";
+import type { NavItem } from "@team6083/ui";
+import { LuCalendarCheck, LuCalendarRange, LuChartNoAxesCombined, LuLogs, LuNetwork, LuShieldCheck, LuUsers } from "react-icons/lu";
 
 import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
 import { TopRanksProvider } from "@/components/ranking/TopRanks";
@@ -59,20 +60,23 @@ export default async function RootLayout({
   const topUserIds = await topUserIdsForSession();
 
   const role = session?.user.role;
-  const nav = [
-    { href: "/logs", label: t("nav.logs"), icon: <LuLogs />, adminOnly: false },
-    { href: "/attendance", label: t("nav.attendance"), icon: <LuCalendarCheck />, adminOnly: false },
-    { href: "/report", label: t("nav.reports"), icon: <LuChartNoAxesCombined />, adminOnly: true },
-  ]
-    .filter((link) => role && (link.adminOnly ? role === Role.ADMIN : true))
-    .map(({ href, label, icon }) => ({ href, label, icon }));
-
-  // Admin pages sit in the account menu until AppShell can group nav items (Team6083/ui#30).
-  const adminLinks = role === Role.ADMIN ? [
-    { href: "/admin/users", label: t("nav.users"), icon: <LuUsers /> },
-    { href: "/admin/teams", label: t("nav.teams"), icon: <LuNetwork /> },
-    { href: "/admin/stat-ranges", label: t("nav.statRanges"), icon: <LuCalendarRange /> },
-  ] : [];
+  const isAdmin = role === Role.ADMIN;
+  const nav: NavItem[] = !role ? [] : [
+    { href: "/logs", label: t("nav.logs"), icon: <LuLogs /> },
+    { href: "/attendance", label: t("nav.attendance"), icon: <LuCalendarCheck /> },
+    ...(isAdmin ? [
+      { href: "/report", label: t("nav.reports"), icon: <LuChartNoAxesCombined /> },
+      {
+        label: t("nav.admin"),
+        icon: <LuShieldCheck />,
+        items: [
+          { href: "/admin/users", label: t("nav.users"), icon: <LuUsers /> },
+          { href: "/admin/teams", label: t("nav.teams"), icon: <LuNetwork /> },
+          { href: "/admin/stat-ranges", label: t("nav.statRanges"), icon: <LuCalendarRange /> },
+        ],
+      },
+    ] : []),
+  ];
 
   const handleSignIn = async () => {
     "use server";
@@ -94,8 +98,6 @@ export default async function RootLayout({
                 <AppFrame
                   orgName={orgName}
                   nav={nav}
-                  adminLabel={t("nav.admin")}
-                  adminLinks={adminLinks}
                   user={session?.user}
                   signInAction={handleSignIn}
                   signOutAction={handleSignOut}

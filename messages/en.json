@@ -104,15 +104,17 @@
       "columns": {
         "user": "User",
         "time": "Time",
-        "duration": "Duration",
-        "actions": "Actions"
-      }
+        "duration": "Duration"
+      },
+      "label": "Time logs"
     },
     "filters": {
       "finishedOnly": "Finished only"
     },
     "buttons": {
-      "createLog": "Create Log"
+      "createLog": "Create Log",
+      "edit": "Edit",
+      "delete": "Delete"
     },
     "status": {
       "currentlyIn": "Currently In",
@@ -199,11 +201,6 @@
       "user": "User",
       "totalTime": "Total Time"
     }
-  },
-  "GenericTable": {
-    "entriesPerPage": "entries per page",
-    "selectedCount": "{count} selected",
-    "showingEntries": "Showing {start} to {end} of {count} entries"
   },
   "LastUpdatedText": {
     "lastUpdated": "Last updated {timeString}"

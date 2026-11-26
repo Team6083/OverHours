@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
-import { Badge, Button, ButtonGroup, ClientOnly, CloseButton, Dialog, HStack, Icon, IconButton, Pagination, Portal, SkeletonText, Stack, Switch, Text } from "@chakra-ui/react";
-import { Tooltip, useAppOutdated } from "@team6083/ui";
-import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuClipboardPlus, LuLock, LuPen, LuTimer, LuTrash2 } from "react-icons/lu";
+import { Badge, Button, ButtonGroup, ClientOnly, CloseButton, Dialog, HStack, Icon, Portal, SkeletonText, Stack, Switch, Text } from "@chakra-ui/react";
+import { type DataColumn, type DataSort, DataTable, FilterBar, SelectionBar, Tooltip, useAppOutdated } from "@team6083/ui";
+import { LuClipboardPlus, LuLock, LuPen, LuTimer, LuTrash2 } from "react-icons/lu";
 
 import GenericClipboard from "@/components/common/Clipboard";
-import GenericTable, { Column } from "@/components/common/GenericTable";
 import TimeLogStatusBadge from "@/components/timelog/TimeLogStatusBadge";
 import UserCombobox from "@/components/user/UserCombobox";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
@@ -45,119 +45,13 @@ function formatLogDuration(inTime: Date, outTime: Date): string {
   return durationMs < 0 ? "—" : formatDuration(durationMs / 1000, { hideSecondsFromMinute: true });
 }
 
-const columns: Column<TableData>[] = [
-  {
-    dataKey: "user",
-    sortable: true,
-    renderHeader: (sort, t) => {
-      return <>
-        {t ? t("table.columns.user") : "User"}
-        {sort && (
-          sort === 1 ? <Icon ml={1}><LuArrowDownAZ /></Icon>
-            : <Icon ml={1}><LuArrowUpZA /></Icon>
-        )}
-      </>;
-    },
-    renderCell: (row) => row.displayName,
-  },
-  {
-    dataKey: "timeIn",
-    sortable: true,
-    renderHeader: (sort, t) => {
-      return <>
-        {t ? t("table.columns.time") : "Time"}
-        {sort && (
-          sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
-            : <Icon ml={1}><LuArrowUp10 /></Icon>
-        )}
-      </>;
-    },
-    renderCell: (row, t) => {
-      return <ClientOnly fallback={<SkeletonText noOfLines={1} />}>
-        <HStack gap={2} rowGap={1} flexWrap="wrap">
-          <Text as="span" whiteSpace="nowrap">{row.timeRangeStr}</Text>
-          {!row.outTime && (
-            <Badge colorPalette="orange">
-              <Icon><LuTimer /></Icon>
-              {t ? t("status.currentlyIn") : "Currently In"}
-            </Badge>
-          )}
-          {row.outTime && row.status === "LOCKED" && (
-            <Tooltip content={t ? t("tooltips.clockedOutAt", { time: row.outTimeStr }) : `Clocked out at ${row.outTimeStr}`}>
-              <Badge colorPalette="red"><Icon><LuLock /></Icon>{t ? t("status.locked") : "Locked"}</Badge>
-            </Tooltip>
-          )}
-        </HStack>
-      </ClientOnly>;
-    }
-  },
-  {
-    dataKey: "duration",
-    sortable: true,
-    renderHeader: (sort, t) => {
-      return <>
-        {t ? t("table.columns.duration") : "Duration"}
-        {sort && (
-          sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
-            : <Icon ml={1}><LuArrowUp10 /></Icon>
-        )}
-      </>;
-    },
-    renderCell: (row) => row.outTime ? (
-      <Text
-        as="span"
-        color={row.status === "LOCKED" ? "fg.muted" : undefined}
-        textDecor={row.status === "LOCKED" ? "line-through" : undefined}
-      >
-        {row.durationStr}
-      </Text>
-    ) : null,
-  }
-]
-
-const actionsColumn: Column<TableData> = {
-  dataKey: "actions",
-  renderHeader: (_, t) => {
-    return t ? t("table.columns.actions") : "Actions";
-  },
-  renderCell: (row) => (
-    <ButtonGroup size="xs" variant="ghost">
-      <IconButton asChild><Link href={`/logs/${row.id}`}><Icon><LuPen /></Icon></Link></IconButton>
-      <IconButton colorPalette="red" asChild><Link href={`/logs/${row.id}/delete`}><Icon><LuTrash2 /></Icon></Link></IconButton>
-    </ButtonGroup>
-  ),
-};
-
-const adminColumns = [...columns, actionsColumn];
-const memberColumns = columns.filter(column => column.dataKey !== "user");
-
-const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1] | null) => {
-  if (!sortBy) return 0;
-  const [key, order] = sortBy;
-
-  let aValue: string | number = "";
-  let bValue: string | number = "";
-
-  if (key === "user") {
-    aValue = a.displayName;
-    bValue = b.displayName;
-  } else if (key === "timeIn") {
-    aValue = a.inTime.getTime();
-    bValue = b.inTime.getTime();
-  } else if (key === "duration") {
-    aValue = a.outTime ? a.outTime.getTime() - a.inTime.getTime() : 0;
-    bValue = b.outTime ? b.outTime.getTime() - b.inTime.getTime() : 0;
-  }
-
-  return (aValue < bValue ? -1 : aValue > bValue ? 1 : 0) * order;
-}
-
 export default function LogsTable(props: {
   logs: Pick<TimeLogDTO, "id" | "userId" | "inTime" | "outTime" | "status" | "notes">[];
   userInfo: Record<string, { name: string, avatarUrl?: string }>;
   showAdminActions?: boolean;
 }) {
   const outdated = useAppOutdated();
+  const router = useRouter();
   const { logs, userInfo, showAdminActions = false } = props;
   const t = useTranslations("LogsPage");
 
@@ -178,40 +72,63 @@ export default function LogsTable(props: {
     });
   }, [logs, userInfo]);
 
+  const columns = useMemo((): DataColumn<TableData>[] => [
+    ...(showAdminActions ? [{
+      key: "user",
+      header: t("table.columns.user"),
+      priority: "primary" as const,
+      cell: (row: TableData) => row.displayName,
+      sortValue: (row: TableData) => row.displayName.toLowerCase(),
+    }] : []),
+    {
+      key: "timeIn",
+      header: t("table.columns.time"),
+      priority: showAdminActions ? undefined : "primary",
+      sortValue: (row) => row.inTime,
+      cell: (row) => <ClientOnly fallback={<SkeletonText noOfLines={1} />}>
+        <HStack gap={2} rowGap={1} flexWrap="wrap">
+          <Text as="span" whiteSpace="nowrap">{row.timeRangeStr}</Text>
+          {!row.outTime && (
+            <Badge colorPalette="orange">
+              <Icon><LuTimer /></Icon>
+              {t("status.currentlyIn")}
+            </Badge>
+          )}
+          {row.outTime && row.status === "LOCKED" && (
+            <Tooltip content={t("tooltips.clockedOutAt", { time: row.outTimeStr })}>
+              <Badge colorPalette="red"><Icon><LuLock /></Icon>{t("status.locked")}</Badge>
+            </Tooltip>
+          )}
+        </HStack>
+      </ClientOnly>,
+    },
+    {
+      key: "duration",
+      header: t("table.columns.duration"),
+      sortValue: (row) => row.outTime ? row.outTime.getTime() - row.inTime.getTime() : 0,
+      cell: (row) => row.outTime ? (
+        <Text
+          as="span"
+          color={row.status === "LOCKED" ? "fg.muted" : undefined}
+          textDecor={row.status === "LOCKED" ? "line-through" : undefined}
+        >
+          {row.durationStr}
+        </Text>
+      ) : null,
+    },
+  ], [showAdminActions, t]);
+
   const [finishedOnly, setFinishedOnly] = useState(true);
   const [userFilterSelected, setUserFilterSelected] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<DataSort["by"]>({ key: "timeIn", direction: "desc" });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [selection, setSelection] = useState<string[]>([]);
 
   const userComboboxUsers = useMemo(
     () => Object.entries(userInfo).map(([id, user]) => ({ id, name: user.name })),
     [userInfo]
   );
-
-  const topRightElement = showAdminActions && <HStack flexWrap="wrap" w="full">
-    <UserCombobox
-      users={userComboboxUsers}
-      value={userFilterSelected ?? ""}
-      onValueChange={(v) => setUserFilterSelected(v || null)}
-      placeholder={t("placeholders.filterUsers")}
-      emptyText={t("placeholders.noUsersFound")}
-      size="xs"
-      width={{ base: "full", md: "200px" }}
-    />
-
-    <HStack justifyContent="space-around">
-      <Button size="sm" variant="ghost" asChild>
-        <Link href="/logs/new">
-          <Icon><LuClipboardPlus /></Icon>
-          {t("buttons.createLog")}
-        </Link>
-      </Button>
-
-      <Switch.Root size="sm" checked={finishedOnly} onCheckedChange={(e) => setFinishedOnly(e.checked)}>
-        <Switch.HiddenInput />
-        <Switch.Control />
-        <Switch.Label>{t("filters.finishedOnly")}</Switch.Label>
-      </Switch.Root>
-    </HStack>
-  </HStack>;
 
   const filteredData = (finishedOnly || userFilterSelected) ? data.filter(log => {
     if (finishedOnly && !log.outTime) return false;
@@ -219,78 +136,116 @@ export default function LogsTable(props: {
     return true;
   }) : data;
 
-  return <Pagination.Root count={filteredData.length} defaultPageSize={10} defaultPage={1}>
-    <GenericTable<TableData>
-      columns={showAdminActions ? adminColumns : memberColumns}
-      items={filteredData}
-      keyFn={(item) => item.id}
-      defaultSortBy={["timeIn", -1]}
-      sortingFn={sortingFn}
-      checkboxOptions={{
-        show: showAdminActions,
-        showActionBar: showAdminActions,
-        renderActionBarContent: (selection) => (
-          <Dialog.Root size="lg">
+  // A filter change can leave fewer pages than the one being shown.
+  const filterBy = (apply: () => void) => {
+    apply();
+    setPage(1);
+  };
 
-            <ButtonGroup size="xs" variant="outline">
-              <Dialog.Trigger asChild>
-                <Button colorPalette="red">
-                  <Icon><LuTrash2 /></Icon> Delete selected
-                </Button>
-              </Dialog.Trigger>
-            </ButtonGroup>
+  return <>
+    {showAdminActions && <FilterBar
+      activeCount={(finishedOnly ? 1 : 0) + (userFilterSelected ? 1 : 0)}
+      onClear={() => filterBy(() => {
+        setFinishedOnly(false);
+        setUserFilterSelected(null);
+      })}
+      actions={
+        <Button size="sm" variant="ghost" asChild>
+          <Link href="/logs/new">
+            <Icon><LuClipboardPlus /></Icon>
+            {t("buttons.createLog")}
+          </Link>
+        </Button>
+      }
+    >
+      <UserCombobox
+        users={userComboboxUsers}
+        value={userFilterSelected ?? ""}
+        onValueChange={(v) => filterBy(() => setUserFilterSelected(v || null))}
+        placeholder={t("placeholders.filterUsers")}
+        emptyText={t("placeholders.noUsersFound")}
+        size="sm"
+        width="full"
+      />
+      <Switch.Root size="sm" checked={finishedOnly} onCheckedChange={(e) => filterBy(() => setFinishedOnly(e.checked))}>
+        <Switch.HiddenInput />
+        <Switch.Control />
+        <Switch.Label>{t("filters.finishedOnly")}</Switch.Label>
+      </Switch.Root>
+    </FilterBar>}
 
-            <Portal>
-              <Dialog.Backdrop />
-              <Dialog.Positioner>
-                <Dialog.Content>
-                  <Dialog.Header>
-                    <Dialog.Title>Confirm Deletion</Dialog.Title>
-                  </Dialog.Header>
-                  <Dialog.Body>
-                    <Text mb={4}>Are you sure you want to delete following time logs?</Text>
-                    <Stack mb={4} gap={2}>
-                      {selection.map(id => {
-                        const log = logs.find(u => u.id === id);
-                        if (!log) return <GenericClipboard key={id} value={id} />;
-
-                        const user = userInfo[log.userId];
-
-                        return <HStack key={log.id}>
-                          <Badge colorPalette="brand">{user?.name ?? log.userId}</Badge>
-                          <TimeLogStatusBadge status={log.status} />
-                          <Badge fontFamily="mono">{log.inTime.toLocaleString()} - {log.outTime?.toLocaleString() ?? "N/A"}</Badge>
-                        </HStack>;
-                      })}
-                    </Stack>
-                    <Text color="fg.muted">Total {selection.length} logs selected</Text>
-                  </Dialog.Body>
-                  <Dialog.Footer>
-                    <ButtonGroup size="sm">
-                      <Dialog.ActionTrigger asChild>
-                        <Button variant="outline">Cancel</Button>
-                      </Dialog.ActionTrigger>
-                      <Dialog.Context>
-                        {(store) => (
-                          <Button colorPalette="red" disabled={outdated} onClick={() => handleDeleteLogs(selection).then(() => store.setOpen(false))}>
-                            <Icon><LuTrash2 /></Icon>
-                            Delete
-                          </Button>
-                        )}
-                      </Dialog.Context>
-                    </ButtonGroup>
-                  </Dialog.Footer>
-                  <Dialog.CloseTrigger asChild>
-                    <CloseButton size="sm" />
-                  </Dialog.CloseTrigger>
-                </Dialog.Content>
-              </Dialog.Positioner>
-            </Portal>
-          </Dialog.Root>
-        )
-      }}
-      topRightElement={topRightElement}
-      t={t}
+    <DataTable<TableData>
+      aria-label={t("table.label")}
+      rows={filteredData}
+      columns={columns}
+      getRowId={(item) => item.id}
+      sort={{ by: sortBy, onChange: setSortBy }}
+      pagination={{ page, pageSize, onPageChange: setPage, onPageSizeChange: setPageSize, pageSizes: [10, 25, 50, 100] }}
+      selection={showAdminActions ? { selected: selection, onChange: setSelection } : undefined}
+      rowActions={showAdminActions ? (row) => [
+        { value: "edit", label: t("buttons.edit"), icon: <LuPen />, onSelect: () => router.push(`/logs/${row.id}`) },
+        { value: "delete", label: t("buttons.delete"), icon: <LuTrash2 />, danger: true, onSelect: () => router.push(`/logs/${row.id}/delete`) },
+      ] : undefined}
     />
-  </Pagination.Root>;
+
+    {showAdminActions && <SelectionBar count={selection.length} onClear={() => setSelection([])}>
+      <Dialog.Root size="lg">
+
+        <ButtonGroup size="xs" variant="outline">
+          <Dialog.Trigger asChild>
+            <Button colorPalette="red">
+              <Icon><LuTrash2 /></Icon> Delete selected
+            </Button>
+          </Dialog.Trigger>
+        </ButtonGroup>
+
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>Confirm Deletion</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Text mb={4}>Are you sure you want to delete following time logs?</Text>
+                <Stack mb={4} gap={2}>
+                  {selection.map(id => {
+                    const log = logs.find(u => u.id === id);
+                    if (!log) return <GenericClipboard key={id} value={id} />;
+
+                    const user = userInfo[log.userId];
+
+                    return <HStack key={log.id}>
+                      <Badge colorPalette="brand">{user?.name ?? log.userId}</Badge>
+                      <TimeLogStatusBadge status={log.status} />
+                      <Badge fontFamily="mono">{log.inTime.toLocaleString()} - {log.outTime?.toLocaleString() ?? "N/A"}</Badge>
+                    </HStack>;
+                  })}
+                </Stack>
+                <Text color="fg.muted">Total {selection.length} logs selected</Text>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <ButtonGroup size="sm">
+                  <Dialog.ActionTrigger asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </Dialog.ActionTrigger>
+                  <Dialog.Context>
+                    {(store) => (
+                      <Button colorPalette="red" disabled={outdated} onClick={() => handleDeleteLogs(selection).then(() => { store.setOpen(false); setSelection([]); })}>
+                        <Icon><LuTrash2 /></Icon>
+                        Delete
+                      </Button>
+                    )}
+                  </Dialog.Context>
+                </ButtonGroup>
+              </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
+    </SelectionBar>}
+  </>;
 }
