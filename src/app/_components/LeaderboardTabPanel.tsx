@@ -50,28 +50,28 @@ export default function LeaderboardTabPanel(props: {
         title={t("title")}
         level={3}
         size="lg"
-        end={
-            <Popover.Root open={popoverOpen} onOpenChange={(e) => setPopoverOpen(e.open)}>
-              <Popover.Trigger asChild>
-                <IconButton size="sm" variant="ghost" aria-label="Select date range">
-                  <Icon><LuCalendarRange /></Icon>
-                </IconButton>
-              </Popover.Trigger>
-              <Portal>
-                <Popover.Positioner>
-                  <Popover.Content>
-                    <Popover.Arrow />
-                    <Popover.Body>
-                      <StatRangeSelector
-                        statRanges={statRanges}
-                        onSelectAction={handleStatRangeSelect}
-                        onClearAction={handleClearRange}
-                      />
-                    </Popover.Body>
-                  </Popover.Content>
-                </Popover.Positioner>
-              </Portal>
-            </Popover.Root>
+        end={statRanges.length > 0 ?
+          <Popover.Root open={popoverOpen} onOpenChange={(e) => setPopoverOpen(e.open)}>
+            <Popover.Trigger asChild>
+              <IconButton size="sm" variant="ghost" aria-label="Select date range">
+                <Icon><LuCalendarRange /></Icon>
+              </IconButton>
+            </Popover.Trigger>
+            <Portal>
+              <Popover.Positioner>
+                <Popover.Content>
+                  <Popover.Arrow />
+                  <Popover.Body>
+                    <StatRangeSelector
+                      statRanges={statRanges}
+                      onSelectAction={handleStatRangeSelect}
+                      onClearAction={handleClearRange}
+                    />
+                  </Popover.Body>
+                </Popover.Content>
+              </Popover.Positioner>
+            </Portal>
+          </Popover.Root> : null
         }
       />
       {loading ? (
