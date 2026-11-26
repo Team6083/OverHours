@@ -1,5 +1,6 @@
-import { Badge, Text } from "@chakra-ui/react";
 import { ComponentProps } from "react";
+
+import { Badge, Text } from "@chakra-ui/react";
 
 export default function RankingBadge(props: {
   ranking: number,

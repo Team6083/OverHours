@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { HStack, Button, Icon, IconButton, Container } from "@chakra-ui/react";
+
+import { Button, Container, HStack, Icon, IconButton } from "@chakra-ui/react";
 import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
 
 import { getStatRangeDTO } from "@/lib/data/statrange-dto";

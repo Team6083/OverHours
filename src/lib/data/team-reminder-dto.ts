@@ -1,6 +1,6 @@
 import "server-only";
-import { Prisma } from "@/generated/prisma";
 
+import { Prisma } from "@/generated/prisma";
 import { calendarDateInZone } from "../attendance";
 import { getTimeZone } from "../config";
 import { objectIdSchema } from "../objectid";

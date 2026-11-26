@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+
 import { Button, Container, GridItem, SimpleGrid } from "@chakra-ui/react";
 import { NoAccessPage } from "@team6083/ui";
 

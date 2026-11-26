@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+
 import { Table } from "@chakra-ui/react";
 
 import RankingBadge from "@/components/ranking/RankingBadge";

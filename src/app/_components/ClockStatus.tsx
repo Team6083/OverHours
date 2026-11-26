@@ -1,9 +1,10 @@
 "use client";
-import { ComponentProps } from "react";
 import { useFormatter, useNow, useTranslations } from "next-intl";
-import { Status, Text } from "@chakra-ui/react";
+import { ComponentProps } from "react";
 
+import { Status, Text } from "@chakra-ui/react";
 import { Tooltip } from "@team6083/ui";
+
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 

@@ -1,4 +1,5 @@
 import { ComponentProps } from "react";
+
 import { Clipboard as ChakraClipboard, Link } from "@chakra-ui/react";
 
 export default function Clipboard(props: { value: string } & ComponentProps<typeof Link>) {

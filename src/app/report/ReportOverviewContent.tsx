@@ -1,15 +1,15 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
-import { HStack, Stat, Heading, Center, Spinner, IconButton } from "@chakra-ui/react";
-import { PageHeader } from "@team6083/ui";
+import { useCallback, useEffect, useState } from "react";
 
+import { Center, Heading, HStack, IconButton, Spinner, Stat } from "@chakra-ui/react";
+import { PageHeader } from "@team6083/ui";
 import { LuRefreshCcw } from "react-icons/lu";
 
 import LeaderboardTable from "@/components/ranking/LeaderboardTable";
 import StatRangeSelector from "@/components/stats/StatRangeSelector";
-import { StatRangeDTO } from "@/lib/data/statrange-dto";
 import StatValueTextDuration from "@/components/stats/StatValueTextDuration";
-import { OverviewStats, getOverviewStats } from "@/lib/data/report";
+import { getOverviewStats, OverviewStats } from "@/lib/data/report";
+import { StatRangeDTO } from "@/lib/data/statrange-dto";
 
 export default function ReportOverviewContent({
   userNameDict,

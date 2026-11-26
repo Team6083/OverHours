@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { Fieldset, Stack, Field, Input, Button, DataList } from "@chakra-ui/react";
+
+import { Button, DataList, Field, Fieldset, Input, Stack } from "@chakra-ui/react";
 import { useAppOutdated } from "@team6083/ui";
 
 import { UserDTO } from "@/lib/data/user-dto";
