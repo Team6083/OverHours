@@ -1,18 +1,18 @@
 "use client";
-import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
-import {
-  Badge, Button, Card, Dialog, GridItem, Heading, HStack, IconButton, Menu, Portal, SimpleGrid, Stack, Table, Text,
-} from "@chakra-ui/react";
-
+import { useEffect, useRef, useState, useTransition } from "react";
 import { IconType } from "react-icons";
+
+import {
+    Badge, Button, Card, Dialog, GridItem, Heading, HStack, IconButton, Menu, Portal, SimpleGrid, Stack, Table, Text,
+} from "@chakra-ui/react";
+import { toaster, useAppOutdated } from "@team6083/ui";
 import { LuCalendarSync, LuCheck, LuCheckCheck, LuCopy, LuSave, LuUsers, LuWandSparkles, LuX } from "react-icons/lu";
 
-import { toaster, useAppOutdated } from "@team6083/ui";
 import {
-  addDays, applyPattern, ATTENDANCE_STATUSES, AttendanceStatus, copyFromWeekBefore, DayStatus, shortDate, STATUS_PALETTE, weekdayOf, weekStartOf,
+    addDays, applyPattern, ATTENDANCE_STATUSES, AttendanceStatus, copyFromWeekBefore, DayStatus, shortDate, STATUS_PALETTE, weekdayOf, weekStartOf,
 } from "@/lib/attendance";
 import { BoardDay } from "@/lib/data/attendance-dto";
 import { getMyWeekAnswers, savePattern, saveWeek } from "./actions";

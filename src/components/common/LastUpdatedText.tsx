@@ -1,8 +1,9 @@
 "use client";
 import { useFormatter, useNow, useTranslations } from "use-intl";
-import { ClientOnly, Text } from "@chakra-ui/react";
 
+import { ClientOnly, Text } from "@chakra-ui/react";
 import { Tooltip } from "@team6083/ui";
+
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 
 export default function LastUpdatedText(props: {

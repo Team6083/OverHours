@@ -1,4 +1,4 @@
-import { Container, Card } from "@chakra-ui/react";
+import { Card, Container } from "@chakra-ui/react";
 
 export default function LogLayout({ children }: { children: React.ReactNode }) {
   return <Container maxWidth="5xl">

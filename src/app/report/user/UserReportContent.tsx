@@ -1,18 +1,27 @@
 "use client";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
-  Box, HStack, Stat, Heading, Center, Spinner, IconButton,
-  Table, SegmentGroup, Text,
+    Box,
+    Center,
+    Heading,
+    HStack,
+    IconButton,
+    SegmentGroup,
+    Spinner,
+    Stat,
+    Table,
+    Text,
 } from "@chakra-ui/react";
 import { PageHeader } from "@team6083/ui";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
-import StatRangeSelector from "@/components/stats/StatRangeSelector";
-import { StatRangeDTO } from "@/lib/data/statrange-dto";
-import UserCombobox from "@/components/user/UserCombobox";
-import StatValueTextDuration from "@/components/stats/StatValueTextDuration";
 import Heatmap from "@/components/stats/HeatMap";
+import StatRangeSelector from "@/components/stats/StatRangeSelector";
+import StatValueTextDuration from "@/components/stats/StatValueTextDuration";
+import UserCombobox from "@/components/user/UserCombobox";
 import { getUserReportData, UserReportData } from "@/lib/data/report";
+import { StatRangeDTO } from "@/lib/data/statrange-dto";
 
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 const DOW_LABELS_FULL = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

@@ -1,6 +1,7 @@
-import { ComponentProps } from "react";
 import { getTranslations } from "next-intl/server";
-import { DataList, Badge } from "@chakra-ui/react";
+import { ComponentProps } from "react";
+
+import { Badge, DataList } from "@chakra-ui/react";
 
 import RankingBadge from "@/components/ranking/RankingBadge";
 import { formatDuration } from "@/lib/util";
