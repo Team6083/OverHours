@@ -1,5 +1,6 @@
-import { Badge, Card, HStack, Stack, Text } from "@chakra-ui/react";
 import { getTranslations } from "next-intl/server";
+
+import { Badge, Card, HStack, Stack, Text } from "@chakra-ui/react";
 
 import { shortDate } from "@/lib/attendance";
 import { ReliabilityRow } from "@/lib/data/attendance-dto";

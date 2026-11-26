@@ -1,7 +1,8 @@
 "use client";
-import { ComponentProps, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Group, Combobox, Button, useFilter, useListCollection, usePopoverContext, Icon, IconButton, Popover, Portal, Text, Box } from "@chakra-ui/react";
+import { ComponentProps, useEffect, useMemo, useState } from "react";
+
+import { Box, Button, Combobox, Group, Icon, IconButton, Popover, Portal, Text, useFilter, useListCollection, usePopoverContext } from "@chakra-ui/react";
 import { useAppOutdated } from "@team6083/ui";
 import { LuSmilePlus } from "react-icons/lu";
 

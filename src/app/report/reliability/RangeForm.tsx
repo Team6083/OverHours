@@ -1,7 +1,8 @@
 "use client";
-import { HStack, Input, Text } from "@chakra-ui/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+
+import { HStack, Input, Text } from "@chakra-ui/react";
 
 export default function RangeForm(props: { start: string; end: string; max: string }) {
   const { start, end, max } = props;

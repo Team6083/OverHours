@@ -1,11 +1,12 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
-  Badge, Button, Center, HStack, IconButton, Input, Spinner, Stat, Table, Text, VStack,
+    Badge, Button, Center, HStack, IconButton, Input, Spinner, Stat, Table, Text, VStack,
 } from "@chakra-ui/react";
 import { EmptyState, PageHeader } from "@team6083/ui";
 import { LuDownload, LuLock, LuRefreshCcw } from "react-icons/lu";
-import { useTranslations } from "next-intl";
 
 import type { LockedTimeLogRow } from "@/lib/data/locked-export";
 import { getLockedReportRows } from "./actions";

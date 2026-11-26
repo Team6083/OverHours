@@ -1,4 +1,5 @@
 import { ComponentProps } from "react";
+
 import { Avatar, Box } from "@chakra-ui/react";
 import { MemberAvatar } from "@team6083/ui";
 

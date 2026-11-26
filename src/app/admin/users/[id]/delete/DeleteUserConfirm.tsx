@@ -1,9 +1,9 @@
-import { Heading, HStack, ButtonGroup, Button, Icon, Text } from "@chakra-ui/react";
+import { Button, ButtonGroup, Heading, HStack, Icon, Text } from "@chakra-ui/react";
 import { FactList } from "@team6083/ui";
 import { LuTrash2 } from "react-icons/lu";
 
-import { UserDTO } from "@/lib/data/user-dto";
 import WriteButton from "@/components/common/WriteButton";
+import { UserDTO } from "@/lib/data/user-dto";
 
 export default function DeleteUserConfirm(props: {
   user: UserDTO;

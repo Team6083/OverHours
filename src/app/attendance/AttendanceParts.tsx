@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+
 import {
-  Avatar, AvatarGroup, Badge, Box, Button, CloseButton, Dialog, HStack, IconButton, Input, Portal, SimpleGrid, Spinner, Stack, Text,
+    Avatar, AvatarGroup, Badge, Box, Button, CloseButton, Dialog, HStack, IconButton, Input, Portal, SimpleGrid, Spinner, Stack, Text,
 } from "@chakra-ui/react";
 import { LuCalendarDays, LuCheck, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+
 import { Container } from "@chakra-ui/react";
 
 import { deleteStatRange, getStatRangeDTO } from "@/lib/data/statrange-dto";

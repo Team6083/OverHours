@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { HStack, VStack, Spinner, Center, Heading, Popover, IconButton, Icon, Portal } from "@chakra-ui/react";
+import { useState } from "react";
+
+import { Center, Heading, HStack, Icon, IconButton, Popover, Portal, Spinner, VStack } from "@chakra-ui/react";
 import { LuCalendarRange } from "react-icons/lu";
 
 import LeaderboardTable from "@/components/ranking/LeaderboardTable";
