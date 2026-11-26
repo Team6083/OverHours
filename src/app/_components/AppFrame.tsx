@@ -2,14 +2,13 @@
 
 import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-
+import { Session } from "next-auth";
 import { useLocale } from "next-intl";
 
-import { AccountMenu, AppShell, BuildInfo, LanguageMenu, SignInButton, SignOutMenuItem, type NavItem } from "@team6083/ui";
 import { Menu } from "@chakra-ui/react";
+import { AccountMenu, AppShell, BuildInfo, LanguageMenu, type NavItem, SignInButton, SignOutMenuItem } from "@team6083/ui";
 
 import { LANGUAGES, LOCALE_COOKIE } from "@/i18n/locales";
-import { Session } from "next-auth";
 
 /** AppShell needs a function for links and the current path, so the server layout hands its data to this client frame. */
 export default function AppFrame(props: {

@@ -1,10 +1,11 @@
 "use client";
-import { useTransition } from "react";
 import { useFormatter, useTranslations } from "next-intl";
+import { useTransition } from "react";
+
 import { Button, Icon } from "@chakra-ui/react";
+import { toaster, useAppOutdated } from "@team6083/ui";
 import { LuDoorOpen, LuTimer } from "react-icons/lu";
 
-import { toaster, useAppOutdated } from "@team6083/ui";
 import { formatDuration } from "@/lib/util";
 import { userClockToggle } from "../actions";
 

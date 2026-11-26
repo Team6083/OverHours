@@ -19,7 +19,7 @@ const prismaMock = vi.hoisted(() => {
 });
 vi.mock("../prisma", () => ({ default: prismaMock }));
 
-import { MergeUsersError, mergeUsers } from "./user-merge";
+import { mergeUsers, MergeUsersError } from "./user-merge";
 
 // Valid ObjectIds
 const KEPT = "000000000000000000000001";

@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { Button, Card } from "@chakra-ui/react";
 
 import { auth } from "@/auth";

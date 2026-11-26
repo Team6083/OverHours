@@ -1,15 +1,16 @@
 "use client";
-import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Icon, Badge, ButtonGroup, IconButton, Text, Button, CloseButton, Dialog, HStack, Portal, Stack, ClientOnly, SkeletonText, Pagination, Switch } from "@chakra-ui/react";
-import { LuArrowDown01, LuArrowUp10, LuLock, LuTimer, LuPen, LuTrash2, LuArrowDownAZ, LuArrowUpZA, LuClipboardPlus } from "react-icons/lu";
+import { useMemo, useState } from "react";
 
+import { Badge, Button, ButtonGroup, ClientOnly, CloseButton, Dialog, HStack, Icon, IconButton, Pagination, Portal, SkeletonText, Stack, Switch, Text } from "@chakra-ui/react";
 import { Tooltip, useAppOutdated } from "@team6083/ui";
-import UserCombobox from "@/components/user/UserCombobox";
-import GenericTable, { Column } from "@/components/common/GenericTable";
+import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuClipboardPlus, LuLock, LuPen, LuTimer, LuTrash2 } from "react-icons/lu";
+
 import GenericClipboard from "@/components/common/Clipboard";
+import GenericTable, { Column } from "@/components/common/GenericTable";
 import TimeLogStatusBadge from "@/components/timelog/TimeLogStatusBadge";
+import UserCombobox from "@/components/user/UserCombobox";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { formatDuration } from "@/lib/util";
 import { handleDeleteLogs } from "./actions";
