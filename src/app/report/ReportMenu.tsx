@@ -1,8 +1,9 @@
 "use client";
-import { createListCollection, Heading, Listbox } from "@chakra-ui/react";
 import { usePathname, useRouter } from "next/navigation";
-import { Fragment } from "react";
 import { useTranslations } from "next-intl";
+import { Fragment } from "react";
+
+import { createListCollection, Heading, Listbox } from "@chakra-ui/react";
 
 const timeAndUserReports = {
   time: {

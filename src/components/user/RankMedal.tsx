@@ -1,6 +1,7 @@
-import { ComponentProps } from "react";
-import { Avatar, Box } from "@chakra-ui/react";
 import { useTranslations } from "next-intl";
+import { ComponentProps } from "react";
+
+import { Avatar, Box } from "@chakra-ui/react";
 import { LuAward, LuCrown } from "react-icons/lu";
 
 // Gold, silver and bronze for 1st, 2nd and 3rd. The icons are thin outlines, so each color keeps at least 3:1 contrast

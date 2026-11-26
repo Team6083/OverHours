@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { HStack, Button, Icon, IconButton, Container } from "@chakra-ui/react";
+import { getTranslations } from "next-intl/server";
+
+import { Button, Container, HStack, Icon, IconButton } from "@chakra-ui/react";
 import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
 
 import { getTimelogDTO } from "@/lib/data/timelog-dto";
 import { getAllUserDTOs } from "@/lib/data/user-dto";
 import LogForm from "./form";
-import { getTranslations } from "next-intl/server";
 
 export default async function SingleUserPage(props: {
   params: Promise<{ id: string }>;

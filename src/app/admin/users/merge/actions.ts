@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { MergeUsersError, mergeUsers } from "@/lib/data/user-merge";
+import { mergeUsers, MergeUsersError } from "@/lib/data/user-merge";
 
 export type MergeUsersState = {
   error?: string;

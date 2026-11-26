@@ -1,6 +1,7 @@
 "use client";
 import { ComponentProps, Fragment } from "react";
-import { GridItem, Grid } from "@chakra-ui/react";
+
+import { Grid, GridItem } from "@chakra-ui/react";
 import { Tooltip, useColorMode } from "@team6083/ui";
 
 

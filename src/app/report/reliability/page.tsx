@@ -1,7 +1,8 @@
+import { getTranslations } from "next-intl/server";
+
 import { SimpleGrid, Stat, Table, Text, VStack } from "@chakra-ui/react";
 import { EmptyState, PageHeader } from "@team6083/ui";
 import { LuCalendarCheck } from "react-icons/lu";
-import { getTranslations } from "next-intl/server";
 
 import { addDays, datesInRange, isCalendarDate, MAX_RANGE_DAYS, shortDate } from "@/lib/attendance";
 import { getTeamReliability, getToday } from "@/lib/data/attendance-dto";
