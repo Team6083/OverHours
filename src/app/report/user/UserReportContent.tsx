@@ -102,7 +102,6 @@ export default function UserReportContent({
         key = String(date.getUTCFullYear());
         label = key;
       }
-      const existing = map.get(key);
       const group = map.get(key) ?? { label, totalMs: 0, sessionIds: new Set<string>() };
       group.totalMs += d.totalMs;
       d.sessionIds.forEach(id => group.sessionIds.add(id));
