@@ -4,12 +4,11 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
-import { Badge, Button, ButtonGroup, ClientOnly, CloseButton, Dialog, HStack, Icon, Portal, SkeletonText, Stack, Switch, Text } from "@chakra-ui/react";
-import { type DataColumn, type DataSort, DataTable, FilterBar, SelectionBar, Tooltip, useAppOutdated } from "@team6083/ui";
+import { Badge, Button, ClientOnly, HStack, Icon, SkeletonText, Switch, Text } from "@chakra-ui/react";
+import { type DataColumn, type DataSort, DataTable, FilterBar, SelectionBar, Tooltip } from "@team6083/ui";
 import { LuClipboardPlus, LuLock, LuPen, LuTimer, LuTrash2 } from "react-icons/lu";
 
-import GenericClipboard from "@/components/common/Clipboard";
-import TimeLogStatusBadge from "@/components/timelog/TimeLogStatusBadge";
+import DeleteTimeLogsDialog from "@/components/timelog/DeleteTimeLogsDialog";
 import UserCombobox from "@/components/user/UserCombobox";
 import { TimeLogDTO } from "@/lib/data/timelog-dto";
 import { formatDuration } from "@/lib/util";
@@ -50,7 +49,6 @@ export default function LogsDataTable(props: {
   userInfo: Record<string, { name: string, avatarUrl?: string }>;
   showAdminActions?: boolean;
 }) {
-  const outdated = useAppOutdated();
   const router = useRouter();
   const { logs, userInfo, showAdminActions = false } = props;
   const t = useTranslations("LogsPage");
@@ -124,6 +122,12 @@ export default function LogsDataTable(props: {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selection, setSelection] = useState<string[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<TableData>();
+
+  const userNames = useMemo(
+    () => Object.fromEntries(Object.entries(userInfo).map(([id, user]) => [id, user.name])),
+    [userInfo]
+  );
 
   const userComboboxUsers = useMemo(
     () => Object.entries(userInfo).map(([id, user]) => ({ id, name: user.name })),
@@ -184,68 +188,28 @@ export default function LogsDataTable(props: {
       selection={showAdminActions ? { selected: selection, onChange: setSelection } : undefined}
       rowActions={showAdminActions ? (row) => [
         { value: "edit", label: t("buttons.edit"), icon: <LuPen />, onSelect: () => router.push(`/logs/${row.id}`) },
-        { value: "delete", label: t("buttons.delete"), icon: <LuTrash2 />, danger: true, onSelect: () => router.push(`/logs/${row.id}/delete`) },
+        { value: "delete", label: t("buttons.delete"), icon: <LuTrash2 />, danger: true, onSelect: () => setDeleteTarget(row) },
       ] : undefined}
     />
 
     {showAdminActions && <SelectionBar count={selection.length} onClear={() => setSelection([])}>
-      <Dialog.Root size="lg">
-
-        <ButtonGroup size="xs" variant="outline">
-          <Dialog.Trigger asChild>
-            <Button colorPalette="red">
-              <Icon><LuTrash2 /></Icon> Delete selected
-            </Button>
-          </Dialog.Trigger>
-        </ButtonGroup>
-
-        <Portal>
-          <Dialog.Backdrop />
-          <Dialog.Positioner>
-            <Dialog.Content>
-              <Dialog.Header>
-                <Dialog.Title>Confirm Deletion</Dialog.Title>
-              </Dialog.Header>
-              <Dialog.Body>
-                <Text mb={4}>Are you sure you want to delete following time logs?</Text>
-                <Stack mb={4} gap={2}>
-                  {selection.map(id => {
-                    const log = logs.find(u => u.id === id);
-                    if (!log) return <GenericClipboard key={id} value={id} />;
-
-                    const user = userInfo[log.userId];
-
-                    return <HStack key={log.id}>
-                      <Badge colorPalette="brand">{user?.name ?? log.userId}</Badge>
-                      <TimeLogStatusBadge status={log.status} />
-                      <Badge fontFamily="mono">{log.inTime.toLocaleString()} - {log.outTime?.toLocaleString() ?? "N/A"}</Badge>
-                    </HStack>;
-                  })}
-                </Stack>
-                <Text color="fg.muted">Total {selection.length} logs selected</Text>
-              </Dialog.Body>
-              <Dialog.Footer>
-                <ButtonGroup size="sm">
-                  <Dialog.ActionTrigger asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </Dialog.ActionTrigger>
-                  <Dialog.Context>
-                    {(store) => (
-                      <Button colorPalette="red" disabled={outdated} onClick={() => handleDeleteLogs(selection).then(() => { store.setOpen(false); setSelection([]); })}>
-                        <Icon><LuTrash2 /></Icon>
-                        Delete
-                      </Button>
-                    )}
-                  </Dialog.Context>
-                </ButtonGroup>
-              </Dialog.Footer>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton size="sm" />
-              </Dialog.CloseTrigger>
-            </Dialog.Content>
-          </Dialog.Positioner>
-        </Portal>
-      </Dialog.Root>
+      <DeleteTimeLogsDialog
+        logs={logs.filter(log => selection.includes(log.id))}
+        userNames={userNames}
+        onDelete={handleDeleteLogs}
+        onDeleted={() => setSelection([])}
+        trigger={<Button size="xs" variant="outline" colorPalette="red">
+          <Icon><LuTrash2 /></Icon> Delete selected
+        </Button>}
+      />
     </SelectionBar>}
+
+    {deleteTarget && <DeleteTimeLogsDialog
+      logs={[deleteTarget]}
+      userNames={userNames}
+      onDelete={handleDeleteLogs}
+      open
+      onOpenChange={(open) => { if (!open) setDeleteTarget(undefined); }}
+    />}
   </>;
 }

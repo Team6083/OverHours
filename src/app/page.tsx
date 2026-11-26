@@ -1,5 +1,4 @@
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
@@ -14,7 +13,7 @@ import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
 import { getActiveStatRangesForPicker } from "@/lib/data/statrange-dto";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import {
-  adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
+  adminClockOut, adminLockLog, deleteTimeLogs, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
 } from "@/lib/data/timelog-dto";
 import { getAllUserAvatars, getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import ClockInOutButton from "./_components/ClockInOutButton";
@@ -135,9 +134,10 @@ export default async function Home() {
         await adminLockLog(id);
         revalidatePath("/");
       }}
-      handleRemove={async (id: string) => {
+      handleRemove={async (ids: string[]) => {
         "use server";
-        redirect(`/logs/${id}/delete?returnTo=/`);
+        await deleteTimeLogs(ids);
+        revalidatePath("/");
       }}
     >
 
