@@ -106,13 +106,16 @@
         "time": "Time",
         "duration": "Duration",
         "actions": "Actions"
-      }
+      },
+      "label": "Time logs"
     },
     "filters": {
       "finishedOnly": "Finished only"
     },
     "buttons": {
-      "createLog": "Create Log"
+      "createLog": "Create Log",
+      "edit": "Edit",
+      "delete": "Delete"
     },
     "status": {
       "currentlyIn": "Currently In",
@@ -180,6 +183,7 @@
     }
   },
   "AppNav": {
+    "newTables": "New tables",
     "nav": {
       "logs": "Logs",
       "reports": "Reports",

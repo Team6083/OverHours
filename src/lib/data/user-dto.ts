@@ -154,25 +154,6 @@ export async function updateUser(id: string, data: {
   return prismaUserToDTO(user);
 }
 
-export async function deleteUser(id: string): Promise<UserDTO> {
-  const session = await auth();
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
-
-  if (session.user.role !== Role.ADMIN) {
-    throw new Error("Forbidden");
-  }
-
-  const user = await prisma.$transaction(async (tx) => {
-    await removeUsersFromAllTeams(tx, [id]);
-    return tx.user.delete({ where: { id } });
-  });
-
-  return prismaUserToDTO(user);
-}
-
 export async function deleteUsers(ids: string[]) {
   const session = await auth();
 

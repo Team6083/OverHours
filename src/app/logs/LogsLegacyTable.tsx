@@ -1,0 +1,255 @@
+"use client";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
+
+import { Badge, Button, ButtonGroup, ClientOnly, HStack, Icon, IconButton, Pagination, SkeletonText, Switch, Text } from "@chakra-ui/react";
+import { Tooltip } from "@team6083/ui";
+import { LuArrowDown01, LuArrowDownAZ, LuArrowUp10, LuArrowUpZA, LuClipboardPlus, LuLock, LuPen, LuTimer, LuTrash2 } from "react-icons/lu";
+
+import GenericTable, { Column } from "@/components/common/GenericTable";
+import DeleteTimeLogsDialog from "@/components/timelog/DeleteTimeLogsDialog";
+import UserCombobox from "@/components/user/UserCombobox";
+import { TimeLogDTO } from "@/lib/data/timelog-dto";
+import { formatDuration } from "@/lib/util";
+import { handleDeleteLogs } from "./actions";
+
+type TableData = Omit<TimeLogDTO, "createdAt" | "updatedAt"> & {
+  displayName: string;
+  avatarUrl?: string;
+  timeRangeStr: string;
+  outTimeStr: string;
+  durationStr: string;
+}
+
+const dayTimeOptions: Intl.DateTimeFormatOptions = {
+  month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+};
+const dayTimeFormat = new Intl.DateTimeFormat(undefined, dayTimeOptions);
+const yearDayTimeFormat = new Intl.DateTimeFormat(undefined, { ...dayTimeOptions, year: "numeric" });
+const timeFormat = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+
+const formatDayTime = (date: Date, currentYear: number) =>
+  (date.getFullYear() === currentYear ? dayTimeFormat : yearDayTimeFormat).format(date);
+
+function formatTimeRange(inTime: Date, outTime: Date | undefined, status: TimeLogDTO["status"], currentYear: number): string {
+  if (!outTime || status === "LOCKED") return formatDayTime(inTime, currentYear);
+
+  const sameDay = inTime.toDateString() === outTime.toDateString();
+  return `${formatDayTime(inTime, currentYear)} – ${sameDay ? timeFormat.format(outTime) : formatDayTime(outTime, currentYear)}`;
+}
+
+function formatLogDuration(inTime: Date, outTime: Date): string {
+  const durationMs = outTime.getTime() - inTime.getTime();
+  return durationMs < 0 ? "—" : formatDuration(durationMs / 1000, { hideSecondsFromMinute: true });
+}
+
+const columns: Column<TableData>[] = [
+  {
+    dataKey: "user",
+    sortable: true,
+    renderHeader: (sort, t) => {
+      return <>
+        {t ? t("table.columns.user") : "User"}
+        {sort && (
+          sort === 1 ? <Icon ml={1}><LuArrowDownAZ /></Icon>
+            : <Icon ml={1}><LuArrowUpZA /></Icon>
+        )}
+      </>;
+    },
+    renderCell: (row) => row.displayName,
+  },
+  {
+    dataKey: "timeIn",
+    sortable: true,
+    renderHeader: (sort, t) => {
+      return <>
+        {t ? t("table.columns.time") : "Time"}
+        {sort && (
+          sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
+            : <Icon ml={1}><LuArrowUp10 /></Icon>
+        )}
+      </>;
+    },
+    renderCell: (row, t) => {
+      return <ClientOnly fallback={<SkeletonText noOfLines={1} />}>
+        <HStack gap={2} rowGap={1} flexWrap="wrap">
+          <Text as="span" whiteSpace="nowrap">{row.timeRangeStr}</Text>
+          {!row.outTime && (
+            <Badge colorPalette="orange">
+              <Icon><LuTimer /></Icon>
+              {t ? t("status.currentlyIn") : "Currently In"}
+            </Badge>
+          )}
+          {row.outTime && row.status === "LOCKED" && (
+            <Tooltip content={t ? t("tooltips.clockedOutAt", { time: row.outTimeStr }) : `Clocked out at ${row.outTimeStr}`}>
+              <Badge colorPalette="red"><Icon><LuLock /></Icon>{t ? t("status.locked") : "Locked"}</Badge>
+            </Tooltip>
+          )}
+        </HStack>
+      </ClientOnly>;
+    }
+  },
+  {
+    dataKey: "duration",
+    sortable: true,
+    renderHeader: (sort, t) => {
+      return <>
+        {t ? t("table.columns.duration") : "Duration"}
+        {sort && (
+          sort === 1 ? <Icon ml={1}><LuArrowDown01 /></Icon>
+            : <Icon ml={1}><LuArrowUp10 /></Icon>
+        )}
+      </>;
+    },
+    renderCell: (row) => row.outTime ? (
+      <Text
+        as="span"
+        color={row.status === "LOCKED" ? "fg.muted" : undefined}
+        textDecor={row.status === "LOCKED" ? "line-through" : undefined}
+      >
+        {row.durationStr}
+      </Text>
+    ) : null,
+  }
+]
+
+const actionsColumn: Column<TableData> = {
+  dataKey: "actions",
+  renderHeader: (_, t) => {
+    return t ? t("table.columns.actions") : "Actions";
+  },
+  renderCell: (row) => (
+    <ButtonGroup size="xs" variant="ghost">
+      <IconButton asChild><Link href={`/logs/${row.id}`}><Icon><LuPen /></Icon></Link></IconButton>
+      <DeleteTimeLogsDialog
+        logs={[row]}
+        userNames={{ [row.userId]: row.displayName }}
+        onDelete={handleDeleteLogs}
+        trigger={<IconButton colorPalette="red" aria-label="Delete"><Icon><LuTrash2 /></Icon></IconButton>}
+      />
+    </ButtonGroup>
+  ),
+};
+
+const adminColumns = [...columns, actionsColumn];
+const memberColumns = columns.filter(column => column.dataKey !== "user");
+
+const sortingFn = (a: TableData, b: TableData, sortBy: [string, 1 | -1] | null) => {
+  if (!sortBy) return 0;
+  const [key, order] = sortBy;
+
+  let aValue: string | number = "";
+  let bValue: string | number = "";
+
+  if (key === "user") {
+    aValue = a.displayName;
+    bValue = b.displayName;
+  } else if (key === "timeIn") {
+    aValue = a.inTime.getTime();
+    bValue = b.inTime.getTime();
+  } else if (key === "duration") {
+    aValue = a.outTime ? a.outTime.getTime() - a.inTime.getTime() : 0;
+    bValue = b.outTime ? b.outTime.getTime() - b.inTime.getTime() : 0;
+  }
+
+  return (aValue < bValue ? -1 : aValue > bValue ? 1 : 0) * order;
+}
+
+export default function LogsLegacyTable(props: {
+  logs: Pick<TimeLogDTO, "id" | "userId" | "inTime" | "outTime" | "status" | "notes">[];
+  userInfo: Record<string, { name: string, avatarUrl?: string }>;
+  showAdminActions?: boolean;
+}) {
+  const { logs, userInfo, showAdminActions = false } = props;
+  const t = useTranslations("LogsPage");
+
+  const data = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+
+    return logs.map((log): TableData => {
+      const user = userInfo[log.userId];
+
+      return {
+        ...log,
+        displayName: user?.name || log.userId,
+        avatarUrl: user?.avatarUrl,
+        timeRangeStr: formatTimeRange(log.inTime, log.outTime, log.status, currentYear),
+        outTimeStr: log.outTime ? formatDayTime(log.outTime, currentYear) : "N/A",
+        durationStr: log.outTime ? formatLogDuration(log.inTime, log.outTime) : "N/A",
+      };
+    });
+  }, [logs, userInfo]);
+
+  const userNames = useMemo(
+    () => Object.fromEntries(Object.entries(userInfo).map(([id, user]) => [id, user.name])),
+    [userInfo]
+  );
+
+  const [finishedOnly, setFinishedOnly] = useState(true);
+  const [userFilterSelected, setUserFilterSelected] = useState<string | null>(null);
+
+  const userComboboxUsers = useMemo(
+    () => Object.entries(userInfo).map(([id, user]) => ({ id, name: user.name })),
+    [userInfo]
+  );
+
+  const topRightElement = showAdminActions && <HStack flexWrap="wrap" w="full">
+    <UserCombobox
+      users={userComboboxUsers}
+      value={userFilterSelected ?? ""}
+      onValueChange={(v) => setUserFilterSelected(v || null)}
+      placeholder={t("placeholders.filterUsers")}
+      emptyText={t("placeholders.noUsersFound")}
+      size="xs"
+      width={{ base: "full", md: "200px" }}
+    />
+
+    <HStack justifyContent="space-around">
+      <Button size="sm" variant="ghost" asChild>
+        <Link href="/logs/new">
+          <Icon><LuClipboardPlus /></Icon>
+          {t("buttons.createLog")}
+        </Link>
+      </Button>
+
+      <Switch.Root size="sm" checked={finishedOnly} onCheckedChange={(e) => setFinishedOnly(e.checked)}>
+        <Switch.HiddenInput />
+        <Switch.Control />
+        <Switch.Label>{t("filters.finishedOnly")}</Switch.Label>
+      </Switch.Root>
+    </HStack>
+  </HStack>;
+
+  const filteredData = (finishedOnly || userFilterSelected) ? data.filter(log => {
+    if (finishedOnly && !log.outTime) return false;
+    if (userFilterSelected && log.userId !== userFilterSelected) return false;
+    return true;
+  }) : data;
+
+  return <Pagination.Root count={filteredData.length} defaultPageSize={10} defaultPage={1}>
+    <GenericTable<TableData>
+      columns={showAdminActions ? adminColumns : memberColumns}
+      items={filteredData}
+      keyFn={(item) => item.id}
+      defaultSortBy={["timeIn", -1]}
+      sortingFn={sortingFn}
+      checkboxOptions={{
+        show: showAdminActions,
+        showActionBar: showAdminActions,
+        renderActionBarContent: (selection) => (
+          <DeleteTimeLogsDialog
+            logs={logs.filter(log => selection.includes(log.id))}
+            userNames={userNames}
+            onDelete={handleDeleteLogs}
+            trigger={<Button size="xs" variant="outline" colorPalette="red">
+              <Icon><LuTrash2 /></Icon> Delete selected
+            </Button>}
+          />
+        )
+      }}
+      topRightElement={topRightElement}
+      t={t}
+    />
+  </Pagination.Root>;
+}

@@ -4,16 +4,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Box,
     Center,
-    Heading,
     HStack,
     IconButton,
     SegmentGroup,
     Spinner,
+    Stack,
     Stat,
     Table,
     Text,
 } from "@chakra-ui/react";
-import { PageHeader } from "@team6083/ui";
+import { TitleBar } from "@team6083/ui";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
 import Heatmap from "@/components/stats/HeatMap";
@@ -90,11 +90,11 @@ export default function UserReportContent({
         key: new Date(d.date).toISOString().slice(0, 10),
         label: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }),
         totalMs: d.totalMs,
-        sessions: d.sessions,
+        sessions: d.sessionIds.length,
       }));
     }
 
-    const map = new Map<string, { label: string; totalMs: number; sessions: number }>();
+    const map = new Map<string, { label: string; totalMs: number; sessionIds: Set<string> }>();
     for (const d of reportData.dailyBreakdown) {
       const date = new Date(d.date);
       let key: string, label: string;
@@ -111,13 +111,14 @@ export default function UserReportContent({
         key = String(date.getUTCFullYear());
         label = key;
       }
-      const existing = map.get(key);
-      if (existing) { existing.totalMs += d.totalMs; existing.sessions += d.sessions; }
-      else map.set(key, { label, totalMs: d.totalMs, sessions: d.sessions });
+      const group = map.get(key) ?? { label, totalMs: 0, sessionIds: new Set<string>() };
+      group.totalMs += d.totalMs;
+      d.sessionIds.forEach(id => group.sessionIds.add(id));
+      map.set(key, group);
     }
     return Array.from(map.entries())
       .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([key, data]) => ({ key, ...data }));
+      .map(([key, { label, totalMs, sessionIds }]) => ({ key, label, totalMs, sessions: sessionIds.size }));
   }, [reportData, groupBy]);
 
   // Year range derived from data
@@ -209,32 +210,30 @@ export default function UserReportContent({
 
   return (
     <>
-      <PageHeader
-        title="User Report"
-        actions={
-          <HStack gap={2} flexWrap="wrap">
-            <UserCombobox
-              users={users}
-              value={selectedUserId}
-              onValueChange={setSelectedUserId}
-              placeholder="Select user"
-              size="xs"
-              width="auto"
-              minWidth="44"
-            />
-  
-            <StatRangeSelector
-              statRanges={statRanges}
-              onSelectAction={(start, end) => setDateRange([start, end])}
-              onClearAction={() => setDateRange(null)}
-            />
-  
-            <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading} disabled={!selectedUserId}>
-              <LuRefreshCcw />
-            </IconButton>
-          </HStack>
-        }
-      />
+      <Stack gap={3} mb={4}>
+        <TitleBar level={1} title="User Report" />
+        <HStack gap={2} flexWrap="wrap">
+          <UserCombobox
+            users={users}
+            value={selectedUserId}
+            onValueChange={setSelectedUserId}
+            placeholder="Select user"
+            size="xs"
+            width="auto"
+            minWidth="44"
+          />
+
+          <StatRangeSelector
+            statRanges={statRanges}
+            onSelectAction={(start, end) => setDateRange([start, end])}
+            onClearAction={() => setDateRange(null)}
+          />
+
+          <IconButton size="sm" variant="ghost" onClick={handleRefresh} loading={loading} disabled={!selectedUserId}>
+            <LuRefreshCcw />
+          </IconButton>
+        </HStack>
+      </Stack>
 
       {!selectedUserId ? (
         <Center color="fg.muted">Select a user to view their report.</Center>
@@ -274,45 +273,49 @@ export default function UserReportContent({
             </Stat.Root>
           </HStack>
 
-          <HStack justify="space-between" align="center" mb={3}>
-            <Heading as="h3" size="md">Activity</Heading>
-            <HStack gap={2}>
-              {heatmapView === "day" && (
-                <HStack gap={1} align="center">
-                  <IconButton
-                    size="xs" variant="ghost"
-                    onClick={() => setSelectedYear(y => y - 1)}
-                    disabled={selectedYear <= minYear}
-                    aria-label="Previous year"
-                  >
-                    <LuArrowLeft />
-                  </IconButton>
-                  <Text fontSize="sm" minW="40px" textAlign="center">{selectedYear}</Text>
-                  <IconButton
-                    size="xs" variant="ghost"
-                    onClick={() => setSelectedYear(y => y + 1)}
-                    disabled={selectedYear >= maxYear}
-                    aria-label="Next year"
-                  >
-                    <LuArrowRight />
-                  </IconButton>
-                </HStack>
-              )}
-              <SegmentGroup.Root
-                size="xs"
-                value={heatmapView}
-                onValueChange={({ value }) => setHeatmapView(value as "day" | "session")}
-              >
-                <SegmentGroup.Indicator />
-                <SegmentGroup.Items
-                  items={[
-                    { value: "day", label: "Calendar" },
-                    { value: "session", label: "Time of Day" },
-                  ]}
-                />
-              </SegmentGroup.Root>
-            </HStack>
-          </HStack>
+          <TitleBar
+            title="Activity"
+            level={3}
+            mb={3}
+            end={
+              <HStack gap={2}>
+                {heatmapView === "day" && (
+                  <HStack gap={1} align="center">
+                    <IconButton
+                      size="xs" variant="ghost"
+                      onClick={() => setSelectedYear(y => y - 1)}
+                      disabled={selectedYear <= minYear}
+                      aria-label="Previous year"
+                    >
+                      <LuArrowLeft />
+                    </IconButton>
+                    <Text fontSize="sm" minW="40px" textAlign="center">{selectedYear}</Text>
+                    <IconButton
+                      size="xs" variant="ghost"
+                      onClick={() => setSelectedYear(y => y + 1)}
+                      disabled={selectedYear >= maxYear}
+                      aria-label="Next year"
+                    >
+                      <LuArrowRight />
+                    </IconButton>
+                  </HStack>
+                )}
+                <SegmentGroup.Root
+                  size="xs"
+                  value={heatmapView}
+                  onValueChange={({ value }) => setHeatmapView(value as "day" | "session")}
+                >
+                  <SegmentGroup.Indicator />
+                  <SegmentGroup.Items
+                    items={[
+                      { value: "day", label: "Calendar" },
+                      { value: "session", label: "Time of Day" },
+                    ]}
+                  />
+                </SegmentGroup.Root>
+              </HStack>
+            }
+          />
 
           <Box overflowX="auto" pb={2}>
             {heatmapView === "day" ? (
@@ -342,24 +345,29 @@ export default function UserReportContent({
             )}
           </Box>
 
-          <HStack justify="space-between" align="center" mt={8} mb={3}>
-            <Heading as="h3" size="md">Sessions</Heading>
-            <SegmentGroup.Root
-              size="xs"
-              value={groupBy}
-              onValueChange={({ value }) => setGroupBy(value as GroupBy)}
-            >
-              <SegmentGroup.Indicator />
-              <SegmentGroup.Items
-                items={[
-                  { value: "day", label: "Daily" },
-                  { value: "week", label: "Weekly" },
-                  { value: "month", label: "Monthly" },
-                  { value: "year", label: "Yearly" },
-                ]}
-              />
-            </SegmentGroup.Root>
-          </HStack>
+          <TitleBar
+            title="Sessions"
+            level={3}
+            mt={8}
+            mb={3}
+            end={
+              <SegmentGroup.Root
+                size="xs"
+                value={groupBy}
+                onValueChange={({ value }) => setGroupBy(value as GroupBy)}
+              >
+                <SegmentGroup.Indicator />
+                <SegmentGroup.Items
+                  items={[
+                    { value: "day", label: "Daily" },
+                    { value: "week", label: "Weekly" },
+                    { value: "month", label: "Monthly" },
+                    { value: "year", label: "Yearly" },
+                  ]}
+                />
+              </SegmentGroup.Root>
+            }
+          />
           <Table.Root size="sm">
             <Table.Header>
               <Table.Row bg="transparent">

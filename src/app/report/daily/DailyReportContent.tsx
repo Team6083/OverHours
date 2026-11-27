@@ -1,8 +1,8 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Badge, ButtonGroup, Center, Heading, HStack, IconButton, Input, Spinner, Stat } from "@chakra-ui/react";
-import { PageHeader } from "@team6083/ui";
+import { Badge, ButtonGroup, Center, HStack, IconButton, Input, Spinner, Stat } from "@chakra-ui/react";
+import { TitleBar } from "@team6083/ui";
 import { LuArrowLeft, LuArrowRight, LuRefreshCcw } from "react-icons/lu";
 
 import Heatmap from "@/components/stats/HeatMap";
@@ -84,9 +84,11 @@ export default function DailyReportContent(props: {
     && reportData.durationStat.total / Math.max(reportData.userDuration.length, 1);
 
   return (<>
-    <PageHeader
+    <TitleBar
+      level={1}
+      mb={4}
       title="Daily Report"
-      actions={
+      end={
         <HStack gap={3}>
           <ButtonGroup size="sm" variant="ghost" gap={1}>
             <IconButton aria-label="Previous Day" onClick={handlePreviousDay}><LuArrowLeft /></IconButton>
@@ -149,7 +151,7 @@ export default function DailyReportContent(props: {
           )}
         </HStack>
 
-        <Heading as="h3" size="md" mb={3}>Headcount Heatmap</Heading>
+        <TitleBar title="Headcount Heatmap" level={3} mb={3} />
 
         {heatmapData ? <Heatmap
           rows={6}

@@ -5,7 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import {
     Alert, Badge, Button, ButtonGroup, Card, Checkbox, Heading, HStack, Icon, List, RadioGroup, Stack, Text,
 } from "@chakra-ui/react";
-import { useAppOutdated } from "@team6083/ui";
+import { TitleBar, useAppOutdated } from "@team6083/ui";
 import { LuMerge } from "react-icons/lu";
 
 import type { MergeConflictLog, MergePreview } from "@/lib/data/user-merge";
@@ -44,12 +44,16 @@ function MergeTeamsPicker(props: {
   const { teams, nameById, dropTeamIds, onChange } = props;
 
   return <Stack gap={2}>
-    <Heading as="h3" size="sm">Teams</Heading>
-    <Text as="p" fontSize="sm" color="fg.muted">
-      Choose the teams the kept user stays in. Each keeps how it was joined: by hand, or by role when every user
-      in it joined by role. A role team that is not kept is joined again at the next sign-in if the user still
-      has the role. A team the users join after this page loaded is kept too.
-    </Text>
+    <TitleBar
+      title="Teams"
+      level={3}
+      size="sm"
+      description={<Text as="span" fontSize="sm">
+        Choose the teams the kept user stays in. Each keeps how it was joined: by hand, or by role when every user
+        in it joined by role. A role team that is not kept is joined again at the next sign-in if the user still
+        has the role. A team the users join after this page loaded is kept too.
+      </Text>}
+    />
     {teams.map(team => (
       <Checkbox.Root
         key={team.id}

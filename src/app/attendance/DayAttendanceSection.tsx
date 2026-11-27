@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useFormatter, useTranslations } from "next-intl";
 import { createContext, useContext, useState } from "react";
 
-import { Badge, Button, Heading, HStack, IconButton, SimpleGrid, Spinner, Stack, Text } from "@chakra-ui/react";
+import { Badge, Button, HStack, IconButton, SimpleGrid, Spinner, Stack, Text } from "@chakra-ui/react";
+import { TitleBar } from "@team6083/ui";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 import { addDays, shortDate } from "@/lib/attendance";
@@ -81,27 +82,26 @@ export default function DayAttendanceSection() {
 
   return (
     <Stack gap={3}>
-      <HStack justify="space-between" wrap="wrap" gapY={1}>
-        <Heading as="h2" size="xl">
-          <Link href="/attendance">{t("title")}</Link>
-        </Heading>
-
-        <HStack gap={1} visibility={dialogOpen ? "hidden" : undefined}>
-          {date !== today && (
-            <Button size="xs" variant="ghost" onClick={() => goTo(today)}>{t("today")}</Button>
-          )}
-          <IconButton size="xs" variant="ghost" aria-label={t("day.previous")} onClick={() => goTo(addDays(date, -1))}>
-            <LuChevronLeft />
-          </IconButton>
-          <HStack gap={2} minW={28} justify="center">
-            <Text fontWeight="medium">{dayLabel(date)}</Text>
-            {date === today && <Badge colorPalette="brand">{t("today")}</Badge>}
+      <TitleBar
+        title={<Link href="/attendance">{t("title")}</Link>}
+        end={
+          <HStack gap={1} visibility={dialogOpen ? "hidden" : undefined}>
+            {date !== today && (
+              <Button size="xs" variant="ghost" onClick={() => goTo(today)}>{t("today")}</Button>
+            )}
+            <IconButton size="xs" variant="ghost" aria-label={t("day.previous")} onClick={() => goTo(addDays(date, -1))}>
+              <LuChevronLeft />
+            </IconButton>
+            <HStack gap={2} minW={28} justify="center">
+              <Text fontWeight="medium">{dayLabel(date)}</Text>
+              {date === today && <Badge colorPalette="brand">{t("today")}</Badge>}
+            </HStack>
+            <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => goTo(addDays(date, 1))}>
+              <LuChevronRight />
+            </IconButton>
           </HStack>
-          <IconButton size="xs" variant="ghost" aria-label={t("day.next")} onClick={() => goTo(addDays(date, 1))}>
-            <LuChevronRight />
-          </IconButton>
-        </HStack>
-      </HStack>
+        }
+      />
 
       {day ? (
         <SimpleGrid columns={{ base: 1, sm: 3 }} gap={4} minH={16}>

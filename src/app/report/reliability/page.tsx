@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
-import { SimpleGrid, Stat, Table, Text, VStack } from "@chakra-ui/react";
-import { EmptyState, PageHeader } from "@team6083/ui";
+import { SimpleGrid, Stack, Stat, Table, Text, VStack } from "@chakra-ui/react";
+import { EmptyState, TitleBar } from "@team6083/ui";
 import { LuCalendarCheck } from "react-icons/lu";
 
 import { addDays, datesInRange, isCalendarDate, MAX_RANGE_DAYS, shortDate } from "@/lib/attendance";
@@ -37,12 +37,14 @@ export default async function ReliabilityReport(props: { searchParams: Promise<{
   const percent = (value: number | null) => value === null ? "–" : `${Math.round(value * 100)}%`;
 
   return (<>
-    <PageHeader
-      title={t("title")}
-      description={<>{t("description")}</>}
-      mb={6}
-      actions={<RangeForm start={start} end={end} max={yesterday} />}
-    />
+    <Stack gap={3} mb={6}>
+      <TitleBar
+        level={1}
+        title={t("title")}
+        description={t("description")}
+      />
+      <RangeForm start={start} end={end} max={yesterday} />
+    </Stack>
 
     {rows.length === 0 ? (
       <EmptyState icon={<LuCalendarCheck />} title={t("empty")} />
