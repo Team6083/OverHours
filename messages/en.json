@@ -332,6 +332,8 @@
     "enabled": "Send a reminder every day",
     "weekdays": "Days that must be filled in",
     "weekdaysHelp": "Only these days of the week count.",
+    "exemptTeams": "Don't remind members of",
+    "exemptTeamsHelp": "For people who don't need to fill in, such as mentors: put them in a team (it can join them by Keycloak role) and pick it here. Its sub-teams count too.",
     "daysAhead": "Look ahead",
     "daysAheadHelp": "Days from tomorrow that must already be answered, 1 to {max}.",
     "time": "Send at",

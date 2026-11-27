@@ -21,7 +21,7 @@ export type TeamReminderDTO = {
   missing: { name: string; dates: string[] }[];
 };
 
-const DEFAULT_SETTINGS: ReminderSettings = { enabled: false, weekdays: [], daysAhead: 7, time: "20:00" };
+const DEFAULT_SETTINGS: ReminderSettings = { enabled: false, weekdays: [], daysAhead: 7, exemptTeamIds: [], time: "20:00" };
 
 function assertValidId(id: string) {
   if (!objectIdSchema.safeParse(id).success) throw new TeamError("Invalid team id.");
@@ -47,7 +47,9 @@ export async function getTeamReminder(teamId: string): Promise<TeamReminderDTO |
   if (rule) {
     try {
       const condition = parseRuleCondition(rule);
-      if (condition.kind === "unanswered") settings = { ...condition.config, enabled: rule.enabled, time: rule.sendTime };
+      if (condition.kind === "unanswered") {
+        settings = { ...condition.config, exemptTeamIds: condition.config.exemptTeamIds ?? [], enabled: rule.enabled, time: rule.sendTime };
+      }
     } catch (error) {
       console.error(`Reminder rule ${rule.id} has an invalid config`, error);
     }
@@ -106,7 +108,7 @@ export async function saveTeamReminder(teamId: string, input: unknown): Promise<
   const parsed = reminderSettingsSchema.safeParse(input);
   if (!parsed.success) throw new TeamError("Invalid reminder settings.");
   const { enabled, time, weekdays, daysAhead } = parsed.data;
-  const data = { enabled, sendTime: time, config: { weekdays, daysAhead } };
+  const data = { enabled, sendTime: time, config: { weekdays, daysAhead, exemptTeamIds: parsed.data.exemptTeamIds ?? [] } };
 
   await saveTeamRule(teamId, data, { ...data, target: {} });
 }

@@ -166,6 +166,39 @@ describe("sendDueReminders", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("doesn't remind members of an exempt team or its sub-teams", async () => {
+    const MENTORS = "0000000000000000000000b1";
+    const SENIOR = "0000000000000000000000b2";
+    db.teams.push({ id: MENTORS, name: "Mentors", parentTeamId: null }, { id: SENIOR, name: "Senior mentors", parentTeamId: MENTORS });
+    db.users.push(
+      { id: "u3", email: "three@example.test", name: "Three", teamIds: [CHILD, MENTORS] },
+      { id: "u4", email: "four@example.test", name: "Four", teamIds: [PARENT, SENIOR] },
+    );
+    db.rules[0].config = { weekdays: [6], daysAhead: 7, exemptTeamIds: [MENTORS] };
+
+    await sendDueReminders(evening, "https://x.test");
+    const body = fetchMock.mock.calls[0][1].body as string;
+    expect(body).toContain("Two");
+    expect(body).not.toContain("Three");
+    expect(body).not.toContain("Four");
+    expect(JSON.parse(body).text).toContain("1 member hasn't");
+  });
+
+  it("ignores the team itself or a team above it as exempt, as after a move under the exempt team", async () => {
+    const TOP = "0000000000000000000000c1";
+    db.teams.push({ id: TOP, name: "Top", parentTeamId: null });
+    db.teams.find(team => team.id === PARENT)!.parentTeamId = TOP;
+    db.rules[0].config = { weekdays: [6], daysAhead: 7, exemptTeamIds: [PARENT, TOP] };
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "sent" }]);
+    expect(fetchMock.mock.calls[0][1].body).toContain("Two");
+  });
+
+  it("sends nothing when everyone left is exempt", async () => {
+    db.rules[0].config = { weekdays: [6], daysAhead: 7, exemptTeamIds: [CHILD] };
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "nobodyMissing" }]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("sends nothing when everyone answered, and records the run", async () => {
     db.entries.push({ userId: "u2", date: "2026-11-14" });
     await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "nobodyMissing" }]);
@@ -332,7 +365,7 @@ describe("getTeamReminder", () => {
     const reminder = await getTeamReminder(PARENT);
     expect(reminder).toEqual({
       team: { id: PARENT, name: "Robot" },
-      settings: { enabled: true, weekdays: [6], daysAhead: 7, time: "20:00" },
+      settings: { enabled: true, weekdays: [6], daysAhead: 7, exemptTeamIds: [], time: "20:00" },
       hasWebhook: true,
       missing: expect.any(Array),
     });
@@ -356,13 +389,13 @@ describe("saveTeamReminder", () => {
   const settings = { enabled: true, weekdays: [3], daysAhead: 3, time: "21:30" };
 
   it("lets an admin change a team's rule, or create it", async () => {
-    await saveTeamReminder(CHILD, settings);
-    expect(db.rules[1]).toMatchObject({ enabled: true, sendTime: "21:30", config: { weekdays: [3], daysAhead: 3 } });
+    await saveTeamReminder(CHILD, { ...settings, exemptTeamIds: [PARENT] });
+    expect(db.rules[1]).toMatchObject({ enabled: true, sendTime: "21:30", config: { weekdays: [3], daysAhead: 3, exemptTeamIds: [PARENT] } });
 
     db.rules = [];
     await saveTeamReminder(CHILD, settings);
     expect(db.rules).toEqual([expect.objectContaining({
-      teamId: CHILD, kind: "unanswered", channel: "slack-webhook", target: {}, config: { weekdays: [3], daysAhead: 3 },
+      teamId: CHILD, kind: "unanswered", channel: "slack-webhook", target: {}, config: { weekdays: [3], daysAhead: 3, exemptTeamIds: [] },
     })]);
   });
 

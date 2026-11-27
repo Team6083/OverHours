@@ -4,6 +4,7 @@
 import * as z from "zod";
 
 import { addDays, isoWeekday } from "./attendance";
+import { objectIdSchema } from "./objectid";
 
 export const MAX_DAYS_AHEAD = 28;
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -12,6 +13,8 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 export const unansweredConfigSchema = z.object({
   weekdays: z.array(z.number().int().min(1).max(7)).max(7).transform(days => [...new Set(days)].sort()),
   daysAhead: z.number().int().min(1).max(MAX_DAYS_AHEAD),
+  /** Members of these teams (sub-teams included) are never reminded, e.g. a mentors team joined by Keycloak role. */
+  exemptTeamIds: z.array(objectIdSchema).max(50).transform(ids => [...new Set(ids)]).optional(),
 });
 
 /** A rule's condition: a new kind is a new branch here. An unknown kind fails to parse. */

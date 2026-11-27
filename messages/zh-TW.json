@@ -332,6 +332,8 @@
     "enabled": "每天送提醒",
     "weekdays": "必填的日子",
     "weekdaysHelp": "只算這幾個星期幾。",
+    "exemptTeams": "不用提醒這些隊伍的成員",
+    "exemptTeamsHelp": "給不需要填的人，例如 mentor：把他們放進一個隊伍（可以用 Keycloak 角色自動加入），再在這裡選它。子隊伍也算。",
     "daysAhead": "往後看幾天",
     "daysAheadHelp": "從明天起，這幾天內的必填日子要先填好，1 到 {max} 天。",
     "time": "送出時間",
