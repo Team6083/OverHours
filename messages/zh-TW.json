@@ -106,13 +106,16 @@
         "time": "時間",
         "duration": "時長",
         "actions": "操作"
-      }
+      },
+      "label": "工時紀錄"
     },
     "filters": {
       "finishedOnly": "只顯示已完成"
     },
     "buttons": {
-      "createLog": "新增紀錄"
+      "createLog": "新增紀錄",
+      "edit": "編輯",
+      "delete": "刪除"
     },
     "status": {
       "currentlyIn": "簽到中",
@@ -180,6 +183,7 @@
     }
   },
   "AppNav": {
+    "newTables": "新版表格",
     "nav": {
       "logs": "紀錄",
       "reports": "報告",

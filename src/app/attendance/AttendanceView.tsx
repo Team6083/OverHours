@@ -6,9 +6,9 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { IconType } from "react-icons";
 
 import {
-    Badge, Button, Card, Dialog, GridItem, Heading, HStack, IconButton, Menu, Portal, SimpleGrid, Stack, Table, Text,
+    Badge, Button, Card, Dialog, GridItem, HStack, IconButton, Menu, Portal, SimpleGrid, Stack, Table, Text,
 } from "@chakra-ui/react";
-import { toaster, useAppOutdated } from "@team6083/ui";
+import { TitleBar, toaster, useAppOutdated } from "@team6083/ui";
 import { LuCalendarDays, LuCalendarSync, LuCheck, LuCheckCheck, LuCopy, LuSave, LuUsers, LuWandSparkles, LuX } from "react-icons/lu";
 
 import {
@@ -285,17 +285,17 @@ export default function AttendanceView(props: {
       </GridItem>
 
       <GridItem colSpan={{ base: 1, md: 3 }} minW={0}>
-        <HStack mb={{ base: 1, md: 4 }} justify="space-between" wrap="wrap" gapY={0}>
-          <HStack>
-            <Heading as="h2" size={{ base: "lg", md: "xl" }}>{t("week.heading")}</Heading>
-            <Badge colorPalette="brand" size="md">{shortDate(weekStart)} – {shortDate(addDays(weekStart, 6))}</Badge>
-          </HStack>
-          <HStack gap={1}>
+        <TitleBar
+          mb={{ base: 1, md: 4 }}
+          title={t("week.heading")}
+          size={{ base: "lg", md: "xl" }}
+          after={<Badge colorPalette="brand" size="md">{shortDate(weekStart)} – {shortDate(addDays(weekStart, 6))}</Badge>}
+          end={<HStack gap={1}>
             {weekLink(`/attendance?week=${addDays(weekStart, -7)}`, addDays(weekStart, -7), t("week.previous"))}
             {weekLink("/attendance", weekStartOf(today), t("week.thisWeek"))}
             {weekLink(`/attendance?week=${addDays(weekStart, 7)}`, addDays(weekStart, 7), t("week.next"))}
-          </HStack>
-        </HStack>
+          </HStack>}
+        />
 
         <Stack gap={{ base: 2, md: 4 }}>
           <Text fontSize="sm" color="fg.muted" hideBelow="md">{t("week.help")}</Text>
