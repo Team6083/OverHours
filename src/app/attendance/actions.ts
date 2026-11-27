@@ -3,7 +3,9 @@ import { revalidatePath } from "next/cache";
 import * as z from "zod";
 
 import { ATTENDANCE_STATUSES, AttendanceStatus, isCalendarDate, isMonth, weekStartOf } from "@/lib/attendance";
-import { BoardDay, getDayBoard, getMyWeek, getUserAttendedDates, getUserMonth, saveMyPattern, saveMyWeek } from "@/lib/data/attendance-dto";
+import {
+  BoardDay, getDayBoard, getMonthCounts, getMyWeek, getUserAttendedDates, getUserMonth, MonthCounts, saveMyPattern, saveMyWeek,
+} from "@/lib/data/attendance-dto";
 
 const calendarDate = z.string().refine(isCalendarDate);
 const schema = z.object({
@@ -49,6 +51,18 @@ export async function getBoardDay(date: string): Promise<{ ok: true; day: BoardD
     return { ok: true, day: await getDayBoard(date) };
   } catch (error) {
     console.error("Failed to load the attendance of a day", error);
+    return { ok: false };
+  }
+}
+
+/** Per-day answer counts for a month, for the month overview. */
+export async function getBoardMonth(month: string): Promise<{ ok: true; counts: MonthCounts } | { ok: false }> {
+  if (!isMonth(month)) return { ok: false };
+
+  try {
+    return { ok: true, counts: await getMonthCounts(month) };
+  } catch (error) {
+    console.error("Failed to load the attendance counts of a month", error);
     return { ok: false };
   }
 }

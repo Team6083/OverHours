@@ -275,7 +275,10 @@
       "clockedIn": "Clocked in",
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
-      "loadFailed": "Could not load this month"
+      "loadFailed": "Could not load this month",
+      "month": "Month overview",
+      "openHint": "Open the month",
+      "counts": "{willCome} will come, {available} if needed, {unavailable} can't come"
     },
     "day": {
       "previous": "Previous day",

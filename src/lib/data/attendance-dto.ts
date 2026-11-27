@@ -78,6 +78,25 @@ export async function getDayBoard(date: string): Promise<BoardDay> {
   return day;
 }
 
+/** How many answered each way on each day of a month (days nobody answered are left out). */
+export type MonthCounts = Record<string, Record<AttendanceStatus, number>>;
+
+export async function getMonthCounts(month: string): Promise<MonthCounts> {
+  await requireUserId();
+
+  const entries = await prisma.attendanceEntry.findMany({
+    where: { date: { in: monthDates(month) }, slot: "AllDay" },
+    select: { date: true, status: true },
+  });
+
+  const counts: MonthCounts = {};
+  for (const entry of entries) {
+    counts[entry.date] ??= { WILL_COME: 0, AVAILABLE: 0, UNAVAILABLE: 0 };
+    counts[entry.date][toStatus(entry.status)] += 1;
+  }
+  return counts;
+}
+
 /** Days of a `YYYY-MM` month on which the user clocked in, in `TZ`. */
 export async function getUserAttendedDates(userId: string, month: string): Promise<string[]> {
   await requireUserId();

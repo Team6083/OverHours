@@ -5,11 +5,12 @@ import MyReliability from "./MyReliability";
 
 const RELIABILITY_DAYS = 30;
 
-export default async function AttendancePage(props: { searchParams: Promise<{ week?: string }> }) {
-  const { week } = await props.searchParams;
+export default async function AttendancePage(props: { searchParams: Promise<{ week?: string; day?: string }> }) {
+  const { week, day } = await props.searchParams;
+  const dayValid = day && isCalendarDate(day) ? day : undefined;
 
   const today = getToday();
-  const weekStart = weekStartOf(week && isCalendarDate(week) ? week : today);
+  const weekStart = weekStartOf(week && isCalendarDate(week) ? week : dayValid ?? today);
 
   const [board, mine, pattern, reliability] = await Promise.all([
     getWeekBoard(weekStart),
@@ -25,7 +26,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ we
   ]);
 
   return (<>
-    <AttendanceView key={weekStart} weekStart={weekStart} today={today} board={board} mine={mine} pattern={pattern} />
+    <AttendanceView key={weekStart} weekStart={weekStart} today={today} board={board} mine={mine} pattern={pattern} day={dayValid} />
     <MyReliability row={reliability} days={RELIABILITY_DAYS} />
   </>);
 }
