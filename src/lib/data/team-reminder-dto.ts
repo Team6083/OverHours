@@ -148,8 +148,8 @@ export type ReminderRun = { ruleId: string; teamId: string; result: "sent" | "no
 
 /**
  * For the scheduler: sends each enabled rule that is due at `now` (once a day, after its time). A run is claimed
- * before sending so overlapping calls don't send twice. A failure after the claim keeps the parts already sent and
- * waits longer after each failure before a later call tries again, from the next part; after `MAX_FAILURES` the rule
+ * before sending so overlapping calls don't send twice. A failure after the claim keeps the members already reminded
+ * and waits longer after each failure before a later call tries again, leaving them out; after `MAX_FAILURES` the rule
  * is given up for the day. A rule that can't send yet (no webhook) isn't claimed, so adding one later the same day
  * still sends. A rule failing doesn't stop the others.
  */
@@ -208,7 +208,7 @@ export async function sendDueReminders(now: Date, appUrl: string): Promise<Remin
       // A retry works the message out again, leaving out the members an earlier try already reminded.
       const skipUserIds = new Set(claim.remindedUserIds);
       const message = await evaluateRule(condition, { team, tree, date, appUrl, skipUserIds });
-      if (message) await deliver(channel, message, ids => recordReminded(rule.id, date, ids));
+      if (message) await deliver(channel, message, ids => recordReminded(rule.id, date, claim, ids));
       result = message || skipUserIds.size > 0 ? "sent" : "nobodyMissing";
     } catch (error) {
       console.error(`Failed to send reminder rule ${rule.id} (try ${claim.failures + 1} of ${MAX_FAILURES})`, error);
@@ -220,7 +220,7 @@ export async function sendDueReminders(now: Date, appUrl: string): Promise<Remin
     }
 
     // Already sent, so a failure to record it keeps the claim rather than sending twice.
-    await finishRun(rule.id, date, result)
+    await finishRun(rule.id, date, claim, result)
       .catch(error => console.error(`Failed to record reminder rule ${rule.id}`, error));
     run(result);
   }

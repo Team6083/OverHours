@@ -80,16 +80,19 @@ vi.mock("../prisma", () => {
         return Object.assign(row, rest);
       },
       updateMany: async ({ where, data }: {
-        where: { ruleId: string; runKey: string; result: string | { in: string[] }; nextAttemptAt?: { lte: Date }; sentAt?: { lt: Date } };
-        data: Omit<Partial<DeliveryRow>, "failures"> & { failures?: number | { increment: number } };
+        where: { ruleId: string; runKey: string; result: string | { in: string[] }; nextAttemptAt?: { lte: Date }; sentAt?: Date | { lt: Date } };
+        data: Omit<Partial<DeliveryRow>, "failures" | "remindedUserIds">
+          & { failures?: number | { increment: number }; remindedUserIds?: { push: string[] } };
       }) => {
         const results = typeof where.result === "string" ? [where.result] : where.result.in;
+        const { sentAt } = where;
         const rows = db.deliveries.filter(row => row.ruleId === where.ruleId && row.runKey === where.runKey && results.includes(row.result)
           && (!where.nextAttemptAt || (row.nextAttemptAt && row.nextAttemptAt <= where.nextAttemptAt.lte))
-          && (!where.sentAt || (row.sentAt && row.sentAt < where.sentAt.lt)));
-        const { failures, ...rest } = data;
+          && (!sentAt || (sentAt instanceof Date ? row.sentAt?.getTime() === sentAt.getTime() : row.sentAt && row.sentAt < sentAt.lt)));
+        const { failures, remindedUserIds, ...rest } = data;
         rows.forEach(row => Object.assign(row, rest, failures === undefined ? {}
-          : { failures: typeof failures === "number" ? failures : (row.failures ?? 0) + failures.increment }));
+          : { failures: typeof failures === "number" ? failures : (row.failures ?? 0) + failures.increment },
+        remindedUserIds ? { remindedUserIds: [...(row.remindedUserIds ?? []), ...remindedUserIds.push] } : {}));
         return { count: rows.length };
       },
       findUniqueOrThrow: async ({ where }: { where: { ruleId_runKey: { ruleId: string; runKey: string } } }) => {
@@ -253,6 +256,17 @@ describe("sendDueReminders", () => {
     await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "gaveUp" }]);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(db.deliveries[0]).toMatchObject({ result: "gaveUp", failures: 5 });
+  });
+
+  it("stops a run that was taken over while it sent, without writing over the new owner", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const takenOver = { result: "claimed", sentAt: at(11), remindedUserIds: [], failures: 1 };
+    fetchMock.mockImplementationOnce(async () => {
+      Object.assign(db.deliveries[0], takenOver);
+      return { ok: true, status: 200 };
+    });
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "failed" }]);
+    expect(db.deliveries[0]).toMatchObject(takenOver);
   });
 
   it("never takes over a run that finished, however old", async () => {

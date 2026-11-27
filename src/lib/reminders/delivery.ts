@@ -20,19 +20,20 @@ export const retryDelayMs = (failures: number) => 5 * 60_000 * 2 ** (failures - 
 /** Longer than a run can take: a run still `claimed` after this was abandoned (the process died mid-run). */
 export const STALE_CLAIM_MS = 10 * 60 * 1000;
 
-export type ClaimedRun = { remindedUserIds: string[]; failures: number };
+/** `claimedAt` is the claim's `sentAt`: later writes match it, so a run that was taken over can't write any more. */
+export type ClaimedRun = { remindedUserIds: string[]; failures: number; claimedAt: Date };
 
 /**
  * Claims a rule's run: inserts its delivery row, or takes over a failed run whose wait is over, or a run abandoned
  * while `claimed` for longer than `STALE_CLAIM_MS`. Each takeover is one conditional write, so only one call gets it.
  * An abandoned run counts as a failure, so a run that keeps dying is given up like one that keeps failing: then the
  * result is "gaveUp". Null when another call has the run, it finished or was given up, or its wait isn't over. The
- * claim says how many parts already went out and how often it failed.
+ * claim says which members were already reminded and how often it failed.
  */
 export async function claimRun(ruleId: string, runKey: string, now = new Date()): Promise<ClaimedRun | "gaveUp" | null> {
   try {
     await prisma.reminderDelivery.create({ data: { ruleId, runKey, result: "claimed", sentAt: now } });
-    return { remindedUserIds: [], failures: 0 };
+    return { remindedUserIds: [], failures: 0, claimedAt: now };
   } catch (error) {
     if ((error as { code?: unknown })?.code !== "P2002") throw error;
   }
@@ -56,25 +57,30 @@ export async function claimRun(ruleId: string, runKey: string, now = new Date())
     await prisma.reminderDelivery.update({ where: key, data: { result: "gaveUp", nextAttemptAt: null } });
     return "gaveUp";
   }
-  return { remindedUserIds: row.remindedUserIds, failures: row.failures };
+  return { remindedUserIds: row.remindedUserIds, failures: row.failures, claimedAt: now };
 }
 
-/** Records the members whose reminder just went out, so a retry of the run leaves them out. */
-export const recordReminded = (ruleId: string, runKey: string, userIds: string[]) =>
-  prisma.reminderDelivery.update({ where: { ruleId_runKey: { ruleId, runKey } }, data: { remindedUserIds: { push: userIds } } });
+const owned = (ruleId: string, runKey: string, claim: ClaimedRun) =>
+  ({ ruleId, runKey, result: "claimed", sentAt: claim.claimedAt });
 
-export const finishRun = (ruleId: string, runKey: string, result: "sent" | "nobodyMissing") =>
-  prisma.reminderDelivery.update({ where: { ruleId_runKey: { ruleId, runKey } }, data: { result } });
+/** Records the members whose reminder just went out, so a retry of the run leaves them out. Throws if the run was taken over. */
+export async function recordReminded(ruleId: string, runKey: string, claim: ClaimedRun, userIds: string[]) {
+  const { count } = await prisma.reminderDelivery.updateMany({ where: owned(ruleId, runKey, claim), data: { remindedUserIds: { push: userIds } } });
+  if (count === 0) throw new Error(`Reminder rule ${ruleId}'s run ${runKey} was taken over`);
+}
+
+export const finishRun = (ruleId: string, runKey: string, claim: ClaimedRun, result: "sent" | "nobodyMissing") =>
+  prisma.reminderDelivery.updateMany({ where: owned(ruleId, runKey, claim), data: { result } });
 
 /**
- * Records a failed try: the run waits `retryDelayMs` before a later call may take it, keeping the parts already
- * sent, and after `MAX_FAILURES` it is given up for the day. Returns the result to report.
+ * Records a failed try: the run waits `retryDelayMs` before a later call may take it, keeping the members already
+ * reminded, and after `MAX_FAILURES` it is given up for the day. Returns the result to report.
  */
 export async function failRun(ruleId: string, runKey: string, claim: ClaimedRun, now = new Date()): Promise<"failed" | "gaveUp"> {
   const failures = claim.failures + 1;
   const gaveUp = failures >= MAX_FAILURES;
-  await prisma.reminderDelivery.update({
-    where: { ruleId_runKey: { ruleId, runKey } },
+  await prisma.reminderDelivery.updateMany({
+    where: owned(ruleId, runKey, claim),
     data: gaveUp
       ? { result: "gaveUp", failures, nextAttemptAt: null }
       : { result: "failed", failures, nextAttemptAt: new Date(now.getTime() + retryDelayMs(failures)) },
