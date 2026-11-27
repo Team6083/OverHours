@@ -5,6 +5,7 @@ import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
 
 import { getUserAccounts } from "@/lib/data/account-dto";
 import { getUserDTO } from "@/lib/data/user-dto";
+import DeleteUsersDialog from "../DeleteUsersDialog";
 import UserForm from "./form";
 import LinkedAccounts from "./LinkedAccounts";
 
@@ -31,9 +32,13 @@ export default async function SingleUserPage(props: {
         </Link>
       </Button>
 
-      {userDTO && <IconButton size="xs" variant="ghost" colorPalette="red" asChild><Link href={`/admin/users/${userDTO.id}/delete`}>
-        <Icon><LuTrash2 /></Icon>
-      </Link></IconButton>}
+      {userDTO && <DeleteUsersDialog
+        users={[{ id: userDTO.id, name: userDTO.name, email: userDTO.email }]}
+        redirectTo="/admin/users"
+        trigger={<IconButton size="xs" variant="ghost" colorPalette="red" aria-label="Delete">
+          <Icon><LuTrash2 /></Icon>
+        </IconButton>}
+      />}
     </HStack>
 
     <Container>
