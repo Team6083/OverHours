@@ -589,19 +589,6 @@ export async function updateTimeLog(timeLogId: string, data: {
   return prismaTimeLogToDTO(result);
 }
 
-export async function deleteTimeLog(timeLogId: string): Promise<TimeLogDTO> {
-  const session = await auth();
-  if (session?.user.role !== Role.ADMIN) {
-    throw new Error("Unauthorized");
-  }
-
-  const timeLog = await prisma.timeLog.delete({
-    where: { id: timeLogId },
-  });
-
-  return prismaTimeLogToDTO(timeLog);
-}
-
 export async function deleteTimeLogs(timeLogIds: string[]) {
   const session = await auth();
   if (session?.user.role !== Role.ADMIN) {

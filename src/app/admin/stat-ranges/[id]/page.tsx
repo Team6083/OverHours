@@ -4,6 +4,7 @@ import { Button, Container, HStack, Icon, IconButton } from "@chakra-ui/react";
 import { LuArrowLeft, LuTrash2 } from "react-icons/lu";
 
 import { getStatRangeDTO } from "@/lib/data/statrange-dto";
+import DeleteStatRangesDialog from "../DeleteStatRangesDialog";
 import StatRangeForm from "./form";
 
 export default async function SingleStatRangePage(props: {
@@ -25,9 +26,13 @@ export default async function SingleStatRangePage(props: {
       </Button>
 
       {statRangeDTO &&
-        <IconButton size="xs" variant="ghost" colorPalette="red" asChild><Link href={`/admin/stat-ranges/${statRangeDTO?.id}/delete`}>
-          <Icon><LuTrash2 /></Icon>
-        </Link></IconButton>
+        <DeleteStatRangesDialog
+          statRanges={[statRangeDTO]}
+          redirectTo="/admin/stat-ranges"
+          trigger={<IconButton size="xs" variant="ghost" colorPalette="red" aria-label="Delete">
+            <Icon><LuTrash2 /></Icon>
+          </IconButton>}
+        />
       }
     </HStack>
 
