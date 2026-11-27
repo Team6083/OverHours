@@ -17,6 +17,12 @@ export type UserFormState = {
   prevValues?: z.infer<typeof schema>
 }
 
+function prismaErrorCode(error: unknown): string | undefined {
+  return typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
+    ? error.code
+    : undefined;
+}
+
 export async function formSubmit(state: UserFormState, formData: FormData): Promise<UserFormState> {
   const formDataObj = Object.fromEntries(formData.entries());
 
@@ -41,12 +47,14 @@ export async function formSubmit(state: UserFormState, formData: FormData): Prom
       console.log("Validation errors:", e.issues);
       return { issues: e.issues, prevValues: formDataObj as never };
     }
-    if (e instanceof EmailManagedByProviderError) {
-      return {
-        issues: [{ code: "custom", path: ["email"], message: e.message, input: formDataObj.email }],
-        prevValues: formDataObj as never,
-      };
-    }
+    const emailIssue = (message: string): UserFormState => ({
+      issues: [{ code: "custom", path: ["email"], message, input: formDataObj.email }],
+      prevValues: formDataObj as never,
+    });
+
+    if (e instanceof EmailManagedByProviderError) return emailIssue(e.message);
+    // `email` is the only unique field on User.
+    if (prismaErrorCode(e) === "P2002") return emailIssue("Another user already has this email.");
     throw e;
   }
 }
