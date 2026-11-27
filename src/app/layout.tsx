@@ -1,17 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { SessionProvider } from "next-auth/react";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { Text } from "@chakra-ui/react";
-import { LuCalendarCheck, LuCalendarRange, LuChartNoAxesCombined, LuLogs, LuNetwork, LuUsers } from "react-icons/lu";
+import type { NavItem } from "@team6083/ui";
+import { LuCalendarCheck, LuCalendarRange, LuChartNoAxesCombined, LuLogs, LuNetwork, LuShieldCheck, LuUsers } from "react-icons/lu";
 
 import { auth, Role, signIn, signOutAndEndKeycloakSession } from "@/auth";
+import { TablePreferenceProvider } from "@/components/common/TablePreference";
 import { TopRanksProvider } from "@/components/ranking/TopRanks";
 import { getOrgName } from "@/lib/config";
 import { getTopUserIds } from "@/lib/data/timelog-dto";
+import { NEW_TABLES_COOKIE } from "@/lib/table-preference";
 import AppFrame from "./_components/AppFrame";
 import { Providers } from "./providers";
 
@@ -57,22 +60,26 @@ export default async function RootLayout({
   const t = await getTranslations("AppNav");
   const session = await auth();
   const topUserIds = await topUserIdsForSession();
+  const newTables = (await cookies()).get(NEW_TABLES_COOKIE)?.value === "1";
 
   const role = session?.user.role;
-  const nav = [
-    { href: "/logs", label: t("nav.logs"), icon: <LuLogs />, adminOnly: false },
-    { href: "/attendance", label: t("nav.attendance"), icon: <LuCalendarCheck />, adminOnly: false },
-    { href: "/report", label: t("nav.reports"), icon: <LuChartNoAxesCombined />, adminOnly: true },
-  ]
-    .filter((link) => role && (link.adminOnly ? role === Role.ADMIN : true))
-    .map(({ href, label, icon }) => ({ href, label, icon }));
-
-  // Admin pages sit in the account menu until AppShell can group nav items (Team6083/ui#30).
-  const adminLinks = role === Role.ADMIN ? [
-    { href: "/admin/users", label: t("nav.users"), icon: <LuUsers /> },
-    { href: "/admin/teams", label: t("nav.teams"), icon: <LuNetwork /> },
-    { href: "/admin/stat-ranges", label: t("nav.statRanges"), icon: <LuCalendarRange /> },
-  ] : [];
+  const isAdmin = role === Role.ADMIN;
+  const nav: NavItem[] = !role ? [] : [
+    { href: "/logs", label: t("nav.logs"), icon: <LuLogs /> },
+    { href: "/attendance", label: t("nav.attendance"), icon: <LuCalendarCheck /> },
+    ...(isAdmin ? [
+      { href: "/report", label: t("nav.reports"), icon: <LuChartNoAxesCombined /> },
+      {
+        label: t("nav.admin"),
+        icon: <LuShieldCheck />,
+        items: [
+          { href: "/admin/users", label: t("nav.users"), icon: <LuUsers /> },
+          { href: "/admin/teams", label: t("nav.teams"), icon: <LuNetwork /> },
+          { href: "/admin/stat-ranges", label: t("nav.statRanges"), icon: <LuCalendarRange /> },
+        ],
+      },
+    ] : []),
+  ];
 
   const handleSignIn = async () => {
     "use server";
@@ -91,24 +98,24 @@ export default async function RootLayout({
           <Providers locale={locale} nonce={nonce}>
             <SessionProvider> {/* Auth.js provider, for useSession() hook */}
               <TopRanksProvider userIds={topUserIds}>
-                <AppFrame
-                  orgName={orgName}
-                  nav={nav}
-                  adminLabel={t("nav.admin")}
-                  adminLinks={adminLinks}
-                  user={session?.user}
-                  signInAction={handleSignIn}
-                  signOutAction={handleSignOut}
-                  footer={
-                    <Text as="span">
-                      {orgName && <>© {new Date().getFullYear()} {orgName}<br /></>}
-                      Made with ❤️ and way too many commits{" "}
-                      <Text as="span" whiteSpace="nowrap">(fueled by ☕️)</Text>
-                    </Text>
-                  }
-                >
-                  {children}
-                </AppFrame>
+                <TablePreferenceProvider newTables={newTables}>
+                  <AppFrame
+                    orgName={orgName}
+                    nav={nav}
+                    user={session?.user}
+                    signInAction={handleSignIn}
+                    signOutAction={handleSignOut}
+                    footer={
+                      <Text as="span">
+                        {orgName && <>© {new Date().getFullYear()} {orgName}<br /></>}
+                        Made with ❤️ and way too many commits{" "}
+                        <Text as="span" whiteSpace="nowrap">(fueled by ☕️)</Text>
+                      </Text>
+                    }
+                  >
+                    {children}
+                  </AppFrame>
+                </TablePreferenceProvider>
               </TopRanksProvider>
             </SessionProvider>
           </Providers>

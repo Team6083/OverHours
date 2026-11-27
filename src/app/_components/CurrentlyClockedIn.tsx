@@ -13,6 +13,7 @@ import {
 } from "react-icons/lu";
 
 import { useRankOf } from "@/components/ranking/TopRanks";
+import DeleteTimeLogsDialog from "@/components/timelog/DeleteTimeLogsDialog";
 import UserAvatar from "@/components/user/UserAvatar";
 import { ComponentPropsWithoutChildren } from "@/lib/util";
 
@@ -33,7 +34,9 @@ export interface CurrentlyClockedInContext {
   searchText: string;
   setSearchText: (text: string) => void;
 
-  handleAction: (action: "clockOut" | "lock" | "remove", id: string) => Promise<void>;
+  handleAction: (action: "clockOut" | "lock", id: string) => Promise<void>;
+  /** Deletes logs once the admin confirms; errors reach the confirm dialog. */
+  handleRemove?: (logIds: string[]) => Promise<unknown>;
 }
 
 const currentlyClockedInContext = createContext<CurrentlyClockedInContext | undefined>(undefined);
@@ -44,7 +47,7 @@ export function CurrentlyClockedInProvider(props: {
   logs: CurrentlyClockedInContext["logs"];
   handleClockout?: (userId: string) => Promise<void>;
   handleLock?: (userId: string) => Promise<void>;
-  handleRemove?: (logId: string) => Promise<void>;
+  handleRemove?: (logIds: string[]) => Promise<unknown>;
 }) {
   const { children, logs, handleClockout, handleLock, handleRemove } = props;
 
@@ -52,11 +55,10 @@ export function CurrentlyClockedInProvider(props: {
   const [searchText, setSearchText] = useState("");
   const filteredLogs = logs.filter(log => log.user.name && filter.contains(log.user.name, searchText));
 
-  const handleAction = async (action: "clockOut" | "lock" | "remove", id: string) => {
+  const handleAction = async (action: "clockOut" | "lock", id: string) => {
     let f: ((userId: string) => Promise<void>) | undefined;
     if (action === "clockOut") f = handleClockout;
     else if (action === "lock") f = handleLock;
-    else if (action === "remove") f = handleRemove;
 
     if (f) {
       try {
@@ -74,6 +76,7 @@ export function CurrentlyClockedInProvider(props: {
       searchText,
       setSearchText,
       handleAction,
+      handleRemove,
     }}>
       <Pagination.Root count={filteredLogs.length} pageSize={8} defaultPage={1}>
         {children}
@@ -133,13 +136,18 @@ export function CurrentlyClockedInTable(props: {
   const { showAdminActions, showUserAvatar, ...tableRootProps } = props;
   const t = useTranslations("HomePage.currentlyInTable");
 
-  const { filteredLogs, handleAction: ctxHandleAction } = useCurrentlyClockedInContext();
+  const { filteredLogs, handleAction: ctxHandleAction, handleRemove } = useCurrentlyClockedInContext();
   const rankOf = useRankOf();
 
   const [pendingAction, setActionPending] = useState<string | null>(null);
   const outdated = useAppOutdated();
+  const [removeTarget, setRemoveTarget] = useState<CurrentlyClockedInTimeLog>();
   const handleAction = async (action: "clockOut" | "lock" | "remove", id: string) => {
     if (pendingAction) return;
+    if (action === "remove") {
+      setRemoveTarget(filteredLogs.find(log => log.id === id));
+      return;
+    }
     setActionPending(action);
     try {
       await ctxHandleAction(action, id);
@@ -161,9 +169,8 @@ export function CurrentlyClockedInTable(props: {
 
   const clockOutPending = pendingAction === "clockOut";
   const lockPending = pendingAction === "lock";
-  const removePending = pendingAction === "remove";
 
-  return (
+  return (<>
     <Table.Root size="md" interactive {...tableRootProps}>
       <Table.Header>
         <Table.Row>
@@ -228,8 +235,7 @@ export function CurrentlyClockedInTable(props: {
                           <Tooltip content={t("actions.removeLog")}>
                             <IconButton
                               colorPalette="red"
-                              loading={removePending}
-                              disabled={outdated || (!!pendingAction && !removePending)}
+                              disabled={outdated || !!pendingAction}
                               onClick={() => handleAction("remove", item.id)}
                             >
                               <LuTrash2 />
@@ -255,7 +261,7 @@ export function CurrentlyClockedInTable(props: {
                                   <LuLock /> {t("actions.lockUser")} {lockPending ? <Spinner size="xs" ms={2} /> : null}
                                 </Menu.Item>
                                 <Menu.Item value="remove" disabled={outdated || !!pendingAction} color="fg.error" _hover={{ bg: "bg.error", color: "fg.error" }}>
-                                  <LuTrash2 /> {t("actions.removeLog")} {removePending ? <Spinner size="xs" ms={2} /> : null}
+                                  <LuTrash2 /> {t("actions.removeLog")}
                                 </Menu.Item>
                               </Menu.Content>
                             </Menu.Positioner>
@@ -271,7 +277,15 @@ export function CurrentlyClockedInTable(props: {
         }}
       </Pagination.Context>
     </Table.Root >
-  );
+
+    {removeTarget && handleRemove && <DeleteTimeLogsDialog
+      logs={[{ id: removeTarget.id, userId: removeTarget.user.id, status: "CURRENTLY_IN", inTime: removeTarget.inTime }]}
+      userNames={{ [removeTarget.user.id]: removeTarget.user.name }}
+      onDelete={handleRemove}
+      open
+      onOpenChange={(open) => { if (!open) setRemoveTarget(undefined); }}
+    />}
+  </>);
 }
 
 export function CurrentlyClockedInContent(props: {
