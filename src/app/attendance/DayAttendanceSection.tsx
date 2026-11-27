@@ -18,7 +18,7 @@ type DayAttendance = {
   failed: boolean;
   retry: () => void;
   goTo: (date: string) => void;
-  /** `month` opens it on the team's month calendar. */
+  /** `month` opens it on the month overview. */
   openDialog: (view?: "month") => void;
   /** The dialog has its own day arrows, so the section hides its own while it is open. */
   dialogOpen: boolean;

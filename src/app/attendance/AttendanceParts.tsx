@@ -404,11 +404,11 @@ export type DayNav = {
   loading: boolean;
   failed: boolean;
   retry: () => void;
-  /** Open on the team month calendar instead of the day's list (a click on the date outside). */
+  /** Open on the month overview instead of the day's list. */
   startInMonth?: boolean;
 };
 
-/** Lets a day's dialog without day arrows open the team month calendar, from the date in its header. */
+/** Lets a day's dialog without day arrows open the month overview, from the icon in its header. */
 export type MonthPick = { date: string; startInMonth?: boolean; pick: (date: string) => void };
 
 type View =
