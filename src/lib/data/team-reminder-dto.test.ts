@@ -184,6 +184,15 @@ describe("sendDueReminders", () => {
     expect(JSON.parse(body).text).toContain("1 member hasn't");
   });
 
+  it("ignores the team itself or a team above it as exempt, as after a move under the exempt team", async () => {
+    const TOP = "0000000000000000000000c1";
+    db.teams.push({ id: TOP, name: "Top", parentTeamId: null });
+    db.teams.find(team => team.id === PARENT)!.parentTeamId = TOP;
+    db.rules[0].config = { weekdays: [6], daysAhead: 7, exemptTeamIds: [PARENT, TOP] };
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "sent" }]);
+    expect(fetchMock.mock.calls[0][1].body).toContain("Two");
+  });
+
   it("sends nothing when everyone left is exempt", async () => {
     db.rules[0].config = { weekdays: [6], daysAhead: 7, exemptTeamIds: [CHILD] };
     await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "nobodyMissing" }]);

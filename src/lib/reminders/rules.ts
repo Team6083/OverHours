@@ -7,7 +7,7 @@ import { isoWeekday, shortDate } from "../attendance";
 import type { TeamTreeEntry } from "../data/team-dto";
 import prisma from "../prisma";
 import { membersMissing, MissingMember, requiredDates, RuleCondition } from "../team-reminders";
-import { getTeamDescendants } from "../team-tree";
+import { getTeamAncestors, getTeamDescendants } from "../team-tree";
 
 /** What a rule wants said, independent of the channel that says it. Already translated; not escaped. */
 export type ReminderMessage = {
@@ -39,7 +39,10 @@ export async function findUnanswered(
   const required = requiredDates(on, config.weekdays, config.daysAhead);
   if (required.length === 0) return [];
 
-  const exempt = new Set((config.exemptTeamIds ?? []).flatMap(id => [id, ...getTeamDescendants(tree, id).map(team => team.id)]));
+  // The team itself and its ancestors can't be exempt: the page offers no button for them, so a stale one would stay hidden.
+  const ignored = new Set([teamId, ...getTeamAncestors(tree, teamId).map(team => team.id)]);
+  const exempt = new Set((config.exemptTeamIds ?? []).filter(id => !ignored.has(id))
+    .flatMap(id => [id, ...getTeamDescendants(tree, id).map(team => team.id)]));
   const members = (await prisma.user.findMany({
     where: { teamIds: { hasSome: [teamId, ...getTeamDescendants(tree, teamId).map(team => team.id)] } },
     select: { id: true, email: true, name: true, teamIds: true },
