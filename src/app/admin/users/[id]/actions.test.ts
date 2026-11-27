@@ -5,6 +5,7 @@ const user = vi.hoisted(() => ({ createUser: vi.fn(), updateUser: vi.fn() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/lib/data/account-dto", () => ({ unlinkAccount: vi.fn() }));
+vi.mock("@/lib/data/card-dto", () => ({ removeCard: vi.fn() }));
 vi.mock("@/lib/data/user-dto", () => ({ ...user, EmailManagedByProviderError: class extends Error {} }));
 
 import { formSubmit } from "./actions";

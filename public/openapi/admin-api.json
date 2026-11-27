@@ -16,7 +16,8 @@
   "tags": [
     { "name": "Users" },
     { "name": "TimeLogs" },
-    { "name": "Jobs" }
+    { "name": "Jobs" },
+    { "name": "Cards" }
   ],
   "paths": {
     "/admin/users": {
@@ -415,6 +416,60 @@
           "401": { "$ref": "#/components/responses/CronUnauthorized" },
           "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/CronNotConfigured" }
+        }
+      }
+    },
+    "/admin/cards/tap": {
+      "post": {
+        "tags": ["Cards"],
+        "summary": "Report a card tapped on a reader",
+        "description": "Requires the cards:tap permission. A card linked to a user clocks them in, or out if they are clocked in. A card nobody has linked gets a bindUrl that the reader should show, e.g. as a QR code; opening it signed in links the card. Only the latest bindUrl works: the next unlinked tap replaces it. Every tap counts: a clock-out shorter than the minimum session length deletes the session (tooShort).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uid": { "type": "string", "description": "Card UID as 4-10 bytes of hex, any case, optionally split by spaces, colons or dashes, or as 8-20 decimal digits", "example": "04:A1:B2:C3:D4:E5:F6" }
+                },
+                "required": ["uid"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What the tap did",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "result": { "type": "string", "enum": ["clockedIn", "clockedOut", "locked", "tooShort", "unbound"] },
+                        "user": {
+                          "type": "object",
+                          "description": "Present unless result is unbound",
+                          "properties": { "id": { "type": "string" }, "name": { "type": "string" } }
+                        },
+                        "bindUrl": { "type": "string", "format": "uri", "description": "Only when result is unbound" }
+                      },
+                      "required": ["result"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/NotConfigured" }
         }
       }
     },

@@ -6,6 +6,7 @@ import NextAuth, { DefaultSession, Profile } from "next-auth";
 import { DefaultJWT, getToken } from "next-auth/jwt";
 import Keycloak from "next-auth/providers/keycloak";
 
+import { rolesForScope, rolesGrantScope } from "./lib/api-scopes";
 import { describeError, describeErrorDescription, INVALID_TOKEN_ERROR_CODES, isVerifyGraceExpired, parseVerifyGraceSec } from "./lib/auth-errors";
 import { evaluateAccess, extractRoles, parseAdminRoles, parseCommaList, parseTokenAlgorithms } from "./lib/auth-roles";
 import { syncUserRoleTeams } from "./lib/data/team-role-sync";
@@ -20,6 +21,8 @@ declare module "next-auth" {
   interface Session {
     user: {
       role: Role;
+      // May report card taps from the /kiosk page (an admin role, or a role in API_ROLES_CARDS_TAP).
+      canTapCards: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -28,6 +31,7 @@ declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     userId: string;
     role: string;
+    canTapCards?: boolean;
     // Whether `role` was derived from a signature-verified access token (false for sessions issued
     // before roles were verified, which get re-evaluated on their next use).
     rolesVerified?: boolean;
@@ -92,17 +96,16 @@ async function getVerifiedRoles(accessToken: string): Promise<string[]> {
 type Access = {
   role: Role;
   allowed: boolean;
+  canTapCards: boolean;
   // Roles from a verified token; absent when the token was rejected, so teams are left alone.
   verifiedRoles?: string[];
 };
 
 function accessFromRoles(roles: string[]): Access {
-  const { isAdmin, allowed } = evaluateAccess(
-    roles,
-    parseAdminRoles(process.env.ADMIN_ROLES),
-    parseCommaList(process.env.ALLOWED_ROLES),
-  );
-  return { role: isAdmin ? Role.ADMIN : Role.USER, allowed };
+  const adminRoles = parseAdminRoles(process.env.ADMIN_ROLES);
+  const { isAdmin, allowed } = evaluateAccess(roles, adminRoles, parseCommaList(process.env.ALLOWED_ROLES));
+  const canTapCards = rolesGrantScope(roles, adminRoles, rolesForScope("cards:tap", process.env));
+  return { role: isAdmin ? Role.ADMIN : Role.USER, allowed, canTapCards };
 }
 
 /**
@@ -318,6 +321,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           token.role = access.role;
+          token.canTapCards = access.canTapCards;
           token.rolesVerified = true;
           delete token.verifyFailedSince;
 
@@ -326,6 +330,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // Verification unavailable: keep the previous role (least privilege if there is none) and
           // leave rolesVerified false so the next callback retries.
           token.role ??= Role.USER;
+          token.canTapCards ??= false;
         }
       }
 
@@ -340,6 +345,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         } else {
           session.user.role = Role.USER;
         }
+        session.user.canTapCards = token.canTapCards === true;
       }
       return session;
     },
