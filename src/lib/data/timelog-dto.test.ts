@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const db = vi.hoisted(() => ({
   session: null as { user: { id: string; role: string } } | null,
   users: [] as string[],
-  logs: [] as { id: string; userId: string; status: string; inTime: Date; createdAt: Date; updatedAt: Date }[],
+  logs: [] as { id: string; userId: string; status: string; inTime: Date; outTime?: Date | null; createdAt: Date; updatedAt: Date }[],
   locks: [] as string[],
   conflicts: [] as string[],
   userWrites: 0,
@@ -12,8 +12,10 @@ const db = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}));
 vi.mock("@/auth", () => ({ auth: async () => db.session, Role: { ADMIN: "admin", USER: "user" } }));
 vi.mock("../prisma", () => {
-  const countLogs = ({ where }: { where: { userId: string; status: string } }) =>
-    db.logs.filter(log => log.userId === where.userId && log.status === where.status).length;
+  type Where = { userId: string; status: string; id?: { not: string } };
+  const matches = (where: Where) => (log: (typeof db.logs)[number]) =>
+    log.userId === where.userId && log.status === where.status && log.id !== where.id?.not;
+  const countLogs = ({ where }: { where: Where }) => db.logs.filter(matches(where)).length;
   const tx = {
     user: {
       count: async ({ where }: { where: { id: string } }) => db.users.filter(id => id === where.id).length,
@@ -25,18 +27,20 @@ vi.mock("../prisma", () => {
       },
     },
     timeLog: {
-      findFirst: async ({ where }: { where: { userId: string; status: string } }) =>
-        db.logs.find(log => log.userId === where.userId && log.status === where.status) ?? null,
+      findFirst: async ({ where }: { where: Where }) => db.logs.find(matches(where)) ?? null,
       create: async ({ data }: { data: { userId: string; status: string; inTime: Date } }) => {
         const log = { ...data, id: `l${db.logs.length + 1}`, createdAt: data.inTime, updatedAt: data.inTime };
         db.logs.push(log);
         return log;
       },
+      update: async ({ where, data }: { where: { id: string }; data: Partial<(typeof db.logs)[number]> }) =>
+        Object.assign(db.logs.find(log => log.id === where.id)!, data),
+      findUnique: async ({ where }: { where: { id: string } }) => db.logs.find(log => log.id === where.id) ?? null,
     },
   };
   return {
     default: {
-      timeLog: { count: async (args: { where: { userId: string; status: string } }) => countLogs(args) },
+      timeLog: { ...tx.timeLog, count: async (args: { where: Where }) => countLogs(args) },
       $transaction: async (fn: (client: typeof tx) => Promise<unknown>) => {
         const code = db.conflicts.shift();
         if (code) {
@@ -50,7 +54,7 @@ vi.mock("../prisma", () => {
   };
 });
 
-import { AlreadyClockedInError, clockIn } from "./timelog-dto";
+import { adminCreateTimeLog, AlreadyClockedInError, clockIn, createTimeLog, updateTimeLog } from "./timelog-dto";
 
 beforeEach(() => {
   db.session = { user: { id: "u1", role: "user" } };
@@ -104,5 +108,34 @@ describe("clockIn", () => {
     await expect(clockIn("u2")).rejects.toThrow("Unauthorized");
     db.session = { user: { id: "admin", role: "admin" } };
     await expect(clockIn("u2")).resolves.toMatchObject({ userId: "u2" });
+  });
+});
+
+describe("admin log writes", () => {
+  const open = { status: "CURRENTLY_IN" as const, inTime: new Date("2026-11-16T10:00:00Z"), notes: null };
+
+  beforeEach(() => {
+    db.session = { user: { id: "admin", role: "admin" } };
+  });
+
+  it("refuses a second open log for someone already clocked in, from the form and the API", async () => {
+    await clockIn("u1");
+    await expect(createTimeLog({ userId: "u1", ...open })).rejects.toBeInstanceOf(AlreadyClockedInError);
+    await expect(adminCreateTimeLog({ userId: "u1", ...open })).rejects.toBeInstanceOf(AlreadyClockedInError);
+    expect(db.logs).toHaveLength(1);
+    expect(db.locks).toEqual(["u1"]);
+  });
+
+  it("lets a finished log become open again, without its clock-out time, unless another log is open", async () => {
+    db.logs = [{ id: "done", userId: "u1", status: "Done", inTime: open.inTime, outTime: new Date("2026-11-16T12:00:00Z"), createdAt: open.inTime, updatedAt: open.inTime }];
+
+    await expect(updateTimeLog("done", { userId: "u1", ...open })).resolves.toMatchObject({ status: "CURRENTLY_IN" });
+    expect(db.logs[0].outTime).toBeNull();
+
+    // Saving the open log again is fine: it doesn't count against itself.
+    await expect(updateTimeLog("done", { userId: "u1", ...open })).resolves.toMatchObject({ status: "CURRENTLY_IN" });
+
+    db.logs.push({ ...db.logs[0], id: "other", status: "Done", outTime: open.inTime });
+    await expect(updateTimeLog("other", { userId: "u1", ...open })).rejects.toBeInstanceOf(AlreadyClockedInError);
   });
 });
