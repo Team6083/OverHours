@@ -1,9 +1,9 @@
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { Card, ClientOnly, GridItem, Heading, HStack, Separator, SimpleGrid, Spinner, Stack, Tabs, Tag, Text, VStack } from "@chakra-ui/react";
+import { Box, Card, ClientOnly, GridItem, HStack, Separator, SimpleGrid, Spinner, Stack, Tabs, Tag, Text, VStack } from "@chakra-ui/react";
+import { TitleBar } from "@team6083/ui";
 import { LuCalendarCheck, LuHouse, LuTrophy } from "react-icons/lu";
 
 import { auth, Role } from "@/auth";
@@ -13,7 +13,7 @@ import { getDayBoard, getToday } from "@/lib/data/attendance-dto";
 import { getActiveStatRangesForPicker } from "@/lib/data/statrange-dto";
 import { getTeamsForUser } from "@/lib/data/team-dto";
 import {
-  adminClockOut, adminLockLog, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
+  adminClockOut, adminLockLog, deleteTimeLogs, getAllCurrentlyInTimelogDTOs, getAllUsersTotalTimeSec, getUserLastLogDTO, TimeLogDTO,
 } from "@/lib/data/timelog-dto";
 import { getAllUserAvatars, getAllUserDTOs, getAllUserNames, getUserDTO, UserDTO } from "@/lib/data/user-dto";
 import ClockInOutButton from "./_components/ClockInOutButton";
@@ -134,9 +134,10 @@ export default async function Home() {
         await adminLockLog(id);
         revalidatePath("/");
       }}
-      handleRemove={async (id: string) => {
+      handleRemove={async (ids: string[]) => {
         "use server";
-        redirect(`/logs/${id}/delete?returnTo=/`);
+        await deleteTimeLogs(ids);
+        revalidatePath("/");
       }}
     >
 
@@ -296,24 +297,25 @@ async function CurrentlyClockedIn(props: {
   const { hasUser, isAdmin, canClockInUsers } = props;
   const t = await getTranslations("HomePage");
 
-  return (<>
-    <HStack mb={4} justify="space-between">
-      <HStack>
-        <Heading as="h2" size="xl">{t("headings.currentlyIn")}</Heading>
-        <CurrentlyClockedInCountBadge />
-        <RefreshButton />
-      </HStack>
+  return (<Stack gap={2}>
+    <Stack gap={1}>
+      <TitleBar
+        title={t("headings.currentlyIn")}
+        keepAfterInline={true}
+        after={<>
+          <CurrentlyClockedInCountBadge />
+          <RefreshButton />
+        </>}
+        end={isAdmin && canClockInUsers ? <ClockUserInPopover
+          buttonProps={{ size: "xs", variant: "ghost" }}
+          users={canClockInUsers}
+        /> : null}
+      />
 
-      {isAdmin && canClockInUsers && <ClockUserInPopover
-        buttonProps={{ size: "xs", variant: "ghost" }}
-        users={canClockInUsers}
-      />}
-    </HStack>
-
-    <HStack mb={2} w="full" justifyContent="end">
-      <LastUpdatedText fontSize="xs" color="fg.muted" date={(() => new Date())()} />
-    </HStack>
-
+      <Box textAlign="right">
+        <LastUpdatedText fontSize="xs" color="fg.muted" date={(() => new Date())()} />
+      </Box>
+    </Stack>
 
     <CurrentlyClockedInContent>
       <ClientOnly fallback={<Spinner size="lg" />}>
@@ -326,5 +328,5 @@ async function CurrentlyClockedIn(props: {
     </CurrentlyClockedInContent>
 
     <CurrentlyClockedInNoData hasUser={hasUser} />
-  </>);
+  </Stack>);
 }

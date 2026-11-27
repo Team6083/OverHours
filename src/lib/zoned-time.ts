@@ -92,3 +92,19 @@ export function lastCutoffAtOrBefore(time: Date, hour: number, minute: number, t
   if (sameDay.getTime() <= time.getTime()) return sameDay;
   return fromWallTime(w.year, w.month, w.day - 1, hour, minute, timeZone);
 }
+
+/**
+ * Splits `start`–`end` at midnight in `timeZone`: each calendar date (`YYYY-MM-DD`) it touches, with the time spent
+ * in it.
+ */
+export function splitByDay(start: Date, end: Date, timeZone: string): { date: string; ms: number }[] {
+  const p = (n: number) => String(n).padStart(2, "0");
+  const pieces: { date: string; ms: number }[] = [];
+  for (let from = start.getTime(); from < end.getTime();) {
+    const w = toWallTime(new Date(from), timeZone);
+    const to = Math.min(fromWallTime(w.year, w.month, w.day + 1, 0, 0, timeZone).getTime(), end.getTime());
+    pieces.push({ date: `${w.year}-${p(w.month)}-${p(w.day)}`, ms: to - from });
+    from = to;
+  }
+  return pieces;
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-    firstCutoffAfter, formatWallTime, fromWallTime, isValidTimeZone, lastCutoffAtOrBefore, toWallTime,
+    firstCutoffAfter, formatWallTime, fromWallTime, isValidTimeZone, lastCutoffAtOrBefore, splitByDay, toWallTime,
 } from "./zoned-time";
 
 const TPE = "Asia/Taipei"; // UTC+8, no daylight saving
@@ -72,5 +72,25 @@ describe("lastCutoffAtOrBefore", () => {
   it("includes a cut-off at exactly that instant", () => {
     const cutoff = fromWallTime(2026, 11, 5, 23, 0, TPE);
     expect(lastCutoffAtOrBefore(cutoff, 23, 0, TPE)).toEqual(cutoff);
+  });
+});
+
+describe("splitByDay", () => {
+  const h = 60 * 60 * 1000;
+
+  it("splits a session at midnight in the zone, not in UTC", () => {
+    // 11/13 22:00 to 11/15 02:00 in Taipei
+    expect(splitByDay(new Date("2026-11-13T14:00:00Z"), new Date("2026-11-14T18:00:00Z"), "Asia/Taipei")).toEqual([
+      { date: "2026-11-13", ms: 2 * h },
+      { date: "2026-11-14", ms: 24 * h },
+      { date: "2026-11-15", ms: 2 * h },
+    ]);
+  });
+
+  it("keeps a session within one day whole, and gives nothing for an empty one", () => {
+    // 07:00 to 09:00 in Taipei, which is the day before in UTC
+    expect(splitByDay(new Date("2026-11-12T23:00:00Z"), new Date("2026-11-13T01:00:00Z"), "Asia/Taipei"))
+      .toEqual([{ date: "2026-11-13", ms: 2 * h }]);
+    expect(splitByDay(new Date("2026-11-13T01:00:00Z"), new Date("2026-11-13T01:00:00Z"), "Asia/Taipei")).toEqual([]);
   });
 });

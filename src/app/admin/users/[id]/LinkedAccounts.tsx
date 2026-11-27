@@ -1,5 +1,5 @@
-import { Card, Code, Heading, Icon, Stack, Text } from "@chakra-ui/react";
-import { FactList } from "@team6083/ui";
+import { Card, Code, Icon, Stack, Text } from "@chakra-ui/react";
+import { FactList, TitleBar } from "@team6083/ui";
 import { LuUnlink } from "react-icons/lu";
 
 import WriteButton from "@/components/common/WriteButton";
@@ -13,11 +13,14 @@ export default function LinkedAccounts(props: {
   const { userId, accounts } = props;
 
   return <Stack mt={8} gap={3}>
-    <Heading size="md">Linked Accounts</Heading>
-    <Text color="fg.muted" textStyle="sm">
-      Identity provider accounts this user signs in with. Unlinking keeps the user&apos;s data; the account&apos;s next
-      sign-in links to the user with its email again, or creates a new user.
-    </Text>
+    <TitleBar
+      title="Linked Accounts"
+      size="md"
+      description={<Text as="span" textStyle="sm">
+        Identity provider accounts this user signs in with. Unlinking keeps the user&apos;s data; the account&apos;s next
+        sign-in links to the user with its email again, or creates a new user.
+      </Text>}
+    />
 
     {accounts.length === 0 && <Text textStyle="sm">No linked accounts. The next sign-in with this email links one.</Text>}
 

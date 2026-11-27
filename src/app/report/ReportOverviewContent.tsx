@@ -1,8 +1,8 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 
-import { Center, Heading, HStack, IconButton, Spinner, Stat } from "@chakra-ui/react";
-import { PageHeader } from "@team6083/ui";
+import { Center, HStack, IconButton, Spinner, Stat } from "@chakra-ui/react";
+import { TitleBar } from "@team6083/ui";
 import { LuRefreshCcw } from "react-icons/lu";
 
 import LeaderboardTable from "@/components/ranking/LeaderboardTable";
@@ -43,9 +43,11 @@ export default function ReportOverviewContent({
 
   return (
     <>
-      <PageHeader
+      <TitleBar
+        level={1}
+        mb={4}
         title="Overview"
-        actions={
+        end={
           <HStack gap={2}>
             <StatRangeSelector
               statRanges={statRanges}
@@ -78,7 +80,7 @@ export default function ReportOverviewContent({
             </Stat.Root>
           </HStack>
 
-          <Heading as="h3" size="md" mb={3}>Leaderboard</Heading>
+          <TitleBar title="Leaderboard" level={3} mb={3} />
           <LeaderboardTable rankings={leaderboardData} />
         </>
       ) : (
