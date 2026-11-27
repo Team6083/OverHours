@@ -12,26 +12,81 @@ export function canDeliver(channel: RuleChannel): boolean {
   }
 }
 
+/** A failing run is tried at most this many times a day, then given up. */
+export const MAX_FAILURES = 5;
+/** Wait after the nth failure before the next try: 5, 10, 20, 40 minutes. */
+export const retryDelayMs = (failures: number) => 5 * 60_000 * 2 ** (failures - 1);
+
+/** Longer than a run can take: a run still `claimed` after this was abandoned (the process died mid-run). */
+export const STALE_CLAIM_MS = 10 * 60 * 1000;
+
+/** `claimedAt` is the claim's `sentAt`: later writes match it, so a run that was taken over can't write any more. */
+export type ClaimedRun = { remindedUserIds: string[]; failures: number; claimedAt: Date };
+
 /**
- * Claims a rule's run by inserting its delivery row. True when this call owns the run; false when another call
- * already has it (the unique index on rule and run key).
+ * Claims a rule's run: inserts its delivery row, or takes over a failed run whose wait is over, or a run abandoned
+ * while `claimed` for longer than `STALE_CLAIM_MS`. Each takeover is one conditional write, so only one call gets it.
+ * An abandoned run counts as a failure, so a run that keeps dying is given up like one that keeps failing: then the
+ * result is "gaveUp". Null when another call has the run, it finished or was given up, or its wait isn't over. The
+ * claim says which members were already reminded and how often it failed.
  */
-export async function claimRun(ruleId: string, runKey: string): Promise<boolean> {
+export async function claimRun(ruleId: string, runKey: string, now = new Date()): Promise<ClaimedRun | "gaveUp" | null> {
   try {
-    await prisma.reminderDelivery.create({ data: { ruleId, runKey, result: "claimed" } });
-    return true;
+    await prisma.reminderDelivery.create({ data: { ruleId, runKey, result: "claimed", sentAt: now } });
+    return { remindedUserIds: [], failures: 0, claimedAt: now };
   } catch (error) {
-    if ((error as { code?: unknown })?.code === "P2002") return false;
-    throw error;
+    if ((error as { code?: unknown })?.code !== "P2002") throw error;
   }
+
+  const key = { ruleId_runKey: { ruleId, runKey } };
+  const retry = await prisma.reminderDelivery.updateMany({
+    where: { ruleId, runKey, result: "failed", nextAttemptAt: { lte: now } },
+    data: { result: "claimed", sentAt: now },
+  });
+  if (retry.count === 0) {
+    const abandoned = await prisma.reminderDelivery.updateMany({
+      where: { ruleId, runKey, result: "claimed", sentAt: { lt: new Date(now.getTime() - STALE_CLAIM_MS) } },
+      data: { sentAt: now, failures: { increment: 1 } },
+    });
+    if (abandoned.count === 0) return null;
+    console.warn(`Took over reminder rule ${ruleId}'s run ${runKey}, abandoned while claimed`);
+  }
+
+  const row = await prisma.reminderDelivery.findUniqueOrThrow({ where: key });
+  if (row.failures >= MAX_FAILURES) {
+    await prisma.reminderDelivery.update({ where: key, data: { result: "gaveUp", nextAttemptAt: null } });
+    return "gaveUp";
+  }
+  return { remindedUserIds: row.remindedUserIds, failures: row.failures, claimedAt: now };
 }
 
-export const finishRun = (ruleId: string, runKey: string, result: "sent" | "nobodyMissing") =>
-  prisma.reminderDelivery.update({ where: { ruleId_runKey: { ruleId, runKey } }, data: { result } });
+const owned = (ruleId: string, runKey: string, claim: ClaimedRun) =>
+  ({ ruleId, runKey, result: "claimed", sentAt: claim.claimedAt });
 
-/** Gives a failed run back, so the next call retries it. */
-export const releaseRun = (ruleId: string, runKey: string) =>
-  prisma.reminderDelivery.deleteMany({ where: { ruleId, runKey } });
+/** Records the members whose reminder just went out, so a retry of the run leaves them out. Throws if the run was taken over. */
+export async function recordReminded(ruleId: string, runKey: string, claim: ClaimedRun, userIds: string[]) {
+  const { count } = await prisma.reminderDelivery.updateMany({ where: owned(ruleId, runKey, claim), data: { remindedUserIds: { push: userIds } } });
+  if (count === 0) throw new Error(`Reminder rule ${ruleId}'s run ${runKey} was taken over`);
+}
+
+export const finishRun = (ruleId: string, runKey: string, claim: ClaimedRun, result: "sent" | "nobodyMissing") =>
+  prisma.reminderDelivery.updateMany({ where: owned(ruleId, runKey, claim), data: { result } });
+
+/**
+ * Records a failed try: the run waits `retryDelayMs` before a later call may take it, keeping the members already
+ * reminded, and after `MAX_FAILURES` it is given up for the day. Returns the result to report.
+ */
+export async function failRun(ruleId: string, runKey: string, claim: ClaimedRun, now = new Date()): Promise<"failed" | "gaveUp"> {
+  const failures = claim.failures + 1;
+  const gaveUp = failures >= MAX_FAILURES;
+  await prisma.reminderDelivery.updateMany({
+    where: owned(ruleId, runKey, claim),
+    data: gaveUp
+      ? { result: "gaveUp", failures, nextAttemptAt: null }
+      : { result: "failed", failures, nextAttemptAt: new Date(now.getTime() + retryDelayMs(failures)) },
+  });
+  return gaveUp ? "gaveUp" : "failed";
+}
 
 /** `&`, `<` and `>` are control characters in Slack text; `<!channel>` in a name would ping everyone. */
 const escapeSlack = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -68,25 +123,33 @@ const list = (bullets: object[]) => ({ type: "rich_text", elements: [{ type: "ri
  * large for one message continues in the next ones, the link closing the last.
  */
 export function slackPayloads(message: ReminderMessage, mention = mentionsOn()) {
-  const bullets = message.groups.flatMap(group =>
-    Array.from({ length: Math.ceil(group.members.length / MEMBERS_PER_BULLET) }, (_, i) =>
-      bullet(group.days, group.members.slice(i * MEMBERS_PER_BULLET, (i + 1) * MEMBERS_PER_BULLET), mention)));
+  return slackParts(message, mention).map(part => part.payload);
+}
 
-  const parts: object[][] = [[]];
+/** `slackPayloads`, each with the ids of the members it lists. */
+function slackParts(message: ReminderMessage, mention = mentionsOn()) {
+  const bullets = message.groups.flatMap(group =>
+    Array.from({ length: Math.ceil(group.members.length / MEMBERS_PER_BULLET) }, (_, i) => {
+      const members = group.members.slice(i * MEMBERS_PER_BULLET, (i + 1) * MEMBERS_PER_BULLET);
+      return { item: bullet(group.days, members, mention), ids: members.map(member => member.id) };
+    }));
+
+  const parts: { items: object[]; ids: string[] }[] = [{ items: [], ids: [] }];
   let size = 0;
-  for (const item of bullets) {
+  for (const { item, ids } of bullets) {
     const itemSize = JSON.stringify(item).length;
-    if (parts[parts.length - 1].length > 0 && size + itemSize > MESSAGE_LIST_BUDGET) {
-      parts.push([]);
+    if (parts[parts.length - 1].items.length > 0 && size + itemSize > MESSAGE_LIST_BUDGET) {
+      parts.push({ items: [], ids: [] });
       size = 0;
     }
-    parts[parts.length - 1].push(item);
+    parts[parts.length - 1].items.push(item);
+    parts[parts.length - 1].ids.push(...ids);
     size += itemSize;
   }
 
   const title = escapeSlack(message.title);
   const link = { type: "context", elements: [{ type: "mrkdwn", text: `<${message.link.url}|${escapeSlack(message.link.label)}>` }] };
-  return parts.map((part, i) => {
+  return parts.map(({ items, ids }, i) => {
     const first = i === 0;
     const last = i === parts.length - 1;
     const page = parts.length > 1 ? ` (${i + 1}/${parts.length})` : "";
@@ -96,21 +159,23 @@ export function slackPayloads(message: ReminderMessage, mention = mentionsOn()) 
         { type: "section", text: { type: "plain_text", text: message.summary } },
         { type: "divider" },
       ] : []),
-      list(part),
+      list(items),
       ...(last ? [link] : []),
     ];
-    return { text: first ? `*${title}*: ${escapeSlack(message.summary)}${page}` : `*${title}*${page}`, blocks };
+    return { payload: { text: first ? `*${title}*: ${escapeSlack(message.summary)}${page}` : `*${title}*${page}`, blocks }, memberIds: ids };
   });
 }
 
 /**
- * Sends the message through the rule's channel; throws when any part doesn't go through, so the run is released and
- * the next call sends it again.
+ * Sends the message through the rule's channel, calling `sent(ids)` with the members of each part once it is out.
+ * Throws when a part doesn't go through.
  */
-export async function deliver(channel: RuleChannel, message: ReminderMessage): Promise<void> {
+export async function deliver(
+  channel: RuleChannel, message: ReminderMessage, sent: (memberIds: string[]) => Promise<unknown> = async () => {},
+): Promise<void> {
   switch (channel.channel) {
     case "slack-webhook": {
-      for (const payload of slackPayloads(message)) {
+      for (const { payload, memberIds } of slackParts(message)) {
         const response = await fetch(channel.target.url!, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -118,6 +183,7 @@ export async function deliver(channel: RuleChannel, message: ReminderMessage): P
           signal: AbortSignal.timeout(10_000),
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        await sent(memberIds);
       }
       return;
     }

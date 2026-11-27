@@ -4,7 +4,9 @@ type RuleRow = {
   id: string; teamId: string; enabled: boolean; kind: string; config: unknown; sendTime: string; channel: string;
   target: unknown; createdAt: Date;
 };
-type DeliveryRow = { ruleId: string; runKey: string; result: string };
+type DeliveryRow = {
+  ruleId: string; runKey: string; result: string; sentAt?: Date; remindedUserIds?: string[]; failures?: number; nextAttemptAt?: Date | null;
+};
 
 const db = vi.hoisted(() => ({
   session: null as { user: { id: string; role: string } } | null,
@@ -64,15 +66,38 @@ vi.mock("../prisma", () => {
         if (db.deliveries.some(row => row.ruleId === data.ruleId && row.runKey === data.runKey)) {
           throw Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
         }
-        db.deliveries.push({ ...data });
+        db.deliveries.push({ remindedUserIds: [], failures: 0, nextAttemptAt: null, ...data });
         return data;
       },
-      update: async ({ where, data }: { where: { ruleId_runKey: { ruleId: string; runKey: string } }; data: { result: string } }) => {
+      update: async ({ where, data }: {
+        where: { ruleId_runKey: { ruleId: string; runKey: string } };
+        data: Omit<Partial<DeliveryRow>, "remindedUserIds"> & { remindedUserIds?: { push: string[] } };
+      }) => {
         const { ruleId, runKey } = where.ruleId_runKey;
-        return Object.assign(db.deliveries.find(row => row.ruleId === ruleId && row.runKey === runKey)!, data);
+        const row = db.deliveries.find(r => r.ruleId === ruleId && r.runKey === runKey)!;
+        const { remindedUserIds, ...rest } = data;
+        if (remindedUserIds) row.remindedUserIds = [...(row.remindedUserIds ?? []), ...remindedUserIds.push];
+        return Object.assign(row, rest);
       },
-      deleteMany: async ({ where }: { where: { ruleId: string; runKey: string } }) => {
-        db.deliveries = db.deliveries.filter(row => !(row.ruleId === where.ruleId && row.runKey === where.runKey));
+      updateMany: async ({ where, data }: {
+        where: { ruleId: string; runKey: string; result: string | { in: string[] }; nextAttemptAt?: { lte: Date }; sentAt?: Date | { lt: Date } };
+        data: Omit<Partial<DeliveryRow>, "failures" | "remindedUserIds">
+          & { failures?: number | { increment: number }; remindedUserIds?: { push: string[] } };
+      }) => {
+        const results = typeof where.result === "string" ? [where.result] : where.result.in;
+        const { sentAt } = where;
+        const rows = db.deliveries.filter(row => row.ruleId === where.ruleId && row.runKey === where.runKey && results.includes(row.result)
+          && (!where.nextAttemptAt || (row.nextAttemptAt && row.nextAttemptAt <= where.nextAttemptAt.lte))
+          && (!sentAt || (sentAt instanceof Date ? row.sentAt?.getTime() === sentAt.getTime() : row.sentAt && row.sentAt < sentAt.lt)));
+        const { failures, remindedUserIds, ...rest } = data;
+        rows.forEach(row => Object.assign(row, rest, failures === undefined ? {}
+          : { failures: typeof failures === "number" ? failures : (row.failures ?? 0) + failures.increment },
+        remindedUserIds ? { remindedUserIds: [...(row.remindedUserIds ?? []), ...remindedUserIds.push] } : {}));
+        return { count: rows.length };
+      },
+      findUniqueOrThrow: async ({ where }: { where: { ruleId_runKey: { ruleId: string; runKey: string } } }) => {
+        const { ruleId, runKey } = where.ruleId_runKey;
+        return db.deliveries.find(row => row.ruleId === ruleId && row.runKey === runKey)!;
       },
     },
     user: {
@@ -155,7 +180,7 @@ describe("sendDueReminders", () => {
       ],
     });
     expect(init.body).not.toContain("one@example.test");
-    expect(db.deliveries).toEqual([{ ruleId: "r1", runKey: "2026-11-13", result: "sent" }]);
+    expect(db.deliveries).toEqual([expect.objectContaining({ ruleId: "r1", runKey: "2026-11-13", result: "sent", remindedUserIds: ["u2"], failures: 0 })]);
 
     await expect(sendDueReminders(new Date("2026-11-13T22:00:00Z"), "https://x.test")).resolves.toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -180,15 +205,77 @@ describe("sendDueReminders", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("releases the run when sending fails, so the next call retries", async () => {
+  const at = (minutes: number) => new Date(evening.getTime() + minutes * 60_000);
+
+  it("waits after a failed send, then retries", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    fetchMock.mockResolvedValue({ ok: false, status: 500 });
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 500 });
 
     await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "failed" }]);
-    expect(db.deliveries).toEqual([]);
+    expect(db.deliveries[0]).toMatchObject({ result: "failed", failures: 1, nextAttemptAt: at(5) });
+
+    await expect(sendDueReminders(at(3), "https://x.test")).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await expect(sendDueReminders(at(5), "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "sent" }]);
+    expect(db.deliveries[0]).toMatchObject({ result: "sent", failures: 1 });
   });
 
-  it("releases the run when reading members fails, and goes on with the other rules", async () => {
+  it("waits longer after each failure and gives up for the day after five", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    fetchMock.mockResolvedValue({ ok: false, status: 404 });
+
+    const results = [];
+    for (const minutes of [0, 5, 15, 35, 75]) results.push((await sendDueReminders(at(minutes), "https://x.test"))[0]?.result);
+    expect(results).toEqual(["failed", "failed", "failed", "failed", "gaveUp"]);
+    expect(db.deliveries[0]).toMatchObject({ result: "gaveUp", failures: 5 });
+
+    await expect(sendDueReminders(at(300), "https://x.test")).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
+  it("skips a run another call claimed moments ago", async () => {
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed", sentAt: at(-1), remindedUserIds: [], failures: 0 }];
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("takes over a run abandoned while claimed, counts it as a failure and leaves out the members it reminded", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    team(4);
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed", sentAt: at(-11), remindedUserIds: ["m0", "m1"], failures: 0 }];
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "sent" }]);
+    expect(bullets(sent()[0])).toEqual(["11/14 (Sat)  M02, M03"]);
+    expect(db.deliveries[0]).toMatchObject({ result: "sent", failures: 1, sentAt: evening, remindedUserIds: ["m0", "m1", "m2", "m3"] });
+  });
+
+  it("gives up a run that keeps being abandoned", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed", sentAt: at(-11), remindedUserIds: [], failures: 4 }];
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "gaveUp" }]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(db.deliveries[0]).toMatchObject({ result: "gaveUp", failures: 5 });
+  });
+
+  it("stops a run that was taken over while it sent, without writing over the new owner", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const takenOver = { result: "claimed", sentAt: at(11), remindedUserIds: [], failures: 1 };
+    fetchMock.mockImplementationOnce(async () => {
+      Object.assign(db.deliveries[0], takenOver);
+      return { ok: true, status: 200 };
+    });
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "failed" }]);
+    expect(db.deliveries[0]).toMatchObject(takenOver);
+  });
+
+  it("never takes over a run that finished, however old", async () => {
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "sent", sentAt: at(-300), remindedUserIds: ["u2"], failures: 0 }];
+    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("counts reading members failing as a failed try, and goes on with the other rules", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     db.rules[1].enabled = true;
     db.entriesFail = true;
@@ -197,13 +284,7 @@ describe("sendDueReminders", () => {
       { ruleId: "r1", teamId: PARENT, result: "failed" },
       { ruleId: "r2", teamId: CHILD, result: "failed" },
     ]);
-    expect(db.deliveries).toEqual([]);
-  });
-
-  it("skips a run another call has already claimed", async () => {
-    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "claimed" }];
-    await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([]);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(db.deliveries.map(row => row.result)).toEqual(["failed", "failed"]);
   });
 
   it("doesn't claim a rule without a webhook, so adding one later the same day still sends", async () => {
@@ -276,12 +357,37 @@ describe("sendDueReminders", () => {
     expect(payloads.flatMap(bullets).join(", ").match(/M\d+/g)).toHaveLength(1200);
   });
 
-  it("releases the run when a later part fails, so the whole reminder is sent again", async () => {
+  const names = (payloads: Parameters<typeof bullets>[0][]): string[] => payloads.flatMap(bullets).join(", ").match(/M\d+/g) ?? [];
+
+  it("retries a failed later part without reminding the members of the earlier parts again", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     team(1200);
     fetchMock.mockResolvedValueOnce({ ok: true, status: 200 }).mockResolvedValueOnce({ ok: false, status: 500 });
     await expect(sendDueReminders(evening, "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "failed" }]);
-    expect(db.deliveries).toEqual([]);
+    const firstPart = names([sent()[0]]);
+    expect(db.deliveries[0]).toMatchObject({ result: "failed", remindedUserIds: firstPart.map(name => `m${Number(name.slice(1))}`) });
+
+    fetchMock.mockClear();
+    await expect(sendDueReminders(at(5), "https://x.test")).resolves.toEqual([{ ruleId: "r1", teamId: PARENT, result: "sent" }]);
+    const retried = names(sent());
+    expect(retried.filter(name => firstPart.includes(name))).toEqual([]);
+    expect(new Set([...firstPart, ...retried]).size).toBe(1200);
+    expect(db.deliveries[0].remindedUserIds).toHaveLength(1200);
+  });
+
+  it("still reminds everyone not yet reminded when someone in an earlier part fills in before the retry", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    team(1200);
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 }).mockResolvedValueOnce({ ok: false, status: 500 });
+    await sendDueReminders(evening, "https://x.test");
+    const firstPart = names([sent()[0]]);
+
+    // A member from the first part answers, so with index-based resuming everyone after them would shift forward.
+    db.entries.push({ userId: "m0", date: "2026-11-14" });
+    fetchMock.mockClear();
+    await sendDueReminders(at(5), "https://x.test");
+    const reminded = new Set([...firstPart, ...names(sent())]);
+    expect(reminded.size).toBe(1200);
   });
 
   it("lists names and sends no email unless REMINDER_MENTION is on", async () => {
@@ -392,6 +498,19 @@ describe("saveTeamReminder", () => {
 });
 
 describe("setTeamReminderWebhook", () => {
+  it("gives today's failed or given-up run a fresh try on a new webhook, keeping who was reminded", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-13T21:00:00Z"));
+    db.deliveries = [{ ruleId: "r1", runKey: "2026-11-13", result: "gaveUp", remindedUserIds: ["u2"], failures: 5, nextAttemptAt: null }];
+    await setTeamReminderWebhook(PARENT, "https://hooks.example.test/fixed");
+    expect(db.deliveries[0]).toMatchObject({ result: "failed", failures: 0, remindedUserIds: ["u2"], nextAttemptAt: new Date("2026-11-13T21:00:00Z") });
+
+    db.deliveries[0].result = "sent";
+    await setTeamReminderWebhook(PARENT, "https://hooks.example.test/other");
+    expect(db.deliveries[0].result).toBe("sent");
+    vi.useRealTimers();
+  });
+
   it("is for admins only and needs https", async () => {
     db.session = { user: { id: "000000000000000000000001", role: "user" } };
     await expect(setTeamReminderWebhook(CHILD, "https://hooks.example.test/mech")).rejects.toThrow("Forbidden");

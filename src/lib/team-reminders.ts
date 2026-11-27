@@ -55,7 +55,7 @@ export function requiredDates(today: string, weekdays: number[], daysAhead: numb
 export const isReminderDue = (rule: { enabled: boolean; sendTime: string }, time: string): boolean =>
   rule.enabled && TIME_PATTERN.test(rule.sendTime) && rule.sendTime <= time;
 
-export type MissingMember = { email: string; name: string; dates: string[] };
+export type MissingMember = { id: string; email: string; name: string; dates: string[] };
 
 /** Members with at least one required day they haven't answered, with those days. */
 export function membersMissing(
@@ -66,6 +66,6 @@ export function membersMissing(
   const done = new Set(answered.map(entry => `${entry.userId} ${entry.date}`));
 
   return members
-    .map(member => ({ email: member.email, name: member.name, dates: required.filter(date => !done.has(`${member.id} ${date}`)) }))
+    .map(member => ({ id: member.id, email: member.email, name: member.name, dates: required.filter(date => !done.has(`${member.id} ${date}`)) }))
     .filter(member => member.dates.length > 0);
 }

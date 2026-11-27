@@ -5,7 +5,7 @@ import { calendarDateInZone } from "../attendance";
 import { getTimeZone } from "../config";
 import { objectIdSchema } from "../objectid";
 import prisma from "../prisma";
-import { canDeliver, claimRun, deliver, finishRun, releaseRun } from "../reminders/delivery";
+import { canDeliver, ClaimedRun, claimRun, deliver, failRun, finishRun, MAX_FAILURES, recordReminded } from "../reminders/delivery";
 import { evaluateRule, findUnanswered } from "../reminders/rules";
 import {
     isReminderDue, parseRuleChannel, parseRuleCondition, ReminderSettings, reminderSettingsSchema, slackWebhookTargetSchema,
@@ -132,15 +132,26 @@ export async function setTeamReminderWebhook(teamId: string, url: string | null)
     enabled: DEFAULT_SETTINGS.enabled, sendTime: DEFAULT_SETTINGS.time, target,
     config: { weekdays: DEFAULT_SETTINGS.weekdays, daysAhead: DEFAULT_SETTINGS.daysAhead },
   });
+
+  // A new webhook gets a fresh try today: a run that failed or gave up on the old one may be retried by the next
+  // call, with its failures reset. Members it already reminded stay recorded, so they aren't reminded again.
+  const rule = value ? await findTeamRule(teamId) : null;
+  if (rule) {
+    await prisma.reminderDelivery.updateMany({
+      where: { ruleId: rule.id, runKey: calendarDateInZone(new Date(), getTimeZone()), result: { in: ["failed", "gaveUp"] } },
+      data: { result: "failed", failures: 0, nextAttemptAt: new Date() },
+    });
+  }
 }
 
-export type ReminderRun = { ruleId: string; teamId: string; result: "sent" | "nobodyMissing" | "noWebhook" | "failed" };
+export type ReminderRun = { ruleId: string; teamId: string; result: "sent" | "nobodyMissing" | "noWebhook" | "failed" | "gaveUp" };
 
 /**
  * For the scheduler: sends each enabled rule that is due at `now` (once a day, after its time). A run is claimed
- * before sending so overlapping calls don't send twice; any failure after the claim releases it, so the next call
- * retries. A rule that can't send yet (no webhook) isn't claimed, so adding one later the same day still sends. A rule
- * failing doesn't stop the others.
+ * before sending so overlapping calls don't send twice. A failure after the claim keeps the members already reminded
+ * and waits longer after each failure before a later call tries again, leaving them out; after `MAX_FAILURES` the rule
+ * is given up for the day. A rule that can't send yet (no webhook) isn't claimed, so adding one later the same day
+ * still sends. A rule failing doesn't stop the others.
  */
 export async function sendDueReminders(now: Date, appUrl: string): Promise<ReminderRun[]> {
   const timeZone = getTimeZone();
@@ -176,8 +187,16 @@ export async function sendDueReminders(now: Date, appUrl: string): Promise<Remin
       continue;
     }
 
+    let claim: ClaimedRun;
     try {
-      if (!await claimRun(rule.id, date)) continue;
+      const claimed = await claimRun(rule.id, date, now);
+      if (!claimed) continue;
+      if (claimed === "gaveUp") {
+        console.error(`Gave up reminder rule ${rule.id} for ${date}: its run was abandoned or failed ${MAX_FAILURES} times`);
+        run("gaveUp");
+        continue;
+      }
+      claim = claimed;
     } catch (error) {
       console.error(`Failed to claim reminder rule ${rule.id}`, error);
       run("failed");
@@ -186,19 +205,22 @@ export async function sendDueReminders(now: Date, appUrl: string): Promise<Remin
 
     let result: "sent" | "nobodyMissing";
     try {
-      const message = await evaluateRule(condition, { team, tree, date, appUrl });
-      if (message) await deliver(channel, message);
-      result = message ? "sent" : "nobodyMissing";
+      // A retry works the message out again, leaving out the members an earlier try already reminded.
+      const skipUserIds = new Set(claim.remindedUserIds);
+      const message = await evaluateRule(condition, { team, tree, date, appUrl, skipUserIds });
+      if (message) await deliver(channel, message, ids => recordReminded(rule.id, date, claim, ids));
+      result = message || skipUserIds.size > 0 ? "sent" : "nobodyMissing";
     } catch (error) {
-      console.error(`Failed to send reminder rule ${rule.id}`, error);
-      await releaseRun(rule.id, date)
-        .catch(releaseError => console.error(`Failed to release reminder rule ${rule.id}`, releaseError));
-      run("failed");
+      console.error(`Failed to send reminder rule ${rule.id} (try ${claim.failures + 1} of ${MAX_FAILURES})`, error);
+      run(await failRun(rule.id, date, claim, now).catch(failError => {
+        console.error(`Failed to record the failure of reminder rule ${rule.id}`, failError);
+        return "failed" as const;
+      }));
       continue;
     }
 
     // Already sent, so a failure to record it keeps the claim rather than sending twice.
-    await finishRun(rule.id, date, result)
+    await finishRun(rule.id, date, claim, result)
       .catch(error => console.error(`Failed to record reminder rule ${rule.id}`, error));
     run(result);
   }

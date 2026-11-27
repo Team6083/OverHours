@@ -303,7 +303,7 @@ their names and sends no email. `on` puts each member in as a Slack `user` eleme
 which overlooking-bot has to resolve to the Slack user; turn it on only once the bot does.
 
 The reminders go out when a scheduler calls this endpoint with `CRON_SECRET`, like auto-lock. Call it every few
-minutes; each reminder is sent at most once a day, and a failed send is retried on the next call:
+minutes; each reminder is sent at most once a day, and a failed send is retried later the same day:
 
 ```bash
 curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://overhours.example.com/api/admin/jobs/attendance-reminders
@@ -311,13 +311,19 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://overhours.example.c
 ```
 
 `result` is `sent`, `nobodyMissing`, `noWebhook` (on but no channel set; nothing is sent, and adding a webhook later
-that day still sends) or `failed` (logged; retried on the next call, or, for a rule with an unknown kind or channel,
-until it is fixed). Run `npx prisma db push` once after deploying.
+that day still sends), `failed` (logged; tried again after 5, 10, 20 and 40 minutes, or, for a rule with an unknown
+kind or channel, until it is fixed) or `gaveUp` (the fifth failure that day; the rule waits for tomorrow, unless an
+admin sets a new webhook, which lets the next call try again). A retry works the list out again and leaves out the
+members an earlier try already reminded, so a long list split over several messages doesn't remind anyone twice. That is
+at least once, not exactly once: if the process dies, or recording fails, right after a message went out, its members
+are reminded again on the retry. Run `npx prisma db push` once after deploying.
 
 Each reminder is a `ReminderRule`: a `kind` with its `config` (only `unanswered`: the weekdays and look-ahead above)
 and a `channel` with its `target` (only `slack-webhook`: the URL), both JSON checked per kind and channel. The page edits
 one rule per team, but a team can hold several, and a new condition or channel needs no schema change. Each run is
-claimed by inserting a `ReminderDelivery` row, unique per rule and day, which is deleted again if sending fails.
+claimed by inserting a `ReminderDelivery` row, unique per rule and day, which records who has been reminded, how often
+it failed and when it may be tried again. A run still `claimed` after 10 minutes was abandoned (the process died
+mid-run): the next call takes it over, counts it as a failure and reminds only the members not yet reminded.
 
 ## Admin API
 

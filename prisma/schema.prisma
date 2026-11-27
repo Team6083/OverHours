@@ -162,9 +162,13 @@ model ReminderDelivery {
   ruleId String   @db.ObjectId
   // The date (`YYYY-MM-DD` in `TZ`) for a daily rule
   runKey String
-  // "claimed" while sending, then "sent" or "nobodyMissing"
-  result String
-  sentAt DateTime @default(now())
+  // "claimed" while sending, then "sent" or "nobodyMissing"; "failed" waits for `nextAttemptAt`, "gaveUp" ends the day
+  result          String
+  sentAt          DateTime  @default(now())
+  // Members whose reminder already went out in this run, so a retry leaves them out
+  remindedUserIds String[]  @default([]) @db.ObjectId
+  failures        Int       @default(0)
+  nextAttemptAt   DateTime?
 
   @@unique([ruleId, runKey])
 }
